@@ -24,32 +24,27 @@
     const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     
     const MslTestUtils = require('../util/MslTestUtils.js');
     
-	// PKCS#1 RSA Public Key Format
-	var publicKeyData =
-    	"-----BEGIN PUBLIC KEY-----\n" +
-		"MIGJAoGBAJ5lBbaR2rylOL6/7PQAKQBC1XPmiG//Zxk45cASIacSEcxHWNP87a5Q\n" +
-		"OxWeljxj6oMATSslVXo0mcH63HMDXdh3kwAZF+eQLIMoKSmZ3b0HOaA3X8Bg28v3\n" +
-		"0NsV0RmdlLPPFPh1hSgnfHHZ+eZXsThWHyQkwl9u6zDZr53/JEPTAgMBAAE=\n" +
-		"-----END PUBLIC KEY-----";
-	var privateKeyData =
-		"-----BEGIN RSA PRIVATE KEY-----\n" +
-		"MIICWwIBAAKBgQCeZQW2kdq8pTi+v+z0ACkAQtVz5ohv/2cZOOXAEiGnEhHMR1jT\n" +
-		"/O2uUDsVnpY8Y+qDAE0rJVV6NJnB+txzA13Yd5MAGRfnkCyDKCkpmd29BzmgN1/A\n" +
-		"YNvL99DbFdEZnZSzzxT4dYUoJ3xx2fnmV7E4Vh8kJMJfbusw2a+d/yRD0wIDAQAB\n" +
-		"AoGAQpM/lX80qzne4f4VgHFYym1M/owVKM327ZkGqHZ2gpyLsosCgQe8dxnt26Zu\n" +
-		"iy+L8Ef+J3ZnuRfG0Mu6QPVXSe2hS/wzvFlEcEidI/97fOUWRHRmZn0WKmDnYqzq\n" +
-		"4trC+0VTTzvnUpVtS5rHj6Xn15rLN1kqxRsP0LR6FftRZmECQQDJ5oz/MyyWU83s\n" +
-		"L7KQ5mXhmuHQdZP4pPV7O5duGb7RydYJY55RydGVlRPFR8tysO89Tudmz1Dx4smI\n" +
-		"I0oUiN6ZAkEAyNYpoYtu0Ll8Xdhy2N4YfAoNIXcl9k5yy000vte3h8PlVZaxaczJ\n" +
-		"cyStPhjQN3CJm1fKpp8dYNPg7mDw9tyVSwJALM8XQdhIsABfdmjLl68as2xda5d8\n" +
-		"xLVPqg76t7vNBuBluWW7kGlbM3iHj8Q0Wfr8zb2CS+X9EAIGOkmiulX6GQJAYAA3\n" +
-		"UDgVVYKEl1tispWfgJNRaYDJza38I4AZSWxWF3ilhD8POTKhzP9oLHmx9f4+WNoj\n" +
-		"TXhbk7BUIb6HEImqdwJACY4w5EpkWXquA2EJu/MpTIzROi1bDD0hNToKbTPKWtw8\n" +
-		"pXmFVRGmEZmcJIEnPfu9y7TMgRjCPIz4CswGOu2zbg==\n" +
-		"-----END RSA PRIVATE KEY-----";
+    /** 1024-bit RSA public key. */
+   	var RSA_PUBKEY_B64 =
+        "MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBALeJpiH5nikd3XeAo2rHjLJVVChM/p6l" +
+        "VnQHyFh77w0Efbppi1P1pNy8BxJ++iFKt2dV/4ZKkUKqtlIu3KX19kcCAwEAAQ==";
+    /** 1024-bit RSA private key. */
+    var RSA_PRIVKEY_B64 =
+        "MIIBVgIBADANBgkqhkiG9w0BAQEFAASCAUAwggE8AgEAAkEAt4mmIfmeKR3dd4Cj" +
+        "aseMslVUKEz+nqVWdAfIWHvvDQR9ummLU/Wk3LwHEn76IUq3Z1X/hkqRQqq2Ui7c" +
+        "pfX2RwIDAQABAkEAlB6YXq7uv0wE4V6Fg7VLjNhkNKn+itXwMW/eddp/D8cC4QbH" +
+        "+0Ejt0e3F+YcY0RBsTUk7hz89VW7BtpjXRrU0QIhAOyjvUsihGzImq+WDiEWvnXX" +
+        "lVaUaJXaaNElE37V/BE1AiEAxo25k2z2SDbFC904Zk020kISi95KNNv5ceEFcGu0" +
+        "dQsCIQDUgj7uCHNv1b7ETDcoE+q6nP2poOFDIb7bgzY8wyH4uQIgf+02YO82auam" +
+        "5HL+8KLVLHkXm/h31UDZoe66Y2lxlmsCIQC+cKulQATpKNnMV1RVtpH07A0+X72s" +
+        "wpu2pmaRSYgw/w==";
 	
 	/**
 	 * RSA ESN.
@@ -150,15 +145,28 @@
     // Expose public static properties.
     module.exports.RSA_ESN = RSA_ESN;
     module.exports.RSA_PUBKEY_ID = RSA_PUBKEY_ID;
-    // FIXME: Use the hard-coded RSA keys.
-    MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN_VERIFY, 2048, {
-        result: function(publicKey, privateKey) {
-            RSA_PUBKEY = module.exports.RSA_PUBKEY = publicKey;
-            RSA_PRIVKEY = module.exports.RSA_PRIVKEY = privateKey;
-            keysDefined.signalAll();
-        },
-        error: function(e) {
-            throw new MslInternalException("Hard-coded RSA key failure.", e);
-        }
-    });
+    
+    (function() {
+        var pubKeyEncoded = Base64.decode(RSA_PUBKEY_B64);
+        var privKeyEncoded = Base64.decode(RSA_PRIVKEY_B64);
+                
+        PublicKey.import(pubKeyEncoded, WebCryptoAlgorithm.RSASSA, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
+            result: function (pubkey) {
+                RSA_PUBKEY = module.exports.RSA_PUBKEY = pubkey;
+                keysDefined.signalAll();
+            },
+            error: function(e) {
+                throw new MslInternalException("Hard-coded RSA key failure.", e);
+            }
+        });
+        PrivateKey.import(privKeyEncoded, WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN, KeyFormat.PKCS8, {
+            result: function (privkey) {
+                RSA_PRIVKEY = module.exports.RSA_PRIVKEY = privkey;
+                keysDefined.signalAll();
+            },
+            error: function(e) {
+                throw new MslInternalException("Hard-coded RSA key failure.", e);
+            }
+        });
+    })();
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MockRsaAuthenticationFactory'));
