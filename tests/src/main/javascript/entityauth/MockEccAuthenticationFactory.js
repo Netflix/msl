@@ -25,29 +25,20 @@
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
     const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
 
-    /** ECC keypair */
-    var ECDSA_KEYPAIR = {
-        publicKeyJSON: {
-            "kty": "EC",
-            "crv": "P-256",
-            "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
-            "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
-            "use": "sig",
-            "kid": "A"
-        },
-        privateKeyJSON: {
-            "kty": "EC",
-            "crv": "P-256",
-            "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
-            "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
-            "d":   "870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE",
-            "use": "sig",
-            "kid": "Apriv"
-        }
-    };
+    /** ECC public key. */
+    var ECC_PUBKEY_B64 =
+        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExgY6uU5xZkvDLVlo5PpKjhRJnyqS" +
+        "j4+LNcQ+x+kdPbZf1GwiJy2sRiJwghsXl9X8ffRpUqiLeNW0oOE/+dG2iw==";
+
+    /** ECC private key. */
+    var ECC_PRIVKEY_B64 =
+        "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgrNqzpcZOpGRqlVGZ" +
+        "nelA4i7N/E96nJ8Ntk1ZXhPzKcChRANCAATGBjq5TnFmS8MtWWjk+kqOFEmfKpKP" +
+        "j4s1xD7H6R09tl/UbCInLaxGInCCGxeX1fx99GlSqIt41bSg4T/50baL";
 
 	/**
 	 * ECC ESN.
@@ -151,9 +142,11 @@
 
     (function() {
         var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
-        _algo['namedCurve'] = ECDSA_KEYPAIR.publicKeyJSON['crv'];
+        _algo['namedCurve'] = 'P-256';
+        var pubKeyEncoded = Base64.decode(ECC_PUBKEY_B64);
+        var privKeyEncoded = Base64.decode(ECC_PRIVKEY_B64);
         
-        PublicKey.import(ECDSA_KEYPAIR.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+        PublicKey.import(pubKeyEncoded, _algo, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
             result: function (pubkey) {
                 ECC_PUBKEY = module.exports.ECC_PUBKEY = pubkey;
                 keysDefined.signalAll();
@@ -162,7 +155,7 @@
                 throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
-        PrivateKey.import(ECDSA_KEYPAIR.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+        PrivateKey.import(privKeyEncoded, _algo, WebCryptoUsage.SIGN, KeyFormat.PKCS8, {
             result: function (privkey) {
                 ECC_PRIVKEY = module.exports.ECC_PRIVKEY = privkey;
                 keysDefined.signalAll();
