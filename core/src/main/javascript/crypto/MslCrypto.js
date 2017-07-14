@@ -273,16 +273,15 @@
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
-                        return Promise.resolve().then(function() {
-                            var alg = ASN1.webCryptoAlgorithmToJwkAlg(algorithm);
-                            var keyOps = ASN1.webCryptoUsageToJwkKeyOps(ku);
-                            var jwkObj = ASN1.rsaDerToJwk(keyData, alg, keyOps, ext);
-                            if (!jwkObj) {
-                                throw new Error("Could not make valid JWK from DER input");
-                            }
-                            var jwk = JSON.stringify(jwkObj);
-                            return nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
-                        });
+                        var alg = ASN1.webCryptoAlgorithmToJwkAlg(algorithm);
+                        var keyOps = ASN1.webCryptoUsageToJwkKeyOps(ku);
+                        var jwkObj = ASN1.rsaDerToJwk(keyData, alg, keyOps, ext);
+                        if (!jwkObj) {
+                            throw new Error("Could not make valid JWK from DER input");
+                        }
+                        var jwk = JSON.stringify(jwkObj);
+                        var op = nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
+                        return promisedOperation(op);
                     } else {
                         var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
 						return promisedOperation(op);
