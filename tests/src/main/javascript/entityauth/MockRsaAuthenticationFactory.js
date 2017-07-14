@@ -150,7 +150,7 @@
         var pubKeyEncoded = Base64.decode(RSA_PUBKEY_B64);
         var privKeyEncoded = Base64.decode(RSA_PRIVKEY_B64);
                 
-        PublicKey.import(pubKeyEncoded, WebCryptoAlgorithm.RSASSA, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
+        PublicKey.import(pubKeyEncoded, WebCryptoAlgorithm.RSASSA_SHA1, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
             result: function (pubkey) {
                 RSA_PUBKEY = module.exports.RSA_PUBKEY = pubkey;
                 keysDefined.signalAll();
@@ -159,7 +159,7 @@
                 throw new MslInternalException("Hard-coded RSA key failure.", e);
             }
         });
-        PrivateKey.import(privKeyEncoded, WebCryptoAlgorithm.RSASSA, WebCryptoUsage.SIGN, KeyFormat.PKCS8, {
+        PrivateKey.import(privKeyEncoded, WebCryptoAlgorithm.RSASSA_SHA1, WebCryptoUsage.SIGN, KeyFormat.PKCS8, {
             result: function (privkey) {
                 RSA_PRIVKEY = module.exports.RSA_PRIVKEY = privkey;
                 keysDefined.signalAll();
