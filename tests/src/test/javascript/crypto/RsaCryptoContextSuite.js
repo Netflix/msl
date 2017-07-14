@@ -34,60 +34,6 @@ describe("RsaCryptoContext", function() {
 
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    
-	/** RSA keypair A. */
-	var RSA_KEYPAIR_A = {
-		privateKey:
-			"-----BEGIN RSA PRIVATE KEY-----\n" +
-			"MIICWwIBAAKBgQCeZQW2kdq8pTi+v+z0ACkAQtVz5ohv/2cZOOXAEiGnEhHMR1jT\n" +
-			"/O2uUDsVnpY8Y+qDAE0rJVV6NJnB+txzA13Yd5MAGRfnkCyDKCkpmd29BzmgN1/A\n" +
-			"YNvL99DbFdEZnZSzzxT4dYUoJ3xx2fnmV7E4Vh8kJMJfbusw2a+d/yRD0wIDAQAB\n" +
-			"AoGAQpM/lX80qzne4f4VgHFYym1M/owVKM327ZkGqHZ2gpyLsosCgQe8dxnt26Zu\n" +
-			"iy+L8Ef+J3ZnuRfG0Mu6QPVXSe2hS/wzvFlEcEidI/97fOUWRHRmZn0WKmDnYqzq\n" +
-			"4trC+0VTTzvnUpVtS5rHj6Xn15rLN1kqxRsP0LR6FftRZmECQQDJ5oz/MyyWU83s\n" +
-			"L7KQ5mXhmuHQdZP4pPV7O5duGb7RydYJY55RydGVlRPFR8tysO89Tudmz1Dx4smI\n" +
-			"I0oUiN6ZAkEAyNYpoYtu0Ll8Xdhy2N4YfAoNIXcl9k5yy000vte3h8PlVZaxaczJ\n" +
-			"cyStPhjQN3CJm1fKpp8dYNPg7mDw9tyVSwJALM8XQdhIsABfdmjLl68as2xda5d8\n" +
-			"xLVPqg76t7vNBuBluWW7kGlbM3iHj8Q0Wfr8zb2CS+X9EAIGOkmiulX6GQJAYAA3\n" +
-			"UDgVVYKEl1tispWfgJNRaYDJza38I4AZSWxWF3ilhD8POTKhzP9oLHmx9f4+WNoj\n" +
-			"TXhbk7BUIb6HEImqdwJACY4w5EpkWXquA2EJu/MpTIzROi1bDD0hNToKbTPKWtw8\n" +
-			"pXmFVRGmEZmcJIEnPfu9y7TMgRjCPIz4CswGOu2zbg==\n" +
-			"-----END RSA PRIVATE KEY-----",
-		// PKCS#1 RSA Public Key Format
-		publicKey:
-			"-----BEGIN PUBLIC KEY-----\n" +
-			"MIGJAoGBAJ5lBbaR2rylOL6/7PQAKQBC1XPmiG//Zxk45cASIacSEcxHWNP87a5Q\n" +
-			"OxWeljxj6oMATSslVXo0mcH63HMDXdh3kwAZF+eQLIMoKSmZ3b0HOaA3X8Bg28v3\n" +
-			"0NsV0RmdlLPPFPh1hSgnfHHZ+eZXsThWHyQkwl9u6zDZr53/JEPTAgMBAAE=\n" +
-			"-----END PUBLIC KEY-----",
-	};
-	/** RSA keypair B. */
-	var RSA_KEYPAIR_B = {
-		privateKey:
-			"-----BEGIN RSA PRIVATE KEY-----\n" +
-			"MIICWwIBAAKBgQDmFkuuushqzchxoO5v4HYKAbg17PqTCHiqjTsHiI8rDK8SDsYJ\n" +
-			"Syqg+iHme6dQWzxMV1yZLGOIEjQu9AngAQ0OxKKm13tA/U0zTfyTEZyK3p3rveXK\n" +
-			"us2tMeVlrJLyhzt62lPcBKf2BEu5lLJIq2TQPhUzE2fdnEl82P5NEOnXuwIDAQAB\n" +
-			"AoGALxcfFDrMK/fD72WVhzY0UmX5sqe2vQL910Iic69CRfhJmHOHmn1U0y9+YrKq\n" +
-			"EqspkyJKJFtOX5oCLh3qK3trlVfVwvqrswNqZIQI3Lm3jmzMdoEBTJV44hwV4QPn\n" +
-			"dupmozSsKXScJzphNSM+fjRTZHqdZmfSDa9mwwxLzlnTpbkCQQD1RycQazPDnV5s\n" +
-			"daDFaEoKiJKKF24TnKTey+l3SaBLgJM9nfV6ZMQM0fhu5AO6FWMGKK8PJy2VWf0+\n" +
-			"jsHszzs1AkEA8CUlVw2nIeD/kW9rBj+p91s8RzhkbOnGBURoWAOCGn2qVx25ybFO\n" +
-			"IJ3a8XqlKI1/dujtWQr4VcpKlNPFSKw1LwJABqxL5Md13hGO+xZsLFK9CPJUQkuG\n" +
-			"5COz3Jfhnywynzs9RkTg49aP+uVPg/zSGSLx0b4TnS7sr46GNEiAAChXLQJAJDP1\n" +
-			"ZSJRx/G7lZlOcSq33OqMM9B0k1bK25Bsipg8zPGU9H0uvRFVzeT+VNlAfNSYGr0S\n" +
-			"yxG0Tnqos7cZTtNnUQJARrojuTuWPTsLzoTVNZqkiw7mmVNxUPVF1cIarffN1vqP\n" +
-			"QaITNTUkBgbo3b04YyHgdgtS5O+hvpxa+mCPOmQzcg==\n" +
-			"-----END RSA PRIVATE KEY-----",
-		// PKCS#1 RSA Public Key Format
-		publicKey:
-			"-----BEGIN PUBLIC KEY-----\n" +
-			"MIGJAoGBAOYWS666yGrNyHGg7m/gdgoBuDXs+pMIeKqNOweIjysMrxIOxglLKqD6\n" +
-			"IeZ7p1BbPExXXJksY4gSNC70CeABDQ7EoqbXe0D9TTNN/JMRnIreneu95cq6za0x\n" +
-			"5WWskvKHO3raU9wEp/YES7mUskirZNA+FTMTZ92cSXzY/k0Q6de7AgMBAAE=\n" +
-			"-----END PUBLIC KEY-----",
-	};
-
 	
     /** Key pair ID. */
     var KEYPAIR_ID = "keypairid";
@@ -165,8 +111,6 @@ describe("RsaCryptoContext", function() {
             loading = true;
             
             runs(function () {
-                // TODO: read from RSA_KEYPAIR_A.publicKey
-                // TODO: read from RSA_KEYPAIR_A.privateKey
                 MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyA = publicKey;
@@ -178,8 +122,6 @@ describe("RsaCryptoContext", function() {
             waitsFor(function() { return publicKeyA && privateKeyA; }, "did not create publicKeyA && privateKeyA", 900);
 
             runs(function() {
-                // TODO: read from RSA_KEYPAIR_B.publicKey
-                // TODO: read from RSA_KEYPAIR_B.privateKey
                 MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 2048, {
                     result: function(publicKey, privateKey) {
                         publicKeyB = publicKey;
@@ -199,7 +141,7 @@ describe("RsaCryptoContext", function() {
             random.nextBytes(messageB);
     		
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-    		var ciphertextA = undefined, ciphertextB;
+    		var ciphertextA, ciphertextB;
     		runs(function() {
     			cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertextA = c; },
@@ -221,7 +163,7 @@ describe("RsaCryptoContext", function() {
 	            expect(ciphertextB).not.toEqual(ciphertextA);
     		});
     		
-    		var plaintextA = undefined, plaintextB;
+    		var plaintextA, plaintextB;
     		runs(function() {
     			cryptoContext.decrypt(ciphertextA, encoder, {
     				result: function(p) { plaintextA = p; },
@@ -1146,7 +1088,7 @@ describe("RsaCryptoContext", function() {
     		random.nextBytes(messageB);
     		
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, RsaCryptoContext.Mode.SIGN_VERIFY);
-    		var signatureA = undefined, signatureB;
+    		var signatureA, signatureB;
     		runs(function() {
     			cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
     				result: function(s) { signatureA = s; },
@@ -1167,7 +1109,7 @@ describe("RsaCryptoContext", function() {
 	    		expect(signatureB).not.toEqual(signatureA);
     		}); 
     		
-    		var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+    		var verifiedAA, verifiedBB, verifiedBA;
     		runs(function() {
     			cryptoContext.verify(messageA, signatureA, encoder, {
     				result: function(v) { verifiedAA = v; },
