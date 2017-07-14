@@ -26,7 +26,9 @@
 
     const MslInternalException = require('../MslInternalException.js');
     const KeyFormat = require('../crypto/KeyFormat.js');
-    const ASN1 = require('../lib/asnjwk.concat.js');
+    
+    const ASN1 = require('../lib/asnjwk.js');
+    const textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Web Crypto API version.
@@ -279,7 +281,7 @@
                                 throw new Error("Could not make valid JWK from DER input");
                             }
                             var jwk = JSON.stringify(jwkObj);
-                            return nfCryptoSubtle.importKey(KeyFormat.JWK, utf8$getBytes(jwk), algorithm, ext, ku);
+                            return nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
                         });
                     } else {
                         var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
@@ -301,7 +303,7 @@
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
 						var op = nfCryptoSubtle.exportKey(KeyFormat.JWK, key);
                         return promisedOperation(op).then(function (result) {
-                            var jwkObj = JSON.parse(utf8$getString(new Uint8Array(result)));
+                            var jwkObj = JSON.parse(textEncoding.getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
                             if (!rsaKey) {
                                 throw new Error("Could not make valid DER from JWK input");

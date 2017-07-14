@@ -16,6 +16,8 @@
 (function(require, module) {
 "use strict";
 
+const Base64 = require('../util/Base64.js');
+
 /** @const */
 var DEBUG=false;
 //================================================================================
@@ -897,7 +899,7 @@ function buildRsaSpki(rsaPublicKey) {
 };
 
 function parseRsaSpki(spkiDer) {
-    var spkiAsn = ASN1.parse(spkiDer);
+    var spkiAsn = parse(spkiDer);
     if (!isRsaSpki) {
         return undefined;
     }
@@ -934,7 +936,7 @@ function buildRsaPkcs8(rsaPrivateKey) {
 }
 
 function parseRsaPkcs8(pkcs8Der) {
-    var pkcs8Asn1 = ASN1.parse(pkcs8Der);
+    var pkcs8Asn1 = parse(pkcs8Der);
     if (!isRsaPkcs8(pkcs8Asn1)) {
         return undefined;
     }
@@ -978,16 +980,16 @@ function buildRsaJwk(rsaKey, alg, keyOps, ext) {
         'alg': alg,
         'key_ops' : keyOps || [],
         'ext': ext == undefined ? false : ext,
-        'n': base64$encode(rsaKey.n, true),
-        'e': base64$encode(rsaKey.e, true)
+        'n': Base64.encode(rsaKey.n, true),
+        'e': Base64.encode(rsaKey.e, true)
     };
     if (rsaKey instanceof RsaPrivateKey) {
-        jwk['d']  = base64$encode(rsaKey.d, true);
-        jwk['p']  = base64$encode(rsaKey.p, true);
-        jwk['q']  = base64$encode(rsaKey.q, true);
-        jwk['dp'] = base64$encode(rsaKey.dp, true);
-        jwk['dq'] = base64$encode(rsaKey.dq, true);
-        jwk['qi'] = base64$encode(rsaKey.qi, true);
+        jwk['d']  = Base64.encode(rsaKey.d, true);
+        jwk['p']  = Base64.encode(rsaKey.p, true);
+        jwk['q']  = Base64.encode(rsaKey.q, true);
+        jwk['dp'] = Base64.encode(rsaKey.dp, true);
+        jwk['dq'] = Base64.encode(rsaKey.dq, true);
+        jwk['qi'] = Base64.encode(rsaKey.qi, true);
     }
     return jwk;
 }
@@ -1013,23 +1015,23 @@ function parseRsaJwk(jwk) {
         keyOps = jwk['key_ops'];
     }
     var ext = jwk['ext'];
-    var n = base64$decode(jwk['n'], true);
-    var e = base64$decode(jwk['e'], true);
+    var n = Base64.decode(jwk['n'], true);
+    var e = Base64.decode(jwk['e'], true);
     if (!jwk['d']) {
         return new RsaPublicKey(n, e, ext, keyOps);
     } else {
-        var d = base64$decode(jwk['d'], true);
-        var p = base64$decode(jwk['p'], true);
-        var q = base64$decode(jwk['q'], true);
-        var dp = base64$decode(jwk['dp'], true);
-        var dq = base64$decode(jwk['dq'], true);
-        var qi = base64$decode(jwk['qi'], true);
+        var d = Base64.decode(jwk['d'], true);
+        var p = Base64.decode(jwk['p'], true);
+        var q = Base64.decode(jwk['q'], true);
+        var dp = Base64.decode(jwk['dp'], true);
+        var dq = Base64.decode(jwk['dq'], true);
+        var qi = Base64.decode(jwk['qi'], true);
         return new RsaPrivateKey(n, e, d, p, q, dp, dq, qi, jwk['alg'], keyOps, ext);
     }
 }
 
 function rsaDerToJwk(der, alg, keyOps, extractable) {
-    var asn = ASN1.parse(der);
+    var asn = parse(der);
     if (!asn) {
         return undefined;
     }
@@ -1124,14 +1126,16 @@ function webCryptoAlgorithmToJwkAlg(webCryptoAlgorithm) {
     }
 }
 
+function parse(abv) {
+    asn1ParseRecursionDepth = 0;
+    return asn1Parse(new Asn1Token(abv), 0, abv.length);
+};
+
 // external interface
 
 // Debug builds include these named symbols plus the Release symbols below. The
 // symbols here get renamed in Release builds.
-module.exports.parse = function(abv) {
-    asn1ParseRecursionDepth = 0;
-    return asn1Parse(new Asn1Token(abv), 0, abv.length);
-};
+module.exports.parse = parse;
 module.exports.show = asn1Show;
 module.exports.isRsaSpki = isRsaSpki;
 module.exports.isRsaPkcs8 = isRsaPkcs8;
@@ -1154,4 +1158,4 @@ module.exports['jwkToRsaDer'] = jwkToRsaDer;
 module.exports['webCryptoAlgorithmToJwkAlg'] = webCryptoAlgorithmToJwkAlg;
 module.exports['webCryptoUsageToJwkKeyOps'] = webCryptoUsageToJwkKeyOps;
 
-})(require, (typeof module !== 'undefined') ? module : mkmodule('ASN1'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('asnjwk'));
