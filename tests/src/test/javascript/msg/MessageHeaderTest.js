@@ -123,7 +123,7 @@ describe("MessageHeader", function() {
     function isAboutNowSeconds(seconds) {
         var now = Date.now();
         var time = seconds * MILLISECONDS_PER_SECOND;
-        return (now - 1000 <= time && time <= now + 1000);
+        return (now - 2000 <= time && time <= now + 2000);
     }
 
 	/** MSL trusted network context. */
