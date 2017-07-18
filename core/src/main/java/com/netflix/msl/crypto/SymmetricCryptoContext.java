@@ -207,10 +207,11 @@ public class SymmetricCryptoContext implements ICryptoContext {
             // Reconstitute encryption envelope.
             final MslObject encryptionEnvelopeMo = encoder.parseObject(data);
             final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1);
-            
+
+            // Commented out for short term, until we move to https://github.com/Netflix/msl/wiki/Cryptography#version-2
             // Verify key ID.
-            if (!encryptionEnvelope.getKeyId().equals(id))
-                throw new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH);
+            // if (!encryptionEnvelope.getKeyId().equals(id))
+            //    throw new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH);
             
             // Decrypt ciphertext.
             final byte[] ciphertext = encryptionEnvelope.getCiphertext();
