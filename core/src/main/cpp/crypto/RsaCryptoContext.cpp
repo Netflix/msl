@@ -109,10 +109,6 @@ std::shared_ptr<ByteArray> RsaCryptoContext::decrypt(shared_ptr<ByteArray> data,
         const MslCiphertextEnvelope encryptionEnvelope =
                 createMslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope::Version::V1);
 
-        // Verify key ID.
-        if (id != encryptionEnvelope.getKeyId())
-            throw MslCryptoException(MslError::ENVELOPE_KEY_ID_MISMATCH);
-
         // Decrypt ciphertext.
         shared_ptr<ByteArray> result = make_shared<ByteArray>();
         if (encryptAlg == RSAPKCS1) {

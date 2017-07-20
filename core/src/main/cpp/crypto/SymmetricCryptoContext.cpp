@@ -113,10 +113,6 @@ std::shared_ptr<ByteArray> SymmetricCryptoContext::decrypt(std::shared_ptr<ByteA
         const MslCiphertextEnvelope encryptionEnvelope =
             createMslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope::Version::V1);
 
-        // Verify key ID.
-        if (id_ != encryptionEnvelope.getKeyId())
-            throw MslCryptoException(MslError::ENVELOPE_KEY_ID_MISMATCH);
-
         // Get ciphertext and IV.
         shared_ptr<ByteArray> ciphertext = encryptionEnvelope.getCiphertext();
         if (ciphertext->size() == 0)

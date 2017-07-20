@@ -273,24 +273,19 @@ public class SymmetricCryptoContextTest {
     
     @Test
     public void encryptDecryptIdMismatch() throws MslEncodingException, MslCryptoException, MslEncoderException {
-        thrown.expect(MslCryptoException.class);
-        thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
-
-        final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, KEYSET_ID + "A", MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
+    	final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, KEYSET_ID + "A", MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, KEYSET_ID + "B", MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
         
         final byte[] message = new byte[32];
         random.nextBytes(message);
         
-        final byte[] ciphertext;
-        try {
-            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
-        } catch (final MslCryptoException e) {
-            fail(e.getMessage());
-            return;
-        }
+        final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
+        assertNotNull(ciphertext);
+        assertThat(ciphertext, is(not(message)));
         
-        cryptoContextB.decrypt(ciphertext, encoder);
+        final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
+        assertNotNull(plaintext);
+        assertArrayEquals(message, plaintext);
     }
     
     @Test

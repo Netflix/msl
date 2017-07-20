@@ -551,18 +551,32 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var moChunk;
         runs(function() {
 	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
-	        	result: function() {},
-	        	error: function(e) { exception = e; }
+	        	result: function(x) { moChunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        
+        var moEncode;
+        runs(function() {
+	        expect(moChunk.isEndOfMessage()).toEqual(chunk.isEndOfMessage());
+	        expect(moChunk.data).toEqual(chunk.data);
+	        expect(moChunk.messageId).toEqual(chunk.messageId);
+	        expect(moChunk.sequenceNumber).toEqual(chunk.sequenceNumber);
+	        moChunk.toMslEncoding(encoder, ENCODER_FORMAT, {
+	            result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+        });
+        waitsFor(function() { return moEncode; }, "moEncode", 100);
         
         runs(function() {
-            var f = function() { throw exception; };
-            expect(f).toThrow(new MslCryptoException(MslError.NONE));
+	        expect(moEncode).not.toBeNull();
+	        // The two payload chunk encodings will not be equal because the
+	        // ciphertext and signature will be generated on-demand.
         });
     });
     

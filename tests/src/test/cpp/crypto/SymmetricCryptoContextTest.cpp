@@ -300,23 +300,18 @@ TEST_P(SymmetricCryptoContextTest, EncryptDecryptNullKeys)
 
 TEST_P(SymmetricCryptoContextTest, EncryptDecryptIdMismatch)
 {
-    //thrown.expect(MslCryptoException.class);
-    //thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
-
     shared_ptr<ICryptoContext> cryptoContextA(make_shared<SymmetricCryptoContext>(ctx_, KEYSET_ID + "A", encryptionKey_, signatureKey_, wrappingKey_));
     shared_ptr<ICryptoContext> cryptoContextB(make_shared<SymmetricCryptoContext>(ctx_, KEYSET_ID + "B", encryptionKey_, signatureKey_, wrappingKey_));
 
     shared_ptr<ByteArray> message = getRandomBytes(32);
 
-    shared_ptr<ByteArray> ciphertext;
-    try {
-    	ciphertext = cryptoContextA->encrypt(message, encoder_, encoderFormat_);
-    } catch (const MslCryptoException& e) {
-        ADD_FAILURE() << e.what();
-        return;
-    }
+    shared_ptr<ByteArray> ciphertext = cryptoContextA->encrypt(message, encoder_, encoderFormat_);
+    EXPECT_FALSE(ciphertext->empty());
+    EXPECT_NE(*message, *ciphertext);
 
-    EXPECT_THROW(cryptoContextB->decrypt(ciphertext, encoder_), MslCryptoException);
+    shared_ptr<ByteArray> plaintext = cryptoContextB->decrypt(ciphertext, encoder_);
+    EXPECT_FALSE(plaintext->empty());
+    EXPECT_EQ(*message, *plaintext);
 }
 
 TEST_P(SymmetricCryptoContextTest, EncryptDecryptKeysMismatch)

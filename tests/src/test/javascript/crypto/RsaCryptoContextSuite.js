@@ -184,7 +184,7 @@ describe("RsaCryptoContext", function() {
             random.nextBytes(messageB);
     		
     		var cryptoContext = new RsaCryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, mode);
-    		var ciphertextA = undefined, ciphertextB;
+    		var ciphertextA, ciphertextB;
     		runs(function() {
     			cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertextA = c; },
@@ -206,7 +206,7 @@ describe("RsaCryptoContext", function() {
 	            expect(ciphertextB).not.toEqual(ciphertextA);
     		});
     		
-    		var plaintextA = undefined, plaintextB;
+    		var plaintextA, plaintextB;
     		runs(function() {
     			cryptoContext.decrypt(ciphertextA, encoder, {
     				result: function(p) { plaintextA = p; },
@@ -285,18 +285,21 @@ describe("RsaCryptoContext", function() {
     		});
     		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
     		
-    		var exception;
+    		var plaintext;
     		runs(function() {
+    			expect(ciphertext).not.toBeNull();
+    			expect(ciphertext).not.toEqual(message);
+    			
     			cryptoContextB.decrypt(ciphertext, encoder, {
-    				result: function() {},
-    				error: function(err) { exception = err; }
+    				result: function() { plaintext = p; },
+    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return exception; }, "exception", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", 300);
     		
     		runs(function() {
-    			var f = function() { throw exception; };
-    			expect(f).toThrow(new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH));
+    			expect(plaintext).not.toBeNull();
+    			expect(plaintext).toEqual(message);
     		});
     	});
 
