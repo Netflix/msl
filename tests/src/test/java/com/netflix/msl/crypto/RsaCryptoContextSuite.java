@@ -192,17 +192,18 @@ public class RsaCryptoContextSuite{
         
         @Test
         public void encryptDecryptIdMismatch() throws MslCryptoException {
-            thrown.expect(MslCryptoException.class);
-            thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
-
             final byte[] message = new byte[messageSize];
             random.nextBytes(message);
             
             final RsaCryptoContext cryptoContextA = new RsaCryptoContext(ctx, KEYPAIR_ID + "A", privateKeyA, publicKeyA, mode);
             final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
+            assertNotNull(ciphertext);
+            assertThat(message, is(not(ciphertext)));
             
             final RsaCryptoContext cryptoContextB = new RsaCryptoContext(ctx, KEYPAIR_ID + "B", privateKeyA, publicKeyA, mode);
-            cryptoContextB.decrypt(ciphertext, encoder);
+            final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
+            assertNotNull(plaintext);
+            assertArrayEquals(message, plaintext);
         }
         
         @Test
