@@ -27,6 +27,7 @@
     const MslCryptoException = require('../MslCryptoException.js');
     const MslError = require('../MslError.js');
     const MslCrypto = require('../crypto/MslCrypto.js');
+    const KeyFormat = require('../crypto/KeyFormat.js');
     const Base64 = require('../util/Base64.js');
 
     var SecretKey = module.exports = Class.create({
@@ -50,7 +51,7 @@
             AsyncExecutor(callback, function () {
                 if (typeof rawKey !== "object")
                     throw new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY);
-
+                
                 if (!keyData && rawKey['extractable']) {
                     var oncomplete = function(result) {
                         createKey(new Uint8Array(result));
@@ -151,7 +152,7 @@
             var onerror = function(e) {
                 callback.error(new MslCryptoException(MslError.INVALID_SYMMETRIC_KEY, null, e));
             };
-            MslCrypto.importKey("raw", keydata, algo, true, usages)
+            MslCrypto.importKey(KeyFormat.RAW, keydata, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
