@@ -148,10 +148,6 @@ public abstract class AsymmetricCryptoContext implements ICryptoContext {
             final MslObject encryptionEnvelopeMo = encoder.parseObject(data);
             final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1);
             
-            // Verify key ID.
-            if (!encryptionEnvelope.getKeyId().equals(id))
-                throw new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH);
-            
             // Decrypt ciphertext.
             final Cipher cipher = CryptoCache.getCipher(transform);
             cipher.init(Cipher.DECRYPT_MODE, privateKey, params);
