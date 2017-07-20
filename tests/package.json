@@ -24,6 +24,6 @@
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
   "dependencies": {
-    "jsrsasign": "^7.1.5"
+    "jsrsasign": "^7.2.2"
   }
 }
