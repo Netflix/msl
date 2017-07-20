@@ -307,11 +307,16 @@ TEST_F(PayloadChunkTest, mismatchedCryptoContextId)
 
 	shared_ptr<PayloadChunk> chunk = make_shared<PayloadChunk>(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm::GZIP, DATA, cryptoContextA);
 	shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, chunk);
-	try {
-		make_shared<PayloadChunk>(ctx, mo, cryptoContextB);
-		ADD_FAILURE() << "Should have thrown";
-	} catch (const MslCryptoException& e) {
-	}
+
+	shared_ptr<PayloadChunk> moChunk = make_shared<PayloadChunk>(ctx, mo, cryptoContextB);
+	EXPECT_EQ(chunk->isEndOfMessage(), moChunk->isEndOfMessage());
+	EXPECT_EQ(*chunk->getData(), *moChunk->getData());
+	EXPECT_EQ(chunk->getMessageId(), moChunk->getMessageId());
+	EXPECT_EQ(chunk->getSequenceNumber(), moChunk->getSequenceNumber());
+	shared_ptr<ByteArray> moEncode = moChunk->toMslEncoding(encoder, format);
+	EXPECT_TRUE(moEncode->size() > 0);
+	// The two payload chunk encodings will not be equal because the
+	// ciphertext and signature will be generated on-demand.
 }
 
 TEST_F(PayloadChunkTest, mismatchedCryptoContextEncryptionKey)

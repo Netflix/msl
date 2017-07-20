@@ -155,7 +155,7 @@ TEST_P(RsaCryptoContextEncryptDecryptTest, encryptDecrypt)
     RsaCryptoContext cryptoContext(ctx, KEYPAIR_ID, privateKeyA, publicKeyA, GetParam().mode);
     shared_ptr<ByteArray> ciphertextA = cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT);
     EXPECT_FALSE(ciphertextA->empty());
-    EXPECT_NE(messageA, ciphertextA);
+    EXPECT_NE(*messageA, *ciphertextA);
 
     shared_ptr<ByteArray> plaintextA = cryptoContext.decrypt(ciphertextA, encoder);
     EXPECT_FALSE(plaintextA->empty());
@@ -211,14 +211,13 @@ TEST_P(RsaCryptoContextEncryptDecryptTest, encryptDecryptIdMismatch)
 
     RsaCryptoContext cryptoContextA(ctx, KEYPAIR_ID + "A", privateKeyA, publicKeyA, GetParam().mode);
     shared_ptr<ByteArray> ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
+    EXPECT_FALSE(ciphertext->empty());
+    EXPECT_NE(*message, *ciphertext);
 
     RsaCryptoContext cryptoContextB(ctx, KEYPAIR_ID + "B", privateKeyA, publicKeyA, GetParam().mode);
-    try {
-        cryptoContextB.decrypt(ciphertext, encoder);
-        ADD_FAILURE() << "Should have thrown";
-    } catch (const MslCryptoException& e) {
-        EXPECT_EQ(MslError::ENVELOPE_KEY_ID_MISMATCH, e.getError());
-    }
+    shared_ptr<ByteArray> plaintext = cryptoContextB.decrypt(ciphertext, encoder);
+    EXPECT_FALSE(plaintext->empty());
+    EXPECT_EQ(*message, *plaintext);
 }
 
 TEST_P(RsaCryptoContextEncryptDecryptTest, encryptDecryptKeysMismatch)
