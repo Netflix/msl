@@ -80,7 +80,7 @@ var MockPresharedAuthenticationFactory$create;
          *        or any thrown exceptions.
 	     */
 		init: function init(callback) {
-            init.base.call(this);
+            init.base.call(this, new MockKeySetStore(), new MockAuthenticationUtils());
 
             var self = this;
             AsyncExecutor(callback, function() {
