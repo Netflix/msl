@@ -116,6 +116,18 @@ TEST_F(UnauthenticatedAuthenticationFactoryTest, cryptoContext)
 	EXPECT_TRUE(cryptoContext);
 }
 
+TEST_F(UnauthenticatedAuthenticationFactoryTest, notPermitted)
+{
+    authutils->disallowScheme(UNAUTHENTICATED_ESN, EntityAuthenticationScheme::NONE);
+	shared_ptr<UnauthenticatedAuthenticationData> data = make_shared<UnauthenticatedAuthenticationData>(UNAUTHENTICATED_ESN);
+	try {
+		factory->getCryptoContext(ctx, data);
+		ADD_FAILURE() << "Should have thrown";
+	} catch (const MslEntityAuthException& e) {
+		EXPECT_EQ(MslError::INCORRECT_ENTITYAUTH_DATA, e.getError());
+	}
+}
+
 TEST_F(UnauthenticatedAuthenticationFactoryTest, revoked)
 {
 	authutils->revokeEntity(UNAUTHENTICATED_ESN);
