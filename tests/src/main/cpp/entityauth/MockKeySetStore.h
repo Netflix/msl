@@ -14,20 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef TEST_ENTITYAUTH_MOCKPRESHAREDKEYSTORE_H_
-#define TEST_ENTITYAUTH_MOCKPRESHAREDKEYSTORE_H_
+#ifndef TEST_ENTITYAUTH_MOCKKEYSETSTORE_H_
+#define TEST_ENTITYAUTH_MOCKKEYSETSTORE_H_
 
-#include <entityauth/PresharedKeyStore.h>
+#include <entityauth/KeySetStore.h>
+
+#include <map>
 
 namespace netflix {
 namespace msl {
 namespace entityauth {
 
-class MockPresharedKeyStore: public PresharedKeyStore
+class MockKeySetStore: public KeySetStore
 {
 public:
-    virtual ~MockPresharedKeyStore() {}
-    MockPresharedKeyStore() {}
+    virtual ~MockKeySetStore() {}
+    MockKeySetStore() {}
 
     /**
      * Add a preshared key set to the store.
@@ -51,7 +53,7 @@ public:
     void clear() { keysets.clear(); }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.PresharedKeyStore#getKeys(java.lang.String)
+     * @see com.netflix.msl.entityauth.KeySetStore#getKeys(java.lang.String)
      */
     virtual bool getKeys(const std::string& identity, KeySet& keyset) const {
         if (keysets.count(identity)) {
@@ -68,4 +70,4 @@ private:
 
 }}} // namespace netflix::msl::entityauth
 
-#endif /* TEST_ENTITYAUTH_MOCKPRESHAREDKEYSTORE_H_ */
+#endif /* TEST_ENTITYAUTH_MOCKKEYSETSTORE_H_ */
