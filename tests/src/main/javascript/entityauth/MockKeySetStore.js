@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 
 /**
- * Test preshared keys store.
+ * Test key set store.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockPresharedKeyStore = PresharedKeyStore.extend({
+var MockKeySetStore = KeySetStore.extend({
     /**
      * Create a new test preshared keys store.
      */
@@ -34,9 +34,9 @@ var MockPresharedKeyStore = PresharedKeyStore.extend({
     },
     
     /**
-     * Add a preshared key set to the store.
+     * Add a key set to the store.
      * 
-     * @param {string} identity preshared keys entity identity.
+     * @param {string} identity key set identity.
      * @param {CipherKey} encryptionKey the encryption key.
      * @param {CipherKey} hmacKey the HMAC key.
      * @param {CipherKey} wrappingKey the wrapping key.
@@ -47,7 +47,7 @@ var MockPresharedKeyStore = PresharedKeyStore.extend({
     },
     
     /**
-     * Remove all preshared key sets from the store.
+     * Remove all key sets from the store.
      */
     clear: function clear() {
         this.keysets = {};

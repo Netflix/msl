@@ -47,7 +47,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
-                var store = new MockPresharedKeyStore();
+                var store = new MockKeySetStore();
                 store.addKeys(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.KPE, MockPresharedProfileAuthenticationFactory.KPH, MockPresharedProfileAuthenticationFactory.KPW);
                 factory = new PresharedProfileAuthenticationFactory(store, authutils);
                 ctx.addEntityAuthenticationFactory(factory);

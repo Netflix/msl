@@ -47,12 +47,13 @@ describe("PresharedAuthenticationFactory", function() {
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
-                var store = new MockPresharedKeyStore();
+                var store = new MockKeySetStore();
                 store.addKeys(MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
                 factory = new PresharedAuthenticationFactory(store, authutils);
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;
             });
+            waitsFor(function() { return initialized; }, "static initialization", 100);
         }
     });
     

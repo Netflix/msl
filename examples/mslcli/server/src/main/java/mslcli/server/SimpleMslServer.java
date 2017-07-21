@@ -38,7 +38,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
-import com.netflix.msl.entityauth.PresharedKeyStore;
+import com.netflix.msl.entityauth.KeySetStore;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.ErrorHeader;

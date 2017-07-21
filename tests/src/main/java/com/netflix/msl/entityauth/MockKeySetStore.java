@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import javax.crypto.SecretKey;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MockPresharedKeyStore implements PresharedKeyStore {
+public class MockKeySetStore implements KeySetStore {
     /**
-     * Add a preshared key set to the store.
+     * Add a key set to the store.
      * 
-     * @param identity preshared keys entity identity.
+     * @param identity keys set identity.
      * @param encryptionKey the encryption key.
      * @param hmacKey the HMAC key.
      * @param wrappingKey the wrapping key.
@@ -47,7 +47,7 @@ public class MockPresharedKeyStore implements PresharedKeyStore {
     }
     
     /* (non-Javadoc)
-     * @see com.netflix.msl.entityauth.PresharedKeyStore#getKeys(java.lang.String)
+     * @see com.netflix.msl.entityauth.KeySetStore#getKeys(java.lang.String)
      */
     @Override
     public KeySet getKeys(final String identity) {
