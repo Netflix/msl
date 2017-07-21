@@ -98,7 +98,7 @@ var MockMslContext$create;
 		    }
 		    function syncEntityAuthFactories(authutils, entityAuthFactories) {
 		        entityAuthFactories[EntityAuthenticationScheme.X509.name] = new MockX509AuthenticationFactory();
-		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new UnauthenticatedAuthenticationFactory();
+		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new MockUnauthenticatedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE_SUFFIXED.name] = new UnauthenticatedSuffixedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.MT_PROTECTED.name] = new MasterTokenProtectedAuthenticationFactory(authutils);
 		        entityAuthFactories[EntityAuthenticationScheme.PROVISIONED.name] = new ProvisionedAuthenticationFactory(new MockIdentityProvisioningService(this));

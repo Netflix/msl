@@ -111,6 +111,16 @@ public class UnauthenticatedAuthenticationFactoryTest {
     }
     
     @Test
+    public void notPermitted() throws MslCryptoException, MslEntityAuthException {
+        thrown.expect(MslEntityAuthException.class);
+        thrown.expectMslError(MslError.INCORRECT_ENTITYAUTH_DATA);
+        
+        authutils.disallowScheme(UNAUTHENTICATED_ESN, EntityAuthenticationScheme.NONE);
+        final UnauthenticatedAuthenticationData data = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+        factory.getCryptoContext(ctx, data);
+    }
+    
+    @Test
     public void revoked() throws MslCryptoException, MslEntityAuthException {
         thrown.expect(MslEntityAuthException.class);
         thrown.expectMslError(MslError.ENTITY_REVOKED);

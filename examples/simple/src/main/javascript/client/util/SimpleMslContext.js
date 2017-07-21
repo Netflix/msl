@@ -17,6 +17,67 @@ var SimpleMslContext;
 
 (function() {
     "use strict";
+    
+    /**
+     * Local authentication utils that only permits the unauthenticated entity
+     * authentication scheme to be used by the local entity identity.
+     */
+    var LocalAuthenticationUtils = AuthenticationUtils.extend({
+        /**
+         * Create a new authentication utils that is aware of the local entity
+         * identity.
+         * 
+         * @param {string} clientId local entity identity.
+         */
+        init: function init(clientId) {
+            init.base.call(this);
+            
+            // The properties.
+            var props = {
+                clientId: { value: clientId, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+
+        /** @inheritDoc */
+        isEntityRevoked: function isEntityRevoked(identity) {
+            return false;
+        },
+        
+        /** @inheritDoc */
+        isSchemePermitted: function isSchemePermitted(identity, arg1, arg2) {
+            var user, scheme;
+            if (arg1 instanceof MslUser) {
+                user = arg1;
+                scheme = arg2;
+            } else {
+                user = null;
+                scheme = arg1;
+            }
+            
+            // Form 2: entity + user => user auth scheme
+            if (user) {
+                return true;
+            }
+            
+            // Form 1: entity => entity auth scheme
+            if (scheme instanceof EntityAuthenticationScheme) {
+                if (scheme == EntityAuthenticationScheme.NONE)
+                    return (identity == this.clientId);
+                return true;
+            }
+
+            // Form 1: entity => user auth scheme
+            if (scheme instanceof UserAuthenticationScheme) {
+                return true;
+            }
+
+            // Form 1: entity => key exchange scheme
+            if (scheme instanceof KeyExchangeScheme) {
+                return true;
+            }
+        },
+    });
 
     /**
      * <p>The example client MSL context.</p>
@@ -42,11 +103,12 @@ var SimpleMslContext;
 
             // Entity authentication data.
             var entityAuthData = new UnauthenticatedAuthenticationData(clientId);
-
+            
             // Entity authentication factories.
             var entityAuthFactories = {};
             entityAuthFactories[EntityAuthenticationScheme.RSA] = new RsaAuthenticationFactory(null, rsaStore);
-            entityAuthFactories[EntityAuthenticationScheme.NONE] = new UnauthenticatedAuthenticationFactory();
+            var authutils = new LocalAuthenticationUtils(clientId);
+            entityAuthFactories[EntityAuthenticationScheme.NONE] = new UnauthenticatedAuthenticationFactory(authutils);
 
             // Key exchange factories.
             var keyxFactories = {};
