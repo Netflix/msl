@@ -150,7 +150,7 @@ bool isAboutNow(shared_ptr<Date> timestamp)
 {
     const int64_t now = Date::now()->getTime();
     const int64_t time = timestamp->getTime();
-    return (now - 1000 <= time && time <= now + 1000);
+    return (now - 2000 <= time && time <= now + 2000);
 }
 
 /**
