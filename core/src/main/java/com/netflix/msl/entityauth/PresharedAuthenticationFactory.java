@@ -22,7 +22,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
-import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
+import com.netflix.msl.entityauth.KeySetStore.KeySet;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
@@ -39,7 +39,7 @@ public class PresharedAuthenticationFactory extends EntityAuthenticationFactory 
      * @param store preshared key store.
      * @param authutils authentication utilities.
      */
-    public PresharedAuthenticationFactory(final PresharedKeyStore store, final AuthenticationUtils authutils) {
+    public PresharedAuthenticationFactory(final KeySetStore store, final AuthenticationUtils authutils) {
         super(EntityAuthenticationScheme.PSK);
         this.store = store;
         this.authutils = authutils;
@@ -72,7 +72,7 @@ public class PresharedAuthenticationFactory extends EntityAuthenticationFactory 
         if (!authutils.isSchemePermitted(identity, getScheme()))
             throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(pad);
         
-        // Load preshared keys authentication data.
+        // Load key set.
         final KeySet keys = store.getKeys(identity);
         if (keys == null)
             throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
@@ -82,7 +82,7 @@ public class PresharedAuthenticationFactory extends EntityAuthenticationFactory 
     }
 
     /** Preshared keys store. */
-    private final PresharedKeyStore store;
+    private final KeySetStore store;
     /** Authentication utilities. */
     private final AuthenticationUtils authutils;
 }

@@ -24,7 +24,7 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
     /**
      * Construct a new preshared keys profile authentication factory instance.
      *
-     * @param {PresharedKeyStore} store preshared key store.
+     * @param {KeySetStore} store key set store.
      * @param {AuthenticationUtils} authutils authentication utilities.
      */
     init: function init(store, authutils) {
@@ -61,7 +61,7 @@ var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
         if (!this.authutils.isSchemePermitted(pskId, this.scheme))
             throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + pskId + " not supported:" + this.scheme).setEntityAuthenticationData(ppad);
         
-        // Load preshared keys authentication data.
+        // Load key set.
         var keys = this.store.getKeys(pskId);
         if (!keys)
             throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + pskId).setEntityAuthenticationData(ppad);

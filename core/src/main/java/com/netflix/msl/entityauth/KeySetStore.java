@@ -18,11 +18,11 @@ package com.netflix.msl.entityauth;
 import javax.crypto.SecretKey;
 
 /**
- * A preshared key store contains trusted preshared keys.
+ * A key set store contains trusted key sets.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public interface PresharedKeyStore {
+public interface KeySetStore {
     /**
      * A set of encryption, HMAC, and wrapping keys.
      */

@@ -61,7 +61,7 @@ public class PresharedAuthenticationFactoryTest {
     public static void setup() throws MslEncodingException, MslCryptoException {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
-        final MockPresharedKeyStore store = new MockPresharedKeyStore();
+        final MockKeySetStore store = new MockKeySetStore();
         store.addKeys(MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH, MockPresharedAuthenticationFactory.KPW);
         authutils = new MockAuthenticationUtils();
         factory = new PresharedAuthenticationFactory(store, authutils);

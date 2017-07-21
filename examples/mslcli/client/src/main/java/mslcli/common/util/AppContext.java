@@ -50,8 +50,8 @@ import com.netflix.msl.crypto.CryptoCache;
 import com.netflix.msl.crypto.ICryptoContext;
 import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
-import com.netflix.msl.entityauth.PresharedKeyStore;
-import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
+import com.netflix.msl.entityauth.KeySetStore;
+import com.netflix.msl.entityauth.KeySetStore.KeySet;
 import com.netflix.msl.entityauth.RsaStore;
 import com.netflix.msl.keyx.DiffieHellmanParameters;
 import com.netflix.msl.keyx.KeyExchangeFactory;
@@ -91,9 +91,9 @@ public final class AppContext {
     /** MslControl implementing MSL protocol stack */
     private final MslControl mslControl;
     /** entity preshared keys database */
-    private final PresharedKeyStore presharedKeyStore;
+    private final KeySetStore presharedKeyStore;
     /** entity MGK keys database */
-    private final PresharedKeyStore mgkKeyStore;
+    private final KeySetStore mgkKeyStore;
     /** user email / password database */
     private final EmailPasswordStore emailPasswordStore;
     /** named RSA key pairs database */
@@ -194,14 +194,14 @@ public final class AppContext {
     /**
      * @return preshared key store
      */
-    public PresharedKeyStore getPresharedKeyStore() {
+    public KeySetStore getPresharedKeyStore() {
         return presharedKeyStore;
     }
 
     /**
      * @return MGK key store
      */
-    public PresharedKeyStore getMgkKeyStore() {
+    public KeySetStore getMgkKeyStore() {
         return mgkKeyStore;
     }
 
@@ -251,7 +251,7 @@ public final class AppContext {
      * @return preshared key store database
      * @throws ConfigurationException
      */
-    private static PresharedKeyStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
+    private static KeySetStore initPresharedKeyStore(final MslProperties p) throws ConfigurationException {
         return _initKeyStore(p.getPresharedKeyStore());
     }
 
@@ -260,7 +260,7 @@ public final class AppContext {
      * @return MGK key store database
      * @throws ConfigurationException
      */
-    private static PresharedKeyStore initMgkKeyStore(final MslProperties p) throws ConfigurationException {
+    private static KeySetStore initMgkKeyStore(final MslProperties p) throws ConfigurationException {
         return _initKeyStore(p.getMgkKeyStore());
     }
 
@@ -269,7 +269,7 @@ public final class AppContext {
      * @return key store database
      * @throws ConfigurationException
      */
-    private static PresharedKeyStore _initKeyStore(final Map<String,Triplet<String,String,String>> keys) throws ConfigurationException {
+    private static KeySetStore _initKeyStore(final Map<String,Triplet<String,String,String>> keys) throws ConfigurationException {
         final Map<String,KeySet> keySets = new HashMap<String,KeySet>();
 
         for (Map.Entry<String,Triplet<String,String,String>> entry : keys.entrySet()) {

@@ -19,8 +19,8 @@ package mslcli.common.entityauth;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.netflix.msl.entityauth.PresharedKeyStore;
-import com.netflix.msl.entityauth.PresharedKeyStore.KeySet;
+import com.netflix.msl.entityauth.KeySetStore;
+import com.netflix.msl.entityauth.KeySetStore.KeySet;
 
 import mslcli.common.util.SharedUtil;
 
@@ -32,7 +32,7 @@ import mslcli.common.util.SharedUtil;
  * @author Vadim Spector <vspector@netflix.com>
  */
 
-public class SimplePresharedKeyStore implements PresharedKeyStore {
+public class SimplePresharedKeyStore implements KeySetStore {
     /**
      * <p>Create a new preshared store that will return the provided preshared
      * keys for the specified identity.</p>
@@ -47,7 +47,7 @@ public class SimplePresharedKeyStore implements PresharedKeyStore {
     }
 
     /**
-     * @see com.netflix.msl.entityauth.PresharedKeyStore#getKeys(String)
+     * @see com.netflix.msl.entityauth.KeySetStore#getKeys(String)
      */
     @Override
     public KeySet getKeys(final String identity) {
