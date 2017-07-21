@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef SRC_ENTITYAUTH_PRESHAREDKEYSTORE_H_
-#define SRC_ENTITYAUTH_PRESHAREDKEYSTORE_H_
+#ifndef SRC_ENTITYAUTH_KEYSETSTORE_H_
+#define SRC_ENTITYAUTH_KEYSETSTORE_H_
 
 #include <crypto/Key.h>
 
@@ -23,10 +23,10 @@ namespace netflix {
 namespace msl {
 namespace entityauth {
 
-class PresharedKeyStore
+class KeySetStore
 {
 public:
-    virtual ~PresharedKeyStore() {}
+    virtual ~KeySetStore() {}
     /**
      * A set of encryption, HMAC, and wrapping keys.
      */
@@ -89,4 +89,4 @@ public:
 
 }}} // namespace netflix::msl::entityauth
 
-#endif /* SRC_ENTITYAUTH_PRESHAREDKEYSTORE_H_ */
+#endif /* SRC_ENTITYAUTH_KEYSETSTORE_H_ */

@@ -24,7 +24,7 @@ namespace msl {
 namespace util { class AuthenticationUtils; }
 namespace entityauth {
 
-class PresharedKeyStore;
+class KeySetStore;
 
 class PresharedAuthenticationFactory : public EntityAuthenticationFactory
 {
@@ -34,10 +34,10 @@ public:
     /**
      * Construct a new preshared keys authentication factory instance.
      *
-     * @param store preshared key store.
+     * @param store key set store.
      * @param authutils authentication utilities.
      */
-    PresharedAuthenticationFactory(std::shared_ptr<PresharedKeyStore> store,
+    PresharedAuthenticationFactory(std::shared_ptr<KeySetStore> store,
             std::shared_ptr<util::AuthenticationUtils> authutils);
 
     /* (non-Javadoc)
@@ -56,7 +56,7 @@ public:
 
 private:
     /** Preshared keys store. */
-    const std::shared_ptr<PresharedKeyStore> store_;
+    const std::shared_ptr<KeySetStore> store_;
     /** Authentication utilities. */
     const std::shared_ptr<util::AuthenticationUtils> authutils_;
 };

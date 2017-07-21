@@ -15,9 +15,9 @@
  */
 
 #include <crypto/SymmetricCryptoContext.h>
+#include <entityauth/KeySetStore.h>
 #include <entityauth/PresharedAuthenticationFactory.h>
 #include <entityauth/PresharedAuthenticationData.h>
-#include <entityauth/PresharedKeyStore.h>
 #include <Macros.h>
 #include <MslEntityAuthException.h>
 #include <MslError.h>
@@ -43,7 +43,7 @@ namespace entityauth {
  * @param store preshared key store.
  * @param authutils authentication utilities.
  */
-PresharedAuthenticationFactory::PresharedAuthenticationFactory(shared_ptr<PresharedKeyStore> store,
+PresharedAuthenticationFactory::PresharedAuthenticationFactory(shared_ptr<KeySetStore> store,
         shared_ptr<AuthenticationUtils> authutils)
     : EntityAuthenticationFactory(EntityAuthenticationScheme::PSK)
     , store_(store)
@@ -79,8 +79,8 @@ shared_ptr<ICryptoContext> PresharedAuthenticationFactory::getCryptoContext(
         throw MslEntityAuthException(MslError::INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " +
                 identity + ":" + getScheme().name()).setEntityAuthenticationData(authdata);
 
-    // Load preshared keys authentication data.
-    PresharedKeyStore::KeySet keys;
+    // Load key set.
+    KeySetStore::KeySet keys;
     bool found = store_->getKeys(identity, keys);
     if (!found || keys.encryptionKey.isNull())
         throw MslEntityAuthException(MslError::ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(authdata);

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <entityauth/MockKeySetStore.h>
 #include <entityauth/PresharedAuthenticationData.h>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
@@ -30,7 +31,6 @@
 #include <util/MockAuthenticationUtils.h>
 #include <util/MockMslContext.h>
 #include <util/MslTestUtils.h>
-#include <entityauth/MockPresharedKeyStore.h>
 
 using namespace std;
 using namespace testing;
@@ -63,7 +63,7 @@ public:
     , encoder(ctx->getMslEncoderFactory())
     , authutils(make_shared<MockAuthenticationUtils>())
     {
-	    shared_ptr<MockPresharedKeyStore> store = make_shared<MockPresharedKeyStore>();
+	    shared_ptr<MockKeySetStore> store = make_shared<MockKeySetStore>();
         store->addKeys(MockPresharedAuthenticationFactory::PSK_ESN,
                 MockPresharedAuthenticationFactory::KPE,
                 MockPresharedAuthenticationFactory::KPH,
