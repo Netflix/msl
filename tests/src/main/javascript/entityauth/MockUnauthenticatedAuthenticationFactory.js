@@ -24,7 +24,7 @@ var MockUnauthenticatedAuthenticationFactory = UnauthenticatedAuthenticationFact
      * Create a new test unauthenticated authentication factory.
      */
     init: function init() {
-        init.base.call(this);
+        init.base.call(this, new MockAuthenticationUtils());
 
         // Define properties.
         var props = {
