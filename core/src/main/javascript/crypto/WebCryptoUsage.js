@@ -25,6 +25,10 @@
 	var WebCryptoUsage = module.exports = {
 	    /** encrypt/decrypt */
 	    ENCRYPT_DECRYPT: [ 'encrypt', 'decrypt' ],
+	    /** encrypt */
+	    ENCRYPT: [ 'encrypt' ],
+	    /** decrypt */
+	    DECRYPT: [ 'decrypt' ],
 	    /** wrap/unwrap */
 	    WRAP_UNWRAP: [ 'wrap', 'unwrap' ],
 	    /** wrap */
