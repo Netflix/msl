@@ -1,4 +1,13 @@
-var isCommonJS = typeof window == "undefined" && typeof exports == "object";
+var isNodeJS = typeof window == "undefined" && typeof exports == "object";
+
+if (isNodeJS) {
+    require('../../crypto/NodeRandom.js');
+    require('../../crypto/NodeCrypto.js');
+    process.on('unhandledRejection', function(r) {
+        console.log(r);
+        if (r.stack) console.log(r.stack);
+    });
+}
 
 jasmine.Env.prototype.parameterize = function(description, paramDefinitions, specDefinitions) {
   var suite = new jasmine.Suite(this, description, specDefinitions, this.currentSuite);
@@ -64,7 +73,7 @@ jasmine.Env.prototype.xparameterize = function(desc, paramDefinitions, specDefin
 var parameterize = function(description, paramDefinitions, specDefinitions) {
     return jasmine.getEnv().parameterize(description, paramDefinitions, specDefinitions);
 };
-if (isCommonJS) exports.parameterize = parameterize;
+if (isNodeJS) exports.parameterize = parameterize;
 
 /**
  * Disables a parameterized suite of specifications.  Used to disable some suites in a file, or files, temporarily during development.
@@ -76,7 +85,7 @@ if (isCommonJS) exports.parameterize = parameterize;
 var xparameterize = function(description, paramDefinitions, specDefinitions) {
   return jasmine.getEnv().xparameterize(description, paramDefinitions, specDefinitions);
 };
-if (isCommonJS) exports.xparameterize = xparameterize;
+if (isNodeJS) exports.xparameterize = xparameterize;
 
 /**
  * Matcher that checks that the expected exception was thrown by the actual.
