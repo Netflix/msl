@@ -23,6 +23,7 @@
     const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
     const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
@@ -142,7 +143,7 @@
 
     (function() {
         var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
-        _algo['namedCurve'] = 'P-256';
+        _algo['namedCurve'] = WebCryptoNamedCurve.P_256;
         var pubKeyEncoded = Base64.decode(ECC_PUBKEY_B64);
         var privKeyEncoded = Base64.decode(ECC_PRIVKEY_B64);
         
