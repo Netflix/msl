@@ -28,6 +28,7 @@
     const MslError = require('../MslError.js');
     const KeyFormat = require('../crypto/KeyFormat.js');
     const MslCrypto = require('../crypto/MslCrypto.js');
+    const Base64 = require('../util/Base64.js');
 
     /**
      * Normalize public key input into expected Web Crypto API format.
