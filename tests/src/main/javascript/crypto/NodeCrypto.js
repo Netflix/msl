@@ -450,7 +450,6 @@
             return Promise.resolve().then(function() {
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
-                    /* 'jsrsasign' */
                     var algoName = jsrsasignAlgorithmName(algorithm, key);
                     var sign = new rs.KJUR.crypto.Signature({alg: algoName});
                     var rawkey = key.rawkey;
@@ -459,33 +458,6 @@
                     var signatureHex = sign.signHex(bufferHex);
                     var signature = rs.hextoArrayBuffer(signatureHex);
                     return new Uint8Array(signature);
-                    
-                    /* 'ursa' */
-                    /*
-                    var algoName = normalizeAlgorithmName(algorithm, key);
-                    var hashName = normalizeHashName(algorithm);
-                    var rawkey = key.rawkey;
-                    var privkey = ursa.coercePrivateKey(rawkey);
-                    var bufferB64 = Base64.encode(buffer);
-                    var signatureB64 = privkey.hashAndSign(algoName, bufferB64, 'base64', 'base64', false, null);
-                    return Base64.decode(signatureB64);
-                    */
-                    
-                    /* 'crypto' */
-                    /*
-                    var algoName = normalizeAlgorithmName(algorithm, key);
-                    var sign = crypto.createSign(algoName);
-                    sign.update(buffer);
-                    var rawkey = key.rawkey;
-                    try {
-                        var signature = sign.sign(rawkey);
-                        console.log("RSA signature: [" + Base64.encode(signature) + "]\n");
-                        return signature;
-                    } catch (e) {
-                        console.log("RSA sign: [" + rawkey + "]\n");
-                        throw e;
-                    }
-                    */
                 }
                 
                 // Handle HMAC.
@@ -499,7 +471,6 @@
                 
                 // Handle EC keys.
                 else if (WebCryptoAlgorithm.isEc(algorithm)) {
-                    /* 'elliptic' */
                     // Compute the hash.
                     var hashName = normalizeHashName(algorithm);
                     var hash = crypto.createHash(hashName);
@@ -524,7 +495,6 @@
             return Promise.resolve().then(function() {
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
-                    /* 'jsrsasign' */
                     var algoName = jsrsasignAlgorithmName(algorithm, key);
                     var rawkey = key.rawkey;
                     var sign = new rs.KJUR.crypto.Signature({alg: algoName});
@@ -534,24 +504,6 @@
                     sign.updateHex(bufferHex);
                     var signatureHex = rs.ArrayBuffertohex(signature.buffer);
                     return sign.verify(signatureHex);
-                    
-                    /* 'ursa'
-                    var algoName = normalizeAlgorithmName(algorithm);
-                    var rawkey = key.rawkey;
-                    var pubkey = ursa.coercePublicKey(rawkey);
-                    var bufferB64 = Base64.encode(buffer);
-                    var signatureB64 = Base64.encode(signature);
-                    return pubkey.hashAndVerify(algoName, bufferB64, signatureB64, 'base64', false, null);
-                    */
-                    
-                    /* 'crypto' */
-                    /*
-                    var algoName = normalizeAlgorithmName(algorithm, key);
-                    var verify = crypto.createVerify(algoName);
-                    verify.update(buffer);
-                    var rawkey = key.rawkey;
-                    return verify.verify(rawkey, signature);
-                    */
                 }
                 
                 // Handle HMAC.
