@@ -109,19 +109,19 @@ describe("EccCryptoContext", function() {
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
                 
-                PublicKey.import(ECDSA_KEYPAIR_A.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                PublicKey.import(ECDSA_KEYPAIR_A.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
                     result: function (pubkey) { publicKeyA = pubkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                PrivateKey.import(ECDSA_KEYPAIR_A.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                PrivateKey.import(ECDSA_KEYPAIR_A.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
                     result: function (privkey) { privateKeyA = privkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                PublicKey.import(ECDSA_KEYPAIR_B.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                PublicKey.import(ECDSA_KEYPAIR_B.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
                     result: function (pubkey) { publicKeyB = pubkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                PrivateKey.import(ECDSA_KEYPAIR_B.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                PrivateKey.import(ECDSA_KEYPAIR_B.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
                     result: function (privkey) { privateKeyB = privkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
