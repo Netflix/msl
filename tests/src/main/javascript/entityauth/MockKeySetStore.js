@@ -25,42 +25,42 @@
     const KeySetStore = require('../../../../../core/src/main/javascript/entityauth/KeySetStore.js');
     
     var MockKeySetStore = module.exports = KeySetStore.extend({
-        /**
+    /**
          * Create a new test key set store.
-         */
-        init: function init() {
-            var keysets = {};
-
-            // The properties.
-            var props = {
-                keysets: { value: keysets, writable: true, enumerable: false, configurable: false },
-            };
-            Object.defineProperties(this, props);
-        },
-
-        /**
-         * Add a key set to the store.
-         * 
-         * @param {string} identity key set identity.
+     */
+    init: function init() {
+        var keysets = {};
+        
+        // The properties.
+        var props = {
+            keysets: { value: keysets, writable: true, enumerable: false, configurable: false },
+        };
+        Object.defineProperties(this, props);
+    },
+    
+    /**
+     * Add a key set to the store.
+     * 
+     * @param {string} identity key set identity.
          * @param {SecretKey} encryptionKey the encryption key.
          * @param {SecretKey} hmacKey the HMAC key.
          * @param {SecretKey} wrappingKey the wrapping key.
-         */
-        addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
+     */
+    addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
             var keyset = new KeySetStore.KeySet(encryptionKey, hmacKey, wrappingKey);
-            this.keysets[identity] = keyset;
-        },
-
-        /**
+        this.keysets[identity] = keyset;
+    },
+    
+    /**
          * Remove all preshared key sets from the store.
-         */
-        clear: function clear() {
-            this.keysets = {};
-        },
-
-        /** @inheritDoc */
-        getKeys: function getKeys(identity) {
-            return this.keysets[identity];
-        },
-    });
+     */
+    clear: function clear() {
+        this.keysets = {};
+    },
+    
+    /** @inheritDoc */
+    getKeys: function getKeys(identity) {
+        return this.keysets[identity];
+    },
+});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MockKeySetStore'));
