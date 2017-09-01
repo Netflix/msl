@@ -140,10 +140,6 @@
                 MslCiphertextEnvelope.parse(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1, {
                     result: function(envelope) {
                         try {
-                            // Verify key ID.
-                            if (envelope.keyId != self.id)
-                                throw new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH);
-
                             // Decrypt ciphertext.
                             var oncomplete = function(plaintext) {
                                 callback.result(new Uint8Array(plaintext));

@@ -611,9 +611,14 @@ public class MasterToken implements MslEncodable {
     }
 
     /**
+     * <p>Returns true if the other object is a master token with the same
+     * serial number, sequence number, and expiration. The expiration is
+     * considered in the event the issuer renews a master token but is unable
+     * or unwilling to increment the sequence number.</p>
+     * 
      * @param obj the reference object with which to compare.
      * @return true if the other object is a master token with the same
-     *         serial number and sequence number.
+     *         serial number, sequence number, and expiration.
      * @see java.lang.Object#equals(java.lang.Object)
      */
     @Override

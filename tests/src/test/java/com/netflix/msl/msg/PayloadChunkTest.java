@@ -353,14 +353,22 @@ public class PayloadChunkTest {
         assertArrayEquals(DATA, plaintext);
     }
     
-    @Test(expected = MslCryptoException.class)
     public void mismatchedCryptoContextId() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         final ICryptoContext cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID + "A", ENCRYPTION_KEY, HMAC_KEY, null);
         final ICryptoContext cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID + "B", ENCRYPTION_KEY, HMAC_KEY, null);
         
         final PayloadChunk chunk = new PayloadChunk(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, cryptoContextA);
         final MslObject mo = MslTestUtils.toMslObject(encoder, chunk);
-        new PayloadChunk(ctx, mo, cryptoContextB);
+        
+        final PayloadChunk moChunk = new PayloadChunk(ctx, mo, cryptoContextB);
+        assertEquals(chunk.isEndOfMessage(), moChunk.isEndOfMessage());
+        assertArrayEquals(chunk.getData(), moChunk.getData());
+        assertEquals(chunk.getMessageId(), moChunk.getMessageId());
+        assertEquals(chunk.getSequenceNumber(), moChunk.getSequenceNumber());
+        final byte[] moEncode = moChunk.toMslEncoding(encoder, ENCODER_FORMAT);
+        assertNotNull(moEncode);
+        // The two payload chunk encodings will not be equal because the
+        // ciphertext and signature will be generated on-demand.
     }
     
     @Test(expected = MslCryptoException.class)

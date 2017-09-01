@@ -242,18 +242,21 @@ describe("RsaCryptoContext", function() {
     		});
     		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
     		
-    		var exception;
+    		var plaintext;
     		runs(function() {
+    			expect(ciphertext).not.toBeNull();
+    			expect(ciphertext).not.toEqual(message);
+    			
     			cryptoContextB.decrypt(ciphertext, encoder, {
-    				result: function() {},
-    				error: function(err) { exception = err; }
+    				result: function() { plaintext = p; },
+    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return exception; }, "exception", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", 300);
     		
     		runs(function() {
-    			var f = function() { throw exception; };
-    			expect(f).toThrow(new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH));
+    			expect(plaintext).not.toBeNull();
+    			expect(plaintext).toEqual(message);
     		});
     	});
 

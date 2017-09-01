@@ -31,7 +31,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
 
     const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockPresharedKeyStore = require('../../../main/javascript/entityauth/MockPresharedKeyStore.js');
+    const MockKeySetStore = require('../../../main/javascript/entityauth/MockKeySetStore.js');
     const MockPresharedProfileAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -62,7 +62,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
             waitsFor(function() { return ctx; }, "ctx", 100);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
-                var store = new MockPresharedKeyStore();
+                var store = new MockKeySetStore();
                 store.addKeys(MockPresharedProfileAuthenticationFactory.PSK_ESN, MockPresharedProfileAuthenticationFactory.KPE, MockPresharedProfileAuthenticationFactory.KPH, MockPresharedProfileAuthenticationFactory.KPW);
                 factory = new PresharedProfileAuthenticationFactory(store, authutils);
                 ctx.addEntityAuthenticationFactory(factory);

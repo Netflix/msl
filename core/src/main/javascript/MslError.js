@@ -224,7 +224,8 @@
 	    USER_REJECTED_BY_APP : new MslError(5037, MslConstants.ResponseCode.USERDATA_REAUTH, "User is rejected by the application."),
 	    USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY : new MslError(5040, MslConstants.ResponseCode.USER_REAUTH, "The entity is not associated with the user."),
 	    USERAUTH_ENTITYUSER_INCORRECT_DATA : new MslError(5041, MslConstants.ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type."),
-	
+	    USERAUTH_VERIFICATION_FAILED : new MslError(5042, MslConstants.ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed."),
+	    
 	    // 6 Message
 	    UNSUPPORTED_COMPRESSION : new MslError(6000, MslConstants.ResponseCode.FAIL, "Unsupported compression algorithm."),
 	    COMPRESSION_ERROR : new MslError(6001, MslConstants.ResponseCode.FAIL, "Error compressing data."),

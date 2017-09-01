@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@
     });
 
     /**
-     * A preshared key store contains trusted preshared keys.
+     * A key set store contains trusted key sets.
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      * @interface
      */
-    var PresharedKeyStore = module.exports = Class.create({
+    var KeySetStore = module.exports = Class.create({
         /**
          * Return the encryption, HMAC, and wrapping keys for the given identity.
          * 
@@ -59,4 +59,4 @@
     
     // Exports.
     module.exports.KeySet = KeySet;
-})(require, (typeof module !== 'undefined') ? module : mkmodule('PresharedKeyStore'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeySetStore'));

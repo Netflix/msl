@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 /**
  * Preshared keys entity authentication factory.
  *
@@ -34,7 +35,7 @@
     	/**
     	 * Construct a new preshared keys authentication factory instance.
     	 *
-    	 * @param {PresharedKeyStore} store preshared key store.
+    	 * @param {KeySetStore} store key set store.
     	 * @param {AuthenticationUtils} authutils authentication utilities.
     	 */
     	init: function init(store, authutils) {
@@ -42,8 +43,8 @@
 
     		// The properties.
     		var props = {
-    				store: { value: store, writable: false, enumerable: false, configurable: false },
-    				authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+    		    store: { value: store, writable: false, enumerable: false, configurable: false },
+    		    authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
     		};
     		Object.defineProperties(this, props);
     	},
@@ -71,10 +72,10 @@
     		if (!this.authutils.isSchemePermitted(identity, this.scheme))
     			throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(pad);
 
-    		// Load preshared keys authentication data.
-    		var keys = this.store.getKeys(identity);
-    		if (!keys)
-    			throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
+            // Load keys set.
+            var keys = this.store.getKeys(identity);
+            if (!keys)
+                throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk " + identity).setEntityAuthenticationData(pad);
 
     		// Return the crypto context.
     		return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);

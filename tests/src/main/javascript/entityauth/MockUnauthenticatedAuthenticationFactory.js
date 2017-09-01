@@ -27,12 +27,14 @@
     const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
+    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+    
     var MockUnauthenticatedAuthenticationFactory = module.exports = UnauthenticatedAuthenticationFactory.extend({
         /**
          * Create a new test unauthenticated authentication factory.
          */
         init: function init() {
-            init.base.call(this);
+            init.base.call(this, new MockAuthenticationUtils());
     
             // Define properties.
             var props = {

@@ -24,10 +24,12 @@ describe("UnauthenticatedAuthenticationFactory", function() {
     const UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
     const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
     const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     const MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -43,8 +45,10 @@ describe("UnauthenticatedAuthenticationFactory", function() {
     var ctx;
     /** MSL encoder factory. */
     var encoder;
+    /** Authentication utils. */
+    var authutils = new MockAuthenticationUtils();
     /** Entity authentication factory. */
-    var factory = new UnauthenticatedAuthenticationFactory();
+    var factory = new UnauthenticatedAuthenticationFactory(authutils);
     
     var initialized = false;
     beforeEach(function() {
@@ -55,13 +59,17 @@ describe("UnauthenticatedAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 1200);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;
             });
         }
+    });
+    
+    afterEach(function() {
+        authutils.reset();
     });
     
     it("createData", function() {
@@ -136,5 +144,23 @@ describe("UnauthenticatedAuthenticationFactory", function() {
         var data = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
         var cryptoContext = factory.getCryptoContext(ctx, data);
         expect(cryptoContext).not.toBeNull();
+    });
+    
+    it("not permitted", function() {
+        var f = function() {
+            authutils.disallowScheme(UNAUTHENTICATED_ESN, EntityAuthenticationScheme.NONE);
+            var data = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            factory.getCryptoContext(ctx, data);
+        };
+        expect(f).toThrow(new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA));
+    });
+    
+    it("revoked", function() {
+        var f = function() {
+            authutils.revokeEntity(UNAUTHENTICATED_ESN);
+            var data = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            factory.getCryptoContext(ctx, data);
+        };
+        expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_REVOKED));
     });
 });

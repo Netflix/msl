@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,18 @@
  */
 
 /**
- * Test preshared keys store.
+ * Test key set store.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
     "use strict";
     
-    const PresharedKeyStore = require('../../../../../core/src/main/javascript/entityauth/PresharedKeyStore.js');
+    const KeySetStore = require('../../../../../core/src/main/javascript/entityauth/KeySetStore.js');
     
-    var MockPresharedKeyStore = module.exports = PresharedKeyStore.extend({
+    var MockKeySetStore = module.exports = KeySetStore.extend({
         /**
-         * Create a new test preshared keys store.
+         * Create a new test key set store.
          */
         init: function init() {
             var keysets = {};
@@ -39,15 +39,15 @@
         },
 
         /**
-         * Add a preshared key set to the store.
+         * Add a key set to the store.
          * 
-         * @param {string} identity preshared keys entity identity.
+         * @param {string} identity key set identity.
          * @param {SecretKey} encryptionKey the encryption key.
          * @param {SecretKey} hmacKey the HMAC key.
          * @param {SecretKey} wrappingKey the wrapping key.
          */
         addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
-            var keyset = new PresharedKeyStore.KeySet(encryptionKey, hmacKey, wrappingKey);
+            var keyset = new KeySetStore.KeySet(encryptionKey, hmacKey, wrappingKey);
             this.keysets[identity] = keyset;
         },
 
@@ -63,4 +63,4 @@
             return this.keysets[identity];
         },
     });
-})(require, (typeof module !== 'undefined') ? module : mkmodule('MockPresharedKeyStore'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockKeySetStore'));

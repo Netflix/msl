@@ -208,10 +208,6 @@ public class SymmetricCryptoContext implements ICryptoContext {
             final MslObject encryptionEnvelopeMo = encoder.parseObject(data);
             final MslCiphertextEnvelope encryptionEnvelope = new MslCiphertextEnvelope(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1);
             
-            // Verify key ID.
-            if (!encryptionEnvelope.getKeyId().equals(id))
-                throw new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH);
-            
             // Decrypt ciphertext.
             final byte[] ciphertext = encryptionEnvelope.getCiphertext();
             if (ciphertext.length == 0)

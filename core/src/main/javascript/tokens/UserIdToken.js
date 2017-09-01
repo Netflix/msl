@@ -487,6 +487,12 @@
         },
 
         /**
+         * <p>Returns true if the other object is a user ID token with the same
+         * serial number bound to the same master token.</p>
+         * 
+         * <p>This function is designed for use with sets and maps to guarantee
+         * uniqueness of individual user ID tokens.</p>
+         * 
          * @param {?} that the reference object with which to compare.
          * @return {boolean} true if the other object is a user ID token with the same serial
          *         number bound to the same master token.

@@ -335,9 +335,6 @@ public class SessionCryptoContextTest {
     
     @Test
     public void encryptDecryptIdMismatch() throws MslEncoderException, MslException {
-        thrown.expect(MslCryptoException.class);
-        thrown.expectMslError(MslError.ENVELOPE_KEY_ID_MISMATCH);
-
         final String identity = MockPresharedAuthenticationFactory.PSK_ESN;
         final SecretKey encryptionKey = MockPresharedAuthenticationFactory.KPE;
         final SecretKey signatureKey = MockPresharedAuthenticationFactory.KPH;
@@ -359,15 +356,13 @@ public class SessionCryptoContextTest {
         final byte[] message = new byte[32];
         random.nextBytes(message);
         
-        final byte[] ciphertext;
-        try {
-            ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
-        } catch (final MslCryptoException e) {
-            fail(e.getMessage());
-            return;
-        }
+        final byte[] ciphertext = cryptoContextA.encrypt(message, encoder, ENCODER_FORMAT);
+        assertNotNull(ciphertext);
+        assertThat(message, is(not(ciphertext)));
         
-        cryptoContextB.decrypt(ciphertext, encoder);
+        final byte[] plaintext = cryptoContextB.decrypt(ciphertext, encoder);
+        assertNotNull(plaintext);
+        assertArrayEquals(message, plaintext);
     }
     
     @Test

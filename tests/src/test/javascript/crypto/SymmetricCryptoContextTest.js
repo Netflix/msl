@@ -443,18 +443,21 @@ describe("SymmetricCryptoContext", function() {
             });
             waitsFor(function() { return ciphertext; }, "ciphertext", 100);
 
-            var exception;
+            var plaintext;
             runs(function() {
+            	expect(ciphertext).not.toBeNull();
+            	expect(ciphertext).not.toEqual(message);
+            	
                 cryptoContextB.decrypt(ciphertext, encoder, {
-                    result: function() {},
-                    error: function(e) { exception = e; },
+                    result: function(p) { plaintext = p; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return plaintext; }, "plaintext", 100);
 
             runs(function() {
-                var f = function() { throw exception; };
-                expect(f).toThrow(new MslCryptoException(MslError.ENVELOPE_KEY_ID_MISMATCH));
+            	expect(plaintext).not.toBeNull();
+            	expect(plaintext).toEqual(message);
             });
         });
 

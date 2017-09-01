@@ -28,6 +28,8 @@
     const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     
+    const MockKeySetStore = require('../entityauth/MockKeySetStore.js');
+    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
     const MslTestUtils = require('../util/MslTestUtils.js');
     
 	/**
@@ -93,7 +95,7 @@
          *        or any thrown exceptions.
 	     */
 		init: function init(callback) {
-            init.base.call(this);
+            init.base.call(this, new MockKeySetStore(), new MockAuthenticationUtils());
 
             var self = this;
             AsyncExecutor(callback, function() {

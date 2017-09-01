@@ -29,17 +29,26 @@
     const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
     const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-
+    
     /** ECC public key. */
-    var ECC_PUBKEY_B64 =
-        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAExgY6uU5xZkvDLVlo5PpKjhRJnyqS" +
-        "j4+LNcQ+x+kdPbZf1GwiJy2sRiJwghsXl9X8ffRpUqiLeNW0oOE/+dG2iw==";
-
+    var ECC_PUBKEY_JWK = {
+        "kty": "EC",
+        "crv": "P-256",
+        "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+        "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
+        "use": "sig",
+        "kid": "A"
+    };
     /** ECC private key. */
-    var ECC_PRIVKEY_B64 =
-        "MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgrNqzpcZOpGRqlVGZ" +
-        "nelA4i7N/E96nJ8Ntk1ZXhPzKcChRANCAATGBjq5TnFmS8MtWWjk+kqOFEmfKpKP" +
-        "j4s1xD7H6R09tl/UbCInLaxGInCCGxeX1fx99GlSqIt41bSg4T/50baL";
+    var ECC_PRIVKEY_JWK = {
+        "kty": "EC",
+        "crv": "P-256",
+        "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+        "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
+        "d":   "870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE",
+        "use": "sig",
+        "kid": "Apriv"
+    };
 
 	/**
 	 * ECC ESN.
@@ -144,10 +153,8 @@
     (function() {
         var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
         _algo['namedCurve'] = WebCryptoNamedCurve.P_256;
-        var pubKeyEncoded = Base64.decode(ECC_PUBKEY_B64);
-        var privKeyEncoded = Base64.decode(ECC_PRIVKEY_B64);
         
-        PublicKey.import(pubKeyEncoded, _algo, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
+        PublicKey.import(ECC_PUBKEY_JWK, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
             result: function (pubkey) {
                 ECC_PUBKEY = module.exports.ECC_PUBKEY = pubkey;
                 keysDefined.signalAll();
@@ -156,7 +163,7 @@
                 throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
-        PrivateKey.import(privKeyEncoded, _algo, WebCryptoUsage.SIGN, KeyFormat.PKCS8, {
+        PrivateKey.import(ECC_PRIVKEY_JWK, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
             result: function (privkey) {
                 ECC_PRIVKEY = module.exports.ECC_PRIVKEY = privkey;
                 keysDefined.signalAll();

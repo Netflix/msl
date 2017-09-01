@@ -30,21 +30,28 @@
     /** Map of names onto schemes. */
     var schemes = {};
     
-    /**
-     * Define a user authentication scheme with the specified name.
-     * 
-     * @param {string} name the user authentication scheme name.
-     */
-    var UserAuthenticationScheme = module.exports = function UserAuthenticationScheme(name) {
-        // The properties.
-        var props = {
-            name: { value: name, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-        
-        // Add this scheme to the map.
-        schemes[name] = this;
-    };
+    var UserAuthenticationScheme = module.exports = Class.create({
+        /**
+         * Define a user authentication scheme with the specified name.
+         * 
+         * @param {string} name the user authentication scheme name.
+         */
+        init: function init(name) {
+            // The properties.
+            var props = {
+                name: { value: name, writable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+    
+            // Add this scheme to the map.
+            schemes[name] = this;
+        },
+
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.name;
+        },
+    });
     
     Class.mixin(UserAuthenticationScheme,
     /** @lends UserAuthenticationScheme */

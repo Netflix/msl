@@ -105,7 +105,6 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                var extractable = true;
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
                 

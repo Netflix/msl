@@ -85,6 +85,7 @@
 		    const MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
 		    const MockEccAuthenticationFactory = require('../entityauth/MockEccAuthenticationFactory.js');
 		    const MockX509AuthenticationFactory = require('../entityauth/MockX509AuthenticationFactory.js');
+		    const MockUnauthenticatedAuthenticationFactory = require('../entityauth/MockUnauthenticatedAuthenticationFactory.js');
 		    const MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
 		    const MockUserIdTokenAuthenticationFactory = require('../userauth/MockUserIdTokenAuthenticationFactory.js');
 		    const MockTokenFactory = require('../tokens/MockTokenFactory.js');
@@ -141,7 +142,7 @@
 		    }
 		    function syncEntityAuthFactories(authutils, entityAuthFactories) {
 		        entityAuthFactories[EntityAuthenticationScheme.X509.name] = new MockX509AuthenticationFactory();
-		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new UnauthenticatedAuthenticationFactory();
+		        entityAuthFactories[EntityAuthenticationScheme.NONE.name] = new MockUnauthenticatedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.NONE_SUFFIXED.name] = new UnauthenticatedSuffixedAuthenticationFactory();
 		        entityAuthFactories[EntityAuthenticationScheme.MT_PROTECTED.name] = new MasterTokenProtectedAuthenticationFactory(authutils);
 		        entityAuthFactories[EntityAuthenticationScheme.PROVISIONED.name] = new ProvisionedAuthenticationFactory(new MockIdentityProvisioningService(this));

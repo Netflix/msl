@@ -329,6 +329,7 @@
             
             AsyncExecutor(callback, function() {
                 // Compute Diffie-Hellman shared secret.
+            	var bitlen = params.p.length * 8;
                 var oncomplete = computeSha384;
                 var onerror = function(e) {
                     callback.error(new MslCryptoException(MslError.DERIVEKEY_ERROR, "Error deriving Diffie-Hellman shared secret.", e));
@@ -336,7 +337,7 @@
                 MslCrypto['deriveBits']({
                     'name': WebCryptoAlgorithm.DIFFIE_HELLMAN['name'],
                     'public': publicKey.getEncoded(),
-                }, privateKey, 384).then(oncomplete, onerror);
+                }, privateKey, bitlen).then(oncomplete, onerror);
             }, self);
             
             function computeSha384(sharedSecret) {

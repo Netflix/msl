@@ -29,21 +29,28 @@
     /** Map of names onto schemes. */
     var schemes = {};
     
-    /**
-     * Define a key exchange scheme with the specified name.
-     * 
-     * @param {string} name the key exchange scheme name.
-     */
-    var KeyExchangeScheme = module.exports = function KeyExchangeScheme(name) {
-        // The properties.
-        var props = {
-            name: { value: name, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-        
-        // Add this scheme to the map.
-        schemes[name] = this;
-    };
+    var KeyExchangeScheme = module.exports = Class.create({
+        /**
+         * Define a key exchange scheme with the specified name.
+         * 
+         * @param {string} name the key exchange scheme name.
+         */
+        init: function init(name) {
+            // The properties.
+            var props = {
+                name: { value: name, writable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+    
+            // Add this scheme to the map.
+            schemes[name] = this;
+        },
+
+        /** @inheritDoc */
+        toString: function toString() {
+            return this.name;
+        },
+    });
     
     Class.mixin(KeyExchangeScheme,
     /** @lends {KeyExchangeScheme} */

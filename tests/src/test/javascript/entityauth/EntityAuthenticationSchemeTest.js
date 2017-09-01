@@ -21,6 +21,7 @@ describe("EntityAuthenticationScheme", function() {
         expect(EntityAuthenticationScheme.X509.name).toEqual("X509");
         expect(EntityAuthenticationScheme.RSA.name).toEqual("RSA");
         expect(EntityAuthenticationScheme.NONE.name).toEqual("NONE");
+        expect(EntityAuthenticationScheme.MIGRATION.name).toEqual("MIGRATION");
     });
     
 	it("schemes that support encryption", function() {
@@ -30,7 +31,8 @@ describe("EntityAuthenticationScheme", function() {
 	it("schemes that do not support encryption", function() {
 		expect(EntityAuthenticationScheme.X509.encrypts).toBeFalsy();
 		expect(EntityAuthenticationScheme.RSA.encrypts).toBeFalsy();
-		expect(EntityAuthenticationScheme.NONE.encrypts).toBeFalsy();
+        expect(EntityAuthenticationScheme.NONE.encrypts).toBeFalsy();
+        expect(EntityAuthenticationScheme.MIGRATION.encrypts).toBeFalsy();
 	});
 	
 	it("schemes that support integrity protection", function() {
@@ -41,5 +43,6 @@ describe("EntityAuthenticationScheme", function() {
 	
 	it("schemes that do not support integrity protection", function() {
         expect(EntityAuthenticationScheme.NONE.protectsIntegrity).toBeFalsy();
+        expect(EntityAuthenticationScheme.MIGRATION.protectsIntegrity).toBeFalsy();
 	});
 });
