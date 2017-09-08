@@ -90,6 +90,9 @@ var MslCrypto$setCryptoSubtle;
             } else if (window.crypto.subtle) {
                 nfCryptoSubtle = window.crypto.subtle;
             }
+            else{
+                throw new Error("window.crypto is defined, but not window.crypto.subtle.  If window.crypto.subtle is undefined, things aren't going to work. Note that window.crypto.subtle will be undefined, as per sepc, if the app in running in an insecure context, e.g. http and not https.  See https://github.com/w3c/webcrypto/issues/28 for historical details.");
+            }
         }
     }
 
