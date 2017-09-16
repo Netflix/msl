@@ -219,6 +219,7 @@
                 var index = revokedSchemes.indexOf(scheme);
                 if (index == -1)
                     revokedSchemes.push(scheme);
+                return;
             }
             
             // Form 1: entity => entity auth scheme
@@ -239,7 +240,7 @@
                 var revokedSchemes = this._revokedUserAuthSchemes[identity];
                 if (!revokedSchemes) {
                     revokedSchemes = [];
-                    this._revokedEntityAuthSchemes[identity] = revokedSchemes;
+                    this._revokedUserAuthSchemes[identity] = revokedSchemes;
                 }
                 var index = revokedSchemes.indexOf(scheme);
                 if (index == -1)
@@ -252,7 +253,7 @@
                 var revokedSchemes = this._revokedKeyxSchemes[identity];
                 if (!revokedSchemes) {
                     revokedSchemes = [];
-                    this._revokedEntityAuthSchemes[identity] = revokedSchemes;
+                    this._revokedKeyxSchemes[identity] = revokedSchemes;
                 }
                 var index = revokedSchemes.indexOf(scheme);
                 if (index == -1)
