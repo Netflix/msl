@@ -143,7 +143,8 @@ jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
       return "Expected function to throw an exception.";
     }
   };
-  this.stack = exception.stack;
+  if (exception)
+      this.stack = exception.stack;
 
   return result;
 };
