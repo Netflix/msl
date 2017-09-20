@@ -285,7 +285,7 @@ private:
     /** Remote clock is synchronized. */
     volatile bool synced_ = false;
     /** Remote entity time offset from local time in seconds. */
-    volatile long offset_ = 0;
+    volatile int64_t offset_ = 0;
 };
 
 }}} // namespace netflix::msl::util
