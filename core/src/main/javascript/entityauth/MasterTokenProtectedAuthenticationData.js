@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,12 +32,21 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MasterTokenProtectedAuthenticationData;
-var MasterTokenProtectedAuthenticationData$create;
-var MasterTokenProtectedAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+    const MslMasterTokenException = require('../MslMasterTokenException.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const MslError = require('../MslError.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MasterToken = require('../tokens/MasterToken.js');
+    const MslException = require('../MslException.js');
 
     /**
      * Key master token.
@@ -58,7 +67,7 @@ var MasterTokenProtectedAuthenticationData$parse;
      */
     var KEY_SIGNATURE = "signature";
     
-    MasterTokenProtectedAuthenticationData = EntityAuthenticationData.extend({
+    var MasterTokenProtectedAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new master token protected entity authentication data
          * instance using the provided master token and actual entity
@@ -198,7 +207,7 @@ var MasterTokenProtectedAuthenticationData$parse;
      * @throws MslEntityAuthException if the master token crypto context cannot
      *         be found in the MSL store and cannot be created.
      */
-    MasterTokenProtectedAuthenticationData$create = function MasterTokenProtectedAuthenticationData$create(ctx, masterToken, authdata, callback) {
+    var MasterTokenProtectedAuthenticationData$create = function MasterTokenProtectedAuthenticationData$create(ctx, masterToken, authdata, callback) {
         AsyncExecutor(callback, function() {
             return new MasterTokenProtectedAuthenticationData(ctx, masterToken, authdata);
         });
@@ -222,7 +231,7 @@ var MasterTokenProtectedAuthenticationData$parse;
      *         the master token crypto context cannot be found in the MSL store
      *         and cannot be created.
      */
-    MasterTokenProtectedAuthenticationData$parse = function MasterTokenProtectedAuthenticationData$parse(ctx, authdataMo, callback) {
+    var MasterTokenProtectedAuthenticationData$parse = function MasterTokenProtectedAuthenticationData$parse(ctx, authdataMo, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -239,7 +248,7 @@ var MasterTokenProtectedAuthenticationData$parse;
             }
             
             // Reconstruct master token.
-            MasterToken$parse(ctx, masterTokenMo, {
+            MasterToken.parse(ctx, masterTokenMo, {
                 result: function(masterToken) {
                     AsyncExecutor(callback, function() {
                         // Grab master token crypto context.
@@ -273,7 +282,7 @@ var MasterTokenProtectedAuthenticationData$parse;
                                                         throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "master token protected authdata " + authdataMo, e);
                                                     throw e;
                                                 }
-                                                EntityAuthenticationData$parse(ctx, internalAuthdataMo, {
+                                                EntityAuthenticationData.parse(ctx, internalAuthdataMo, {
                                                     result: function(internalAuthdata) {
                                                         AsyncExecutor(callback, function() {
                                                             return new MasterTokenProtectedAuthenticationData(ctx, masterToken, internalAuthdata);
@@ -301,4 +310,8 @@ var MasterTokenProtectedAuthenticationData$parse;
             });
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = MasterTokenProtectedAuthenticationData$create;
+    module.exports.parse = MasterTokenProtectedAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MasterTokenProtectedAuthenticationData'));

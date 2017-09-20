@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,25 +19,29 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ProvisionedAuthenticationFactory;
-
-/**
- * An identity provisioning service returns unique entity identities.
- * @interface
- */
-var ProvisionedAuthenticationFactory$IdentityProvisioningService;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const ProvisionedAuthenticationData = require('../entityauth/ProvisionedAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
 
-    var IdentityProvisioningService = ProvisionedAuthenticationFactory$IdentityProvisioningService = util.Class.create({
+    /**
+     * An identity provisioning service returns unique entity identities.
+     * @interface
+     */
+    var IdentityProvisioningService = Class.create({
         /**
          * @return {string} the next unique entity identity.
          */
         nextIdentity: function() {},
     });
 
-    ProvisionedAuthenticationFactory = EntityAuthenticationFactory.extend({
+    var ProvisionedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
         /**
          * Construct a new provisioned authentication factory instance.
          * 
@@ -75,4 +79,7 @@ var ProvisionedAuthenticationFactory$IdentityProvisioningService;
             return new NullCryptoContext();
         },
     });
-})();
+    
+    // Exports.
+    module.exports.IdentityProvisioningService = IdentityProvisioningService;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ProvisionedAuthenticationFactory'));

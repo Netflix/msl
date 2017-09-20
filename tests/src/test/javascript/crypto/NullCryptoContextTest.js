@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,13 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("NullCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -32,7 +39,7 @@ describe("NullCryptoContext", function() {
     beforeEach(function() {
         if (!initialized) {
             var ctx;
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

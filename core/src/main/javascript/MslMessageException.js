@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,23 +20,29 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslMessageException = MslException.extend({
-    /**
-     * Construct a new MSL message exception with the specified error, details, and
-     * cause.
-     *
-     * @param {MslError} error the error.
-     * @param {string} details the details text. May be null or undefined.
-     * @param {Error} cause the cause. May be null or undefined.
-     * @constructor
-     */
-    init: function init(error, details, cause) {
-        init.base.call(this, error, details, cause);
-
-        // The properties.
-        var props = {
-            name: { value: "MslMessageException", writable: false, configurable: true }
-        };
-        Object.defineProperties(this, props);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const MslException = require('./MslException.js');
+	
+	var MslMessageException = module.exports = MslException.extend({
+	    /**
+	     * Construct a new MSL message exception with the specified error, details, and
+	     * cause.
+	     *
+	     * @param {MslError} error the error.
+	     * @param {string} details the details text. May be null or undefined.
+	     * @param {Error} cause the cause. May be null or undefined.
+	     * @constructor
+	     */
+	    init: function init(error, details, cause) {
+	        init.base.call(this, error, details, cause);
+	
+	        // The properties.
+	        var props = {
+	            name: { value: "MslMessageException", writable: false, configurable: true }
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslMessageException'));

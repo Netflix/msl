@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,15 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UnauthenticatedAuthenticationData;
-var UnauthenticatedAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require("../util/AsyncExecutor.js");
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslError = require('../MslError.js');
     
     /**
      * Key entity identity.
@@ -44,7 +48,7 @@ var UnauthenticatedAuthenticationData$parse;
      */
     var KEY_IDENTITY = "identity";
 
-    UnauthenticatedAuthenticationData = EntityAuthenticationData.extend({
+    var UnauthenticatedAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new unauthenticated entity authentication data instance from
          * the specified entity identity.</p>
@@ -90,7 +94,7 @@ var UnauthenticatedAuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    UnauthenticatedAuthenticationData$parse = function UnauthenticatedAuthenticationData$parse(unauthenticatedAuthMo) {
+    var UnauthenticatedAuthenticationData$parse = function UnauthenticatedAuthenticationData$parse(unauthenticatedAuthMo) {
         try {
             var identity = unauthenticatedAuthMo.getString(KEY_IDENTITY);
             return new UnauthenticatedAuthenticationData(identity);
@@ -100,4 +104,7 @@ var UnauthenticatedAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = UnauthenticatedAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UnauthenticatedAuthenticationData'));

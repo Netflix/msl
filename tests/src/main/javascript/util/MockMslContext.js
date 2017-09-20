@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockMslContext;
-var MockMslContext$create;
-
-(function() {
+(function(require, module) {
+    "use strict";
+    
+    const MslContext = require('../../../../../core/src/main/javascript/util/MslContext.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    
 	/** MSL encryption key. */
     var MSL_ENCRYPTION_KEY = "HVjzuPdH0Wqxk8TApiTqzw==";
     /** MSL HMAC key. */
@@ -30,7 +35,7 @@ var MockMslContext$create;
     /** MSL wrapping key. */
     var MSL_WRAPPING_KEY = "g7aaFYDTI6LnndmyJiaz9g==";
 	
-	MockMslContext = MslContext.extend({
+	var MockMslContext = module.exports = MslContext.extend({
 		/**
 	     * Create a new test MSL context.
 	     * 
@@ -47,13 +52,52 @@ var MockMslContext$create;
 	     *         authentication data.
 	     */
 		init: function init(scheme, peerToPeer, callback) {
+		    const UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
+		    const UnauthenticatedSuffixedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
+		    const MasterTokenProtectedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationFactory.js');
+		    const ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
+		    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+		    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+		    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+		    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+		    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+		    const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+		    const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
+		    const RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
+		    const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
+		    const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+		    const UnauthenticatedSuffixedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+		    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+		    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+		    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+		    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+		    const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+		    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+		    const DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
+		    const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
+		    const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+		    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+		    
+		    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+            const MockIdentityProvisioningService = require('../entityauth/MockIdentityProvisioningService.js');
+		    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+		    const MockPresharedProfileAuthenticationFactory = require('../entityauth/MockPresharedProfileAuthenticationFactory.js');
+		    const MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
+		    const MockEccAuthenticationFactory = require('../entityauth/MockEccAuthenticationFactory.js');
+		    const MockX509AuthenticationFactory = require('../entityauth/MockX509AuthenticationFactory.js');
+		    const MockUnauthenticatedAuthenticationFactory = require('../entityauth/MockUnauthenticatedAuthenticationFactory.js');
+		    const MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
+		    const MockUserIdTokenAuthenticationFactory = require('../userauth/MockUserIdTokenAuthenticationFactory.js');
+		    const MockTokenFactory = require('../tokens/MockTokenFactory.js');
+		    const MockDiffieHellmanParameters = require('../keyx/MockDiffieHellmanParameters.js');
+		    
 		    var self = this;
 
 		    // Set up entity authentication factories.
 		    AsyncExecutor(callback, function pskAuthFactory() {
                 var authutils = new MockAuthenticationUtils();
 		        var entityAuthFactories = {};
-		        MockPresharedAuthenticationFactory$create({
+		        MockPresharedAuthenticationFactory.create({
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.PSK.name] = factory;
@@ -64,7 +108,7 @@ var MockMslContext$create;
 		        });
 		    });
 		    function pskProfileAuthFactory(authutils, entityAuthFactories) {
-		        MockPresharedProfileAuthenticationFactory$create({
+		        MockPresharedProfileAuthenticationFactory.create({
                     result: function(factory) {
                         AsyncExecutor(callback, function() {
                             entityAuthFactories[EntityAuthenticationScheme.PSK_PROFILE.name] = factory;
@@ -75,7 +119,7 @@ var MockMslContext$create;
                 });
 		    }
 		    function rsaAuthFactory(authutils, entityAuthFactories) {
-		        MockRsaAuthenticationFactory$create(null, {
+		        MockRsaAuthenticationFactory.create(null, {
 		            result: function(factory) {
 		                AsyncExecutor(callback, function() {
 		                    entityAuthFactories[EntityAuthenticationScheme.RSA.name] = factory;
@@ -86,7 +130,7 @@ var MockMslContext$create;
 		        });
 		    }
 		    function eccAuthFactory(authutils, entityAuthFactories) {
-                MockEccAuthenticationFactory$create(null, {
+                MockEccAuthenticationFactory.create(null, {
                     result: function(factory) {
                         AsyncExecutor(callback, function() {
                             entityAuthFactories[EntityAuthenticationScheme.ECC.name] = factory;
@@ -111,11 +155,11 @@ var MockMslContext$create;
                 mslCryptoContext(authutils, entityAuthFactories, userAuthFactories);
 		    }
 		    function mslCryptoContext(authutils, entityAuthFactories, userAuthFactories) {
-		        CipherKey$import(MSL_ENCRYPTION_KEY, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+		        SecretKey.import(MSL_ENCRYPTION_KEY, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 		            result: function (mslEncryptionKey) {
-		                CipherKey$import(MSL_HMAC_KEY, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+		                SecretKey.import(MSL_HMAC_KEY, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
 		                    result: function (mslHmacKey) {
-		                        CipherKey$import(MSL_WRAPPING_KEY, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+		                        SecretKey.import(MSL_WRAPPING_KEY, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
 		                            result: function(mslWrappingKey) {
 		                                finish(authutils, entityAuthFactories, userAuthFactories, mslEncryptionKey, mslHmacKey, mslWrappingKey);
 		                            },
@@ -157,7 +201,7 @@ var MockMslContext$create;
 		            };
 
 		            // Set message capabilities.
-		            var capabilities = new MessageCapabilities([MslConstants$CompressionAlgorithm.LZW], [ "en-US" ], [MslEncoderFormat.JSON]);
+		            var capabilities = new MessageCapabilities([MslConstants.CompressionAlgorithm.LZW], [ "en-US" ], [MslEncoderFormat.JSON]);
 
 		            // Set the MSL crypto context.
 		            var mslCryptoContext = new SymmetricCryptoContext(this, "TestMslKeys", mslEncryptionKey, mslHmacKey, mslWrapKey);
@@ -166,7 +210,7 @@ var MockMslContext$create;
 		            var tokenFactory = new MockTokenFactory();
 
 		            // Set up Diffie-Hellman parameter specifications.
-		            var paramSpecs = MockDiffieHellmanParameters$getDefaultParameters();
+		            var paramSpecs = MockDiffieHellmanParameters.getDefaultParameters();
 
 		            // Set up key exchange factories.
 		            var keyxFactories = new Array();
@@ -182,6 +226,7 @@ var MockMslContext$create;
 
 		            // The properties.
 		            var props = {
+		                _random: { value: new Random(), writable: false, enumerable: false, configurable: false },
 		                _mslCryptoContext: { value: mslCryptoContext, writable: true, enumerable: false, configurable: false },
 		                _peerToPeer: { value: peerToPeer, writable: false, enumerable: false, configurable: false },
 		                _capabilities: { value: capabilities, writable: true, enumerable: false, configurable: false },
@@ -209,7 +254,7 @@ var MockMslContext$create;
 
 		/** @inheritDoc */
 		getRandom: function getRandom() {
-			return new Random();
+			return this._random;
 		},
 
 		/** @inheritDoc */
@@ -256,7 +301,7 @@ var MockMslContext$create;
         
         /** @inheritDoc */
 		getEntityAuthenticationScheme: function getEntityAuthenticationScheme(name) {
-		    return EntityAuthenticationScheme$getScheme(name);
+		    return EntityAuthenticationScheme.getScheme(name);
 		},
 
 		/**
@@ -286,7 +331,7 @@ var MockMslContext$create;
 		
 		/** @inheritDoc */
 		getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {
-		    return UserAuthenticationScheme$getScheme(name);
+		    return UserAuthenticationScheme.getScheme(name);
 		},
 
 		/**
@@ -339,7 +384,7 @@ var MockMslContext$create;
 		
 		/** @inheritDoc */
 		getKeyExchangeScheme: function getKeyExchangeScheme(name) {
-		    return KeyExchangeScheme$getScheme(name);
+		    return KeyExchangeScheme.getScheme(name);
 		},
 
         /**
@@ -426,7 +471,10 @@ var MockMslContext$create;
      * @throws MslEncodingException if there is an error creating the entity
      *         authentication data.
      */
-	MockMslContext$create = function MockMslContext$create(scheme, peerToPeer, callback) {
+	var MockMslContext$create = function MockMslContext$create(scheme, peerToPeer, callback) {
 	    new MockMslContext(scheme, peerToPeer, callback);
 	};
-})();
+	
+	// Exports.
+	module.exports.create = MockMslContext$create;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockMslContext'));

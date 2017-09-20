@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslCiphertextEnvelope;
-var MslCiphertextEnvelope$create;
-var MslCiphertextEnvelope$parse;
-var MslCiphertextEnvelope$Version;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslConstants = require('../MslConstants.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Base64 = require('../util/Base64.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key version.
      * @const
@@ -64,7 +70,7 @@ var MslCiphertextEnvelope$Version;
     var KEY_SHA256 = "sha256";
 
     /** Versions. */
-    var Version = MslCiphertextEnvelope$Version = {
+    var Version = {
         /**
          * <p>Version 1.</p>
          * 
@@ -112,11 +118,11 @@ var MslCiphertextEnvelope$Version;
         V2 : 2
     };
     
-    MslCiphertextEnvelope = MslEncodable.extend({
+    var MslCiphertextEnvelope = module.exports = MslEncodable.extend({
         /**
          * <p>Create a new encryption envelope with the provided details.</p>
          *
-         * @param {string|MslConstants$CipherSpec} keyIdOrSpec the key
+         * @param {string|MslConstants.CipherSpec} keyIdOrSpec the key
          *        identifier or cipher specification.
          * @param {?Uint8Array} iv the initialization vector. May be null.
          * @param {Uint8Array} ciphertext the ciphertext.
@@ -127,8 +133,8 @@ var MslCiphertextEnvelope$Version;
         	var version    = Version.V1,
         		keyId      = keyIdOrSpec,
         		cipherSpec = null;
-        	for (var key in MslConstants$CipherSpec) {
-        		if (MslConstants$CipherSpec[key] == keyIdOrSpec) {
+        	for (var key in MslConstants.CipherSpec) {
+        		if (MslConstants.CipherSpec[key] == keyIdOrSpec) {
         			version = Version.V2;
         			keyId = null;
         			cipherSpec = keyIdOrSpec;
@@ -156,7 +162,7 @@ var MslCiphertextEnvelope$Version;
                         mo.put(KEY_KEY_ID, this.keyId);
                         if (this.iv) mo.put(KEY_IV, this.iv);
                         mo.put(KEY_CIPHERTEXT, this.ciphertext);
-                        mo.put(KEY_SHA256, base64$decode("AA=="));
+                        mo.put(KEY_SHA256, Base64.decode("AA=="));
                         break;
                     case Version.V2:
                         mo.put(KEY_VERSION, this.version);
@@ -183,7 +189,7 @@ var MslCiphertextEnvelope$Version;
      *        callback the callback functions that will receive the envelope
      *        or any thrown exceptions.
      */
-    MslCiphertextEnvelope$create = function MslCiphertextEnvelope$create(keyIdOrCipherSpec, iv, ciphertext, callback) {
+    var MslCiphertextEnvelope$create = function MslCiphertextEnvelope$create(keyIdOrCipherSpec, iv, ciphertext, callback) {
     	AsyncExecutor(callback, function() {
     		return new MslCiphertextEnvelope(keyIdOrCipherSpec, iv, ciphertext);
     	});
@@ -194,7 +200,7 @@ var MslCiphertextEnvelope$Version;
      * envelope version is provided then the MSL object is parsed accordingly.
      *
      * @param {MslObject} mo the MSL object.
-     * @param {?MslCiphertextEnvelope$Version} version the envelope version.
+     * @param {?Version} version the envelope version.
      *        May be null.
      * @param {{result: function(MslCiphertextEnvelope), error: function(Error)}}
      *        callback the callback functions that will receive the envelope
@@ -203,7 +209,7 @@ var MslCiphertextEnvelope$Version;
      *         encryption envelope.
      * @throws MslEncodingException if there is an error parsing the data.
      */
-    MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
+    var MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
         AsyncExecutor(callback, function() {
             // If a version was not specified, determine the envelope version.
             if (!version) {
@@ -250,7 +256,7 @@ var MslCiphertextEnvelope$Version;
                         var v = mo.getInt(KEY_VERSION);
                         if (v != Version.V2)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo);
-                        keyIdOrSpec = MslConstants$CipherSpec$fromString(mo.getString(KEY_CIPHERSPEC));
+                        keyIdOrSpec = MslConstants.CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
                         if (!keyIdOrSpec)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERSPEC, "ciphertext envelope " + mo);
                         iv = (mo.has(KEY_IV)) ? mo.getBytes(KEY_IV) : null;
@@ -269,5 +275,9 @@ var MslCiphertextEnvelope$Version;
             return new MslCiphertextEnvelope(keyIdOrSpec, iv, ciphertext);
         });
     };
-})();
-
+    
+    // Exports.
+    module.exports.create = MslCiphertextEnvelope$create;
+    module.exports.parse = MslCiphertextEnvelope$parse;
+    module.exports.Version = Version;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslCiphertextEnvelope'));

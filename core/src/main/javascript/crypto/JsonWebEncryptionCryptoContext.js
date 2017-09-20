@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,19 +23,25 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {ICryptoContext}
  */
-var JsonWebEncryptionCryptoContext;
-var JsonWebEncryptionCryptoContext$Algorithm;
-var JsonWebEncryptionCryptoContext$Encryption;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    const Class = require('../util/Class.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const PrivateKey = require('../crypto/PrivateKey.js');
+    const PublicKey = require('../crypto/PublicKey.js');
+    const SecretKey = require('../crypto/SecretKey.js');
 
     /**
      * Supported content encryption key encryption algorithms. These are the
      * web crypto algorithm names.
      * @enum
      */
-    var Algorithm = JsonWebEncryptionCryptoContext$Algorithm = {
+    var Algorithm = {
         /** RSAES-OAEP */
         RSA_OAEP: WebCryptoAlgorithm.RSA_OAEP['name'],
         /** AES-128 Key Wrap */
@@ -47,14 +53,14 @@ var JsonWebEncryptionCryptoContext$Encryption;
      * algorithm names.
      * @enum
      */
-    JsonWebEncryptionCryptoContext$Encryption = {
+    var Encryption = {
         /** AES-128 GCM */
         A128GCM: "A128GCM",
         /** AES-256 GCM */
         A256GCM: "A256GCM",
     };
 
-    JsonWebEncryptionCryptoContext = util.Class.create({
+    var JsonWebEncryptionCryptoContext = module.exports = Class.create({
         /**
          * Create a new JSON web encryption crypto context with the specified
          * content encryption key and plaintext encryption algorithms.
@@ -62,7 +68,7 @@ var JsonWebEncryptionCryptoContext$Encryption;
          * @param {MslContext} ctx MSL context.
          * @param {Algorithm} algo content encryption key encryption algorithm.
          * @param {Encryption} enc plaintext encryption algorithm.
-         * @param {?PrivateKey|CipherKey} key content encryption key encryption
+         * @param {?PrivateKey|SecretKey} key content encryption key encryption
          *        private key for asymmetric encryption algorithms or secret key
          *        for symmetric encryption algorithms.
          * @param {PublicKey=} publicKey content encryption key encryption
@@ -113,12 +119,12 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 var oncomplete = function(result) {
                     callback.result(new Uint8Array(result));
                 };
-                var onerror = function(error) {
-                    callback.error(new MslCryptoException(MslError.WRAP_ERROR));
+                var onerror = function(e) {
+                    callback.error(new MslCryptoException(MslError.WRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
-                mslCrypto['wrapKey']('jwe+jwk', key.rawKey, this._wrapKey, this._transform)
+                MslCrypto['wrapKey']('jwe+jwk', key.rawKey, this._wrapKey, this._transform)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -129,12 +135,12 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 var oncomplete = function(result) {
                     constructKey(result);
                 };
-                var onerror = function() {
-                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
+                var onerror = function(e) {
+                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR, null, e));
                 };
                 // Use the transform instead of the wrap key algorithm in case
                 // the key algorithm is missing some fields.
-                mslCrypto['unwrapKey']('jwe+jwk', data, this._unwrapKey, this._transform, algo, false, usages)
+                MslCrypto['unwrapKey']('jwe+jwk', data, this._unwrapKey, this._transform, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 
@@ -142,13 +148,13 @@ var JsonWebEncryptionCryptoContext$Encryption;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey.create(rawKey, callback);
                             break;
                         case "public":
-                            PublicKey$create(rawKey, callback);
+                            PublicKey.create(rawKey, callback);
                             break;
                         case "private":
-                            PrivateKey$create(rawKey, callback);
+                            PrivateKey.create(rawKey, callback);
                             break;
                         default:
                             throw new MslCryptoException(MslError.UNSUPPORTED_KEY, "type: " + rawKey["type"]);
@@ -167,4 +173,8 @@ var JsonWebEncryptionCryptoContext$Encryption;
             callback.error(new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED));
         },
     });
-})();
+    
+    // Exports.
+    module.exports.Algorithm = Algorithm;
+    module.exports.Encryption = Encryption;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonWebEncryptionCryptoContext'));

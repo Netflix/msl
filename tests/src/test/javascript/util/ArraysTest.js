@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,25 @@
  * limitations under the License.
  */
 describe("Arrays", function () {
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
-    describe("Arrays$concat", function () {
+    describe("Arrays.concat", function () {
 
         it("empty", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
             ]);
             expect(result).toEqual(new Uint8Array([]));
         });
 
         it("one array", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
                 new Uint8Array([1, 2, 3])
             ]);
             expect(result).toEqual(new Uint8Array([1, 2, 3]));
         });
 
         it("multiple arrays", function () {
-            var result = Arrays$concat([
+            var result = Arrays.concat([
                 new Uint8Array([1, 2, 3]),
                 new Uint8Array([4, 5, 6, 7]),
                 new Uint8Array([11])

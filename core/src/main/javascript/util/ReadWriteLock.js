@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,20 @@
  * lock multiple times a writer cannot. A reader also cannot acquire the write
  * lock recursively.</p>
  */
-var ReadWriteLock;
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslConstants = require('../MslConstants.js');
+	const Class = require('../util/Class.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslInternalException = require('../MslInternalException.js');
+	
     /**
      * @param {number} the ticket number.
      * @return the next larger ticket number, wrapped around.
      */
     function incrementTicket(number) {
-        return (number == MslConstants$MAX_LONG_VALUE) ? 1 : number + 1;
+        return (number == MslConstants.MAX_LONG_VALUE) ? 1 : number + 1;
     }
     
     /**
@@ -74,7 +80,7 @@ var ReadWriteLock;
         return next;
     }
 
-    ReadWriteLock = util.Class.create({
+    var ReadWriteLock = module.exports = Class.create({
         /**
          * Create a new read-write lock.
          */
@@ -333,4 +339,4 @@ var ReadWriteLock;
             this._nextReader = 0;
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ReadWriteLock'));

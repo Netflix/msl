@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 describe("ConditionVariable", function() {
+    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    
     var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";

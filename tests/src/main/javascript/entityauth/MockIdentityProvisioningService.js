@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockIdentityProvisioningService;
-
-(function() {
+(function(require, module) {
     "use strict";
     
-    MockIdentityProvisioningService = ProvisionedAuthenticationFactory$IdentityProvisioningService.extend({
+    const ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
+    
+    var MockIdentityProvisioningService = module.exports = ProvisionedAuthenticationFactory.IdentityProvisioningService.extend({
         /**
          * <p>Create a new test identity provisioning service using the random
          * number generator from the provided MSL context.<p>
@@ -53,4 +53,4 @@ var MockIdentityProvisioningService;
             return "" + now + ":" + suffix;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockIdentityProvisioningService'));

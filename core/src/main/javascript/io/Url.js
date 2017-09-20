@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,24 +23,39 @@
  * read from. The output stream will not accept additional data once the input
  * stream is read from.
  */
-var Url;
-
-var IHttpLocation = util.Class.create({
-
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const OuptutStream = require('../io/OutputStream.js');
+	const InputStream = require('../io/InputStream.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslIoException = require('../MslIoException.js');
+	const ByteArrayInputStream = require('../io/ByteArrayInputStream.js');
+	const textEncoding = require('../lib/textEncoding.js');
+	
     /**
-     * Given a request, gets the response.
-     *
-     * @param {{body:string}} request
-     * @param {number} timeout request response timeout in milliseconds or -1 for no timeout.
-     * @param {{result: function({body:string}), timeout: function(), error: function(Error)}}
-     *        callback the callback will receive the response
-     * @returns {{abort:Function})
+     * UTF-8 charset.
+     * @const
+     * @type {string}
      */
-    getResponse: function getResponse(request, timeout, callback) { }
-
-});
-
-(function () {
+    var UTF_8 = 'utf-8';
+	
+	var IHttpLocation = Class.create({
+	    /**
+	     * Given a request, gets the response.
+	     *
+	     * @param {{body:string}} request
+	     * @param {number} timeout request response timeout in milliseconds or -1 for no timeout.
+	     * @param {{result: function({body:string}), timeout: function(), error: function(Error)}}
+	     *        callback the callback will receive the response
+	     * @returns {{abort:Function})
+	     */
+	    getResponse: function getResponse(request, timeout, callback) { }
+	
+	});
 
     /**
      * An HTTP output stream buffers data and then sends it upon close. The
@@ -306,7 +321,7 @@ var IHttpLocation = util.Class.create({
                                     this.getJSON = function () { return self._json };
                                 }
 
-                                content = result.response.content || utf8$getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json));
+                                content = result.response.content || textEncoding.getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json), UTF_8);
                                 this._buffer = new ByteArrayInputStream(content);
                                 this._buffer.read(len, timeout, callback);
                             }, self);
@@ -318,7 +333,7 @@ var IHttpLocation = util.Class.create({
         },
     });
 
-    Url = util.Class.create({
+    var Url = module.exports = Class.create({
         /**
          * Create a new URL that points at the provided location.
          *
@@ -364,4 +379,7 @@ var IHttpLocation = util.Class.create({
             return {input: input, output: output};
         },
     });
-})();
+    
+    // Exports.
+    module.exports.IHttpLocation = IHttpLocation;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Url'));

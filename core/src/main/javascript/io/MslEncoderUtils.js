@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MslEncoderUtils$createArray;
-var MslEncoderUtils$equalObjects;
-var MslEncoderUtils$equalArrays;
-var MslEncoderUtils$equalSets;
-var MslEncoderUtils$merge;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslObject = require('../io/MslObject.js');
+	const MslArray = require('../io/MslArray.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const Arrays = require('../util/Arrays.js');
     
     /**
      * Create a MSL array from a collection of objects that are either one of
@@ -36,7 +37,7 @@ var MslEncoderUtils$merge;
      * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
      *         encoded properly or an unsupported object is encountered.
      */
-    MslEncoderUtils$createArray = function MslEncoderUtils$createArray(ctx, c, callback) {
+    var MslEncoderUtils$createArray = function MslEncoderUtils$createArray(ctx, c, callback) {
     	function add(encoder, array, i, callback) {
 	    	AsyncExecutor(callback, function() {
 	    		if (i >= c.length) return array;
@@ -91,7 +92,7 @@ var MslEncoderUtils$merge;
      * @return {boolean} true if the MSL objects are equivalent.
      * @throws MslEncoderException if there is an error parsing the data.
      */
-    MslEncoderUtils$equalObjects = function MslEncoderUtils$equalObjects(mo1, mo2) {
+    var MslEncoderUtils$equalObjects = function MslEncoderUtils$equalObjects(mo1, mo2) {
         // Equal if both null or the same object.
         if (mo1 === mo2)
             return true;
@@ -109,7 +110,7 @@ var MslEncoderUtils$merge;
 	        if (names1 == null || names2 == null || names1.length != names2.length)
 	            return false;
 	        // Not equal if the sets are not equal.
-	        if (!Arrays$containEachOther(names1, names2))
+	        if (!Arrays.containEachOther(names1, names2))
 	            return false;
         }
         
@@ -128,7 +129,7 @@ var MslEncoderUtils$merge;
             if (o1 instanceof Uint8Array || o2 instanceof Uint8Array) {
                 var b1 = mo1.getBytes(name);
                 var b2 = mo2.getBytes(name);
-                if (!Arrays$equal(b1, b2))
+                if (!Arrays.equal(b1, b2))
                     return false;
             } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
                 if (!MslEncoderUtils$equalObjects(o1, o2))
@@ -161,7 +162,7 @@ var MslEncoderUtils$merge;
      * @return true if the MSL arrays are equal.
      * @throws MslEncoderException if there is an error parsing the data.
      */
-    MslEncoderUtils$equalArrays = function MslEncoderUtils$equalArrays(ma1, ma2) {
+    var MslEncoderUtils$equalArrays = function MslEncoderUtils$equalArrays(ma1, ma2) {
         // Equal if both null or the same object.
         if (ma1 === ma2)
             return true;
@@ -183,7 +184,7 @@ var MslEncoderUtils$merge;
             if (o1 instanceof Uint8Array || o2 instanceof Uint8Array) {
                 var b1 = ma1.getBytes(i);
                 var b2 = ma2.getBytes(i);
-                if (!Arrays$equal(b1, b2))
+                if (!Arrays.equal(b1, b2))
                     return false;
             } else if (o1 instanceof MslObject && o2 instanceof MslObject) {
                 if (!MslEncoderUtils$equalObjects(o1, o2))
@@ -216,7 +217,7 @@ var MslEncoderUtils$merge;
      * @return {boolean} true if the MSL arrays are set-equal.
      * @throws MslEncoderException if there is an error parsing the data.
      */
-    MslEncoderUtils$equalSets = function MslEncoderUtils$equalSets(ma1, ma2) {
+    var MslEncoderUtils$equalSets = function MslEncoderUtils$equalSets(ma1, ma2) {
         // Equal if both null or the same object.
         if (ma1 == ma2)
             return true;
@@ -231,7 +232,7 @@ var MslEncoderUtils$merge;
             s1[i] = ma1.opt(i);
             s2[i] = ma2.opt(i);
         }
-        return Arrays$containEachOther(s1, s2);
+        return Arrays.containEachOther(s1, s2);
     }
     
     /**
@@ -245,7 +246,7 @@ var MslEncoderUtils$merge;
      * @throws MslEncoderException if a value in one of the arguments is
      *         invalid—this should not happen.
      */
-    MslEncoderUtils$merge = function MslEncoderUtils$merge(mo1, mo2) {
+    var MslEncoderUtils$merge = function MslEncoderUtils$merge(mo1, mo2) {
         // Return null if both objects are null.
         if (!mo1 && !mo2)
             return null;
@@ -267,4 +268,11 @@ var MslEncoderUtils$merge;
         }
         return mo;
     };
-})();
+    
+    // Exports.
+    module.exports.createArray = MslEncoderUtils$createArray;
+    module.exports.equalObjects = MslEncoderUtils$equalObjects;
+    module.exports.equalArrays = MslEncoderUtils$equalArrays;
+    module.exports.equalSets = MslEncoderUtils$equalSets;
+    module.exports.merge = MslEncoderUtils$merge;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderUtils'));

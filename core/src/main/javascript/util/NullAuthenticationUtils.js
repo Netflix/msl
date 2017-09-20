@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,14 +20,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var NullAuthenticationUtils = AuthenticationUtils.extend({
-	/** @inheritDoc */
-	isEntityRevoked: function isEntityRevoked(identity) {
-		return false;
-	},
-
-	/** @inheritDoc */
-	isSchemePermitted: function isSchemePermitted() {
-		return true;
-	},
-});
+(function(require, module) {
+	"use strict";
+	
+	const AuthenticationUtils = require('../util/AuthenticationUtils.js');
+		
+	var NullAuthenticationUtils = module.exports = AuthenticationUtils.extend({
+		/** @inheritDoc */
+		isEntityRevoked: function isEntityRevoked(identity) {
+			return false;
+		},
+	
+		/** @inheritDoc */
+		isSchemePermitted: function isSchemePermitted() {
+			return true;
+		},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NullAuthenticationUtils'));

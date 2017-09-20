@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,24 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageBuilder;
-var MessageBuilder$incrementMessageId;
-var MessageBuilder$decrementMessageId;
-var MessageBuilder$createRequest;
-var MessageBuilder$createResponse;
-var MessageBuilder$createErrorResponse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslException = require('../MslException.js');
+	const MslUserAuthException = require('../MslUserAuthException.js');
+	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+	const ErrorHeader = require('../msg/ErrorHeader.js');
+	const Class = require('../util/Class.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MessageHeader = require('../msg/MessageHeader.js');
+	const ServiceToken = require('../tokens/ServiceToken.js');
+	const NullCryptoContext = require('../crypto/NullCryptoContext.js');
+	
     /**
      * Empty service token data.
      * @const
@@ -42,10 +52,10 @@ var MessageBuilder$createErrorResponse;
      * @return {number} the message ID + 1.
      * @throws MslInternalException if the provided message ID is out of range.
      */
-    var incrementMessageId = MessageBuilder$incrementMessageId = function MessageBuilder$incrementMessageId(messageId) {
-        if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+    var MessageBuilder$incrementMessageId = function MessageBuilder$incrementMessageId(messageId) {
+        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
-        return (messageId == MslConstants$MAX_LONG_VALUE) ? 0 : messageId + 1;
+        return (messageId == MslConstants.MAX_LONG_VALUE) ? 0 : messageId + 1;
     };
 
     /**
@@ -56,10 +66,10 @@ var MessageBuilder$createErrorResponse;
      * @return {number} the message ID - 1.
      * @throws MslInternalException if the provided message ID is out of range.
      */
-    MessageBuilder$decrementMessageId = function MessageBuilder$incrementMessageId(messageId) {
-        if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+    var MessageBuilder$decrementMessageId = function MessageBuilder$incrementMessageId(messageId) {
+        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
-        return (messageId == 0) ? MslConstants$MAX_LONG_VALUE : messageId - 1;
+        return (messageId == 0) ? MslConstants.MAX_LONG_VALUE : messageId - 1;
     };
 
     /**
@@ -227,15 +237,15 @@ var MessageBuilder$createErrorResponse;
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, callback) {
+    var MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, callback) {
         AsyncExecutor(callback, function() {
             if (messageId == undefined || messageId == null) {
                 var random = ctx.getRandom();
                 do {
                     messageId = random.nextLong();
-                } while (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE);
+                } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
             } else {
-                if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                     throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
             }
 
@@ -304,9 +314,9 @@ var MessageBuilder$createErrorResponse;
                     var factory = ctx.getUserAuthenticationFactory(scheme);
                     if (!factory) {
                         throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme)
-                        .setMasterToken(masterToken)
-                        .setUserAuthenticationData(userAuthData)
-                        .setMessageId(requestMessageId);
+	                        .setMasterToken(masterToken)
+	                        .setUserAuthenticationData(userAuthData)
+	                        .setMessageId(requestMessageId);
                     }
                     user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
                 }
@@ -341,7 +351,7 @@ var MessageBuilder$createErrorResponse;
      *         bound to its corresponding master token or there is an error
      *         creating or renewing the master token.
      */
-    MessageBuilder$createResponse = function MessageBuilder$createResponse(ctx, requestHeader, callback) {
+    var MessageBuilder$createResponse = function MessageBuilder$createResponse(ctx, requestHeader, callback) {
         AsyncExecutor(callback, function() {
             var masterToken = requestHeader.masterToken;
             var entityAuthData = requestHeader.entityAuthenticationData;
@@ -353,11 +363,11 @@ var MessageBuilder$createErrorResponse;
 
             // The response message ID must be equal to the request message ID + 1.
             var requestMessageId = requestHeader.messageId;
-            var messageId = incrementMessageId(requestMessageId);
+            var messageId = MessageBuilder$incrementMessageId(requestMessageId);
             
             // Compute the intersection of the request and response message
             // capabilities.
-            var capabilities = MessageCapabilities$intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
+            var capabilities = MessageCapabilities.intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
             
             // Identify the response format.
             var encoder = ctx.getMslEncoderFactory();
@@ -446,7 +456,7 @@ var MessageBuilder$createErrorResponse;
      * @throws MslMessageException if no entity authentication data was
      *         returned by the MSL context.
      */
-    MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, recipient, requestMessageId, error, userMessage, callback) {
+    var MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, recipient, requestMessageId, error, userMessage, callback) {
         AsyncExecutor(callback, function() {
             ctx.getEntityAuthenticationData(null, {
                 result: function(entityAuthData) {
@@ -455,19 +465,19 @@ var MessageBuilder$createErrorResponse;
                         // must be equal to the request message ID + 1.
                         var messageId;
                         if (requestMessageId != undefined && requestMessageId != null) {
-                            messageId = incrementMessageId(requestMessageId);
+                            messageId = MessageBuilder$incrementMessageId(requestMessageId);
                         }
                         // Otherwise use a random message ID.
                         else {
                             var random = ctx.getRandom();
                             do {
                                 messageId = random.nextLong();
-                            } while (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE);
+                            } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
                         }
                         var errorCode = error.responseCode;
                         var internalCode = error.internalCode;
                         var errorMsg = error.message;
-                        ErrorHeader$create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
+                        ErrorHeader.create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
                     });
                 },
                 error: function(e) { callback.error(e); }
@@ -475,7 +485,7 @@ var MessageBuilder$createErrorResponse;
         });
     };
 
-    MessageBuilder = util.Class.create({
+    var MessageBuilder = module.exports = Class.create({
         /**
          * Create a new message builder with the provided tokens and key exchange
          * data if a master token was issued or renewed.
@@ -723,12 +733,12 @@ var MessageBuilder$createErrorResponse;
                 } else {
                     nonReplayableId = null;
                 }
-                var headerData = new MessageHeader$HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
+                var headerData = new MessageHeader.HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
                 var peerTokens = new Array();
                 for (var name in this._peerServiceTokens)
                     peerTokens.push(this._peerServiceTokens[name]);
-                var peerData = new MessageHeader$HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
-                MessageHeader$create(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
+                var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
+                MessageHeader.create(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
         },
 
@@ -1056,7 +1066,7 @@ var MessageBuilder$createErrorResponse;
                 // Rebuild the original token with empty service data.
                 var masterToken = originalToken.isMasterTokenBound() ? this._masterToken : null;
                 var userIdToken = originalToken.isUserIdTokenBound() ? this._userIdToken : null;
-                ServiceToken$create(this._ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext(), {
+                ServiceToken.create(this._ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext(), {
                     result: function(token) {
                         AsyncExecutor(callback, function() {
                             return this.addServiceToken(token);
@@ -1241,7 +1251,7 @@ var MessageBuilder$createErrorResponse;
                 // Rebuild the original token with empty service data.
                 var peerMasterToken = originalToken.isMasterTokenBound() ? this._peerMasterToken : null;
                 var peerUserIdToken = originalToken.isUserIdTokenBound() ? this._peerUserIdToken : null;
-                ServiceToken$create(this._ctx, name, EMPTY_DATA, peerMasterToken, peerUserIdToken, false, null, new NullCryptoContext(), {
+                ServiceToken.create(this._ctx, name, EMPTY_DATA, peerMasterToken, peerUserIdToken, false, null, new NullCryptoContext(), {
                     result: function(token) {
                         AsyncExecutor(callback, function() {
                             return this.addPeerServiceToken(token);
@@ -1267,4 +1277,11 @@ var MessageBuilder$createErrorResponse;
             return tokens;
         },
     });
-})();
+    
+    // Exports.
+    module.exports.incrementMessageId = MessageBuilder$incrementMessageId;
+    module.exports.decrementMessageId = MessageBuilder$decrementMessageId;
+    module.exports.createRequest = MessageBuilder$createRequest;
+    module.exports.createResponse = MessageBuilder$createResponse;
+    module.exports.createErrorResponse = MessageBuilder$createErrorResponse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageBuilder'));

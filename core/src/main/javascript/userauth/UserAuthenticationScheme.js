@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UserAuthenticationScheme;
-var UserAuthenticationScheme$getScheme;
+(function(require, module) {
+	"use strict";
 
-(function() {
-    "use strict";
+	const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
     
-    UserAuthenticationScheme = util.Class.create({
+    var UserAuthenticationScheme = module.exports = Class.create({
         /**
          * Define a user authentication scheme with the specified name.
          * 
@@ -43,32 +42,37 @@ var UserAuthenticationScheme$getScheme;
                 name: { value: name, writable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-            
+    
             // Add this scheme to the map.
             schemes[name] = this;
         },
-        
+
         /** @inheritDoc */
         toString: function toString() {
             return this.name;
         },
     });
     
-    util.Class.mixin(UserAuthenticationScheme,
+    Class.mixin(UserAuthenticationScheme,
     /** @lends UserAuthenticationScheme */
     ({
         /** Email/password. */
         EMAIL_PASSWORD : new UserAuthenticationScheme("EMAIL_PASSWORD"),
         USER_ID_TOKEN : new UserAuthenticationScheme("USER_ID_TOKEN"),
     }));
-    Object.freeze(UserAuthenticationScheme);
 
     /**
      * @param {string} name the entity authentication scheme name.
      * @return {?UserAuthenticationScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    UserAuthenticationScheme$getScheme = function UserAuthenticationScheme$getScheme(name) {
+    var UserAuthenticationScheme$getScheme = function UserAuthenticationScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    Object.defineProperties(UserAuthenticationScheme, {
+        getScheme: { value: UserAuthenticationScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(UserAuthenticationScheme);
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UserAuthenticationScheme'));

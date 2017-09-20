@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserIdTokenAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const UserIdTokenAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationFactory.js');
+    const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockMslUser = require('../../../main/javascript/tokens/MockMslUser.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -43,7 +57,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
     beforeEach(function() {
         if (!ctx) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -214,7 +228,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
     it("mismatched master token identity", function() {
         var mismatchedCtx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+            MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                 result: function(x) { mismatchedCtx = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });

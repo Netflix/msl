@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,12 +57,22 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PayloadChunk;
-var PayloadChunk$create;
-var PayloadChunk$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslUtils = require('../util/MslUtils.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslException = require('../MslException.js');
+	const Base64 = require('../util/Base64.js');
+	
     /**
      * Key payload.
      * @const
@@ -118,7 +128,7 @@ var PayloadChunk$parse;
         this.payload = payload;
     }
 
-    PayloadChunk = MslEncodable.extend({
+    var PayloadChunk = module.exports = MslEncodable.extend({
         /**
          * Construct a new payload chunk with the given message ID, data and
          * provided crypto context. If requested, the data will be compressed
@@ -140,9 +150,9 @@ var PayloadChunk$parse;
          */
         init: function init(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData) {
             // Verify sequence number and message ID.
-            if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+            if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Sequence number " + sequenceNumber + " is outside the valid range.");
-            if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+            if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                 throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
 
             // Construct the payload.
@@ -151,11 +161,11 @@ var PayloadChunk$parse;
                 // Optionally compress the application data.
                 var payloadData;
                 if (compressionAlgo) {
-                    var compressed = MslUtils$compress(compressionAlgo, data);
+                    var compressed = MslUtils.compress(compressionAlgo, data);
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
-                    if (compressed) {
+                    if (compressed && compressed.length < data.length) {
                         payloadData = compressed;
                     } else {
                         compressionAlgo = null;
@@ -290,7 +300,7 @@ var PayloadChunk$parse;
      *         the payload chunk.
      * @throws MslException if there is an error compressing the data.
      */
-    PayloadChunk$create = function PayloadChunk$create(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
+    var PayloadChunk$create = function PayloadChunk$create(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
             return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, null);
         });
@@ -315,7 +325,7 @@ var PayloadChunk$parse;
      *         or the payload data is corrupt or missing.
      * @throws MslException if there is an error uncompressing the data.
      */
-    PayloadChunk$parse = function PayloadChunk$parse(ctx, payloadChunkMo, cryptoContext, callback) {
+    var PayloadChunk$parse = function PayloadChunk$parse(ctx, payloadChunkMo, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -353,16 +363,16 @@ var PayloadChunk$parse;
                 try {
                     var payload = encoder.parseObject(plaintext);
                     var sequenceNumber = payload.getLong(KEY_SEQUENCE_NUMBER);
-                    if (sequenceNumber < 0 || sequenceNumber > MslConstants$MAX_LONG_VALUE)
+                    if (sequenceNumber < 0 || sequenceNumber > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.PAYLOAD_SEQUENCE_NUMBER_OUT_OF_RANGE, "payload chunk payload " + payload);
                     var messageId = payload.getLong(KEY_MESSAGE_ID);
-                    if (messageId < 0 || messageId > MslConstants$MAX_LONG_VALUE)
+                    if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                         throw new MslException(MslError.PAYLOAD_MESSAGE_ID_OUT_OF_RANGE, "payload chunk payload " + payload);
                     var endofmsg = (payload.has(KEY_END_OF_MESSAGE)) ? payload.getBoolean(KEY_END_OF_MESSAGE) : false;
                     var compressionAlgo;
                     if (payload.has(KEY_COMPRESSION_ALGORITHM)) {
                         compressionAlgo = payload.getString(KEY_COMPRESSION_ALGORITHM);
-                        if (!MslConstants$CompressionAlgorithm[compressionAlgo])
+                        if (!MslConstants.CompressionAlgorithm[compressionAlgo])
                             throw new MslMessageException(MslError.UNIDENTIFIED_COMPRESSION, compressionAlgo);
                     } else {
                         compressionAlgo = null;
@@ -376,7 +386,7 @@ var PayloadChunk$parse;
                     } else if (compressionAlgo == null) {
                         data = compressedData;
                     } else {
-                        data = MslUtils$uncompress(compressionAlgo, compressedData);
+                        data = MslUtils.uncompress(compressionAlgo, compressedData);
                     }
                     
                     // Return the payload chunk.
@@ -384,10 +394,14 @@ var PayloadChunk$parse;
                     return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext, creationData);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + base64$encode(plaintext), e);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + Base64.encode(plaintext), e);
                     throw e;
                 }
             });
         }
     };
-})();
+    
+    // Exports.
+    module.exports.create = PayloadChunk$create;
+    module.exports.parse = PayloadChunk$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PayloadChunk'));

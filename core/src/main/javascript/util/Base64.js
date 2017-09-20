@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var base64$encode,
-    base64$decode;
-
-(function () {
+(function (require, module) {
     "use strict";
 
     var map =    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
@@ -56,7 +53,7 @@ var base64$encode,
      *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
      * @return {String} the Base64 string representation of the data.
      */
-    base64$encode = function (a, urlSafe) {
+    var base64$encode = function (a, urlSafe) {
         var s = '',
             i = 0,
             l = a.length,
@@ -114,7 +111,7 @@ var base64$encode,
      * @throws Error if the Base64 string is the wrong length or is not Base64
      *         encoded data. The empty string is considered valid.
      */
-    base64$decode = function (s, urlSafe) {
+    var base64$decode = function (s, urlSafe) {
         s = s.replace(prepRegex, '');
         
         // Pad out urlsafe data so we can treat padded and unpadded incoming
@@ -160,4 +157,8 @@ var base64$encode,
 
         return a;
     };
-})();
+    
+    // Exports.
+    module.exports.encode = base64$encode;
+    module.exports.decode = base64$decode;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Base64'));

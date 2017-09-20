@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,17 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("RsaAuthenticationData", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockRsaAuthenticationFactory = require('../../../main/javascript/entityauth/MockRsaAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -41,7 +52,7 @@ describe("RsaAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -83,7 +94,7 @@ describe("RsaAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
         
-            moData = RsaAuthenticationData$parse(authdata);
+            moData = RsaAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.publicKeyId).toEqual(data.publicKeyId);
             expect(moData.scheme).toEqual(data.scheme);
@@ -153,7 +164,7 @@ describe("RsaAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -216,7 +227,7 @@ describe("RsaAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_IDENTITY);
             var f = function() {
-                RsaAuthenticationData$parse(authdata);
+                RsaAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 	    });
@@ -236,7 +247,7 @@ describe("RsaAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_PUBKEY_ID);
             var f = function() {
-                RsaAuthenticationData$parse(authdata);
+                RsaAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -251,7 +262,7 @@ describe("RsaAuthenticationData", function() {
             dataB = new RsaAuthenticationData(identityB, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -281,7 +292,7 @@ describe("RsaAuthenticationData", function() {
             dataB = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, pubkeyidB);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

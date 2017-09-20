@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 describe("MslCiphertextEnvelope", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key version. */
     var KEY_VERSION = "version";
     /** Key key ID. */
@@ -34,7 +45,7 @@ describe("MslCiphertextEnvelope", function() {
 	var KEY_ID = "keyid";
 	
 	// Shortcuts
-	var Version = MslCiphertextEnvelope$Version;
+	var Version = MslCiphertextEnvelope.Version;
 	
 	var IV = new Uint8Array(16);
 	var CIPHERTEXT = new Uint8Array(32);
@@ -50,7 +61,7 @@ describe("MslCiphertextEnvelope", function() {
     	    random.nextBytes(CIPHERTEXT);
     	    
     	    var ctx;
-    	    MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+    	    MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
     	        result: function(c) { ctx = c; },
     	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     	    });
@@ -67,7 +78,7 @@ describe("MslCiphertextEnvelope", function() {
         it("ctors", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -91,7 +102,7 @@ describe("MslCiphertextEnvelope", function() {
             runs(function() {
                 expect(encode).not.toBeNull();
                 var mo = encoder.parseObject(encode);
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -119,7 +130,7 @@ describe("MslCiphertextEnvelope", function() {
         it("ctors with null IV", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, null, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, null, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -143,7 +154,7 @@ describe("MslCiphertextEnvelope", function() {
             runs(function() {
                 expect(encode).not.toBeNull();
                 var mo = encoder.parseObject(encode);
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -171,7 +182,7 @@ describe("MslCiphertextEnvelope", function() {
         it("encode is correct", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -200,7 +211,7 @@ describe("MslCiphertextEnvelope", function() {
         it("encode is correct with null IV", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, null, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, null, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -229,7 +240,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing key ID", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -250,7 +261,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_KEY_ID);
                 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -266,7 +277,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing ciphertext", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -287,7 +298,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_CIPHERTEXT);
                 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -303,7 +314,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing SHA-256", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -324,7 +335,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_SHA256);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -340,7 +351,7 @@ describe("MslCiphertextEnvelope", function() {
         it("incorrect SHA-256", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(KEY_ID, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(KEY_ID, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -364,7 +375,7 @@ describe("MslCiphertextEnvelope", function() {
                 hash[0] += 1;
                 mo.put(KEY_SHA256, hash);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -381,9 +392,9 @@ describe("MslCiphertextEnvelope", function() {
 	});
 	
 	function data() {
-	    var keys = Object.keys(MslConstants$CipherSpec); 
+	    var keys = Object.keys(MslConstants.CipherSpec); 
 	    return keys.map(function(key) {
-	        return [ MslConstants$CipherSpec[key] ];
+	        return [ MslConstants.CipherSpec[key] ];
 	    });
 	}
 
@@ -391,7 +402,7 @@ describe("MslCiphertextEnvelope", function() {
 	    it("ctors", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -416,7 +427,7 @@ describe("MslCiphertextEnvelope", function() {
                 expect(encode).not.toBeNull();
 
                 var mo = encoder.parseObject(encode);
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -444,7 +455,7 @@ describe("MslCiphertextEnvelope", function() {
         it("ctors with null IV", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, null, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, null, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -469,7 +480,7 @@ describe("MslCiphertextEnvelope", function() {
                 expect(encode).not.toBeNull();
 
                 var mo = encoder.parseObject(encode);
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -497,7 +508,7 @@ describe("MslCiphertextEnvelope", function() {
         it("encode is correct", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -527,7 +538,7 @@ describe("MslCiphertextEnvelope", function() {
         it("encode is correct with null IV", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, null, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, null, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -557,7 +568,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing version", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -578,7 +589,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_VERSION);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -594,7 +605,7 @@ describe("MslCiphertextEnvelope", function() {
         it("invalid version", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -615,7 +626,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.put(KEY_VERSION, "x");
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -631,7 +642,7 @@ describe("MslCiphertextEnvelope", function() {
         it("unknown version", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -652,7 +663,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.put(KEY_VERSION, -1);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -668,7 +679,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing cipher specification", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -689,7 +700,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_CIPHERSPEC);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -705,7 +716,7 @@ describe("MslCiphertextEnvelope", function() {
         it("invalid cipher specification", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -726,7 +737,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.put(KEY_CIPHERSPEC, "x");
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });
@@ -742,7 +753,7 @@ describe("MslCiphertextEnvelope", function() {
         it("missing ciphertext", function() {
             var envelope;
             runs(function() {
-                MslCiphertextEnvelope$create(cipherSpec, IV, CIPHERTEXT, {
+                MslCiphertextEnvelope.create(cipherSpec, IV, CIPHERTEXT, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -763,7 +774,7 @@ describe("MslCiphertextEnvelope", function() {
                 var mo = encoder.parseObject(encode);
                 mo.remove(KEY_CIPHERTEXT);
 
-                MslCiphertextEnvelope$parse(mo, null, {
+                MslCiphertextEnvelope.parse(mo, null, {
                     result: function() {},
                     error: function(e) { exception = e; }
                 });

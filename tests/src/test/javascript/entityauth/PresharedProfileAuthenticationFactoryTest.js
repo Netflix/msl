@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PresharedProfileAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
+    const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockKeySetStore = require('../../../main/javascript/entityauth/MockKeySetStore.js');
+    const MockPresharedProfileAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedProfileAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -39,7 +54,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -97,7 +112,7 @@ describe("PresharedProfileAuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     

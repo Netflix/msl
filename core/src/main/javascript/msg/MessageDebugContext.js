@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,27 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @interface
  */
-var MessageDebugContext = util.Class.create({
-    /**
-     * Called just prior to sending a message with the message header or error
-     * header that will be sent. An error may occur preventing successful
-     * transmission of the header after this method is called.
-     * 
-     * @param {Header} header message header or error header. 
-     */
-    sentHeader: function(header) {},
-    
-    /**
-     * Called just after receiving a message, before performing additional
-     * validation, with the message header or error header.
-     * 
-     * @param {Header} header message header or error header.
-     */
-    receivedHeader: function(header) {}
-});
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+		
+	var MessageDebugContext = module.exports = Class.create({
+	    /**
+	     * Called just prior to sending a message with the message header or error
+	     * header that will be sent. An error may occur preventing successful
+	     * transmission of the header after this method is called.
+	     * 
+	     * @param {Header} header message header or error header. 
+	     */
+	    sentHeader: function(header) {},
+	    
+	    /**
+	     * Called just after receiving a message, before performing additional
+	     * validation, with the message header or error header.
+	     * 
+	     * @param {Header} header message header or error header.
+	     */
+	    receivedHeader: function(header) {}
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageDebugContext'));

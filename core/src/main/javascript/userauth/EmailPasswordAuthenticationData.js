@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,15 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EmailPasswordAuthenticationData;
-var EmailPasswordAuthenticationData$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	const UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
     
     /**
      * Key email key.
@@ -49,7 +53,7 @@ var EmailPasswordAuthenticationData$parse;
      */
     var KEY_PASSWORD = "password";
 
-    EmailPasswordAuthenticationData = UserAuthenticationData.extend({
+    var EmailPasswordAuthenticationData = module.exports = UserAuthenticationData.extend({
         /**
          * Construct a new email/password authentication data instance from the
          * specified email and password.
@@ -93,7 +97,7 @@ var EmailPasswordAuthenticationData$parse;
      * @param {MslObject} emailPasswordAuthMo the MSL object.
      * @throws MslEncodingException if there is an error parsing the data.
      */
-    EmailPasswordAuthenticationData$parse = function EmailPasswordAuthenticationData$parse(emailPasswordAuthMo) {
+    var EmailPasswordAuthenticationData$parse = function EmailPasswordAuthenticationData$parse(emailPasswordAuthMo) {
         try {
             var email = emailPasswordAuthMo.getString(KEY_EMAIL);
             var password = emailPasswordAuthMo.getString(KEY_PASSWORD);
@@ -106,4 +110,7 @@ var EmailPasswordAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = EmailPasswordAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EmailPasswordAuthenticationData'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,61 +13,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var PresharedProfileAuthenticationFactory;
 
 /**
  * <p>Preshared keys profile entity authentication factory.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PresharedProfileAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new preshared keys profile authentication factory instance.
-     *
-     * @param {KeySetStore} store key set store.
-     * @param {AuthenticationUtils} authutils authentication utilities.
-     */
-    init: function init(store, authutils) {
-        init.base.call(this, EntityAuthenticationScheme.PSK_PROFILE);
+(function(require, module) {
+    "use strict";
+    
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require("../util/AsyncExecutor.js");
+    const PresharedProfileAuthenticationData = require('../entityauth/PresharedProfileAuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const MslError = require('../MslError.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
+    
+	var PresharedProfileAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+	    /**
+	     * Construct a new preshared keys profile authentication factory instance.
+	     *
+	     * @param {KeySetStore} store key set store.} store preshared key store.
+	     * @param {AuthenticationUtils} authutils authentication utilities.
+	     */
+	    init: function init(store, authutils) {
+	        init.base.call(this, EntityAuthenticationScheme.PSK_PROFILE);
+	
+	        // The properties.
+	        var props = {
+	            store: { value: store, writable: false, enumerable: false, configurable: false },
+	            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	
+	    /** @inheritDoc */
+	    createData: function createData(ctx, entityAuthMo, callback) {
+	        AsyncExecutor(callback, function() {
+	            return PresharedProfileAuthenticationData.parse(entityAuthMo);
+	        });
+	    },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(ctx, authdata) {
+	        // Make sure we have the right kind of entity authentication data.
+	        if (!(authdata instanceof PresharedProfileAuthenticationData))
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+	        var ppad = authdata;
+	        
+	        // Check for revocation.
+	        var pskId = ppad.presharedKeysId;
+	        if (this.authutils.isEntityRevoked(pskId))
+	            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk profile " + pskId).setEntityAuthenticationData(ppad);
+	        
+	        // Verify the scheme is permitted.
+	        if (!this.authutils.isSchemePermitted(pskId, this.scheme))
+	            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + pskId + " not supported:" + this.scheme).setEntityAuthenticationData(ppad);
 
-        // The properties.
-        var props = {
-            store: { value: store, writable: false, enumerable: false, configurable: false },
-            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
-
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return PresharedProfileAuthenticationData$parse(entityAuthMo);
-        });
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof PresharedProfileAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-        var ppad = authdata;
-        
-        // Check for revocation.
-        var pskId = ppad.presharedKeysId;
-        if (this.authutils.isEntityRevoked(pskId))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "psk profile " + pskId).setEntityAuthenticationData(ppad);
-        
-        // Verify the scheme is permitted.
-        if (!this.authutils.isSchemePermitted(pskId, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + pskId + " not supported:" + this.scheme).setEntityAuthenticationData(ppad);
-        
-        // Load key set.
-        var keys = this.store.getKeys(pskId);
-        if (!keys)
-            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + pskId).setEntityAuthenticationData(ppad);
-        
-        // Return the crypto context.
-        var identity = ppad.getIdentity();
-        return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);
-    },
-});
+	        // Load key set.
+	        var keys = this.store.getKeys(pskId);
+	        if (!keys)
+	            throw new MslEntityAuthException(MslError.ENTITY_NOT_FOUND, "psk profile " + pskId).setEntityAuthenticationData(ppad);
+	        
+	        // Return the crypto context.
+	        var identity = ppad.getIdentity();
+	        return new SymmetricCryptoContext(ctx, identity, keys.encryptionKey, keys.hmacKey, keys.wrappingKey);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PresharedProfileAuthenticationFactory'));

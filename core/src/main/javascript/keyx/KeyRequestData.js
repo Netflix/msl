@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,16 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var KeyRequestData;
-var KeyRequestData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key key exchange scheme.
      * @const
@@ -52,7 +58,7 @@ var KeyRequestData$parse;
      */
     var KEY_KEYDATA = "keydata";
 
-    KeyRequestData = MslEncodable.extend({
+    var KeyRequestData = module.exports = MslEncodable.extend({
         /**
          * Create a new key request data object with the specified key exchange
          * scheme.
@@ -134,7 +140,7 @@ var KeyRequestData$parse;
      * @throws MslKeyExchangeException if unable to create the key request
      *         data.
      */
-    KeyRequestData$parse = function KeyRequestData$parse(ctx, keyRequestDataMo, callback) {
+    var KeyRequestData$parse = function KeyRequestData$parse(ctx, keyRequestDataMo, callback) {
         AsyncExecutor(callback, function() {
             try {
                 // Pull the key data.
@@ -157,4 +163,7 @@ var KeyRequestData$parse;
             }
         });
     };
-})();
+    
+    // Exports.
+    module.exports.parse = KeyRequestData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyRequestData'));

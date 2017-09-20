@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,16 +17,19 @@
 /**
  * <p>A queue that supports waiting for an element.</p>
  */
-var BlockingQueue;
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+    
+    const Class = require('../util/Class.js');
+    const MslConstants = require('../MslConstants.js');
+    const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 
     /**
      * @param {number} number the ticket number.
      * @return the next larger ticket number, wrapped around.
      */
     function incrementTicket(number) {
-        return (number == MslConstants$MAX_LONG_VALUE) ? 1 : number + 1;
+        return (number == MslConstants.MAX_LONG_VALUE) ? 1 : number + 1;
     }
 
     /**
@@ -48,7 +51,7 @@ var BlockingQueue;
         return next;
     }
 
-    BlockingQueue = util.Class.create({
+    var BlockingQueue = module.exports = Class.create({
         /**
          * Create a new blocking queue.
          */
@@ -190,4 +193,4 @@ var BlockingQueue;
             this._queue.push(elem);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('BlockingQueue'));

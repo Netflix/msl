@@ -19,42 +19,48 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockKeySetStore = KeySetStore.extend({
-    /**
-     * Create a new test preshared keys store.
-     */
-    init: function init() {
-        var keysets = {};
-        
-        // The properties.
-        var props = {
-            keysets: { value: keysets, writable: true, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+(function(require, module) {
+    "use strict";
     
-    /**
-     * Add a key set to the store.
-     * 
-     * @param {string} identity key set identity.
-     * @param {CipherKey} encryptionKey the encryption key.
-     * @param {CipherKey} hmacKey the HMAC key.
-     * @param {CipherKey} wrappingKey the wrapping key.
-     */
-    addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
-        var keyset = new KeySet(encryptionKey, hmacKey, wrappingKey);
-        this.keysets[identity] = keyset;
-    },
+    const KeySetStore = require('../../../../../core/src/main/javascript/entityauth/KeySetStore.js');
     
-    /**
-     * Remove all key sets from the store.
-     */
-    clear: function clear() {
-        this.keysets = {};
-    },
-    
-    /** @inheritDoc */
-    getKeys: function getKeys(identity) {
-        return this.keysets[identity];
-    },
-});
+    var MockKeySetStore = module.exports = KeySetStore.extend({
+        /**
+         * Create a new test key set store.
+         */
+        init: function init() {
+            var keysets = {};
+
+            // The properties.
+            var props = {
+                keysets: { value: keysets, writable: true, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+
+        /**
+         * Add a key set to the store.
+         * 
+         * @param {string} identity key set identity.
+         * @param {SecretKey} encryptionKey the encryption key.
+         * @param {SecretKey} hmacKey the HMAC key.
+         * @param {SecretKey} wrappingKey the wrapping key.
+         */
+        addKeys: function addKeys(identity, encryptionKey, hmacKey, wrappingKey) {
+            var keyset = new KeySetStore.KeySet(encryptionKey, hmacKey, wrappingKey);
+            this.keysets[identity] = keyset;
+        },
+
+        /**
+         * Remove all preshared key sets from the store.
+         */
+        clear: function clear() {
+            this.keysets = {};
+        },
+
+        /** @inheritDoc */
+        getKeys: function getKeys(identity) {
+            return this.keysets[identity];
+        },
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockKeySetStore'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 describe("MslCryptoException", function() {
+    const MslCryptoException = require('../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslException = require('../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../core/src/main/javascript/MslError.js');
+    
 	it("error as expected", function() {
 		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);
 		expect(e.error).toBe(MslError.MSL_PARSE_ERROR);

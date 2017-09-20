@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var Random;
-var Random$setCrypto;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslConstants = require('../MslConstants.js');
+    const MslInternalException = require('../MslInternalException.js');
+	const Class = require('../util/Class.js');
 
     // Shift multiplication.
     var SHIFT_24 = 0x1000000;
     var SHIFT_20 = 0x100000;
     // Minimum integer.
-    var MIN_LONG_VALUE = 0 - MslConstants$MAX_LONG_VALUE;
+    var MIN_LONG_VALUE = 0 - MslConstants.MAX_LONG_VALUE;
     // 2^52.
     var POW_NEGATIVE_52 = Math.pow(2,-52);
 
@@ -38,7 +39,7 @@ var Random$setCrypto;
      *
      * @param {object} the new crypto interface.
      */
-    Random$setCrypto = function Random$setCrypto(crypto) {
+    var Random$setCrypto = function Random$setCrypto(crypto) {
     	nfCrypto = crypto;
     };
 
@@ -55,7 +56,7 @@ var Random$setCrypto;
         return Math.floor(factor * (max - min + 1) + min);
     }
 
-    Random = util.Class.create({
+    var Random = module.exports = Class.create({
         /**
          * @return {boolean} a random boolean value.
          */
@@ -152,4 +153,7 @@ var Random$setCrypto;
             }
         }
     });
-})();
+    
+    // Exports.
+    module.exports.setRandom = Random$setCrypto;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Random'));

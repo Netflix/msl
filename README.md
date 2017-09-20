@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/Netflix/msl.svg?branch=master)](https://travis-ci.org/Netflix/msl)
+
 # Message Security Layer
 
 <img src="https://github.com/Netflix/msl/raw/gh-pages/images/msl-logo.gif" alt="MSL Logo" align="left" hspace="20" vspace="0"/>

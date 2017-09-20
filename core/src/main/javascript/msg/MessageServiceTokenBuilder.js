@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,14 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageServiceTokenBuilder;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const ServiceToken = require('../tokens/ServiceToken.js');
+	const MslInternalException = require('../MslInternalException.js');
 
     /**
      * <p>Select the appropriate crypto context for the named service token.</p>
@@ -90,7 +94,7 @@ var MessageServiceTokenBuilder;
         }
     }
 
-    MessageServiceTokenBuilder = util.Class.create({
+    var MessageServiceTokenBuilder = module.exports = Class.create({
         /**
          * Create a new message service token builder with the provided MSL and
          * message contexts and message builder.
@@ -230,7 +234,7 @@ var MessageServiceTokenBuilder;
                     return false;
 
                 // Add the service token.
-                ServiceToken$create(this.ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             try {
@@ -243,7 +247,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -274,7 +278,7 @@ var MessageServiceTokenBuilder;
                 var cryptoContext = selectCryptoContext(name, this.cryptoContexts);
                 if (!cryptoContext)
                     return false;
-                ServiceToken$create(this.ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, null, null, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             // Add the service token.
@@ -288,7 +292,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -327,7 +331,7 @@ var MessageServiceTokenBuilder;
                     return false;
 
                 // Add the service token.
-                ServiceToken$create(this.ctx, name, data, masterToken, null, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, masterToken, null, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             try {
@@ -340,7 +344,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -379,7 +383,7 @@ var MessageServiceTokenBuilder;
                     return false;
 
                 // Add the service token.
-                ServiceToken$create(this.ctx, name, data, masterToken, null, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, masterToken, null, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             try {
@@ -392,7 +396,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -436,7 +440,7 @@ var MessageServiceTokenBuilder;
                     return false;
 
                 // Add the service token.
-                ServiceToken$create(this.ctx, name, data, masterToken, userIdToken, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, masterToken, userIdToken, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             try {
@@ -449,7 +453,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -493,7 +497,7 @@ var MessageServiceTokenBuilder;
                     return false;
 
                 // Add the service token.
-                ServiceToken$create(this.ctx, name, data, masterToken, userIdToken, encrypt, compressionAlgo, cryptoContext, {
+                ServiceToken.create(this.ctx, name, data, masterToken, userIdToken, encrypt, compressionAlgo, cryptoContext, {
                     result: function(serviceToken) {
                         AsyncExecutor(callback, function() {
                             try {
@@ -506,7 +510,7 @@ var MessageServiceTokenBuilder;
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -580,7 +584,7 @@ var MessageServiceTokenBuilder;
                     if (serviceToken.name == name) {
                         this.builder.deleteServiceToken(name, {
                             result: function() { callback.result(true); },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -612,7 +616,7 @@ var MessageServiceTokenBuilder;
                     if (serviceToken.name == name) {
                         this.builder.deletePeerServiceToken(name, {
                             result: function() { callback.result(true); },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -623,4 +627,4 @@ var MessageServiceTokenBuilder;
             }, this);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageServiceTokenBuilder'));

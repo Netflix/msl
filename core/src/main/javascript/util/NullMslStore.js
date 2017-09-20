@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,59 +20,67 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {MslStore}
  */
-var NullMslStore = MslStore.extend({
-    /** @inheritDoc */
-    setCryptoContext: function setCryptoContext(masterToken, cryptoContext) {},
-
-    /** @inheritDoc */
-    getMasterToken: function getMasterToken() { return null; },
-    
-    /** @inheritDoc */
-    getNonReplayableId: function getNonReplayableId(masterToken) { return 1; },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(masterToken) { return null; },
-
-    /** @inheritDoc */
-    removeCryptoContext: function removeCryptoContext(masterToken) {},
-
-    /** @inheritDoc */
-    clearCryptoContexts: function clearCryptoContexts() {},
-
-    /** @inheritDoc */
-    addUserIdToken: function addUserIdToken(userId, userIdToken) {},
-
-    /** @inheritDoc */
-    getUserIdToken: function getUserIdToken(userId) { return null; },
-
-    /** @inheritDoc */
-    removeUserIdToken: function removeUserIdToken(userIdToken) {},
-
-    /** @inheritDoc */
-    clearUserIdTokens: function clearUserIdTokens() {},
-
-    /** @inheritDoc */
-    addServiceTokens: function addServiceTokens(tokens) {},
-
-    /** @inheritDoc */
-    getServiceTokens: function getServiceTokens(masterToken, userIdToken) {
-        // Validate arguments.
-        if (userIdToken) {
-            if (!masterToken)
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_NULL);
-            if (!userIdToken.isBoundTo(masterToken))
-                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.mtSerialNumber + "; mt " + masterToken.serialNumber);
-        }
-        return [];
-    },
-
-    /** @inheritDoc */
-    removeServiceTokens: function removeServiceTokens(name, masterToken, userIdToken) {
-        // Validate arguments.
-        if (userIdToken && masterToken && !userIdToken.isBoundTo(masterToken))
-            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.masterTokenSerialNumber + "; mt " + masterToken.serialNumber);
-    },
-
-    /** @inheritDoc */
-    clearServiceTokens: function clearServiceTokens() {},
-});
+(function(require, module) {
+	"use strict";
+	
+	const MslStore = require('../util/MslStore.js');
+	const MslException = require('../MslException.js');
+	const MslError = require('../MslError.js');
+	
+	var NullMslStore = module.exports = MslStore.extend({
+	    /** @inheritDoc */
+	    setCryptoContext: function setCryptoContext(masterToken, cryptoContext) {},
+	
+	    /** @inheritDoc */
+	    getMasterToken: function getMasterToken() { return null; },
+	    
+	    /** @inheritDoc */
+	    getNonReplayableId: function getNonReplayableId(masterToken) { return 1; },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(masterToken) { return null; },
+	
+	    /** @inheritDoc */
+	    removeCryptoContext: function removeCryptoContext(masterToken) {},
+	
+	    /** @inheritDoc */
+	    clearCryptoContexts: function clearCryptoContexts() {},
+	
+	    /** @inheritDoc */
+	    addUserIdToken: function addUserIdToken(userId, userIdToken) {},
+	
+	    /** @inheritDoc */
+	    getUserIdToken: function getUserIdToken(userId) { return null; },
+	
+	    /** @inheritDoc */
+	    removeUserIdToken: function removeUserIdToken(userIdToken) {},
+	
+	    /** @inheritDoc */
+	    clearUserIdTokens: function clearUserIdTokens() {},
+	
+	    /** @inheritDoc */
+	    addServiceTokens: function addServiceTokens(tokens) {},
+	
+	    /** @inheritDoc */
+	    getServiceTokens: function getServiceTokens(masterToken, userIdToken) {
+	        // Validate arguments.
+	        if (userIdToken) {
+	            if (!masterToken)
+	                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_NULL);
+	            if (!userIdToken.isBoundTo(masterToken))
+	                throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.mtSerialNumber + "; mt " + masterToken.serialNumber);
+	        }
+	        return [];
+	    },
+	
+	    /** @inheritDoc */
+	    removeServiceTokens: function removeServiceTokens(name, masterToken, userIdToken) {
+	        // Validate arguments.
+	        if (userIdToken && masterToken && !userIdToken.isBoundTo(masterToken))
+	            throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.masterTokenSerialNumber + "; mt " + masterToken.serialNumber);
+	    },
+	
+	    /** @inheritDoc */
+	    clearServiceTokens: function clearServiceTokens() {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NullMslStore'));

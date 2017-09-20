@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public class ServiceToken implements MslEncodable {
             
             // Only use compression if the compressed data is smaller than the
             // uncompressed data.
-            if (compressed.length < data.length) {
+            if (compressed != null && compressed.length < data.length) {
                 this.compressionAlgo = compressionAlgo;
                 this.compressedServicedata = compressed;
             } else {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,60 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PublicKey;
-var PublicKey$create;
-var PublicKey$import;
-
-(function () {
+(function (require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const KeyFormat = require('../crypto/KeyFormat.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const Base64 = require('../util/Base64.js');
 
-    PublicKey = util.Class.create({
+    /**
+     * Normalize public key input into expected Web Crypto API format.
+     *
+     * @param {string|Uint8Array|object} input Base64-encoded, raw or JSON key
+     *        data (SPKI|JWK).
+     * @param {KeyFormat} format provided key format (SPKI|JWK).
+     * @return {Uint8Array|object} DER-encoded SPKI or JSON Web Key object.
+     * @throws MslCryptoException if the key data is invalid.
+     */
+    function normalizePublicKey(input, format) {
+        // SPKI must either be a Base64-encoded string or the raw bytes.
+        if (format == KeyFormat.SPKI) {
+            if (input instanceof Uint8Array)
+                return input;
+            if (typeof input === 'string') {
+                try {
+                    return Base64.decode(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+                }
+            }
+            throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + JSON.stringify(input));
+        }
+        
+        // JWK must either be a JSON string or a JavaScript object.
+        if (format == KeyFormat.JWK) {
+            if (typeof input === 'string') {
+                try {
+                    input = JSON.parse(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+                }
+            }
+            if (typeof input === 'object' && input.constructor === Object)
+                return input;
+            throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, format + " " + input, e);
+        }
+
+        // Invalid format.
+        throw new MslCryptoException(MslError.INVALID_PUBLIC_KEY, "Invalid format '" + format + "'", e);
+    }
+
+    var PublicKey = module.exports = Class.create({
         /**
          * Create a new public key from an original public key.
          *
@@ -52,9 +98,9 @@ var PublicKey$import;
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.SPKI));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.SPKI, e));
                     };
-                    mslCrypto['exportKey'](KeyFormat.SPKI, rawKey)
+                    MslCrypto['exportKey'](KeyFormat.SPKI, rawKey)
                         .then(oncomplete, onerror);
                 } else {
                     createKey(encoded);
@@ -96,7 +142,7 @@ var PublicKey$import;
      *        callback the callback will receive the new public key
      *        or any thrown exceptions.
      */
-    PublicKey$create = function PublicKey$create(rawKey, callback) {
+    var PublicKey$create = function PublicKey$create(rawKey, callback) {
         new PublicKey(rawKey, callback);
     };
 
@@ -114,17 +160,21 @@ var PublicKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    PublicKey$import = function PublicKey$import(input, algo, usages, format, callback) {
+    var PublicKey$import = function PublicKey$import(input, algo, usages, format, callback) {
         AsyncExecutor(callback, function() {
-            input = KeyFormat.normalizePubkeyInput(input, format);
+            var keydata = normalizePublicKey(input, format);
             var oncomplete = function(result) {
-                new PublicKey(result, callback, input);
+                new PublicKey(result, callback, keydata);
             };
             var onerror = function(e) {
-                callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY));
+                callback.error(new MslCryptoException(MslError.INVALID_PUBLIC_KEY, null, e));
             };
-            mslCrypto['importKey'](format, input, algo, true, usages)
+            MslCrypto['importKey'](format, keydata, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = PublicKey$create;
+    module.exports.import = PublicKey$import;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PublicKey'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,40 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {ICryptoContext}
  */
-var NullCryptoContext = ICryptoContext.extend({
-    /** @inheritDoc */
-    encrypt: function encrypt(data, encoder, format, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    decrypt: function decrypt(data, encoder, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    wrap: function wrap(key, encoder, format, callback) {
-        callback.result(key);
-    },
-
-    /** @inheritDoc */
-    unwrap: function unwrap(data, algo, usages, encoder, callback) {
-        callback.result(data);
-    },
-
-    /** @inheritDoc */
-    sign: function sign(data, encoder, format, callback) {
-        callback.result(new Uint8Array(0));
-    },
-
-    /** @inheritDoc */
-    verify: function verify(data, signature, encoder, callback) {
-        callback.result(true);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const ICryptoContext = require('../crypto/ICryptoContext.js');
+	
+	var NullCryptoContext = module.exports = ICryptoContext.extend({
+	    /** @inheritDoc */
+	    encrypt: function encrypt(data, encoder, format, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    decrypt: function decrypt(data, encoder, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    wrap: function wrap(key, encoder, format, callback) {
+	        callback.result(key);
+	    },
+	
+	    /** @inheritDoc */
+	    unwrap: function unwrap(data, algo, usages, encoder, callback) {
+	        callback.result(data);
+	    },
+	
+	    /** @inheritDoc */
+	    sign: function sign(data, encoder, format, callback) {
+	        callback.result(new Uint8Array(0));
+	    },
+	
+	    /** @inheritDoc */
+	    verify: function verify(data, signature, encoder, callback) {
+	        callback.result(true);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NullCryptoContext'));

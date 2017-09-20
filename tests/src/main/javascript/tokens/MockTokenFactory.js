@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,23 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockTokenFactory;
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const TokenFactory = require('../../../../../core/src/main/javascript/tokens/TokenFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
+    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    
+    const MockMslUser = require('../tokens/MockMslUser.js');
 
     /** Renewal window start offset in milliseconds. */
     var RENEWAL_OFFSET = 60000;
@@ -30,7 +44,7 @@ var MockTokenFactory;
     /** Non-replayable ID acceptance window. */
     var NON_REPLAYABLE_ID_WINDOW = 65536;
 
-    MockTokenFactory = TokenFactory.extend({
+    var MockTokenFactory = module.exports = TokenFactory.extend({
         /**
          * Create a new mock token factory.
          *
@@ -91,12 +105,12 @@ var MockTokenFactory;
             AsyncExecutor(callback, function() {
                 if (!masterToken.isDecrypted())
                     throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-                if (nonReplayableId < 0 || nonReplayableId > MslConstants$MAX_LONG_VALUE)
+                if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
                     throw new MslException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "nonReplayableId " + nonReplayableId);
 
                 // Reject if the non-replayable ID is equal or just a few messages
                 // behind. The sender can recover by incrementing.
-                var catchupWindow = Math.floor(MslConstants$MAX_MESSAGES / 2);
+                var catchupWindow = Math.floor(MslConstants.MAX_MESSAGES / 2);
                 if (nonReplayableId <= this._largestNonReplayableId &&
                     nonReplayableId > this._largestNonReplayableId - catchupWindow)
                 {
@@ -111,7 +125,7 @@ var MockTokenFactory;
                 // If the non-replayable ID is smaller reject it if it is outside the
                 // wrap-around window. The sender cannot recover quickly.
                 if (nonReplayableId < this._largestNonReplayableId) {
-                    var cutoff = this._largestNonReplayableId - MslConstants$MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
+                    var cutoff = this._largestNonReplayableId - MslConstants.MAX_LONG_VALUE + NON_REPLAYABLE_ID_WINDOW;
                     if (nonReplayableId >= cutoff)
                         return MslError.MESSAGE_REPLAYED_UNRECOVERABLE;
                 }
@@ -131,9 +145,9 @@ var MockTokenFactory;
                 var serialNumber = -1;
                 do {
                     serialNumber = ctx.getRandom().nextLong();
-                } while (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE);
+                } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
                 var identity = entityAuthData.getIdentity();
-                MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
+                MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
 
@@ -146,7 +160,7 @@ var MockTokenFactory;
                 var mtIssuerData = masterToken.issuerData;
                 var mergedIssuerData;
                 try {
-                    mergedIssuerData = MslEncoderUtils$merge(masterToken.issuerData, issuerData);
+                    mergedIssuerData = MslEncoderUtils.merge(masterToken.issuerData, issuerData);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
                         throw new MslEncodingException(MslError.MASTERTOKEN_ISSUERDATA_ENCODE_ERROR, "mt issuerdata " + mtIssuerData + "; issuerdata " + issuerData, e);
@@ -157,14 +171,14 @@ var MockTokenFactory;
                 var oldSequenceNumber = masterToken.sequenceNumber;
                 var sequenceNumber;
                 if (this._sequenceNumber == -1) {
-                    sequenceNumber = (oldSequenceNumber == MslConstants$MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
+                    sequenceNumber = (oldSequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : oldSequenceNumber + 1;
                 } else {
-                    this._sequenceNumber = (this._sequenceNumber == MslConstants$MAX_LONG_VALUE) ? 0 : this._sequenceNumber + 1;
+                    this._sequenceNumber = (this._sequenceNumber == MslConstants.MAX_LONG_VALUE) ? 0 : this._sequenceNumber + 1;
                     sequenceNumber = this._sequenceNumber;
                 }
                 var serialNumber = masterToken.serialNumber;
                 var identity = masterToken.identity;
-                MasterToken$create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey, callback);
+                MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, mergedIssuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
 
@@ -197,8 +211,8 @@ var MockTokenFactory;
                 var serialNumber = -1;
                 do {
                     serialNumber = ctx.getRandom().nextLong();
-                } while (serialNumber < 0 || serialNumber > MslConstants$MAX_LONG_VALUE);
-                UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback);
+                } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+                UserIdToken.create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback);
             }, this);
         },
 
@@ -213,15 +227,15 @@ var MockTokenFactory;
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
                 var serialNumber = userIdToken.serialNumber;
                 var user = userIdToken.user;
-                UserIdToken$create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback);
+                UserIdToken.create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback);
             }, this);
         },
         
         /** @inheritDoc */
         createUser: function createUser(ctx, userdata, callback) {
             AsyncExecutor(callback, function() {
-                return MockMslUser$parse(userdata);
+                return MockMslUser.parse(userdata);
             }, this);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockTokenFactory'));

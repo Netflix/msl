@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,24 +20,30 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslUserIdTokenException = MslException.extend({
-    /**
-     * Construct a new MSL user ID token exception with the specified error and
-     * user ID token.
-     *
-     * @param {MslError} error the error.
-     * @param {UserIdToken} userIdToken the user ID token. May not be null.
-     * @param {?string=} details the details text. May be null or undefined.
-     * @param {?Error=} cause the cause. May be null or undefined.
-     */
-    init: function init(error, userIdToken, details, cause) {
-        init.base.call(this, error, details, cause);
-
-        // The properties.
-        var props = {
-            userIdToken: { value: userIdToken, writable: false, configurable: false },
-            name: { value: "MslUserIdTokenException", writable: false, configurable: true }
-        };
-        Object.defineProperties(this, props);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const MslException = require('./MslException.js');
+	
+	var MslUserIdTokenException = module.exports = MslException.extend({
+	    /**
+	     * Construct a new MSL user ID token exception with the specified error and
+	     * user ID token.
+	     *
+	     * @param {MslError} error the error.
+	     * @param {UserIdToken} userIdToken the user ID token. May not be null.
+	     * @param {?string=} details the details text. May be null or undefined.
+	     * @param {?Error=} cause the cause. May be null or undefined.
+	     */
+	    init: function init(error, userIdToken, details, cause) {
+	        init.base.call(this, error, details, cause);
+	
+	        // The properties.
+	        var props = {
+	            userIdToken: { value: userIdToken, writable: false, configurable: false },
+	            name: { value: "MslUserIdTokenException", writable: false, configurable: true }
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslUserIdTokenException'));

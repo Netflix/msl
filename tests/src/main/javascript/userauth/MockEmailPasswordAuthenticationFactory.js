@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,18 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockEmailPasswordAuthenticationFactory;
-
-(function() {
+(function(require, module) {
+    "use strict";
+    
+    const UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    
+    const MockMslUser = require('../tokens/MockMslUser.js');
+    
 	/** Email. */
     var EMAIL = "email1@domain.com";
     /** Password. */
@@ -36,7 +45,7 @@ var MockEmailPasswordAuthenticationFactory;
     /** User #2. (880083944) */
     var USER_2 = new MockMslUser("8422c679242f709891ef4699301abdb2");
 
-    MockEmailPasswordAuthenticationFactory = UserAuthenticationFactory.extend({
+    var MockEmailPasswordAuthenticationFactory = module.exports = UserAuthenticationFactory.extend({
 	    /**
 	     * Create a new test email/password authentication factory.
 	     */
@@ -47,7 +56,7 @@ var MockEmailPasswordAuthenticationFactory;
 	    /** @inheritDoc */
 	    createData: function createData(ctx, masterToken, userAuthMo, callback) {
 	        AsyncExecutor(callback, function() {
-	            return EmailPasswordAuthenticationData$parse(userAuthMo);
+	            return EmailPasswordAuthenticationData.parse(userAuthMo);
 	        });
 	    },
 
@@ -89,10 +98,10 @@ var MockEmailPasswordAuthenticationFactory;
     });
     
     // Expose public static properties.
-    MockEmailPasswordAuthenticationFactory.EMAIL = EMAIL;
-    MockEmailPasswordAuthenticationFactory.PASSWORD = PASSWORD;
-    MockEmailPasswordAuthenticationFactory.USER = USER;
-    MockEmailPasswordAuthenticationFactory.EMAIL_2 = EMAIL_2;
-    MockEmailPasswordAuthenticationFactory.PASSWORD_2 = PASSWORD_2;
-    MockEmailPasswordAuthenticationFactory.USER_2 = USER_2;
-})();
+    module.exports.EMAIL = EMAIL;
+    module.exports.PASSWORD = PASSWORD;
+    module.exports.USER = USER;
+    module.exports.EMAIL_2 = EMAIL_2;
+    module.exports.PASSWORD_2 = PASSWORD_2;
+    module.exports.USER_2 = USER_2;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockEmailPasswordAuthenticationFactory'));

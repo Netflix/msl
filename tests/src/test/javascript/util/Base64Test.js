@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,26 +19,30 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("base64", function() {
+describe("Base64", function() {
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    
     /** UTF-8 charset. */
     var CHARSET = "utf-8";
     
     /** Standard Base64 examples. */
     var EXAMPLES = [
-        {data: textEncoding$getBytes("The long winded author is going for a walk while the light breeze bellows in his ears.", CHARSET),
+        {data: textEncoding.getBytes("The long winded author is going for a walk while the light breeze bellows in his ears.", CHARSET),
          base64: "VGhlIGxvbmcgd2luZGVkIGF1dGhvciBpcyBnb2luZyBmb3IgYSB3YWxrIHdoaWxlIHRoZSBsaWdodCBicmVlemUgYmVsbG93cyBpbiBoaXMgZWFycy4="},
-        {data: textEncoding$getBytes("Sometimes porcupines need beds to sleep on.", CHARSET),
+        {data: textEncoding.getBytes("Sometimes porcupines need beds to sleep on.", CHARSET),
          base64: "U29tZXRpbWVzIHBvcmN1cGluZXMgbmVlZCBiZWRzIHRvIHNsZWVwIG9uLg=="},
-        {data: textEncoding$getBytes("Even the restless dreamer enjoys home-cooked foods.", CHARSET),
+        {data: textEncoding.getBytes("Even the restless dreamer enjoys home-cooked foods.", CHARSET),
          base64: "RXZlbiB0aGUgcmVzdGxlc3MgZHJlYW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu"},
     ];
     /** URL-safe Base64 examples. */
     var URL_EXAMPLES = [
-        {data: textEncoding$getBytes("The long winded author is going for a walk while the light breeze bellows in his ears.", CHARSET),
+        {data: textEncoding.getBytes("The long winded author is going for a walk while the light breeze bellows in his ears.", CHARSET),
          base64: "VGhlIGxvbmcgd2luZGVkIGF1dGhvciBpcyBnb2luZyBmb3IgYSB3YWxrIHdoaWxlIHRoZSBsaWdodCBicmVlemUgYmVsbG93cyBpbiBoaXMgZWFycy4"},
-        {data: textEncoding$getBytes("Sometimes porcupines need beds to sleep on.", CHARSET),
+        {data: textEncoding.getBytes("Sometimes porcupines need beds to sleep on.", CHARSET),
          base64: "U29tZXRpbWVzIHBvcmN1cGluZXMgbmVlZCBiZWRzIHRvIHNsZWVwIG9uLg"},
-        {data: textEncoding$getBytes("Even the restless dreamer enjoys home-cooked foods.", CHARSET),
+        {data: textEncoding.getBytes("Even the restless dreamer enjoys home-cooked foods.", CHARSET),
          base64: "RXZlbiB0aGUgcmVzdGxlc3MgZHJlYW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu"}
     ];
     
@@ -50,8 +54,8 @@ describe("base64", function() {
            var base64 = example.base64;
            
            // Encode/decode.
-           var encoded = base64$encode(data);
-           var decoded = base64$decode(base64);
+           var encoded = Base64.encode(data);
+           var decoded = Base64.decode(base64);
            
            // Validate.
            expect(encoded).toEqual(base64);
@@ -71,8 +75,8 @@ describe("base64", function() {
             var modifiedBase64 = "  \t" + base64.substring(0, half) + "\r\n \r\n\t" + base64.substring(half) + " \t \n";
             
             // Encode/decode.
-            var encoded = base64$encode(data);
-            var decoded = base64$decode(modifiedBase64);
+            var encoded = Base64.encode(data);
+            var decoded = Base64.decode(modifiedBase64);
             
             // Validate.
             expect(encoded).toEqual(base64);
@@ -88,8 +92,8 @@ describe("base64", function() {
             var base64 = example.base64;
             
             // Encode/decode.
-            var encoded = base64$encode(data, true);
-            var decoded = base64$decode(base64, true);
+            var encoded = Base64.encode(data, true);
+            var decoded = Base64.decode(base64, true);
             
             // Validate.
             expect(encoded).toEqual(base64);

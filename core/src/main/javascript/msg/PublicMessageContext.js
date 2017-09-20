@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,19 +26,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PublicMessageContext = MessageContext.extend({
-    /** @inheritDoc */
-    isEncrypted: function isEncrypted() {
-        return false;
-    },
-    
-    /** @inheritDoc */
-    isIntegrityProtected: function isIntegrityProtected() {
-        return true;
-    },
-    
-    /** @inheritDoc */
-    isNonReplayable: function isNonReplayable() {
-        return false;
-    }
-});
+(function(require, module) {
+	"use strict";
+
+	const MessageContext = require('../msg/MessageContext.js');
+	
+	var PublicMessageContext = module.exports = MessageContext.extend({
+	    /** @inheritDoc */
+	    isEncrypted: function isEncrypted() {
+	        return false;
+	    },
+	    
+	    /** @inheritDoc */
+	    isIntegrityProtected: function isIntegrityProtected() {
+	        return true;
+	    },
+	    
+	    /** @inheritDoc */
+	    isNonReplayable: function isNonReplayable() {
+	        return false;
+	    }
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PublicMessageContext'))

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,19 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonMslObject;
-var JsonMslObject$encode;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslArray = require('../io/MslArray.js');
+	const MslObject = require('../io/MslObject.js');
+	const textEncoding = require('../lib/textEncoding.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslException = require('../MslException.js');
+	const Base64 = require('../util/Base64.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
     
     /**
      * UTF-8 charset.
@@ -42,7 +50,7 @@ var JsonMslObject$encode;
      *        exceptions.
      * @throws MslEncoderException if there is an error encoding the data.
      */
-    JsonMslObject$encode = function JsonMslObject$encode(encoder, object, callback) {
+    var JsonMslObject$encode = function JsonMslObject$encode(encoder, object, callback) {
     	AsyncExecutor(callback, function() {
     		var jsonObject = (object instanceof JsonMslObject)
     			? object
@@ -51,7 +59,7 @@ var JsonMslObject$encode;
     		jsonObject.toJSONString(encoder, {
     			result: function(json) {
     				AsyncExecutor(callback, function() {
-    					return textEncoding$getBytes(json, UTF_8);
+    					return textEncoding.getBytes(json, UTF_8);
     				});
     			},
     			error: callback.error,
@@ -59,7 +67,7 @@ var JsonMslObject$encode;
     	});
     };
     
-    JsonMslObject = MslObject.extend({
+    var JsonMslObject = module.exports = MslObject.extend({
         /**
          * <p>Create a new {@code JsonMslObject} from the given
          * {@code MslObject}, object map, or its encoded representation.</p>
@@ -102,7 +110,7 @@ var JsonMslObject$encode;
 
                 // Uint8Array
                 else if (source instanceof Uint8Array) {
-                    var json = textEncoding$getString(source, UTF_8);
+                    var json = textEncoding.getString(source, UTF_8);
                     var jo = JSON.parse(json);
                     if (!(jo instanceof Object) || jo.constructor !== Object)
                         throw new MslEncoderException("Invalid JSON object encoding.");
@@ -123,6 +131,8 @@ var JsonMslObject$encode;
         
         /** @inheritDoc */
         put: function put(key, value) {
+            const JsonMslArray = require('../io/JsonMslArray.js');
+            
         	var o;
         	try {
         		// Convert Object to MslObject.
@@ -144,6 +154,8 @@ var JsonMslObject$encode;
         
         /** @inheritDoc */
         getBytes: function getBytes(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             // When a JsonMslObject is decoded, there's no way for us to know if a
             // value is supposed to be a String to byte[]. Therefore interpret
             // Strings as Base64-encoded data consistent with the toJSONString()
@@ -153,13 +165,13 @@ var JsonMslObject$encode;
                 return value;
             try {
 	            if (value instanceof String)
-	                return base64$decode(value.valueOf());
+	                return Base64.decode(value.valueOf());
 	            if (typeof value === 'string')
-	                return base64$decode(value);
+	                return Base64.decode(value);
             } catch (e) {
-                throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+                throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
             }
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
         },
         
         /** @inheritDoc */
@@ -173,9 +185,9 @@ var JsonMslObject$encode;
         		return value;
             try {
 	            if (value instanceof String)
-	                return base64$decode(value.valueOf());
+	                return Base64.decode(value.valueOf());
 	            if (typeof value === 'string')
-	                return base64$decode(value);
+	                return Base64.decode(value);
             } catch (e) {
                 // Fall through.
             }
@@ -204,13 +216,15 @@ var JsonMslObject$encode;
 
     		function next(jo, keys, i) {
     			AsyncExecutor(callback, function() {
+    			    const JsonMslArray = require('../io/JsonMslArray.js');
+    			    
 	    			if (i >= keys.length)
 	    				return jo;
 	    			
 	    			var key = keys[i];
 	    			var value = this.opt(key);
 	        		if (value instanceof Uint8Array) {
-	        			jo[key] = base64$encode(value);
+	        			jo[key] = Base64.encode(value);
 	        			next(jo, keys, i+1);
 	        		} else if (value instanceof JsonMslObject) {
 	        			value.toJSONObject(encoder, {
@@ -301,4 +315,7 @@ var JsonMslObject$encode;
         	});
         }
     });
-})();
+    
+    // Exports.
+    module.exports.encode = JsonMslObject$encode;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonMslObject'));

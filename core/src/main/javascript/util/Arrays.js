@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,7 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var Arrays$equal;
-var Arrays$isUint8Array;
-var Arrays$copyOf;
-var Arrays$hashCode;
-var Arrays$contains;
-var Arrays$containEachOther;
-var Arrays$combineTokens;
-var Arrays$concat;
-
-(function() {
+(function(require, module) {
 	"use strict";
 	
 	/**
@@ -36,7 +27,7 @@ var Arrays$concat;
 	 * @param {(Uint8Array|Array.<number>)} b second array.
 	 * @return {boolean} true if the two arrays are equal.
 	 */
-	Arrays$equal = function Arrays$equal(a, b) {
+	var Arrays$equal = function Arrays$equal(a, b) {
 	    if (a === b) return true;
 	    if (!a || !b || a.length != b.length) return false;
 	    for (var i = 0; i < a.length; ++i) {
@@ -50,7 +41,7 @@ var Arrays$concat;
 	 * @param o {*} object to test.
 	 * @returns {Boolean} true if the object is a Uint8Array.
 	 */
-	Arrays$isUint8Array = function Arrays$isUint8Array(o) {
+	var Arrays$isUint8Array = function Arrays$isUint8Array(o) {
 	    return o && o.constructor == Uint8Array;
 	};
 	
@@ -64,7 +55,7 @@ var Arrays$concat;
 	 *        in a, the result will be padded with zeros.
 	 * @return {Uint8Array|Array.<number>} a shallow copy of the array.
 	 */
-	Arrays$copyOf = function Arrays$copyOf(a, off, len) {
+	var Arrays$copyOf = function Arrays$copyOf(a, off, len) {
 	    var b;
 	
 	    // The offset is not less than the length then throw an exception.
@@ -80,7 +71,7 @@ var Arrays$concat;
 	
 	    // Clamp the length based on the offset.
 	    if (len === undefined || len === null)
-	        len = a.length;
+	        len = a.length - off;
 	
 	    // Create the copy.
 	    if (Arrays$isUint8Array(a))
@@ -101,7 +92,7 @@ var Arrays$concat;
 	 * @param {Uint8Array|Array.<number>} a the array to compute a hash code for.
 	 * @return {number} the computed hash code.
 	 */
-	Arrays$hashCode = function Arrays$hashCode(a) {
+	var Arrays$hashCode = function Arrays$hashCode(a) {
 	    if (!(Arrays$isUint8Array(a)) && !(Array.isArray(a)))
 	        throw new TypeError('Cannot compute the hash code of ' + a);
 	    var result = 1;
@@ -124,7 +115,7 @@ var Arrays$concat;
 	 * @param {Array} b second array or single element.
 	 * @return {boolean} true if a contains all the elements of b.
 	 */
-	Arrays$contains = function Arrays$contains(a, b) {
+	var Arrays$contains = function Arrays$contains(a, b) {
 	    if (a === b) return true;
 	    if (!a || !b) return false;
 	    if (!(b instanceof Array))
@@ -157,7 +148,7 @@ var Arrays$concat;
 	 * @param {Array.<*>} b second array.
 	 * @return {boolean} true if a contains all the elements of b and vice versa.
 	 */
-	Arrays$containEachOther = function Arrays$containEachOther(a, b) {
+	var Arrays$containEachOther = function Arrays$containEachOther(a, b) {
 	    return Arrays$contains(a, b) && (a.length == b.length || Arrays$contains(b, a));
 	};
 	
@@ -174,7 +165,7 @@ var Arrays$concat;
 	 * @param {Function=} f optional filter function for adding elements of b.
 	 * @returns {Array.<MasterToken>|Array.<UserIdToken>|Array.<ServiceToken>} combined array.
 	 */
-	Arrays$combineTokens = function Arrays$combineTokens(a, b, f) {
+	var Arrays$combineTokens = function Arrays$combineTokens(a, b, f) {
 	    if (!f) f = function(e) { return true; };
 	    var map = {};
 	    a.forEach(function(e) {
@@ -196,7 +187,7 @@ var Arrays$concat;
 	 * @param {Array.<Uint8Array>} arrays array of Uint8Array to merge
 	 * @returns {Uint8Array} concatenated array
 	 */
-	Arrays$concat = function Arrays$concat(arrays) {
+	var Arrays$concat = function Arrays$concat(arrays) {
 	    var result,
 	        i,
 	        current,
@@ -215,4 +206,14 @@ var Arrays$concat;
 	    }
 	    return result;
 	};
-})();
+	
+	// Exports.
+	module.exports.equal = Arrays$equal;
+	module.exports.isUint8Array = Arrays$isUint8Array;
+	module.exports.copyOf = Arrays$copyOf;
+	module.exports.hashCode = Arrays$hashCode;
+	module.exports.contains = Arrays$contains;
+	module.exports.containEachOther = Arrays$containEachOther;
+	module.exports.combineTokens = Arrays$combineTokens;
+	module.exports.concat = Arrays$concat;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Arrays'));

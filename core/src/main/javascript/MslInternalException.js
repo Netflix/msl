@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslInternalException;
-
-(function() {
-    MslInternalException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	
+    var MslInternalException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -70,4 +72,4 @@ var MslInternalException;
 
     // Attach methods.
     MslInternalException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslInternalException'));

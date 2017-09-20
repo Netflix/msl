@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 describe("BlockingQueue", function() {
+    const BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    
     var TIMEOUT = 150;
     var DELAY = 1;
     var NAME = "name";
@@ -120,7 +124,7 @@ describe("BlockingQueue", function() {
             expect(t).toBeDefined();
             deliver(queue, items);
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
+        waitsFor(function() { return Arrays.equal(consumer.items, items); }, "items", 200);
     });
     
     it("add and poll", function() {
@@ -130,7 +134,7 @@ describe("BlockingQueue", function() {
             var t = queue.poll(TIMEOUT, consumer.getCallback(NAME));
             expect(t).toBeDefined();
         });
-        waitsFor(function() { return Arrays$equal(consumer.items, items); }, "items", 200);
+        waitsFor(function() { return Arrays.equal(consumer.items, items); }, "items", 200);
     });
     
     it("multiple poll and add", function() {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,15 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EntityAuthenticationScheme;
-var EntityAuthenticationScheme$getScheme;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
     
-    EntityAuthenticationScheme = util.Class.create({
+    var EntityAuthenticationScheme = module.exports = Class.create({
         /**
          * Define an entity authentication scheme with the specified name and
          * cryptographic properties.
@@ -48,7 +47,7 @@ var EntityAuthenticationScheme$getScheme;
                 protectsIntegrity: { value: protects, writable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-
+            
             // Add this scheme to the map.
             schemes[name] = this;
         },
@@ -59,7 +58,7 @@ var EntityAuthenticationScheme$getScheme;
         },
     });
 
-    util.Class.mixin(EntityAuthenticationScheme,
+    Class.mixin(EntityAuthenticationScheme,
     /** @lends {EntityAuthenticationScheme} */
     ({
         /** Pre-shared keys. */
@@ -83,14 +82,19 @@ var EntityAuthenticationScheme$getScheme;
         /** ESN Migration. */
         MIGRATION : new EntityAuthenticationScheme("MIGRATION", false, false),
     }));
-    Object.freeze(EntityAuthenticationScheme);
 
     /**
      * @param {string} name the entity authentication scheme name.
      * @return {?EntityAuthenticationScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    EntityAuthenticationScheme$getScheme = function EntityAuthenticationScheme$getScheme(name) {
+    var EntityAuthenticationScheme$getScheme = function EntityAuthenticationScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    Object.defineProperties(EntityAuthenticationScheme, {
+        getScheme: { value: EntityAuthenticationScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(EntityAuthenticationScheme);
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EntityAuthenticationScheme'));

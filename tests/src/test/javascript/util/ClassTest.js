@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 describe("Class", function() {
-	var Animal = util.Class.create({
+    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    
+	var Animal = Class.create({
 		init: function(type, name) {
 			var props = {
 				classname: { value: "AnimalClass", writable: false, enumerable: false, configurable: true },

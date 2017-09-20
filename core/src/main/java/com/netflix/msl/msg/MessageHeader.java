@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -914,11 +914,11 @@ public class MessageHeader extends Header {
         // Create the encoding.
         final MslObject header = encoder.createObject();
         if (masterToken != null)
-            header.put(HeaderKeys.KEY_MASTER_TOKEN, masterToken);
+            header.put(Header.KEY_MASTER_TOKEN, masterToken);
         else
-            header.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-        header.put(HeaderKeys.KEY_HEADERDATA, ciphertext);
-        header.put(HeaderKeys.KEY_SIGNATURE, signature);
+            header.put(Header.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+        header.put(Header.KEY_HEADERDATA, ciphertext);
+        header.put(Header.KEY_SIGNATURE, signature);
         final byte[] encoding = encoder.encodeObject(header, format);
         
         // Cache and return the encoding.

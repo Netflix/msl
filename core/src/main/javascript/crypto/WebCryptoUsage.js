@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,21 +19,29 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var WebCryptoUsage = {
-    /** encrypt/decrypt */
-    ENCRYPT_DECRYPT: [ 'encrypt', 'decrypt' ],
-    /** wrap/unwrap */
-    WRAP_UNWRAP: [ 'wrap', 'unwrap' ],
-    /** wrap */
-    WRAP: [ 'wrap'],
-    /** unwrap */
-    UNWRAP: [ 'unwrap' ],
-    /** sign/verify */
-    SIGN_VERIFY: [ 'sign', 'verify' ],
-    /** sign */
-    SIGN: [ 'sign' ],
-    /** verify */
-    VERIFY: [ 'verify' ],
-    /** derive key */
-    DERIVE_KEY: [ 'deriveKey' ],
-};
+(function(require, module) {
+	"use strict";
+		
+	var WebCryptoUsage = module.exports = {
+	    /** encrypt/decrypt */
+	    ENCRYPT_DECRYPT: [ 'encrypt', 'decrypt' ],
+	    /** encrypt */
+	    ENCRYPT: [ 'encrypt' ],
+	    /** decrypt */
+	    DECRYPT: [ 'decrypt' ],
+	    /** wrap/unwrap */
+	    WRAP_UNWRAP: [ 'wrap', 'unwrap' ],
+	    /** wrap */
+	    WRAP: [ 'wrap'],
+	    /** unwrap */
+	    UNWRAP: [ 'unwrap' ],
+	    /** sign/verify */
+	    SIGN_VERIFY: [ 'sign', 'verify' ],
+	    /** sign */
+	    SIGN: [ 'sign' ],
+	    /** verify */
+	    VERIFY: [ 'verify' ],
+	    /** derive key */
+	    DERIVE_KEY: [ 'deriveKey' ],
+	};
+})(require, (typeof module !== 'undefined') ? module : mkmodule('WebCryptoUsage'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,25 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SymmetricCryptoContext;
-
-(function() {
-    SymmetricCryptoContext = ICryptoContext.extend({
+(function(require, module) {
+	"use strict";
+	
+	const ICryptoContext = require('../crypto/ICryptoContext.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslError = require('../MslError.js');
+	const MslCiphertextEnvelope = require('../crypto/MslCiphertextEnvelope.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslException = require('../MslException.js');
+	const MslCrypto = require('../crypto/MslCrypto.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const SecretKey = require('../crypto/SecretKey.js');
+	const PublicKey = require('../crypto/PublicKey.js');
+	const PrivateKey = require('../crypto/PrivateKey.js');
+	const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+	
+    var SymmetricCryptoContext = module.exports = ICryptoContext.extend({
         /**
          * <p>Create a new symmetric crypto context using the provided keys.</p>
          * 
@@ -37,9 +52,9 @@ var SymmetricCryptoContext;
          *
          * @param {MslContext} ctx MSL context.
          * @param {string} id the key set identity.
-         * @param {CipherKey} encryptionKey the key used for encryption/decryption.
-         * @param {CipherKey} signatureKey the key used for HMAC or CMAC computation.
-         * @param {CipherKey} wrapKey the key used for wrap/unwrap.
+         * @param {SecretKey} encryptionKey the key used for encryption/decryption.
+         * @param {SecretKey} signatureKey the key used for HMAC or CMAC computation.
+         * @param {SecretKey} wrapKey the key used for wrap/unwrap.
          * @throws MslCryptoException if the encryption key length is unsupported.
          */
         init: function init(ctx, id, encryptionKey, signatureKey, wrapKey) {
@@ -76,13 +91,13 @@ var SymmetricCryptoContext;
 
                 var oncomplete = function(ciphertext) {
                     // Return ciphertext envelope byte representation.
-                    MslCiphertextEnvelope$create(self.id, iv, new Uint8Array(ciphertext), {
+                    MslCiphertextEnvelope.create(self.id, iv, new Uint8Array(ciphertext), {
                         result: function(envelope) {
                             envelope.toMslEncoding(encoder, format, {
                                 result: callback.result,
                                 error: function(e) {
                                     if (e instanceof MslEncoderException)
-                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, e);
+                                        e = new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_ENCODE_ERROR, null, e);
                                     callback.error(e);
                                 },
                             });
@@ -95,9 +110,9 @@ var SymmetricCryptoContext;
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR));
+                    callback.error(new MslCryptoException(MslError.ENCRYPT_ERROR, null, e));
                 };
-                mslCrypto['encrypt']({ 'name': WebCryptoAlgorithm.AES_CBC['name'], 'iv': iv }, self.encryptionKey, data)
+                MslCrypto['encrypt']({ 'name': WebCryptoAlgorithm.AES_CBC['name'], 'iv': iv }, self.encryptionKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -122,17 +137,17 @@ var SymmetricCryptoContext;
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope$parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
+                MslCiphertextEnvelope.parse(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1, {
                     result: function(envelope) {
                         try {
                             // Decrypt ciphertext.
                             var oncomplete = function(plaintext) {
                                 callback.result(new Uint8Array(plaintext));
                             };
-                            var onerror = function() {
-                                callback.error(new MslCryptoException(MslError.DECRYPT_ERROR));
+                            var onerror = function(e) {
+                                callback.error(new MslCryptoException(MslError.DECRYPT_ERROR, null, e));
                             };
-                            mslCrypto['decrypt']({ 'name': WebCryptoAlgorithm.AES_CBC['name'], 'iv': envelope.iv }, self.encryptionKey, envelope.ciphertext)
+                            MslCrypto['decrypt']({ 'name': WebCryptoAlgorithm.AES_CBC['name'], 'iv': envelope.iv }, self.encryptionKey, envelope.ciphertext)
                                 .then(oncomplete, onerror);
                         } catch (e) {
                             if (!(e instanceof MslException))
@@ -162,9 +177,9 @@ var SymmetricCryptoContext;
                     callback.result(new Uint8Array(result));
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.WRAP_ERROR));
+                    callback.error(new MslCryptoException(MslError.WRAP_ERROR, null, e));
                 };
-                mslCrypto['wrapKey']('raw', key.rawKey, this.wrapKey, this.wrapKey.algorithm)
+                MslCrypto['wrapKey']('raw', key.rawKey, this.wrapKey, this.wrapKey.algorithm)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -178,9 +193,9 @@ var SymmetricCryptoContext;
                     constructKey(result);
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR));
+                    callback.error(new MslCryptoException(MslError.UNWRAP_ERROR, null, e));
                 };
-                mslCrypto['unwrapKey']('raw', data, this.wrapKey, this.wrapKey.algorithm, algo, false, usages)
+                MslCrypto['unwrapKey']('raw', data, this.wrapKey, this.wrapKey.algorithm, algo, false, usages)
                     .then(oncomplete, onerror);
             }, this);
 
@@ -188,13 +203,13 @@ var SymmetricCryptoContext;
                 AsyncExecutor(callback, function() {
                     switch (rawKey["type"]) {
                         case "secret":
-                            CipherKey$create(rawKey, callback);
+                            SecretKey.create(rawKey, callback);
                             break;
                         case "public":
-                            PublicKey$create(rawKey, callback);
+                            PublicKey.create(rawKey, callback);
                             break;
                         case "private":
-                            PrivateKey$create(rawKey, callback);
+                            PrivateKey.create(rawKey, callback);
                             break;
                         default:
                             throw new MslCryptoException(MslError.UNSUPPORTED_KEY, "type: " + rawKey["type"]);
@@ -214,14 +229,14 @@ var SymmetricCryptoContext;
                 var oncomplete = function(hash) {
                     AsyncExecutor(callback, function() {
                         // Return the signature envelope byte representation.
-                        MslSignatureEnvelope$create(new Uint8Array(hash), {
+                        MslSignatureEnvelope.create(new Uint8Array(hash), {
                             result: function(envelope) {
                             	envelope.getBytes(encoder, format, {
                             		result: callback.result,
                             		error: function(e) {
                             			AsyncExecutor(callback, function() {
 		                                    if (e instanceof MslEncoderException)
-		                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, e);
+		                                        e = new MslCryptoException(MslError.SIGNATURE_ENVELOPE_ENCODE_ERROR, null, e);
 		                                    callback.error(e);
                             			}, self);
                             		},
@@ -231,10 +246,10 @@ var SymmetricCryptoContext;
                         });
                     }, self);
                 };
-                var onerror = function() {
-                    callback.error(new MslCryptoException(MslError.HMAC_ERROR));
+                var onerror = function(e) {
+                    callback.error(new MslCryptoException(MslError.HMAC_ERROR, null, e));
                 };
-                mslCrypto['sign'](this.signatureKey.algorithm, this.signatureKey, data)
+                MslCrypto['sign'](this.signatureKey.algorithm, this.signatureKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -247,15 +262,15 @@ var SymmetricCryptoContext;
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no signature key.");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
+                MslSignatureEnvelope.parse(signature, MslSignatureEnvelope.Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             // Verify the hash.
                             var oncomplete = callback.result;
                             var onerror = function(e) {
-                                callback.error(new MslCryptoException(MslError.HMAC_ERROR));
+                                callback.error(new MslCryptoException(MslError.HMAC_ERROR, null, e));
                             };
-                            mslCrypto['verify'](this.signatureKey.algorithm, this.signatureKey, envelope.signature, data)
+                            MslCrypto['verify'](this.signatureKey.algorithm, this.signatureKey, envelope.signature, data)
                                 .then(oncomplete, onerror);
                         }, self);
                     },
@@ -264,4 +279,4 @@ var SymmetricCryptoContext;
             }, this);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SymmetricCryptoContext'));

@@ -1,7 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
- *//**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +21,10 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncoderFormat;
-var MslEncoderFormat$getFormat;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
     
     /**
      * Map of names onto formats.
@@ -55,7 +52,7 @@ var MslEncoderFormat$getFormat;
      * @param {string} name the encoder format name.
      * @param {Uint8Array} identifier the byte stream identifier.
      */
-    MslEncoderFormat = function MslEncoderFormat(name, identifier) {
+    var MslEncoderFormat = module.exports = function MslEncoderFormat(name, identifier) {
         // The properties.
         var props = {
             name: { value: name, writable: false, configurable: false },
@@ -68,24 +65,26 @@ var MslEncoderFormat$getFormat;
         formatsById[identifier] = this;
     };
     
-    util.Class.mixin(MslEncoderFormat,
+    Class.mixin(MslEncoderFormat,
     /** @lends {MslEncoderFormat} */
     ({
         /** JSON. */
         JSON : new MslEncoderFormat("JSON", JSON_IDENTIFIER),
+        
+        /**
+         * @param {string|Uint8Array} f the encoding format name or identifier.
+         * @return {MslEncoderFormat} the encoding format identified by the specified name or
+         *         identifier, or {@code null} if there is none.
+         */
+        getFormat: function getFormat(f) {
+            if (typeof f === 'string' && formatsByName[f])
+                return formatsByName[f];
+            if (formatsById[f])
+                return formatsById[f];
+            return null;
+        },
     }));
     Object.freeze(MslEncoderFormat);
     
-    /**
-     * @param {string|Uint8Array} f the encoding format name or identifier.
-     * @return {MslEncoderFormat} the encoding format identified by the specified name or
-     *         identifier, or {@code null} if there is none.
-     */
-    MslEncoderFormat$getFormat = function MslEncoderFormat$getFormat(f) {
-        if (typeof f === 'string' && formatsByName[f])
-            return formatsByName[f];
-        if (formatsById[f])
-            return formatsById[f];
-        return null;
-    };
-})();
+    // Exports.
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderFormat'));

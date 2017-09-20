@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var KeySet;
-var KeySetStore;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
     
     /**
      * A set of encryption, HMAC, and wrapping keys.
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    KeySet = util.Class.create({
+    var KeySet = Class.create({
         /**
          * Create a new key set with the given keys.
          * 
-         * @param {CipherKey} encryptionKey the encryption key.
-         * @param {CipherKey} hmacKey the HMAC key.
-         * @param {CipherKey} wrappingKey the wrapping key.
+         * @param {SecretKey} encryptionKey the encryption key.
+         * @param {SecretKey} hmacKey the HMAC key.
+         * @param {SecretKey} wrappingKey the wrapping key.
          */
         init: function init(encryptionKey, hmacKey, wrappingKey) {
             // The properties.
@@ -48,7 +47,7 @@ var KeySetStore;
      * @author Wesley Miaw <wmiaw@netflix.com>
      * @interface
      */
-    KeySetStore = util.Class.create({
+    var KeySetStore = module.exports = Class.create({
         /**
          * Return the encryption, HMAC, and wrapping keys for the given identity.
          * 
@@ -57,4 +56,7 @@ var KeySetStore;
          */
         getKeys: function(identity) {},
     });
-})();
+    
+    // Exports.
+    module.exports.KeySet = KeySet;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeySetStore'));

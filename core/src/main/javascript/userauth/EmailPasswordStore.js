@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,19 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EmailPasswordStore = util.Class.create({    
-    /**
-     * Return the user if the email/password combination is valid.
-     * 
-     * @param {string} email email address.
-     * @param {string} password password.
-     * @return {MslUser} the MSL user or null if there is no such user.
-     */
-    isUser: function(email, password) {},
-});
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+		
+	var EmailPasswordStore = module.exports = Class.create({    
+	    /**
+	     * Return the user if the email/password combination is valid.
+	     * 
+	     * @param {string} email email address.
+	     * @param {string} password password.
+	     * @return {MslUser} the MSL user or null if there is no such user.
+	     */
+	    isUser: function(email, password) {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EmailPasswordStore'));

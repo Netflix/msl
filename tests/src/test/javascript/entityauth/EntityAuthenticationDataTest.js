@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,15 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EntityAuthenticationData", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key entity authentication data. */
@@ -38,12 +47,12 @@ describe("EntityAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -58,7 +67,7 @@ describe("EntityAuthenticationData", function() {
 	        var mo = encoder.createObject();
 	        mo.put(KEY_SCHEME + "x", EntityAuthenticationScheme.NONE.name);
 	        mo.put(KEY_AUTHDATA, new MslObject());
-	        EntityAuthenticationData$parse(ctx, mo, {
+	        EntityAuthenticationData.parse(ctx, mo, {
 	            result: function() {},
 	            error: function(e) { exception = e; },
 	        });
@@ -77,7 +86,7 @@ describe("EntityAuthenticationData", function() {
 	        var mo = encoder.createObject();
 	        mo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name);
 	        mo.put(KEY_AUTHDATA + "x", new MslObject());
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -96,7 +105,7 @@ describe("EntityAuthenticationData", function() {
 	        var mo = encoder.createObject();
 	        mo.put(KEY_SCHEME, "x");
 	        mo.put(KEY_AUTHDATA, new MslObject());
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });
@@ -112,7 +121,7 @@ describe("EntityAuthenticationData", function() {
     it("authentication factory not found", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -125,7 +134,7 @@ describe("EntityAuthenticationData", function() {
             var mo = encoder.createObject();
             mo.put(KEY_SCHEME, EntityAuthenticationScheme.NONE.name);
             mo.put(KEY_AUTHDATA, new MslObject());
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function() {},
                 error: function(e) { exception = e; },
             });

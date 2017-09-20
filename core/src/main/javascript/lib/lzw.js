@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var lzw$compress;
-var lzw$uncompress;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
 
     /**
      * Byte size in bits.
@@ -77,7 +74,7 @@ var lzw$uncompress;
      * @return {?Uint8Array} the compressed data or null if the compressed data
      *         would be larger than the original data.
      */
-    lzw$compress = function(data) {
+    var lzw$compress = function(data) {
         // Populate the initial dictionary.
         var dictionary = {};
         for (var key in COMPRESS_DICTIONARY)
@@ -197,7 +194,7 @@ var lzw$uncompress;
      * @return {Uint8Array} the uncompressed data or null if there is no data
      *         to uncompress.
      */
-    lzw$uncompress = function (data) {
+    var lzw$extend = function (data) {
         // Populate the initial dictionary by copying the initial dictionary
         var dictionary = UNCOMPRESS_DICTIONARY.slice();
 
@@ -313,4 +310,8 @@ var lzw$uncompress;
         // Return the uncompressed data which may be empty.
         return uncompressed.subarray(0, index);
     };
-})();
+    
+    // Exports.
+    module.exports.compress = lzw$compress;
+    module.exports.extend = lzw$extend;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('lzw'));

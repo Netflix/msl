@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,13 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ConsoleFilterStreamFactory;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const InputStream = require('../io/InputStream.js');
+	const OutputStream = require('../io/OutputStream.js');
+	const FilterStreamFactory = require('../io/FilterStreamFactory.js');
+	
     /**
      * A filter input stream that outputs read data to stdout. A new line is
      * output when the stream is closed.
@@ -114,7 +118,7 @@ var ConsoleFilterStreamFactory;
         },
     });
     
-    ConsoleFilterStreamFactory = FilterStreamFactory.extend({
+    var ConsoleFilterStreamFactory = module.exports = FilterStreamFactory.extend({
 	    /** @inheritDoc */
 	    getInputStream: function getInputStream(input) {
 	        return new ConsoleInputStream(input);
@@ -125,4 +129,4 @@ var ConsoleFilterStreamFactory;
 	        return new ConsoleOutputStream(output);
 	    },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ConsoleFilterStreamFactory'));

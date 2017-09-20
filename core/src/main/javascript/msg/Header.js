@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,9 +52,48 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var Header$parseHeader;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslError = require('../MslError.js');
+	
+	/**
+	 * Common header keys.
+	 * @const
+	 * @type {string}
+	 */
+	var Header$KEY_ENTITY_AUTHENTICATION_DATA = "entityauthdata";
+	/**
+	 * Key master token.
+	 * @const
+	 * @type {string}
+	 */
+	var Header$KEY_MASTER_TOKEN = "mastertoken";
+	/**
+	 * Key header data.
+	 * @const
+	 * @type {string}
+	 */
+	var Header$KEY_HEADERDATA = "headerdata";
+	/**
+	 * Key error data.
+	 * @const
+	 * @type {string}
+	 */
+	var Header$KEY_ERRORDATA = "errordata";
+	/**
+	 * Key signature.
+	 * @const
+	 * @type {string}
+	 */
+	var Header$KEY_SIGNATURE = "signature";
+	
     /**
      * <p>Construct a new header from the provided MSL object.</p>
      * 
@@ -93,7 +132,7 @@ var Header$parseHeader;
      *         authentication data or a master token or a token is improperly
      *         bound to another token.
      */
-    Header$parseHeader = function Header$parseHeader(ctx, headerMo, cryptoContexts, callback) {
+    var Header$parseHeader = function Header$parseHeader(ctx, headerMo, cryptoContexts, callback) {
         AsyncExecutor(callback, function() {
             // Pull authentication data.
             var entityAuthDataMo;
@@ -117,7 +156,7 @@ var Header$parseHeader;
             
             // Reconstruct entity authentication data.
             if (entityAuthDataMo) {
-                EntityAuthenticationData$parse(ctx, entityAuthDataMo, {
+                EntityAuthenticationData.parse(ctx, entityAuthDataMo, {
                     result: function(entityAuthData) {
                         reconstructMasterToken(entityAuthData, masterTokenMo, signature);
                     },
@@ -130,7 +169,7 @@ var Header$parseHeader;
         
         function reconstructMasterToken(entityAuthData, masterTokenMo, signature) {
             if (masterTokenMo) {
-                MasterToken$parse(ctx, masterTokenMo, {
+                MasterToken.parse(ctx, masterTokenMo, {
                     result: function(masterToken) {
                         processHeaders(entityAuthData, masterToken, signature);
                     },
@@ -143,13 +182,16 @@ var Header$parseHeader;
         
         function processHeaders(entityAuthData, masterToken, signature) {
             AsyncExecutor(callback, function() {
+                const MessageHeader = require('../msg/MessageHeader.js');
+                const ErrorHeader = require('../msg/ErrorHeader.js');
+                
                 try {
                     // Process message headers.
                     if (headerMo.has(Header$KEY_HEADERDATA)) {
                         var headerdata = headerMo.getBytes(Header$KEY_HEADERDATA);
                         if (headerdata.length == 0)
                             throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenicationData(entityAuthData);
-                        MessageHeader$parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
+                        MessageHeader.parse(ctx, headerdata, entityAuthData, masterToken, signature, cryptoContexts, callback);
                     }
                     
                     // Process error headers.
@@ -157,7 +199,7 @@ var Header$parseHeader;
                         var errordata = headerMo.getBytes(Header$KEY_ERRORDATA);
                         if (errordata.length == 0)
                             throw new MslMessageException(MslError.HEADER_DATA_MISSING).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
-                        ErrorHeader$parse(ctx, errordata, entityAuthData, signature, callback);
+                        ErrorHeader.parse(ctx, errordata, entityAuthData, signature, callback);
                     }
                     
                     // Unknown header.
@@ -172,4 +214,12 @@ var Header$parseHeader;
             });
         }
     };
-})();
+    
+    // Exports.
+    module.exports.KEY_ENTITY_AUTHENTICATION_DATA = Header$KEY_ENTITY_AUTHENTICATION_DATA;
+    module.exports.KEY_MASTER_TOKEN = Header$KEY_MASTER_TOKEN;
+    module.exports.KEY_HEADERDATA = Header$KEY_HEADERDATA;
+    module.exports.KEY_ERRORDATA = Header$KEY_ERRORDATA;
+    module.exports.KEY_SIGNATURE = Header$KEY_SIGNATURE;
+    module.exports.parseHeader = Header$parseHeader;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('Header'));

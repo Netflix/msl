@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,62 +20,69 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockCryptoContextRepository = WrapCryptoContextRepository.extend({
-    init: function init() {
-        // The properties.
-        var props = {
-            /**
-             * Newest wrap data.
-             * @type {Uint8Array}
-             */
-            _wrapdata : { value: null, writable: true, enumerable: false, configurable: false },
-            _wrapdataB64 : { value: null, writable: true, enumerable: false, configurable: false },
-            /**
-             * Map of wrap data onto crypto contexts.
-             * @type {Object.<String,ICryptoContext>}
-             */
-            _cryptoContexts: { value: {}, writable: true, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+(function(require, module) {
+    "use strict";
     
-    /** @inheritDoc */
-    addCryptoContext: function addCryptoContext(wrapdata, cryptoContext) {
-        var key = base64$encode(wrapdata);
-        this._cryptoContexts[key] = cryptoContext;
-        this._wrapdata = wrapdata;
-        this._wrapdataB64 = key;
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(wrapdata) {
-        var key = base64$encode(wrapdata);
-        return (this._cryptoContexts[key]) ? this._cryptoContexts[key] : null;
-    },
-
-    /** @inheritDoc */
-    removeCryptoContext: function removeCryptoContext(wrapdata) {
-        var key = base64$encode(wrapdata);
-        delete this._cryptoContexts[key];
-        if (this._wrapdataB64 == key) {
+    const WrapCryptoContextRepository = require('../../../../../core/src/main/javascript/keyx/WrapCryptoContextRepository.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    
+    var MockCryptoContextRepository = module.exports = WrapCryptoContextRepository.extend({
+        init: function init() {
+            // The properties.
+            var props = {
+                /**
+                 * Newest wrap data.
+                 * @type {Uint8Array}
+                 */
+                _wrapdata : { value: null, writable: true, enumerable: false, configurable: false },
+                _wrapdataB64 : { value: null, writable: true, enumerable: false, configurable: false },
+                /**
+                 * Map of wrap data onto crypto contexts.
+                 * @type {Object.<String,ICryptoContext>}
+                 */
+                _cryptoContexts: { value: {}, writable: true, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+        
+        /** @inheritDoc */
+        addCryptoContext: function addCryptoContext(wrapdata, cryptoContext) {
+            var key = Base64.encode(wrapdata);
+            this._cryptoContexts[key] = cryptoContext;
+            this._wrapdata = wrapdata;
+            this._wrapdataB64 = key;
+        },
+    
+        /** @inheritDoc */
+        getCryptoContext: function getCryptoContext(wrapdata) {
+            var key = Base64.encode(wrapdata);
+            return (this._cryptoContexts[key]) ? this._cryptoContexts[key] : null;
+        },
+    
+        /** @inheritDoc */
+        removeCryptoContext: function removeCryptoContext(wrapdata) {
+            var key = Base64.encode(wrapdata);
+            delete this._cryptoContexts[key];
+            if (this._wrapdataB64 == key) {
+                this._wrapdata = null;
+                this._wrapdataB64 = null;
+            }
+        },
+        
+        /**
+         * @return {Uint8Array} the newest wrap data or null if there is none.
+         */
+        getWrapdata: function getWrapdata() {
+            return this._wrapdata;
+        },
+        
+        /**
+         * Clear the repository of all state data.
+         */
+        clear: function clear() {
+            this._cryptoContexts = {};
             this._wrapdata = null;
             this._wrapdataB64 = null;
-        }
-    },
-    
-    /**
-     * @return {Uint8Array} the newest wrap data or null if there is none.
-     */
-    getWrapdata: function getWrapdata() {
-        return this._wrapdata;
-    },
-    
-    /**
-     * Clear the repository of all state data.
-     */
-    clear: function clear() {
-        this._cryptoContexts = {};
-        this._wrapdata = null;
-        this._wrapdataB64 = null;
-    },
-});
+        },
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockCryptoContextRepository'));

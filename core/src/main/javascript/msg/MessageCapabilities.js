@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageCapabilities;
-var MessageCapabilities$parse;
-var MessageCapabilities$intersection;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Arrays = require('../util/Arrays.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key compression algorithms.
      * @const
@@ -82,7 +89,7 @@ var MessageCapabilities$intersection;
      * @return {?MessageCapabilities} the intersection of message capabilities or {@code null} if one
      *         of the message capabilities is {@code null}.
      */
-    MessageCapabilities$intersection = function MessageCapabilities$intersection(mc1, mc2) {
+    var MessageCapabilities$intersection = function MessageCapabilities$intersection(mc1, mc2) {
         if (!mc1 || !mc2)
             return null;
         
@@ -99,7 +106,7 @@ var MessageCapabilities$intersection;
         return new MessageCapabilities(compressionAlgos, languages, encoderFormats);
     };
 
-    MessageCapabilities = MslEncodable.extend({
+    var MessageCapabilities = module.exports = MslEncodable.extend({
         /**
          * Create a new message capabilities object with the specified supported
          * features.
@@ -149,9 +156,9 @@ var MessageCapabilities$intersection;
         equals: function equals(that) {
             if (this === that) return true;
             if (!(that instanceof MessageCapabilities)) return false;
-            return Arrays$containEachOther(this.compressionAlgorithms, that.compressionAlgorithms) &&
-                   Arrays$containEachOther(this.languages, that.languages) &&
-                   Arrays$containEachOther(this.encoderFormats, that.encoderFormats);
+            return Arrays.containEachOther(this.compressionAlgorithms, that.compressionAlgorithms) &&
+                   Arrays.containEachOther(this.languages, that.languages) &&
+                   Arrays.containEachOther(this.encoderFormats, that.encoderFormats);
         },
 
         /** @inheritDoc */
@@ -167,7 +174,7 @@ var MessageCapabilities$intersection;
      * @param {Object} capabilitiesMo the MSL object.
      * @throws MslEncodingException if there is an error parsing the data.
      */
-    MessageCapabilities$parse = function MessageCapabilities$parse(capabilitiesMo) {
+    var MessageCapabilities$parse = function MessageCapabilities$parse(capabilitiesMo) {
         try {
             // Extract compression algorithms.
             var compressionAlgos = [];
@@ -175,7 +182,7 @@ var MessageCapabilities$intersection;
             for (var i = 0; algos && i < algos.size(); ++i) {
                 var algo = algos.getString(i);
                 // Ignore unsupported algorithms.
-                if (MslConstants$CompressionAlgorithm[algo])
+                if (MslConstants.CompressionAlgorithm[algo])
                     compressionAlgos.push(algo);
             }
             
@@ -190,7 +197,7 @@ var MessageCapabilities$intersection;
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
             for (var i = 0; formats && i < formats.size(); ++i) {
                 var format = formats.getString(i);
-                var encoderFormat = MslEncoderFormat$getFormat(format);
+                var encoderFormat = MslEncoderFormat.getFormat(format);
                 // Ignore unsupported formats.
                 if (encoderFormat)
                     encoderFormats.push(encoderFormat);
@@ -203,4 +210,8 @@ var MessageCapabilities$intersection;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = MessageCapabilities$parse;
+    module.exports.intersection = MessageCapabilities$intersection;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageCapabilities'));

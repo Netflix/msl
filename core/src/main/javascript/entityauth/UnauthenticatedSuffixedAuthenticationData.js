@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,11 +41,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UnauthenticatedSuffixedAuthenticationData;
-var UnauthenticatedSuffixedAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
     "use strict";
+
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require("../util/AsyncExecutor.js");
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslError = require('../MslError.js');
     
     /**
      * Key entity root.
@@ -67,7 +71,7 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
      */
     var CONCAT_CHAR = ".";
     
-    UnauthenticatedSuffixedAuthenticationData = EntityAuthenticationData.extend({
+    var UnauthenticatedSuffixedAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * Construct a new unauthenticated suffixed entity authentication data
          * instance from the specified entity identity root and suffix.
@@ -122,7 +126,7 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the JSON
      *         representation.
      */
-    UnauthenticatedSuffixedAuthenticationData$parse = function UnauthenticatedSuffixedAuthenticationData$parse(unauthSuffixedAuthMo) {
+    var UnauthenticatedSuffixedAuthenticationData$parse = function UnauthenticatedSuffixedAuthenticationData$parse(unauthSuffixedAuthMo) {
         try {
             var root = unauthSuffixedAuthMo.getString(KEY_ROOT);
             var suffix = unauthSuffixedAuthMo.getString(KEY_SUFFIX);
@@ -133,4 +137,7 @@ var UnauthenticatedSuffixedAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = UnauthenticatedSuffixedAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UnauthenticatedSuffixedAuthenticationData'));

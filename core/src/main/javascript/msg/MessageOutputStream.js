@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,23 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MessageOutputStream;
-var MessageOutputStream$create;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const OutputStream = require('../io/OutputStream.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MessageHeader = require('../msg/MessageHeader.js');
+	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+    const PayloadChunk = require('../msg/PayloadChunk.js');
+	const MslConstants = require('../MslConstants.js');
+	const BlockingQueue = require('../util/BlockingQueue.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslIoException = require('../MslIoException.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const ErrorHeader = require('../msg/ErrorHeader.js');
+	const MslException = require('../MslException.js');
     
-    MessageOutputStream = OutputStream.extend({
+    var MessageOutputStream = module.exports = OutputStream.extend({
         /**
          * Construct a new message output stream. The header is output
          * immediately by calling {@code #flush()} on the destination output
@@ -71,10 +81,10 @@ var MessageOutputStream$create;
                 var compressionAlgo;
                 var encoderFormat;
                 if (header instanceof MessageHeader) {
-                    capabilities = MessageCapabilities$intersection(ctx.getMessageCapabilities(), header.messageCapabilities);
+                    capabilities = MessageCapabilities.intersection(ctx.getMessageCapabilities(), header.messageCapabilities);
                     if (capabilities) {
                         var compressionAlgos = capabilities.compressionAlgorithms;
-                        compressionAlgo = MslConstants$CompressionAlgorithm$getPreferredAlgorithm(compressionAlgos);
+                        compressionAlgo = MslConstants.CompressionAlgorithm.getPreferredAlgorithm(compressionAlgos);
                         var encoderFormats = capabilities.encoderFormats;
                         encoderFormat = encoder.getPreferredFormat(encoderFormats);
                     } else {
@@ -201,7 +211,7 @@ var MessageOutputStream$create;
          * future payload chunks. This function will flush any buffered data iff
          * the compression algorithm is being changed.
          *
-         * @param {MslConstants$CompressionAlgorithm} compressionAlgo payload chunk
+         * @param {MslConstants.CompressionAlgorithm} compressionAlgo payload chunk
          *            compression algorithm. Null for no compression.
          * @param {number} timeout write timeout in milliseconds.
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
@@ -254,8 +264,8 @@ var MessageOutputStream$create;
                             return true;
                         }, self);
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error
                 });
             }
         },
@@ -430,7 +440,7 @@ var MessageOutputStream$create;
                     }
 
                     // Write the payload chunk.
-                    PayloadChunk$create(this._ctx, this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
+                    PayloadChunk.create(this._ctx, this._payloadSequenceNumber, messageHeader.messageId, this._closed, this._compressionAlgo, data, this._cryptoContext, {
                         result: function(chunk) {
                             InterruptibleExecutor(callback, function() {
                                 if (this._caching) this._payloads.push(chunk);
@@ -583,7 +593,10 @@ var MessageOutputStream$create;
      *        stream, or any thrown exceptions.
      * @throws IOException if there is an error writing the header.
      */
-    MessageOutputStream$create = function MessageOutputStream$create(ctx, destination, header, cryptoContext, format, timeout, callback) {
+    var MessageOutputStream$create = function MessageOutputStream$create(ctx, destination, header, cryptoContext, format, timeout, callback) {
         new MessageOutputStream(ctx, destination, header, cryptoContext, format, timeout, callback);
     };
-})();
+    
+    // Exports.
+    module.exports.create = MessageOutputStream$create;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageOutputStream'));

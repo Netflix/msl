@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 describe("MslError", function() {
+    const MslError = require('../../../../core/src/main/javascript/MslError.js');
+    const MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
+    
     var BASE = 100000;
     
     it("JSON parse error is correct", function() {
         expect(MslError.MSL_PARSE_ERROR).not.toBeUndefined();
         expect(MslError.MSL_PARSE_ERROR).not.toBeNull();
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     
@@ -29,7 +33,7 @@ describe("MslError", function() {
     	MslError.MSL_PARSE_ERROR.responseCode = "x";
     	MslError.MSL_PARSE_ERROR.message = "x";
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
-        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants$ResponseCode.FAIL);
+        expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
     

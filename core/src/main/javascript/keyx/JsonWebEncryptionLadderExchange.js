@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,21 +34,36 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonWebEncryptionLadderExchange;
-var JsonWebEncryptionLadderExchange$Mechanism;
-var JsonWebEncryptionLadderExchange$RequestData;
-var JsonWebEncryptionLadderExchange$RequestData$parse;
-var JsonWebEncryptionLadderExchange$ResponseData;
-var JsonWebEncryptionLadderExchange$ResponseData$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const Arrays = require('../util/Arrays.js');
+	const Base64 = require('../util/Base64.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	const MslException = require('../MslException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	const SecretKey = require('../crypto/SecretKey.js');
 
     /**
      * Wrapping key wrap mechanism.
      * @enum {string}
      */
-    var Mechanism = JsonWebEncryptionLadderExchange$Mechanism = {
+    var Mechanism = {
         /** Wrapping key wrapped by PSK (AES-128 key wrap). */
         PSK: "PSK",
         /** Wrapping key wrapped by previous wrapping key (AES-128 key wrap). */
@@ -100,7 +115,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * <li>{@code wrapdata} the wrapping data for the previous wrapping key</li>
      * </ul></p>
      */
-    var RequestData = JsonWebEncryptionLadderExchange$RequestData = KeyRequestData.extend({
+    var RequestData = KeyRequestData.extend({
         /**
          * <p>Create a new JSON Web Encryption ladder key request data instance
          * with the specified mechanism and wrapping key data.</p>
@@ -149,17 +164,17 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         /** @inheritDoc */
         equals: function equals(that) {
             if (that === this) return true;
-            if (!(that instanceof JsonWebEncryptionLadderExchange$RequestData)) return false;
+            if (!(that instanceof RequestData)) return false;
             return equals.base.call(this, that) &&
                 this.mechanism == that.mechanism &&
-                Arrays$equal(this.wrapdata, that.wrapdata);
+                Arrays.equal(this.wrapdata, that.wrapdata);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             var key = uniqueKey.base.call(this) + ':' + this.mechanism;
             if (this.wrapdata)
-                key += ':' + Arrays$hashCode(this.wrapdata);
+                key += ':' + Arrays.hashCode(this.wrapdata);
             return key;
         },
     });
@@ -175,7 +190,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * @throws MslKeyExchangeException if the specified mechanism is not
      *         recognized.
      */
-    var RequestData$parse = JsonWebEncryptionLadderExchange$RequestData$parse = function RequestData$parse(keyRequestMo) {
+    var RequestData$parse = function RequestData$parse(keyRequestMo) {
         var mechanism;
         try {
             mechanism = keyRequestMo.getString(KEY_MECHANISM);
@@ -232,7 +247,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * <li>{@code hmackey} the session HMAC key in JWE format, wrapped with the new wrapping key</li>
      * </ul></p>
      */
-    var ResponseData = JsonWebEncryptionLadderExchange$ResponseData = KeyResponseData.extend({
+    var ResponseData = KeyResponseData.extend({
         /**
          * Create a new JSON Web Encryption ladder key response data instance
          * with the provided master token and wrapped keys.
@@ -271,21 +286,21 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof JsonWebEncryptionLadderExchange$ResponseData)) return false;
+            if (!(that instanceof ResponseData)) return false;
             return equals.base.call(this, that) &&
-                Arrays$equal(this.wrapKey, that.wrapKey) &&
-                Arrays$equal(this.wrapdata, that.wrapdata) &&
-                Arrays$equal(this.encryptionKey, that.encryptionKey) &&
-                Arrays$equal(this.hmacKey, that.hmacKey);
+                Arrays.equal(this.wrapKey, that.wrapKey) &&
+                Arrays.equal(this.wrapdata, that.wrapdata) &&
+                Arrays.equal(this.encryptionKey, that.encryptionKey) &&
+                Arrays.equal(this.hmacKey, that.hmacKey);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             var key = uniqueKey.base.call(this) +
-                ':' + Arrays$hashCode(this.wrapKey) +
-                ':' + Arrays$hashCode(this.wrapdata) +
-                ':' + Arrays$hashCode(this.encryptionKey) +
-                ':' + Arrays$hashCode(this.hmacKey);
+                ':' + Arrays.hashCode(this.wrapKey) +
+                ':' + Arrays.hashCode(this.wrapdata) +
+                ':' + Arrays.hashCode(this.encryptionKey) +
+                ':' + Arrays.hashCode(this.hmacKey);
             return key;
         }
     });
@@ -299,7 +314,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = JsonWebEncryptionLadderExchange$ResponseData$parse = function JsonWebEncryptionLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         try {
             var wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
             var wrapdata = keyDataMo.getBytes(KEY_WRAPDATA);
@@ -343,7 +358,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                     var cryptoContext = factory.getCryptoContext(ctx, authdata);
                     // FIXME: Get a handle to KPE.
                     var kpe = undefined;
-                    return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, kpe);
+                    return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.A128KW, JsonWebEncryptionCryptoContext.Encryption.A128GCM, kpe);
                 }
                 case Mechanism.WRAP:
                 {
@@ -352,7 +367,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                     cryptoContext.unwrap(wrapdata, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.WRAP_UNWRAP, encoder, {
                         result: function(wrapKey) {
                             AsyncExecutor(callback, function() {
-                                return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
+                                return new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.A128KW, JsonWebEncryptionCryptoContext.Encryption.A128GCM, wrapKey);
                             });
                         },
                         error: callback.error,
@@ -365,7 +380,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
         });
     }
 
-    JsonWebEncryptionLadderExchange = KeyExchangeFactory.extend({
+    var JsonWebEncryptionLadderExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new JSON Web Encryption ladder key exchange factory.
          *
@@ -427,7 +442,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                 // Create random AES-128 wrapping key.
                 var wrapBytes = new Uint8Array(16);
                 ctx.getRandom().nextBytes(wrapBytes);
-                CipherKey$import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey.import(wrapBytes, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(wrapKey) {
                         AsyncExecutor(callback, function() {
                             var mslCryptoContext = ctx.getMslCryptoContext();
@@ -519,7 +534,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
             function wrapSessionKeys(masterToken, entityAuthData, wrapKey, wrapdata, encryptionKey, hmacKey, wrappedWrapJwk) {
                 AsyncExecutor(callback, function() {
-                    var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
+                    var wrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.A128KW, JsonWebEncryptionCryptoContext.Encryption.A128GCM, wrapKey);
                     var encoder = ctx.getMslEncoderFactory();
                     wrapCryptoContext.wrap(encryptionKey, encoder, format, {
                         result: function(wrappedEncryptionJwk) {
@@ -634,7 +649,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
                                     var cryptoContext = factory.getCryptoContext(ctx, authdata);
                                     // FIXME: Get a handle to KPE.
                                     var kpe = undefined;
-                                    wrapKeyCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, kpe);
+                                    wrapKeyCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.A128KW, JsonWebEncryptionCryptoContext.Encryption.A128GCM, kpe);
                                     break;
                                 }
                                 case Mechanism.WRAP:
@@ -670,7 +685,7 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
 
             function unwrapSessionKeys(entityAuthData, response, requestWrapdata, identity, wrapKey) {
                 AsyncExecutor(callback, function() {
-                    var unwrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext$Algorithm.A128KW, JsonWebEncryptionCryptoContext$Encryption.A128GCM, wrapKey);
+                    var unwrapCryptoContext = new JsonWebEncryptionCryptoContext(ctx, JsonWebEncryptionCryptoContext.Algorithm.A128KW, JsonWebEncryptionCryptoContext.Encryption.A128GCM, wrapKey);
                     var encoder = ctx.getMslEncoderFactory();
                     unwrapCryptoContext.unwrap(response.encryptionKey, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                         result: function(encryptionKey) {
@@ -708,4 +723,11 @@ var JsonWebEncryptionLadderExchange$ResponseData$parse;
             }
         }
     });
-})();
+    
+    // Exports.
+    module.exports.Mechanism = Mechanism;
+    module.exports.RequestData = RequestData;
+    module.exports.RequestData.parse = RequestData$parse;
+    module.exports.ResponseData = ResponseData;
+    module.exports.ResponseData.parse = ResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonWebEncryptionLadderExchange'));

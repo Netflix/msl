@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,15 +20,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncodable;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+    
+    const Class = require('../util/Class.js');
 
     /**
      * @interface
      */
-    MslEncodable = util.Class.create({
+    var MslEncodable = module.exports = Class.create({
         /**
          * Returns the requested encoding of a MSL object representing the
          * implementing class.
@@ -43,4 +43,4 @@ var MslEncodable;
          */
         toMslEncoding: function(encoder, format, callback) {},
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncodable'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslTokenizer;
+(function(require, module) {
+	"use strict";
 
-(function() {
-    "use strict";
+	const Class = require('../util/Class.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslInternalException = require('../MslInternalException.js');
 
-    MslTokenizer = util.Class.create({
+    var MslTokenizer = module.exports = Class.create({
         /**
          * <p>Create a new tokenizer.</p>
          */
@@ -129,4 +131,4 @@ var MslTokenizer;
             }, self);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslTokenizer'));
