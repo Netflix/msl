@@ -19,6 +19,21 @@
  *
  */
 describe("EccAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslEncoderFactory = require('../../../../../core/src/main/javascript/io/MslEncoderFactory.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
+    const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const EccStore = require('../../../../../core/src/main/javascript/entityauth/EccStore.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -36,7 +51,7 @@ describe("EccAuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.ECC, false, {
+                MockMslContext.create(EntityAuthenticationScheme.ECC, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -90,7 +105,7 @@ describe("EccAuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
 

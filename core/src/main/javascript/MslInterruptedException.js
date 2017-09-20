@@ -19,10 +19,12 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslInterruptedException;
-
-(function() {
-    MslInterruptedException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	
+    var MslInterruptedException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -69,4 +71,4 @@ var MslInterruptedException;
 
     // Attach methods.
     MslInterruptedException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslInterruptedException'));

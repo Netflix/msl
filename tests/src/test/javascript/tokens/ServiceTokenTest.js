@@ -20,12 +20,36 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 parameterize("ServiceToken", function data() {
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    
     return [
         [ null ],
-        [ MslConstants$CompressionAlgorithm.LZW ],
+        [ MslConstants.CompressionAlgorithm.LZW ],
     ];
 },
 function(encoding, compressionAlgo) {
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -70,9 +94,9 @@ function(encoding, compressionAlgo) {
             random.nextBytes(encryptionBytes);
             var hmacBytes = new Uint8Array(32);
             random.nextBytes(hmacBytes);
-            CipherKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey.import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(encryptionKey) {
-                    CipherKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                    SecretKey.import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                         result: function(hmacKey) {
                             AsyncExecutor(callback, function() {
                                 var cryptoContext = new SymmetricCryptoContext(ctx, keysetId, encryptionKey, hmacKey, null);
@@ -88,7 +112,7 @@ function(encoding, compressionAlgo) {
     }
     
     var NAME = "tokenName";
-    var DATA = textEncoding$getBytes("We have to use some data that is compressible, otherwise service tokens will not always use the compression we request.", "utf-8");
+    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise service tokens will not always use the compression we request.", "utf-8");
     var MASTER_TOKEN;
     var USER_ID_TOKEN;
     var ENCRYPTED = true;
@@ -98,7 +122,7 @@ function(encoding, compressionAlgo) {
     beforeEach(function() {
     	if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -130,7 +154,7 @@ function(encoding, compressionAlgo) {
     it("ctors", function() {
     	var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -165,7 +189,7 @@ function(encoding, compressionAlgo) {
 	        expect(encode).not.toBeNull();
 	        
 	        var mo = encoder.parseObject(encode);
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -201,9 +225,9 @@ function(encoding, compressionAlgo) {
     });
     
     it("mismatched crypto contexts", function() {
-        var serviceToken = undefined, joCryptoContext;
+        var serviceToken, joCryptoContext;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -227,7 +251,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
             var mo = encoder.parseObject(encode);
             
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, joCryptoContext, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, joCryptoContext, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -263,9 +287,9 @@ function(encoding, compressionAlgo) {
     });
     
     it("mapped crypto contexts", function() {
-        var serviceToken = undefined, cryptoContexts = {};
+        var serviceToken, cryptoContexts = {};
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -295,7 +319,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
             var mo = encoder.parseObject(encode);
 
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -333,7 +357,7 @@ function(encoding, compressionAlgo) {
     it("unmapped crypto context", function() {
         var serviceToken = undefined, cryptoContexts = {};
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -363,7 +387,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	var mo = encoder.parseObject(encode);
 
-        	ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
+        	ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
         		result: function(token) { moServiceToken = token; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -399,7 +423,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("master token mismatched", function() {
-        var masterToken = undefined, joMasterToken;
+        var masterToken, joMasterToken;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterToken = token; },
@@ -414,7 +438,7 @@ function(encoding, compressionAlgo) {
         
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, masterToken, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, masterToken, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -432,7 +456,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-	        ServiceToken$parse(ctx, mo, joMasterToken, null, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, joMasterToken, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -448,7 +472,7 @@ function(encoding, compressionAlgo) {
     it("master token missing", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -466,7 +490,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-	        ServiceToken$parse(ctx, mo, null, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, null, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -480,7 +504,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("user ID token mismatched", function() {
-    	var userIdToken = undefined, joUserIdToken;
+    	var userIdToken, joUserIdToken;
     	runs(function() {
     		MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
     			result: function(token) { userIdToken = token; },
@@ -495,7 +519,7 @@ function(encoding, compressionAlgo) {
     	
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -513,7 +537,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, joUserIdToken, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, joUserIdToken, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -529,7 +553,7 @@ function(encoding, compressionAlgo) {
     it("user ID token missing", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -547,7 +571,7 @@ function(encoding, compressionAlgo) {
         
         var exception;
         runs(function() {
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, null, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, null, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -561,7 +585,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("tokens mismatched", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -585,7 +609,7 @@ function(encoding, compressionAlgo) {
 
     	var exception;
     	runs(function() {
-    		ServiceToken$create(ctx, NAME, DATA, masterTokenA, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+    		ServiceToken.create(ctx, NAME, DATA, masterTokenA, userIdToken, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
     			result: function() {},
     			error: function(e) { exception = e; }
     		});
@@ -601,7 +625,7 @@ function(encoding, compressionAlgo) {
     it("missing tokendata", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -621,7 +645,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	mo.remove(KEY_TOKENDATA);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -637,7 +661,7 @@ function(encoding, compressionAlgo) {
     it("invalid tokendata", function() {
     	var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -659,7 +683,7 @@ function(encoding, compressionAlgo) {
 	        ++tokendata[0];
 	        mo.put(KEY_TOKENDATA, tokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -675,7 +699,7 @@ function(encoding, compressionAlgo) {
     it("missing signature", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -695,7 +719,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	mo.remove(KEY_SIGNATURE);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -711,7 +735,7 @@ function(encoding, compressionAlgo) {
     it("missing name", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -743,7 +767,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -759,7 +783,7 @@ function(encoding, compressionAlgo) {
     it("missing master token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -791,7 +815,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
             mo.put(KEY_TOKENDATA, modifiedTokendata);
             
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -807,7 +831,7 @@ function(encoding, compressionAlgo) {
     it("invalid master token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -839,7 +863,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -855,7 +879,7 @@ function(encoding, compressionAlgo) {
     it("negative master token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -887,7 +911,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -903,7 +927,7 @@ function(encoding, compressionAlgo) {
     it("too large master token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -923,7 +947,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
             	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -935,7 +959,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -951,7 +975,7 @@ function(encoding, compressionAlgo) {
     it("missing user ID token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -983,7 +1007,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
             mo.put(KEY_TOKENDATA, modifiedTokendata);
             
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -999,7 +1023,7 @@ function(encoding, compressionAlgo) {
     it("invalid user ID token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1031,7 +1055,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1047,7 +1071,7 @@ function(encoding, compressionAlgo) {
     it("negative user ID token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1079,7 +1103,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1095,7 +1119,7 @@ function(encoding, compressionAlgo) {
     it("too large user ID token serial number", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1115,7 +1139,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        var tokendata = mo.getBytes(KEY_TOKENDATA);
 	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
             	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1127,7 +1151,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1143,7 +1167,7 @@ function(encoding, compressionAlgo) {
     it("missing encrypted", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1175,7 +1199,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1191,7 +1215,7 @@ function(encoding, compressionAlgo) {
     it("invalid encrypted", function() {
     	var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1223,7 +1247,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1239,7 +1263,7 @@ function(encoding, compressionAlgo) {
     it("invalid compression algorithm", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1271,7 +1295,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
             mo.put(KEY_TOKENDATA, modifiedTokendata);
             
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -1287,7 +1311,7 @@ function(encoding, compressionAlgo) {
     it("missing servicedata", function() {
     	var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1319,7 +1343,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
 	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1335,7 +1359,7 @@ function(encoding, compressionAlgo) {
     it("invalid servicedata", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1371,7 +1395,7 @@ function(encoding, compressionAlgo) {
                 	mo.put(KEY_TOKENDATA, modifiedTokendata);
                 	mo.put(KEY_SIGNATURE, signature);
 
-                	ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+                	ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 		result: function() {},
                 		error: function(e) { exception = e; }
                 	});
@@ -1390,7 +1414,7 @@ function(encoding, compressionAlgo) {
     it("empty servicedata", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, new Uint8Array(0), MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, new Uint8Array(0), MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1409,7 +1433,7 @@ function(encoding, compressionAlgo) {
 
         var moServiceToken;
         runs(function() {
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1425,7 +1449,7 @@ function(encoding, compressionAlgo) {
     it("empty servicedata not verified", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, new Uint8Array(0), MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, new Uint8Array(0), MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1447,7 +1471,7 @@ function(encoding, compressionAlgo) {
 	        ++signature[0];
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	        	result: function(token) { moServiceToken = token; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -1463,7 +1487,7 @@ function(encoding, compressionAlgo) {
     it("corrupt servicedata", function() {
     	var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1502,7 +1526,7 @@ function(encoding, compressionAlgo) {
 	    	        mo.put(KEY_TOKENDATA, modifiedTokendata);
 	    	        mo.put(KEY_SIGNATURE, signature);
 	    	        
-	    	        ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+	    	        ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 	    	        	result: function() {},
 	    	        	error: function(e) { exception = e; }
 	    	        });
@@ -1521,7 +1545,7 @@ function(encoding, compressionAlgo) {
     it("not verified", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1545,7 +1569,7 @@ function(encoding, compressionAlgo) {
 	        ++signature[0];
 	        mo.put(KEY_SIGNATURE, signature);
         
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1582,7 +1606,7 @@ function(encoding, compressionAlgo) {
     it("not encrypted", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, !ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, !ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1603,7 +1627,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	var mo = encoder.parseObject(encode);
 
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1640,7 +1664,7 @@ function(encoding, compressionAlgo) {
     it("null crypto context", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1660,7 +1684,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	var mo = encoder.parseObject(encode);
         
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1697,7 +1721,7 @@ function(encoding, compressionAlgo) {
     it("not encrypted with null crypto context", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, !ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, !ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1717,7 +1741,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	var mo = encoder.parseObject(encode);
 
-            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, null, {
                 result: function(token) { moServiceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1767,11 +1791,11 @@ function(encoding, compressionAlgo) {
         
         var serviceTokenA, serviceTokenB;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(ctx, NAME, DATA, masterTokenB, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, masterTokenB, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1804,11 +1828,11 @@ function(encoding, compressionAlgo) {
         
         var serviceTokenA, serviceTokenB;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenB, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenB, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1828,7 +1852,7 @@ function(encoding, compressionAlgo) {
     it("isUnbound", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, null, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, null, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1845,13 +1869,13 @@ function(encoding, compressionAlgo) {
     it("equals name", function() {
         var nameA = NAME + "A";
         var nameB = NAME + "B";
-        var serviceTokenA = undefined, serviceTokenB;
+        var serviceTokenA, serviceTokenB;
         runs(function() {
-            ServiceToken$create(ctx, nameA, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, nameA, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(ctx, nameB, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, nameB, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1862,7 +1886,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, serviceTokenA, {
         		result: function(mo) {
-		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 		                result: function(token) { serviceTokenA2 = token; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -1902,11 +1926,11 @@ function(encoding, compressionAlgo) {
         
         var serviceTokenA, serviceTokenB;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, masterTokenA, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(ctx, NAME, DATA, masterTokenB, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, masterTokenB, null, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1917,7 +1941,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, serviceTokenA, {
         		result: function(mo) {
-		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 		                result: function(token) { serviceTokenA2 = token; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -1957,11 +1981,11 @@ function(encoding, compressionAlgo) {
         
         var serviceTokenA, serviceTokenB;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenA, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenA = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenB, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, userIdTokenB, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceTokenB = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1972,7 +1996,7 @@ function(encoding, compressionAlgo) {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, serviceTokenA, {
         		result: function(mo) {
-		            ServiceToken$parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
+		            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, CRYPTO_CONTEXT, {
 		                result: function(token) { serviceTokenA2 = token; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -1999,7 +2023,7 @@ function(encoding, compressionAlgo) {
     it("equals object", function() {
         var serviceToken;
         runs(function() {
-            ServiceToken$create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
+            ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

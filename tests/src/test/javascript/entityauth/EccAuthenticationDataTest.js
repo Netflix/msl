@@ -20,6 +20,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EccAuthenticationData", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+    const RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -41,7 +53,7 @@ describe("EccAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -83,7 +95,7 @@ describe("EccAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
         
-            moData = EccAuthenticationData$parse(authdata);
+            moData = EccAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.publicKeyId).toEqual(data.publicKeyId);
             expect(moData.scheme).toEqual(data.scheme);
@@ -153,7 +165,7 @@ describe("EccAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -216,7 +228,7 @@ describe("EccAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_IDENTITY);
             var f = function() {
-                EccAuthenticationData$parse(authdata);
+                EccAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -236,7 +248,7 @@ describe("EccAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_PUBKEY_ID);
             var f = function() {
-                EccAuthenticationData$parse(authdata);
+                EccAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -251,7 +263,7 @@ describe("EccAuthenticationData", function() {
             dataB = new RsaAuthenticationData(identityB, MockEccAuthenticationFactory.ECC_PUBKEY_ID);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
@@ -281,7 +293,7 @@ describe("EccAuthenticationData", function() {
             dataB = new RsaAuthenticationData(MockEccAuthenticationFactory.ECC_ESN, pubkeyidB);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

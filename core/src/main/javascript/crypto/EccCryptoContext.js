@@ -21,12 +21,19 @@
  * @author Pablo Pissanetzky <ppissanetzky@netflix.com>
  * @implements {ICryptoContext}
  */
-var EccCryptoContext;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const ICryptoContext = require('../crypto/ICryptoContext.js');
+    const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
 
-    EccCryptoContext = ICryptoContext.extend({
+    var EccCryptoContext = module.exports = ICryptoContext.extend({
         /**
          * <p>Create a new ECC crypto context with the provided public and
          * private keys.</p>
@@ -92,7 +99,7 @@ var EccCryptoContext;
                     throw new MslCryptoException(MslError.SIGN_NOT_SUPPORTED, "no private key");
                 var oncomplete = function(hash) {
                     // Return the signature envelope byte representation.
-                    MslSignatureEnvelope$create(new Uint8Array(hash), {
+                    MslSignatureEnvelope.create(new Uint8Array(hash), {
                         result: function(envelope) {
                             envelope.getBytes(encoder, format, {
                                 result: callback.result,
@@ -107,9 +114,9 @@ var EccCryptoContext;
                     });
                 };
                 var onerror = function(e) {
-                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                    callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                 };
-                mslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
+                MslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, this.privateKey, data)
                     .then(oncomplete, onerror);
             }, this);
         },
@@ -122,14 +129,14 @@ var EccCryptoContext;
                     throw new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED, "no public key");
 
                 // Reconstitute the signature envelope.
-                MslSignatureEnvelope$parse(signature, MslSignatureEnvelope$Version.V1, encoder, {
+                MslSignatureEnvelope.parse(signature, MslSignatureEnvelope.Version.V1, encoder, {
                     result: function(envelope) {
                         AsyncExecutor(callback, function() {
                             var oncomplete = callback.result;
                             var onerror = function(e) {
-                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR));
+                                callback.error(new MslCryptoException(MslError.SIGNATURE_ERROR, null, e));
                             };
-                            mslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
+                            MslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, this.publicKey, envelope.signature, data)
                                 .then(oncomplete, onerror);
                         }, self);
                     },
@@ -138,4 +145,4 @@ var EccCryptoContext;
             }, this);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EccCryptoContext'));

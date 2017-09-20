@@ -67,11 +67,24 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ServiceToken;
-var ServiceToken$create;
-var ServiceToken$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodable = require('../io/MslEncodable.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslUtils = require('../util/MslUtils.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const UserIdToken = require('../tokens/UserIdToken.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslException = require('../MslException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const ICryptoContext = require('../crypto/ICryptoContext.js');
+	const MslConstants = require('../MslConstants.js');
+	const Base64 = require('../util/Base64.js');
+	
     /**
      * Key token data.
      * @const
@@ -172,7 +185,7 @@ var ServiceToken$parse;
         this.verified = verified;
     };
 
-    ServiceToken = MslEncodable.extend({
+    var ServiceToken = module.exports = MslEncodable.extend({
         /**
          * <p>Construct a new service token with the specified name and data. If a
          * master token is provided, the service token is bound to the master
@@ -189,7 +202,7 @@ var ServiceToken$parse;
          * @param {MasterToken} masterToken the master token. May be null.
          * @param {UserIdToken} userIdToken the user ID token. May be null.
          * @param {boolean} encrypted true if the token should be encrypted.
-         * @param {MslConstants$CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
+         * @param {MslConstants.CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
          *        for no compression.
          * @param {ICryptoContext} cryptoContext the crypto context.
          * @param {?CreationData} creationData optional creation data.
@@ -218,11 +231,11 @@ var ServiceToken$parse;
                 // Optionally compress the service data.
                 var plaintext;
                 if (compressionAlgo) {
-                    var compressed = MslUtils$compress(compressionAlgo, data);
+                    var compressed = MslUtils.compress(compressionAlgo, data);
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
-                    if (compressed.length < data.length) {
+                    if (compressed && compressed.length < data.length) {
                         compressedServicedata = compressed;
                     } else {
                         compressionAlgo = null;
@@ -276,7 +289,7 @@ var ServiceToken$parse;
                 encrypted: { value: encrypted, writable: false, enumerable: false, configurable: false },
                 /**
                  * Compression algorithm.
-                 * @type {MslConstants$CompressionAlgorithm}
+                 * @type {MslConstants.CompressionAlgorithm}
                  */
                 compressionAlgo: { value: compressionAlgo, writable: false, configurable: false },
                 /**
@@ -565,7 +578,7 @@ var ServiceToken$parse;
      * @param {MasterToken} masterToken the master token. May be null.
      * @param {UserIdToken} userIdToken the user ID token. May be null.
      * @param {boolean} encrypted true if the token should be encrypted.
-     * @param {MslConstants$CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
+     * @param {MslConstants.CompressionAlgorithm} compressionAlgo the compression algorithm. May be {@code null}
      *        for no compression.
      * @param {ICryptoContext} cryptoContext the crypto context.
      * @param {{result: function(ServiceToken), error: function(Error)}}
@@ -577,7 +590,7 @@ var ServiceToken$parse;
      *         the token data.
      * @throws MslException if there is an error compressing the data.
      */
-    ServiceToken$create = function ServiceToken$create(ctx, name, data, masterToken, userIdToken, encrypted, compressionAlgo, cryptoContext, callback) {
+    var ServiceToken$create = function ServiceToken$create(ctx, name, data, masterToken, userIdToken, encrypted, compressionAlgo, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
             return new ServiceToken(ctx, name, data, masterToken, userIdToken, encrypted, compressionAlgo, cryptoContext, null);
         });
@@ -625,7 +638,7 @@ var ServiceToken$parse;
      *         compression algorithm is not known or there is an error
      *         uncompressing the data.
      */
-    ServiceToken$parse = function ServiceToken$parse(ctx, serviceTokenMo, masterToken, userIdToken, cryptoContext, callback) {
+    var ServiceToken$parse = function ServiceToken$parse(ctx, serviceTokenMo, masterToken, userIdToken, cryptoContext, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -672,14 +685,14 @@ var ServiceToken$parse;
                     name = tokendata.getString(KEY_NAME);
                     if (tokendata.has(KEY_MASTER_TOKEN_SERIAL_NUMBER)) {
                         mtSerialNumber = tokendata.getLong(KEY_MASTER_TOKEN_SERIAL_NUMBER);
-                        if (mtSerialNumber < 0 || mtSerialNumber > MslConstants$MAX_LONG_VALUE)
+                        if (mtSerialNumber < 0 || mtSerialNumber > MslConstants.MAX_LONG_VALUE)
                             throw new MslException(MslError.SERVICETOKEN_MASTERTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokendata).setMasterToken(masterToken).setUserIdToken(userIdToken);
                     } else {
                         mtSerialNumber = -1;
                     }
                     if (tokendata.has(KEY_USER_ID_TOKEN_SERIAL_NUMBER)) {
                         uitSerialNumber = tokendata.getLong(KEY_USER_ID_TOKEN_SERIAL_NUMBER);
-                        if (uitSerialNumber < 0 || uitSerialNumber > MslConstants$MAX_LONG_VALUE)
+                        if (uitSerialNumber < 0 || uitSerialNumber > MslConstants.MAX_LONG_VALUE)
                             throw new MslException(MslError.SERVICETOKEN_USERIDTOKEN_SERIAL_NUMBER_OUT_OF_RANGE, "servicetokendata " + tokendata).setMasterToken(masterToken).setUserIdToken(userIdToken);
                     } else {
                         uitSerialNumber = -1;
@@ -690,9 +703,9 @@ var ServiceToken$parse;
                     encrypted = tokendata.getBoolean(KEY_ENCRYPTED);
                     if (tokendata.has(KEY_COMPRESSION_ALGORITHM)) {
                         var algoName = tokendata.getString(KEY_COMPRESSION_ALGORITHM);
-                        if (!MslConstants$CompressionAlgorithm[algoName])
+                        if (!MslConstants.CompressionAlgorithm[algoName])
                             throw new MslException(MslError.UNIDENTIFIED_COMPRESSION, algoName);
-                        compressionAlgo = MslConstants$CompressionAlgorithm[algoName];
+                        compressionAlgo = MslConstants.CompressionAlgorithm[algoName];
                     } else {
                         compressionAlgo = null;
                     }
@@ -700,7 +713,7 @@ var ServiceToken$parse;
                     data = tokendata.getBytes(KEY_SERVICEDATA);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + base64$encode(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
+                        throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetokendata " + Base64.encode(tokendataBytes), e).setMasterToken(masterToken).setUserIdToken(userIdToken);
                     throw e;
                 }
                 
@@ -713,7 +726,7 @@ var ServiceToken$parse;
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(compressedServicedata) {
                                 var servicedata = (compressionAlgo)
-                                    ? MslUtils$uncompress(compressionAlgo, compressedServicedata)
+                                    ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                                     : compressedServicedata;
                                 reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                                     name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
@@ -732,7 +745,7 @@ var ServiceToken$parse;
                     } else {
                         var compressedServicedata = ciphertext;
                         var servicedata = (compressionAlgo)
-                            ? MslUtils$uncompress(compressionAlgo, compressedServicedata)
+                            ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                             name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
@@ -765,4 +778,8 @@ var ServiceToken$parse;
             });
         }
     };
-})();
+    
+    // Exports.
+    module.exports.create = ServiceToken$create;
+    module.exports.parse = ServiceToken$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ServiceToken'));

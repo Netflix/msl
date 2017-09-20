@@ -20,9 +20,14 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  * @implements {MslStore}
  */
-var SimpleMslStore;
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslStore = require('../util/MslStore.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslException = require('../MslException.js');
+	const MslError = require('../MslError.js');
 
     /**
      * Increments the provided non-replayable ID by 1, wrapping around to zero
@@ -34,12 +39,12 @@ var SimpleMslStore;
      *         range.
      */
     function incrementNonReplayableId(id) {
-        if (id < 0 || id > MslConstants$MAX_LONG_VALUE)
+        if (id < 0 || id > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Non-replayable ID " + id + " is outside the valid range.");
-        return (id == MslConstants$MAX_LONG_VALUE) ? 0 : id + 1;
+        return (id == MslConstants.MAX_LONG_VALUE) ? 0 : id + 1;
     }
 
-    SimpleMslStore = MslStore.extend({
+    var SimpleMslStore = module.exports = MslStore.extend({
         /**
          * Create a new simple MSL store.
          */
@@ -495,4 +500,4 @@ var SimpleMslStore;
             }, this);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleMslStore'));

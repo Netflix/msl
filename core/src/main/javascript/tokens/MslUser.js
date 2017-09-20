@@ -20,31 +20,37 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslUser = util.Class.create({
-    /**
-     * <p>Returns a serialized data encoding of the MSL user. This is the value
-     * that will be used by the MSL stack during transport and to reconstruct
-     * the MSL user instance.</p>
-     * 
-     * @return {string} the MSL user encoding.
-     */
-    getEncoded: function() {},
-
-    /**
-     * <p>Compares this object against the provided object. This method must
-     * return true if the provided object is a {@code MslUser} referencing the
-     * same MSL user.</p>
-     * 
-     * @param {?} obj the object with which to compare.
-     * @return {@code true} if the object is a {@code MslUser} that references
-     *         the same MSL user.
-     * @see #uniqueKey()
-     */
-    equals: function(that) {},
-
-    /**
-     * @return {string} a string that uniquely identifies this MSL user.
-     * @see #equals(that)
-     */
-    uniqueKey: function() {},
-});
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+		
+	var MslUser = module.exports = Class.create({
+	    /**
+	     * <p>Returns a serialized data encoding of the MSL user. This is the value
+	     * that will be used by the MSL stack during transport and to reconstruct
+	     * the MSL user instance.</p>
+	     * 
+	     * @return {string} the MSL user encoding.
+	     */
+	    getEncoded: function() {},
+	
+	    /**
+	     * <p>Compares this object against the provided object. This method must
+	     * return true if the provided object is a {@code MslUser} referencing the
+	     * same MSL user.</p>
+	     * 
+	     * @param {?} obj the object with which to compare.
+	     * @return {@code true} if the object is a {@code MslUser} that references
+	     *         the same MSL user.
+	     * @see #uniqueKey()
+	     */
+	    equals: function(that) {},
+	
+	    /**
+	     * @return {string} a string that uniquely identifies this MSL user.
+	     * @see #equals(that)
+	     */
+	    uniqueKey: function() {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslUser'));

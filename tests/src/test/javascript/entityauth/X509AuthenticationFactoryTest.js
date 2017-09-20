@@ -20,6 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("X509AuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const X509Store = require('../../../../../core/src/main/javascript/entityauth/X509Store.js');
+    const X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');
+    const X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
+
+    const MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -79,7 +94,6 @@ describe("X509AuthenticationFactory", function() {
 
     /** X.509 store. */
     var caStore = new X509Store();
-    caStore.addCert(MockX509AuthenticationFactory.X509_CERT);
     
     /** Entity authentication factory. */
     var factory = new X509AuthenticationFactory(caStore);
@@ -101,13 +115,14 @@ describe("X509AuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", 900);
             runs(function() {
+                caStore.addCert(MockX509AuthenticationFactory.X509_CERT);
                 encoder = ctx.getMslEncoderFactory();
                 ctx.addEntityAuthenticationFactory(factory);
                 initialized = true;
@@ -153,7 +168,7 @@ describe("X509AuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     

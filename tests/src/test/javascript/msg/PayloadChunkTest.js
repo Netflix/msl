@@ -20,6 +20,28 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PayloadChunk", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+
+    const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -44,7 +66,7 @@ describe("PayloadChunk", function() {
     var KEY_DATA = "data";
     
     // Shortcuts.
-    var CompressionAlgorithm = MslConstants$CompressionAlgorithm;
+    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
     
     /**
      * Uncompress the provided data using the specified compression algorithm.
@@ -57,7 +79,7 @@ describe("PayloadChunk", function() {
     function uncompress(compressionAlgo, data) {
     	switch (compressionAlgo) {
     	case CompressionAlgorithm.LZW:
-    		return lzw$uncompress(data);
+    		return lzw.extend(data);
     	default:
     		throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
     	}
@@ -78,7 +100,7 @@ describe("PayloadChunk", function() {
     var SEQ_NO = 1;
     var MSG_ID = 42;
     var END_OF_MSG = false;
-    var DATA = textEncoding$getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants$DEFAULT_CHARSET);
+    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants.DEFAULT_CHARSET);
     var CRYPTO_CONTEXT;
 
     /** Raw data. */
@@ -91,7 +113,7 @@ describe("PayloadChunk", function() {
     beforeEach(function () {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -106,11 +128,11 @@ describe("PayloadChunk", function() {
                 random.nextBytes(encryptionBytes);
                 random.nextBytes(hmacBytes);
                 
-                CipherKey$import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(encryptionBytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function (key) { ENCRYPTION_KEY = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey.import(hmacBytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function (key) { HMAC_KEY = key; },
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -128,7 +150,7 @@ describe("PayloadChunk", function() {
     it("ctors", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -153,7 +175,7 @@ describe("PayloadChunk", function() {
         var moChunk;
         runs(function() {
 	        expect(encode).not.toBeNull();
-            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -184,7 +206,7 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
             var sequenceNumber = -1;
-	        PayloadChunk$create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk.create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -199,8 +221,8 @@ describe("PayloadChunk", function() {
     it("ctor with too large sequence number", function() {
     	var exception;
     	runs(function() {
-	        var sequenceNumber = MslConstants$MAX_LONG_VALUE + 2;
-	        PayloadChunk$create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        var sequenceNumber = MslConstants.MAX_LONG_VALUE + 2;
+	        PayloadChunk.create(ctx, sequenceNumber, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -216,7 +238,7 @@ describe("PayloadChunk", function() {
     	var exception;
     	runs(function() {
     		var messageId = -1;
-	        PayloadChunk$create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        PayloadChunk.create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -231,8 +253,8 @@ describe("PayloadChunk", function() {
     it("ctor with too large message ID", function() {
     	var exception;
     	runs(function() {
-	        var messageId = MslConstants$MAX_LONG_VALUE + 2;
-	        PayloadChunk$create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+	        var messageId = MslConstants.MAX_LONG_VALUE + 2;
+	        PayloadChunk.create(ctx, SEQ_NO, messageId, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -247,7 +269,7 @@ describe("PayloadChunk", function() {
     it("mslobject is correct", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -300,7 +322,7 @@ describe("PayloadChunk", function() {
     xit("ctor with GZIP", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -326,7 +348,7 @@ describe("PayloadChunk", function() {
         var moChunk;
         runs(function() {
             expect(encode).not.toBeNull();
-            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -355,7 +377,7 @@ describe("PayloadChunk", function() {
     xit("mslencode is correct with GZIP", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -421,7 +443,7 @@ describe("PayloadChunk", function() {
     it("ctor with LZW", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -447,7 +469,7 @@ describe("PayloadChunk", function() {
         var moChunk;
         runs(function() {
             expect(encode).not.toBeNull();
-            PayloadChunk$parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, encoder.parseObject(encode), CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -477,7 +499,7 @@ describe("PayloadChunk", function() {
     it("json is correct with LZW", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, CompressionAlgorithm.LZW, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -535,7 +557,7 @@ describe("PayloadChunk", function() {
 
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -553,7 +575,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
+	        PayloadChunk.parse(ctx, mo, cryptoContextB, {
 	        	result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -587,11 +609,11 @@ describe("PayloadChunk", function() {
             var encryptionBytesB = new Uint8Array(16);
             random.nextBytes(encryptionBytesA);
             random.nextBytes(encryptionBytesB);
-            CipherKey$import(encryptionBytesA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey.import(encryptionBytesA, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(x) { encryptionKeyA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            CipherKey$import(encryptionBytesB, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+            SecretKey.import(encryptionBytesB, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                 result: function(x) { encryptionKeyB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -605,7 +627,7 @@ describe("PayloadChunk", function() {
             cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, encryptionKeyA, HMAC_KEY, null);
             cryptoContextB = new SymmetricCryptoContext(ctx,CRYPTO_CONTEXT_ID, encryptionKeyB, HMAC_KEY, null);
             
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -623,7 +645,7 @@ describe("PayloadChunk", function() {
         
         var exception;
         runs(function() {
-	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
+	        PayloadChunk.parse(ctx, mo, cryptoContextB, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -644,11 +666,11 @@ describe("PayloadChunk", function() {
         	var hmacBytesB = new Uint8Array(32);
         	random.nextBytes(hmacBytesA);
         	random.nextBytes(hmacBytesB);
-        	CipherKey$import(hmacBytesA, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+        	SecretKey.import(hmacBytesA, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         	    result: function(x) { hmacKeyA = x; },
         	    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	CipherKey$import(hmacBytesB, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+        	SecretKey.import(hmacBytesB, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         	    result: function(x) { hmacKeyB = x; },
         	    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -661,7 +683,7 @@ describe("PayloadChunk", function() {
             cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyA, null);
             cryptoContextB = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyB, null);
             
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContextA, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -679,7 +701,7 @@ describe("PayloadChunk", function() {
         
         var exception;
         runs(function() {
-	        PayloadChunk$parse(ctx, mo, cryptoContextB, {
+	        PayloadChunk.parse(ctx, mo, cryptoContextB, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -695,7 +717,7 @@ describe("PayloadChunk", function() {
     it("incorrect signature", function() {
     	var chunk;
     	runs(function() {
-    		PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+    		PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
     			result: function(x) { chunk = x; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
@@ -717,7 +739,7 @@ describe("PayloadChunk", function() {
 	        random.nextBytes(signature);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -733,7 +755,7 @@ describe("PayloadChunk", function() {
     it("missing payload", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -753,7 +775,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	mo.remove(KEY_PAYLOAD);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -769,7 +791,7 @@ describe("PayloadChunk", function() {
     it("invalid payload", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -789,7 +811,7 @@ describe("PayloadChunk", function() {
         runs(function() {
 	        mo.put(KEY_PAYLOAD, "x");
 	
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -805,7 +827,7 @@ describe("PayloadChunk", function() {
     it("corrupt payload", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -837,7 +859,7 @@ describe("PayloadChunk", function() {
 	   runs(function() {
 	        mo.put(KEY_SIGNATURE, signature);
 	
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -854,7 +876,7 @@ describe("PayloadChunk", function() {
         var chunk;
         runs(function() {
         	var data = new Uint8Array(0);
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, data, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -872,7 +894,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -887,7 +909,7 @@ describe("PayloadChunk", function() {
     it("missing sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -949,7 +971,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -965,7 +987,7 @@ describe("PayloadChunk", function() {
     it("invalid sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1025,7 +1047,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1041,7 +1063,7 @@ describe("PayloadChunk", function() {
     it("negative sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1101,7 +1123,7 @@ describe("PayloadChunk", function() {
 	        mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1117,7 +1139,7 @@ describe("PayloadChunk", function() {
     it("too large sequence number", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1146,7 +1168,7 @@ describe("PayloadChunk", function() {
         var plaintext;
         runs(function() {
         	var payloadMo = encoder.parseObject(payload);
-	        payloadMo.put(KEY_SEQUENCE_NUMBER, MslConstants$MAX_LONG_VALUE + 2);
+	        payloadMo.put(KEY_SEQUENCE_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
 	        encoder.encodeObject(payloadMo, ENCODER_FORMAT, {
 	        	result: function(x) { plaintext = x; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1177,7 +1199,7 @@ describe("PayloadChunk", function() {
 	        mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1193,7 +1215,7 @@ describe("PayloadChunk", function() {
     it("missing message ID", function() {
 	    var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1253,7 +1275,7 @@ describe("PayloadChunk", function() {
 	        mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1269,7 +1291,7 @@ describe("PayloadChunk", function() {
     it("invalid message ID", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1329,7 +1351,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
         	mo.put(KEY_SIGNATURE, signature);
 
-        	PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+        	PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
         		result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1345,7 +1367,7 @@ describe("PayloadChunk", function() {
     it("invalid end of message", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1405,7 +1427,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
         	mo.put(KEY_SIGNATURE, signature);
 
-        	PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+        	PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1421,7 +1443,7 @@ describe("PayloadChunk", function() {
     it("invalid compression algorithm", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1481,7 +1503,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1497,7 +1519,7 @@ describe("PayloadChunk", function() {
     it("missing data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1557,7 +1579,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1573,7 +1595,7 @@ describe("PayloadChunk", function() {
     it("empty data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1633,7 +1655,7 @@ describe("PayloadChunk", function() {
 	        mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1649,7 +1671,7 @@ describe("PayloadChunk", function() {
     it("end of message payload with invalid data", function() {
     	var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1709,7 +1731,7 @@ describe("PayloadChunk", function() {
         	mo.put(KEY_PAYLOAD, newPayload);
 	        mo.put(KEY_SIGNATURE, signature);
 	        
-	        PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+	        PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 	        	result: function() {},
 	        	error: function(e) { exception = e; }
 	        });
@@ -1726,7 +1748,7 @@ describe("PayloadChunk", function() {
     it("large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1745,7 +1767,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1761,7 +1783,7 @@ describe("PayloadChunk", function() {
     xit("GZIP large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1784,7 +1806,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1800,7 +1822,7 @@ describe("PayloadChunk", function() {
     xit("GZIP verona", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, rawdata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1823,7 +1845,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1840,7 +1862,7 @@ describe("PayloadChunk", function() {
     it("LZW large data", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, largedata, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, largedata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1863,7 +1885,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1878,7 +1900,7 @@ describe("PayloadChunk", function() {
     xit("LZW verona", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.LZW, rawdata, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1901,7 +1923,7 @@ describe("PayloadChunk", function() {
         
         var moChunk;
         runs(function() {
-            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
                 result: function(x) { moChunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1919,11 +1941,11 @@ describe("PayloadChunk", function() {
         var seqNoB = 2;
         var chunkA, chunkB;
         runs(function() {
-            PayloadChunk$create(ctx, seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, seqNoA, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, seqNoB, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1933,7 +1955,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, chunkA, {
         		result: function(mo) {
-		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 		                result: function(x) { chunkA2 = x; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -1960,13 +1982,13 @@ describe("PayloadChunk", function() {
     xit("equals message ID", function() {
         var msgIdA = 1;
         var msgIdB = 2;
-        var chunkA = undefined, chunkB;
+        var chunkA, chunkB;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, msgIdA, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, msgIdB, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1976,7 +1998,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, chunkA, {
         		result: function(mo) {
-		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 		                result: function(x) { chunkA2 = x; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -2001,13 +2023,13 @@ describe("PayloadChunk", function() {
     });
     
     xit("equals end of message", function() {
-        var chunkA = undefined, chunkB;
+        var chunkA, chunkB;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, false, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2017,7 +2039,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, chunkA, {
         		result: function(mo) {
-		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 		                result: function(x) { chunkA2 = x; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -2042,13 +2064,13 @@ describe("PayloadChunk", function() {
     });
     
     xit("equals compression algorithm", function() {
-        var chunkA = undefined, chunkB;
+        var chunkA, chunkB;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, CompressionAlgorithm.GZIP, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2058,7 +2080,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, chunkA, {
         		result: function(mo) {
-		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 		                result: function(x) { chunkA2 = x; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -2088,17 +2110,17 @@ describe("PayloadChunk", function() {
         var dataB = new Uint8Array(32);
         random.nextBytes(dataB);
         var dataC = new Uint8Array(0);
-        var chunkA = undefined, chunkB = undefined, chunkC;
+        var chunkA, chunkB, chunkC;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, dataA, CRYPTO_CONTEXT, {
                 result: function(x) { chunkA = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataB, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, dataB, CRYPTO_CONTEXT, {
                 result: function(x) { chunkB = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, dataC, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, dataC, CRYPTO_CONTEXT, {
                 result: function(x) { chunkC = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2108,7 +2130,7 @@ describe("PayloadChunk", function() {
         runs(function() {
         	MslTestUtils.toMslObject(encoder, chunkA, {
         		result: function(mo) {
-		            PayloadChunk$parse(ctx, mo, CRYPTO_CONTEXT, {
+		            PayloadChunk.parse(ctx, mo, CRYPTO_CONTEXT, {
 		                result: function(x) { chunkA2 = x; },
 		                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		            });
@@ -2139,7 +2161,7 @@ describe("PayloadChunk", function() {
     xit("equals object", function() {
         var chunk;
         runs(function() {
-            PayloadChunk$create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
+            PayloadChunk.create(ctx, SEQ_NO, MSG_ID, true, null, DATA, CRYPTO_CONTEXT, {
                 result: function(x) { chunk = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

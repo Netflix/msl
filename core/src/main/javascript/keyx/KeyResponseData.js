@@ -37,10 +37,17 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var KeyResponseData;
-var KeyResponseData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	
     /**
      * Key master token.
      * @const
@@ -60,7 +67,7 @@ var KeyResponseData$parse;
      */
     var KEY_KEYDATA = "keydata";
 
-    KeyResponseData = MslEncodable.extend({
+    var KeyResponseData = module.exports = MslEncodable.extend({
         /**
          * Create a new key response data object with the specified key exchange
          * scheme and associated master token.
@@ -145,7 +152,7 @@ var KeyResponseData$parse;
      * @throws MslException if the key response master token expiration
      *         timestamp occurs before the renewal window.
      */
-    KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataMo, callback) {
+    var KeyResponseData$parse = function KeyResponseData$parse(ctx, keyResponseDataMo, callback) {
         AsyncExecutor(callback, function() {
             var encoder = ctx.getMslEncoderFactory();
             
@@ -159,7 +166,7 @@ var KeyResponseData$parse;
                 var keyData = keyResponseDataMo.getMslObject(KEY_KEYDATA, encoder);
 
                 // Rebuild master token.
-                MasterToken$parse(ctx, masterTokenMo, {
+                MasterToken.parse(ctx, masterTokenMo, {
                     result: function(masterToken) {
                         AsyncExecutor(callback, function() {
                             // Construct an instance of the concrete subclass.
@@ -178,4 +185,7 @@ var KeyResponseData$parse;
             }
         });
     };
-})();
+    
+    // Exports.
+    module.exports.parse = KeyResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyResponseData'));

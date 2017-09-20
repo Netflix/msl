@@ -19,11 +19,23 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockPresharedProfileAuthenticationFactory;
-var MockPresharedProfileAuthenticationFactory$create;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    const PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    
+    const MockKeySetStore = require('../entityauth/MockKeySetStore.js');
+    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+    const MslTestUtils = require('../util/MslTestUtils.js');
     
     /**
      * PSK ESN.
@@ -71,17 +83,17 @@ var MockPresharedProfileAuthenticationFactory$create;
 
     /**
      * Kpe/Kph/Kpw #1.
-     * @type {CipherKey}
+     * @type {SecretKey}
      */
     var KPE, KPH, KPW;
     /**
      * Kpe/Kph/Kpw #2.
-     * @type {CipherKey}
+     * @type {SecretKey}
      */
     var KPE2, KPH2, KPW2;
     var keysDefined = new ConditionVariable();
     
-    MockPresharedProfileAuthenticationFactory = PresharedProfileAuthenticationFactory.extend({
+    var MockPresharedProfileAuthenticationFactory = module.exports = PresharedProfileAuthenticationFactory.extend({
         /**
          * Create a new test pre-shared keys profile authentication factory.
          * 
@@ -144,25 +156,28 @@ var MockPresharedProfileAuthenticationFactory$create;
      *        callback the callback functions that will receive the factory
      *        or any thrown exceptions.
      */
-    MockPresharedProfileAuthenticationFactory$create = function MockPresharedProfileAuthenticationFactory$create(callback) {
+    var MockPresharedProfileAuthenticationFactory$create = function MockPresharedProfileAuthenticationFactory$create(callback) {
         new MockPresharedProfileAuthenticationFactory(callback);
     };
     
+    // Exports.
+    module.exports.create = MockPresharedProfileAuthenticationFactory$create;
+    
     // Expose public static properties.
-    MockPresharedProfileAuthenticationFactory.PSK_ESN = PSK_ESN;
-    MockPresharedProfileAuthenticationFactory.PROFILE = PROFILE;
-    CipherKey$import(PSK_KPE, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+    module.exports.PSK_ESN = PSK_ESN;
+    module.exports.PROFILE = PROFILE;
+    SecretKey.import(PSK_KPE, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
         result: function (key) {
-            KPE = MockPresharedProfileAuthenticationFactory.KPE = key;
+            KPE = module.exports.KPE = key;
             keysDefined.signalAll();
         },
         error: function (e) {
             throw new MslInternalException("Hard-coded Kpe key failure.", e);
         }
     });
-    CipherKey$import(PSK_KPH, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+    SecretKey.import(PSK_KPH, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         result: function (key) {
-            KPH = MockPresharedProfileAuthenticationFactory.KPH = key;
+            KPH = module.exports.KPH = key;
             keysDefined.signalAll();
         },
         error: function (e) {
@@ -171,9 +186,9 @@ var MockPresharedProfileAuthenticationFactory$create;
     });
     MslTestUtils.deriveWrappingKey(PSK_KPE, PSK_KPH, {
         result: function(psk_kpw) {
-            CipherKey$import(psk_kpw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+            SecretKey.import(psk_kpw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                 result: function(key) {
-                    KPW = MockPresharedProfileAuthenticationFactory.KPW = key;
+                    KPW = module.exports.KPW = key;
                     keysDefined.signalAll();
                 },
                 error: function (e) {
@@ -186,18 +201,18 @@ var MockPresharedProfileAuthenticationFactory$create;
         }
     });
     MockPresharedProfileAuthenticationFactory.PSK_ESN2 = PSK_ESN2;
-    CipherKey$import(PSK_KPE2, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+    SecretKey.import(PSK_KPE2, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
         result: function (key) {
-            KPE2 = MockPresharedProfileAuthenticationFactory.KPE2 = key;
+            KPE2 = module.exports.KPE2 = key;
             keysDefined.signalAll();
         },
         error: function (e) {
             throw new MslInternalException("Hard-coded Kpe key failure.", e);
         }
     });
-    CipherKey$import(PSK_KPH2, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+    SecretKey.import(PSK_KPH2, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
         result: function (key) {
-            KPH2 = MockPresharedProfileAuthenticationFactory.KPH2 = key;
+            KPH2 = module.exports.KPH2 = key;
             keysDefined.signalAll();
         },
         error: function (e) {
@@ -206,9 +221,9 @@ var MockPresharedProfileAuthenticationFactory$create;
     });
     MslTestUtils.deriveWrappingKey(PSK_KPE2, PSK_KPH2, {
         result: function(psk_kpw) {
-            CipherKey$import(psk_kpw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+            SecretKey.import(psk_kpw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                 result: function(key) {
-                    KPW2 = MockPresharedProfileAuthenticationFactory.KPW2 = key;
+                    KPW2 = module.exports.KPW2 = key;
                     keysDefined.signalAll();
                 },
                 error: function (e) {
@@ -220,4 +235,4 @@ var MockPresharedProfileAuthenticationFactory$create;
             throw new MslInternalException("Hard-coded Kpw key failure.", e);
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockPresharedProfileAuthenticationFactory'));

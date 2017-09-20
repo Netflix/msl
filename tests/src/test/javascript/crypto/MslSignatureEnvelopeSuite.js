@@ -20,6 +20,14 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MslSignatureEnvelope", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MslSignatureEnvelope = require('../../../../../core/src/main/javascript/crypto/MslSignatureEnvelope.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -31,7 +39,7 @@ describe("MslSignatureEnvelope", function() {
     var KEY_SIGNATURE = "signature";
     
     // Shortcuts.
-    var Version = MslSignatureEnvelope$Version;
+    var Version = MslSignatureEnvelope.Version;
     
     var SIGNATURE = new Uint8Array(32);
     
@@ -45,7 +53,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 var random = new Random();
                 random.nextBytes(SIGNATURE);
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -63,7 +71,7 @@ describe("MslSignatureEnvelope", function() {
         it("ctors", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(SIGNATURE, {
+                MslSignatureEnvelope.create(SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -85,7 +93,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 expect(envelopeBytes).not.toBeNull();
 
-                MslSignatureEnvelope$parse(envelopeBytes, null, encoder, {
+                MslSignatureEnvelope.parse(envelopeBytes, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -111,7 +119,7 @@ describe("MslSignatureEnvelope", function() {
         it("encode is correct", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(SIGNATURE, {
+                MslSignatureEnvelope.create(SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -135,9 +143,9 @@ describe("MslSignatureEnvelope", function() {
     });
     
     function data() {
-        var keys = Object.keys(MslConstants$SignatureAlgo); 
+        var keys = Object.keys(MslConstants.SignatureAlgo); 
         return keys.map(function(key) {
-            return [ MslConstants$SignatureAlgo[key] ];
+            return [ MslConstants.SignatureAlgo[key] ];
         });
     }
     
@@ -145,7 +153,7 @@ describe("MslSignatureEnvelope", function() {
         it("ctors", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -167,7 +175,7 @@ describe("MslSignatureEnvelope", function() {
             runs(function() {
                 expect(envelopeBytes).not.toBeNull();
 
-                MslSignatureEnvelope$parse(envelopeBytes, null, encoder, {
+                MslSignatureEnvelope.parse(envelopeBytes, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -193,7 +201,7 @@ describe("MslSignatureEnvelope", function() {
         it("encode is correct", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -221,7 +229,7 @@ describe("MslSignatureEnvelope", function() {
         it("missing version", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -251,7 +259,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -267,7 +275,7 @@ describe("MslSignatureEnvelope", function() {
         it("invalid version", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -297,7 +305,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -313,7 +321,7 @@ describe("MslSignatureEnvelope", function() {
         it("unknown version", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -343,7 +351,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -359,7 +367,7 @@ describe("MslSignatureEnvelope", function() {
         it("missing algorithm", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -389,7 +397,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -405,7 +413,7 @@ describe("MslSignatureEnvelope", function() {
         it("invalid algorithm", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -435,7 +443,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -451,7 +459,7 @@ describe("MslSignatureEnvelope", function() {
         it("missing signature", function() {
             var envelope;
             runs(function() {
-                MslSignatureEnvelope$create(algorithm, SIGNATURE, {
+                MslSignatureEnvelope.create(algorithm, SIGNATURE, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -481,7 +489,7 @@ describe("MslSignatureEnvelope", function() {
             
             var moEnvelope;
             runs(function() {
-                MslSignatureEnvelope$parse(moEncode, null, encoder, {
+                MslSignatureEnvelope.parse(moEncode, null, encoder, {
                     result: function(x) { moEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

@@ -20,6 +20,22 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 xdescribe("DiffieHellmanExchangeSuite", function() {
+    const MslEncoderFactory = require('../../../../../core/src/main/javascript/io/MslEncoderFactory.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
+    const DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+
+    const MockDiffieHellmanParameters = require('../../../main/javascript/keyx/MockDiffieHellmanParameters.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -53,7 +69,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     }
     
     /** Diffie-Hellman parameters ID. */
-    var PARAMETERS_ID = MockDiffieHellmanParameters$DEFAULT_ID;
+    var PARAMETERS_ID = MockDiffieHellmanParameters.DEFAULT_ID;
 
     /** Random. */
     var random = new Random();
@@ -70,12 +86,12 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     beforeEach(function() {
     	if (!initialized) {
     	    runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                var params = MockDiffieHellmanParameters$getDefaultParameters();
+                var params = MockDiffieHellmanParameters.getDefaultParameters();
                 var paramSpec = params.getParameterSpec(PARAMETERS_ID);
                 
                 MslTestUtils.generateDiffieHellmanKeys(paramSpec, {
@@ -111,10 +127,8 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     });
     
     // Shortcuts.
-    var RequestData = DiffieHellmanExchange$RequestData;
-    var RequestData$parse = DiffieHellmanExchange$RequestData$parse;
-    var ResponseData = DiffieHellmanExchange$ResponseData;
-    var ResponseData$parse = DiffieHellmanExchange$ResponseData$parse;
+    var RequestData = DiffieHellmanExchange.RequestData;
+    var ResponseData = DiffieHellmanExchange.ResponseData;
     
     /** Request data unit tests. */
     describe("RequestData", function() {
@@ -137,7 +151,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var moReq;
             runs(function() {
                 expect(keydata).not.toBeNull();
-                RequestData$parse(keydata, {
+                RequestData.parse(keydata, {
                     result: function(data) { moReq = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -229,7 +243,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        runs(function() {
 	        	keydata.remove(KEY_PARAMETERS_ID);
 	        	var f = function() {
-	        		RequestData$parse(keydata);
+	        		RequestData.parse(keydata);
 	        	};
 	        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 	        });
@@ -249,7 +263,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        runs(function() {
 	        	keydata.remove(KEY_PUBLIC_KEY);
 	        	var f = function() {
-	        		RequestData$parse(keydata);
+	        		RequestData.parse(keydata);
 	        	};
 	        	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
 	        });
@@ -269,7 +283,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        runs(function() {
 	        	keydata.put(KEY_PUBLIC_KEY, "x");
 	        	var f = function() {
-	        		RequestData$parse(keydata);
+	        		RequestData.parse(keydata);
 	        	};
 	        	expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
 	        });
@@ -282,7 +296,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			RequestData$parse(keydata, {
+            			RequestData.parse(keydata, {
             				result: function(data) { dataA2 = data; },
             				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             			});
@@ -314,7 +328,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			RequestData$parse(keydata, {
+            			RequestData.parse(keydata, {
             				result: function(data) { dataA2 = data; },
             				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             			});
@@ -346,7 +360,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			RequestData$parse(keydata, {
+            			RequestData.parse(keydata, {
             				result: function(data) { dataA2 = data; },
             				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             			});
@@ -404,7 +418,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	            
-	            var moResp = ResponseData$parse(MASTER_TOKEN, keydata);
+	            var moResp = ResponseData.parse(MASTER_TOKEN, keydata);
 	            expect(moResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
 	            expect(moResp.masterToken).toEqual(resp.masterToken);
 	            expect(moResp.identity).toEqual(resp.identity);
@@ -496,7 +510,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            keydata.remove(KEY_PARAMETERS_ID);
 	            var f = function() {
-	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            	ResponseData.parse(MASTER_TOKEN, keydata);
 	            };
 	            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -516,7 +530,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            keydata.remove(KEY_PUBLIC_KEY);
 	            var f = function() {
-	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            	ResponseData.parse(MASTER_TOKEN, keydata);
 	            };
 	            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -536,7 +550,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            keydata.put(KEY_PUBLIC_KEY, "x");
 	            var f = function() {
-	            	ResponseData$parse(MASTER_TOKEN, keydata);
+	            	ResponseData.parse(MASTER_TOKEN, keydata);
 	            };
 	            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY));
             });
@@ -562,7 +576,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            dataB = new ResponseData(masterTokenB, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
 	            	},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -590,7 +604,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
 	            	},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -618,7 +632,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
 	            	},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -883,7 +897,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var data = new Uint8Array(32);
             random.nextBytes(data);
             
-            var requestCryptoContext = undefined, responseCryptoContext;
+            var requestCryptoContext, responseCryptoContext;
             runs(function() {
             	requestCryptoContext = keyxData.cryptoContext;
 	            var keyResponseData = keyxData.keyResponseData;
@@ -896,7 +910,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
-            var requestCiphertext = undefined, responseCiphertext;
+            var requestCiphertext, responseCiphertext;
             runs(function() {
                 expect(responseCryptoContext).not.toBeNull();requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
@@ -914,7 +928,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             });
 
             // Signatures should always be equal.
-            var requestSignature = undefined, responseSignature;
+            var requestSignature, responseSignature;
             runs(function() {
                 requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
@@ -933,7 +947,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             });
             
             // Plaintext should always be equal to the original message.
-            var requestPlaintext = undefined, responsePlaintext;
+            var requestPlaintext, responsePlaintext;
             runs(function() {
                 requestCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },
@@ -952,7 +966,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             });
             
             // Verification should always succeed.
-            var requestVerified; responseVerified = undefined;
+            var requestVerified, responseVerified;
             runs(function() {
             	requestCryptoContext.verify(data, responseSignature, encoder, {
             		result: function(data) { requestVerified = data; },

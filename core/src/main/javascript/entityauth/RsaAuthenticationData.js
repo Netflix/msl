@@ -30,10 +30,16 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var RsaAuthenticationData;
-var RsaAuthenticationData$parse;
+(function(require, module) {
+    "use strict";
 
-(function() {
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslError = require('../MslError.js');
+
     /**
      * Key entity identity.
      * @const
@@ -47,7 +53,7 @@ var RsaAuthenticationData$parse;
      */
     var KEY_PUBKEY_ID = "pubkeyid";
 
-    RsaAuthenticationData = EntityAuthenticationData.extend({
+    var RsaAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new public key authentication data instance from the
          * specified entity identity and public key ID.</p>
@@ -98,7 +104,7 @@ var RsaAuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    RsaAuthenticationData$parse = function RsaAuthenticationData$parse(rsaAuthMo) {
+    var RsaAuthenticationData$parse = function RsaAuthenticationData$parse(rsaAuthMo) {
         try {
             var identity = rsaAuthMo.getString(KEY_IDENTITY);
             var pubkeyid = rsaAuthMo.getString(KEY_PUBKEY_ID);
@@ -109,4 +115,7 @@ var RsaAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = RsaAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('RsaAuthenticationData'));

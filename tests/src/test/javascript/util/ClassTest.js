@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 describe("Class", function() {
-	var Animal = util.Class.create({
+    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    
+	var Animal = Class.create({
 		init: function(type, name) {
 			var props = {
 				classname: { value: "AnimalClass", writable: false, enumerable: false, configurable: true },

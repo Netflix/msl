@@ -29,10 +29,16 @@
  * </ul></p>
  *
  */
-var EccAuthenticationData;
-var EccAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key entity identity.
      * @const
@@ -46,7 +52,7 @@ var EccAuthenticationData$parse;
      */
     var KEY_PUBKEY_ID = "pubkeyid";
 
-    EccAuthenticationData = EntityAuthenticationData.extend({
+    var EccAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new ECC public key authentication data instance from the
          * specified entity identity and public key ID.</p>
@@ -97,7 +103,7 @@ var EccAuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    EccAuthenticationData$parse = function EccAuthenticationData$parse(eccAuthMo) {
+    var EccAuthenticationData$parse = function EccAuthenticationData$parse(eccAuthMo) {
         try {
             var identity = eccAuthMo.getString(KEY_IDENTITY);
             var pubkeyid = eccAuthMo.getString(KEY_PUBKEY_ID);
@@ -108,4 +114,7 @@ var EccAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = EccAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EccAuthenticationData'));

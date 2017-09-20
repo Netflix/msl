@@ -20,6 +20,22 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageServiceTokenBuilder", function() {
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    const MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
+    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
 	var random = new Random();
 	var trustedNetCtx;
 	var trustedNetMsgCtx;
@@ -47,22 +63,22 @@ describe("MessageServiceTokenBuilder", function() {
 	beforeEach(function() {
 		if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { trustedNetCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                MockMslContext$create(EntityAuthenticationScheme.PSK, true, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, true, {
                     result: function(c) { p2pCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
             waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 100);
             runs(function() {
-                MockMessageContext$create(trustedNetCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
+                MockMessageContext.create(trustedNetCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
                     result: function(c) { trustedNetMsgCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-			    MockMessageContext$create(p2pCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
+			    MockMessageContext.create(p2pCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
 			        result: function(c) { p2pMsgCtx = c; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -85,7 +101,7 @@ describe("MessageServiceTokenBuilder", function() {
 					result: function(token) { PEER_USER_ID_TOKEN = token; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				KEY_REQUEST_DATA = new SymmetricWrappedExchange$RequestData(SymmetricWrappedExchange$KeyId.PSK);
+				KEY_REQUEST_DATA = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
             });
 			waitsFor(function() { return USER_ID_TOKEN && PEER_USER_ID_TOKEN && KEY_REQUEST_DATA; }, "user ID tokens and key request data not received", 100);
 			runs(function() {
@@ -109,7 +125,7 @@ describe("MessageServiceTokenBuilder", function() {
 	        p2pCtx.getMslStore().clearCryptoContexts();
 	        p2pCtx.getMslStore().clearServiceTokens();
 	        p2pCtx.getMslStore().clearUserIdTokens();
-	        MockMessageContext$create(p2pCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
+	        MockMessageContext.create(p2pCtx, USER_ID, UserAuthenticationScheme.EMAIL_PASSWORD, {
 	            result: function(c) { p2pMsgCtx = c; },
 	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -120,7 +136,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("primary master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -140,7 +156,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("primary master token with key exchange data", function() {
         var requestBuilder;
         runs(function() {
-            MessageBuilder$createRequest(trustedNetCtx, null, null, null, null, {
+            MessageBuilder.createRequest(trustedNetCtx, null, null, null, null, {
                 result: function(x) { requestBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -160,7 +176,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         var responseBuilder;
         runs(function() {
-            MessageBuilder$createResponse(trustedNetCtx, request, {
+            MessageBuilder.createResponse(trustedNetCtx, request, {
                 result: function(x) { responseBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -182,7 +198,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("primary user ID token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -202,7 +218,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("peer master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -223,7 +239,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("peer master token with key exchange data", function() {
 	    var requestBuilder;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+            MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
                 result: function(x) { requestBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -243,7 +259,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         var responseBuilder;
         runs(function() {
-            MessageBuilder$createResponse(p2pCtx, request, {
+            MessageBuilder.createResponse(p2pCtx, request, {
                 result: function(x) { responseBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -265,7 +281,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("peer user ID token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -286,7 +302,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("get primary service tokens", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -307,7 +323,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("get peer service tokens", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -329,7 +345,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("get both service tokens", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -354,11 +370,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add primary service token", function() {
 	    var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -379,11 +395,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add primary service token with mismatched master token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -400,7 +416,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add primary service token with mismatched user ID token", function() {
 	    var msgBuilder, userIdToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -413,7 +429,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         var serviceToken;
         runs(function() {
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, userIdToken, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, userIdToken, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -430,11 +446,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add primary service token with no master token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+            MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -451,11 +467,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add primary service token with no user ID token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -472,11 +488,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add peer service token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -498,11 +514,11 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add peer service token with mismatched master token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -520,7 +536,7 @@ describe("MessageServiceTokenBuilder", function() {
     it("add peer service token with mismatched user ID token", function() {
         var msgBuilder, userIdToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -533,7 +549,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         var serviceToken;
         runs(function() {
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, userIdToken, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, userIdToken, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -551,11 +567,11 @@ describe("MessageServiceTokenBuilder", function() {
     it("add peer service token with no master token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -572,11 +588,11 @@ describe("MessageServiceTokenBuilder", function() {
     it("add peer service token with no user ID token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -594,11 +610,11 @@ describe("MessageServiceTokenBuilder", function() {
     it("add peer service token to trusted network message", function() {
         var msgBuilder, serviceToken;
         runs(function() {
-            MessageBuilder$createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+            MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
                 result: function(x) { msgBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ServiceToken$create(trustedNetCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+            ServiceToken.create(trustedNetCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
                 result: function(x) { serviceToken = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -617,7 +633,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add unbound primary service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -655,7 +671,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -683,7 +699,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add master bound primary service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -718,7 +734,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add master bound primary service token with no master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -749,7 +765,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -777,7 +793,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound primary service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -812,7 +828,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound primary service token with no master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -840,7 +856,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound primary service token with no user ID token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -871,7 +887,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -899,7 +915,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("exclude primary service token", function() {
 		var serviceToken;
 		runs(function() {
-		    ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -908,7 +924,7 @@ describe("MessageServiceTokenBuilder", function() {
 		
 		var msgBuilder;
 		runs(function() {
-			MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+			MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 				result: function(x) { msgBuilder = x; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -934,7 +950,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("exclude unknown primary service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -951,7 +967,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("delete primary service token", function() {
 		var serviceToken;
 		runs(function() {
-		    ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -960,7 +976,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-			MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+			MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 				result: function(x) { msgBuilder = x; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1009,7 +1025,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("delete unknown primary service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1031,7 +1047,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("p2p add unbound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1066,7 +1082,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("trusted network add unbound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(trustedNetCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(trustedNetCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1095,7 +1111,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1123,7 +1139,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add master bound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1159,7 +1175,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add master bound peer service token with no master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1189,7 +1205,7 @@ describe("MessageServiceTokenBuilder", function() {
 		runs(function() {
 			p2pMsgCtx.removeCryptoContext(TOKEN_NAME);
 			p2pMsgCtx.removeCryptoContext(EMPTY_TOKEN_NAME);
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1218,7 +1234,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("trusted network add master bound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(trustedNetCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1240,7 +1256,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1276,7 +1292,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound peer service token with no master token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, null, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, null, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1304,7 +1320,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("add user bound peer service token with no user ID token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1336,7 +1352,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1365,7 +1381,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("trusted network add user bound peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1387,7 +1403,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("exclude peer service token", function() {
 		var serviceToken;
 		runs(function() {
-		    ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1396,7 +1412,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-			MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+			MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 				result: function(x) { msgBuilder = x; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1419,7 +1435,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("exclude unknown peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1437,7 +1453,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("delete peer service token", function() {
 		var serviceToken;
 		runs(function() {
-		    ServiceToken$create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
@@ -1446,7 +1462,7 @@ describe("MessageServiceTokenBuilder", function() {
 
 		var msgBuilder;
 		runs(function() {
-			MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+			MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 				result: function(x) { msgBuilder = x; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1491,7 +1507,7 @@ describe("MessageServiceTokenBuilder", function() {
 	it("delete unknown peer service token", function() {
 		var msgBuilder;
 		runs(function() {
-		    MessageBuilder$createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
+		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, null, {
 		        result: function(x) { msgBuilder = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });

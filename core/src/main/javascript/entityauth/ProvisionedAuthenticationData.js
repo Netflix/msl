@@ -30,13 +30,13 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ProvisionedAuthenticationData;
-var ProvisionedAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
     "use strict";
     
-    ProvisionedAuthenticationData = EntityAuthenticationData.extend({
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    
+    var ProvisionedAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * Construct a new provisioned entity authentication data instance. 
          */
@@ -76,7 +76,10 @@ var ProvisionedAuthenticationData$parse;
         }
     });
     
-    ProvisionedAuthenticationData$parse = function ProvisionedAuthenticationData$parse(provisionedAuthJo) {
+    var ProvisionedAuthenticationData$parse = function ProvisionedAuthenticationData$parse(provisionedAuthJo) {
         return new ProvisionedAuthenticationData();
     };
-})();
+    
+    // Exports.
+    module.exports.parse = ProvisionedAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ProvisionedAuthenticationData'));

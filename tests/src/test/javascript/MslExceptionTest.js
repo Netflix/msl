@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 describe("MslException", function() {
+    const EmailPasswordAuthenticationData = require('../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const MslException = require('../../../../core/src/main/javascript/MslException.js');
+    const EntityAuthenticationScheme = require('../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslError = require('../../../../core/src/main/javascript/MslError.js');
+    const MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
+
+    const MockMslContext = require('../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../main/javascript/util/MslTestUtils.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    
     /**
      * @return {UserAuthenticationData} dummy user authentication data.
      */
@@ -27,7 +37,7 @@ describe("MslException", function() {
     beforeEach(function() {
         if (!ctx) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(x) { ctx = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -225,7 +235,7 @@ describe("MslException", function() {
     it("too large message ID", function() {
     	var f = function() {
     		var e = new MslException(MslError.MSL_PARSE_ERROR);
-    		e.messageId = MslConstants$MAX_LONG_VALUE + 2;
+    		e.messageId = MslConstants.MAX_LONG_VALUE + 2;
     	};
     	expect(f).toThrow(new RangeError());
     });

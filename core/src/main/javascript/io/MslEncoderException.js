@@ -20,10 +20,12 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncoderException;
-
-(function() {
-    MslEncoderException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	
+    var MslEncoderException = module.exports = Class.create(new Error());
     
     var proto = {
         /**
@@ -69,4 +71,4 @@ var MslEncoderException;
     
     // Attach methods.
     MslEncoderException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderException'));

@@ -19,46 +19,59 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UnauthenticatedAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new unauthenticated authentication factory instance.
-     * 
-     * @param {AuthenticationUtils} authutils authentication utilities.
-     */
-    init: function init(authutils) {
-        init.base.call(this, EntityAuthenticationScheme.NONE);
-        
-        // The properties.
-        var props = {
-            authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+(function(require, module) {
+    "use strict";
+    
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const UnauthenticatedAuthenticationData = require('../entityauth/UnauthenticatedAuthenticationData.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const MslError = require('../MslError.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
 
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return UnauthenticatedAuthenticationData$parse(entityAuthMo);
-        });
-    },
+    var UnauthenticatedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+    	/**
+    	 * Construct a new unauthenticated authentication factory instance.
+    	 * 
+    	 * @param {AuthenticationUtils} authutils authentication utilities.
+    	 */
+    	init: function init(authutils) {
+    		init.base.call(this, EntityAuthenticationScheme.NONE);
+            
+            // The properties.
+            var props = {
+                authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+    	},
 
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof UnauthenticatedAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-        var uad = authdata;
-        
-        // Check for revocation.
-        var identity = uad.getIdentity();
-        if (this.authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntityAuthenticationData(uad);
-        
-        // Verify the scheme is permitted.
-        if (!this.authutils.isSchemePermitted(identity, this.scheme))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(uad);
+    	/** @inheritDoc */
+    	createData: function createData(ctx, entityAuthMo, callback) {
+    		AsyncExecutor(callback, function() {
+    			return UnauthenticatedAuthenticationData.parse(entityAuthMo);
+    		});
+    	},
 
-        // Return the crypto context.
-        return new NullCryptoContext();
-    },
-});
+    	/** @inheritDoc */
+    	getCryptoContext: function getCryptoContext(ctx, authdata) {
+    	    // Make sure we have the right kind of entity authentication data.
+    	    if (!(authdata instanceof UnauthenticatedAuthenticationData))
+    	        throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+    	    var uad = authdata;
+
+    	    // Check for revocation.
+    	    var identity = uad.getIdentity();
+    	    if (this.authutils.isEntityRevoked(identity))
+    	        throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "none " + identity).setEntityAuthenticationData(uad);
+
+    	    // Verify the scheme is permitted.
+    	    if (!this.authutils.isSchemePermitted(identity, this.scheme))
+    	        throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication scheme for entity " + identity + " not supported:" + this.scheme).setEntityAuthenticationData(uad);
+
+    	    // Return the crypto context.
+    	    return new NullCryptoContext();
+    	},
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UnauthenticatedAuthenticationFactory'));

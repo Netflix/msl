@@ -19,45 +19,54 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockMslUser = MslUser.extend({
-    /**
-     * Create a new MSL user with the specified user ID.
-     * 
-     * @param {string} id MSL user ID.
-     */
-    init: function init(id) {
-        // Set properties.
-        var props = {
-            id: { value: id, writable: false, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
+(function(require, module) {
+    "use strict";
     
-    /** @inheritDoc */
-    getEncoded: function getEncoded() {
-        return this.id;
-    },
-
-    /** @inheritDoc */
-    equals: function equals(obj) {
-        if (obj === this) return true;
-        if (!(obj instanceof MockMslUser)) return false;
-        var that = obj;
-        return this.id == that.id;
-    },
-
-    /** @inheritDoc */
-    uniqueKey: function uniqueKey() {
-        return this.id;
-    },
-});
-
-/**
- * Create a new MSL user from the serialized user data.
- * 
- * @param {Uint8Array} userdata serialized user data.
- * @return {MslUser} the MSL user.
- */
-function MockMslUser$parse(userdata) {
-    return new MockMslUser(userdata);
-}
+    const MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
+        
+    var MockMslUser = module.exports = MslUser.extend({
+        /**
+         * Create a new MSL user with the specified user ID.
+         * 
+         * @param {string} id MSL user ID.
+         */
+        init: function init(id) {
+            // Set properties.
+            var props = {
+                id: { value: id, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+        
+        /** @inheritDoc */
+        getEncoded: function getEncoded() {
+            return this.id;
+        },
+    
+        /** @inheritDoc */
+        equals: function equals(obj) {
+            if (obj === this) return true;
+            if (!(obj instanceof MockMslUser)) return false;
+            var that = obj;
+            return this.id == that.id;
+        },
+    
+        /** @inheritDoc */
+        uniqueKey: function uniqueKey() {
+            return this.id;
+        },
+    });
+    
+    /**
+     * Create a new MSL user from the serialized user data.
+     * 
+     * @param {Uint8Array} userdata serialized user data.
+     * @return {MslUser} the MSL user.
+     */
+    function MockMslUser$parse(userdata) {
+        return new MockMslUser(userdata);
+    }
+    
+    // Exports.
+    module.exports.parse = MockMslUser$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockMslUser'));

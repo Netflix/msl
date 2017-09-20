@@ -20,6 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SessionCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key ciphertext. */
     var KEY_CIPHERTEXT = "ciphertext";
     /** MSL encoder format. */
@@ -40,13 +54,13 @@ describe("SessionCryptoContext", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
         var signatureKey = MockPresharedAuthenticationFactory.KPH;
-        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, callback);
+        MasterToken.create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, callback);
     }
     
     /**
      * @param {MslContext} ctx MSL context.
-     * @param {CipherKey} encryptionKey master token encryption key.
-     * @param {CipherKey} signatureKey master token signature key.
+     * @param {SecretKey} encryptionKey master token encryption key.
+     * @param {SecretKey} signatureKey master token signature key.
 	 * @param {result: function(MasterToken), error: function(Error)}
 	 *        callback the callback functions that will receive the envelope
 	 *        or any thrown exceptions.
@@ -61,14 +75,14 @@ describe("SessionCryptoContext", function() {
 		var expiration = new Date(Date.now() + 2000);
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         
-        MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, {
+        MasterToken.create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, {
         	result: function(masterToken) {
         	    var mo = MslTestUtils.toMslObject(encoder, masterToken, {
         	        result: function(mo) {
                         var signature = mo.getBytes("signature");
                         ++signature[1];
                         mo.put("signature", signature);
-                        MasterToken$parse(ctx, mo, callback);
+                        MasterToken.parse(ctx, mo, callback);
         	        },
         	        error: callback.error,
         	    });
@@ -88,7 +102,7 @@ describe("SessionCryptoContext", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -265,7 +279,7 @@ describe("SessionCryptoContext", function() {
     	var envelope;
     	runs(function() {
     	    var envelopeMo = encoder.parseObject(ciphertext);
-    		MslCiphertextEnvelope$parse(envelopeMo, null, {
+    		MslCiphertextEnvelope.parse(envelopeMo, null, {
     			result: function(e) { envelope = e; },
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
@@ -277,7 +291,7 @@ describe("SessionCryptoContext", function() {
 	    	var ciphertext = envelope.ciphertext;
 	    	++ciphertext[0];
 	    	++ciphertext[ciphertext.length - 1];
-	    	MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, ciphertext, {
+	    	MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, ciphertext, {
 	    		result: function(e) { shortEnvelope = e; },
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
@@ -333,7 +347,7 @@ describe("SessionCryptoContext", function() {
     	var envelope;
     	runs(function() {
     	    var envelopeMo = encoder.parseObject(ciphertext);
-	    	MslCiphertextEnvelope$parse(envelopeMo, null, {
+	    	MslCiphertextEnvelope.parse(envelopeMo, null, {
 	    		result: function(e) { envelope = e; },
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
@@ -345,7 +359,7 @@ describe("SessionCryptoContext", function() {
 	    	var ciphertext = envelope.ciphertext;
 	
 	    	var shortCiphertext = new Uint8Array(ciphertext.buffer, 0, ciphertext.length / 2);
-	    	MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, shortCiphertext, {
+	    	MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, shortCiphertext, {
 	    		result: function(e) { shortEnvelope = e; },
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});

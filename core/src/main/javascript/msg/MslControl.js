@@ -107,17 +107,33 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslControl;
-var MslControl$ApplicationError;
-var MslControl$MslChannel;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const OutputStream = require('../io/OutputStream.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const ErrorMessageRegistry = require('../msg/ErrorMessageRegistry.js');
+	const MessageContext = require('../msg/MessageContext.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslInterruptedException = require('../MslInterruptedException.js');
+	const MslException = require('../MslException.js');
+	const MessageStreamFactory = require('../msg/MessageStreamFactory.js');
+	const ReadWriteLock = require('../util/ReadWriteLock.js');
+	const MessageBuilder = require('../msg/MessageBuilder.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslConstants = require('../MslConstants.js');
+	const MessageServiceTokenBuilder = require('../msg/MessageServiceTokenBuilder.js');
+	const MslMessageException = require('../MslMessageException.js');
+	const MslError = require('../MslError.js');
+	const BlockingQueue = require('../util/BlockingQueue.js');
+	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+	const MslErrorResponseException = require('../MslErrorResponseException.js');
 
     /**
      * Application level errors that may translate into MSL level errors.
      */
-    MslControl$ApplicationError = {
+    var ApplicationError = {
         /** The entity identity is no longer accepted by the application. */
         ENTITY_REJECTED: "ENTITY_REJECTED",
         /** The user identity is no longer accepted by the application. */
@@ -129,7 +145,7 @@ var MslControl$MslChannel;
      * representing a single MSL communication channel established between
      * the local and remote entities.
      */
-    var MslChannel = MslControl$MslChannel = function MslControl$MslChannel(input, output) {
+    var MslChannel = function MslChannel(input, output) {
         var props = {
             /** Message input stream to read from the remote entity. */
             input: { value: input, writable: false, configurable: false },
@@ -143,7 +159,7 @@ var MslControl$MslChannel;
     /**
      * A map key based off a MSL context and master token pair.
      */
-    var MslContextMasterTokenKey = util.Class.create({
+    var MslContextMasterTokenKey = Class.create({
         /**
          * Create a new MSL context and master token map key.
          *
@@ -557,12 +573,7 @@ var MslControl$MslChannel;
         return entityAuthData.getIdentity();
     }
 
-    var ReceiveService;
-    var RespondService;
-    var ErrorService;
-    var RequestService;
-
-    var MslControlImpl = util.Class.create({
+    var MslControlImpl = Class.create({
         /**
          * Create a new instance of MSL control.
          *
@@ -694,13 +705,13 @@ var MslControl$MslChannel;
                                         return this.getNewestMasterToken(service, ctx, timeout, callback);
                                     }, self);
                                 },
-                                timeout: function() { callback.timeout(); },
-                                error: function(e) { callback.error(e); }
+                                timeout: callback.timeout,
+                                error: callback.error,
                             });
                         }, self);
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error,
                 });
                 service.setAbort(function() {
                     if (ticket) {
@@ -740,7 +751,7 @@ var MslControl$MslChannel;
                     self._masterTokenLocks[key] = rwlock;
                 }
                 // No need to register an abort function with the calling
-                // service as this occurs in a independently.
+                // service as this occurs independently.
                 rwlock.writeLock(-1, {
                     result: function(ticket) {
                         ctx.getMslStore().removeCryptoContext(masterToken);
@@ -915,7 +926,7 @@ var MslControl$MslChannel;
                         }
 
                         var recipient = msgCtx.getRecipient();
-                        MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, null, {
+                        MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, null, {
                             result: function(builder) {
                                 AsyncExecutor(callback, function() {
                                     builder.setNonReplayable(msgCtx.isNonReplayable());
@@ -937,8 +948,8 @@ var MslControl$MslChannel;
                         });
                     }, self);
                 },
-                timeout: function() { callback.timeout(); },
-                error: function(e) { callback.error(e); }
+                timeout: callback.timeout,
+                error: callback.error,
             });
         },
 
@@ -987,7 +998,7 @@ var MslControl$MslChannel;
             var self = this;
 
             // Create the response.
-            MessageBuilder$createResponse(ctx, request, {
+            MessageBuilder.createResponse(ctx, request, {
                 result: function(builder) {
                     InterruptibleExecutor(callback, function() {
                         builder.setNonReplayable(msgCtx.isNonReplayable());
@@ -1072,10 +1083,10 @@ var MslControl$MslChannel;
                 InterruptibleExecutor(callback, function() {
                     // Resend the request without a master token or user ID token.
                     // Make sure the use the error header message ID + 1.
-                    var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
+                    var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                     var recipient = resendMsgCtx.getRecipient();
-                    MessageBuilder$createRequest(ctx, null, null, recipient, messageId, {
+                    MessageBuilder.createRequest(ctx, null, null, recipient, messageId, {
                         result: function(requestBuilder) {
                             InterruptibleExecutor(callback, function() {
                                 if (ctx.isPeerToPeer()) {
@@ -1103,10 +1114,10 @@ var MslControl$MslChannel;
                             // Resend the request without a user ID token.
                             // Make sure the use the error header message ID + 1.
                             var masterToken = tokenTicket && tokenTicket.masterToken;
-                            var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
+                            var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                             var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                             var recipient = resendMsgCtx.getRecipient();
-                            MessageBuilder$createRequest(ctx, masterToken, null, recipient, messageId, {
+                            MessageBuilder.createRequest(ctx, masterToken, null, recipient, messageId, {
                                 result: function(requestBuilder) {
                                     InterruptibleExecutor(callback, function() {
                                         if (ctx.isPeerToPeer()) {
@@ -1121,13 +1132,13 @@ var MslControl$MslChannel;
                                         };
                                     }, self);
                                 },
-                                error: function(e) { callback.error(e); }
+                                error: callback.error,
                             });
 
                         }, self);
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error,
                 });
             }
 
@@ -1137,8 +1148,8 @@ var MslControl$MslChannel;
                 var payloads = sent.request.getPayloads();
                 var errorCode = errorHeader.errorCode;
                 switch (errorCode) {
-                    case MslConstants$ResponseCode.ENTITYDATA_REAUTH:
-                    case MslConstants$ResponseCode.ENTITY_REAUTH:
+                    case MslConstants.ResponseCode.ENTITYDATA_REAUTH:
+                    case MslConstants.ResponseCode.ENTITY_REAUTH:
                     {
                         // If the MSL context cannot provide new entity authentication
                         // data then return null. This function should never return
@@ -1159,8 +1170,8 @@ var MslControl$MslChannel;
                         });
                         return;
                     }
-                    case MslConstants$ResponseCode.USERDATA_REAUTH:
-                    case MslConstants$ResponseCode.SSOTOKEN_REJECTED:
+                    case MslConstants.ResponseCode.USERDATA_REAUTH:
+                    case MslConstants.ResponseCode.SSOTOKEN_REJECTED:
                     {
                         // If the message context cannot provide user authentication
                         // data then return null.
@@ -1180,20 +1191,20 @@ var MslControl$MslChannel;
                         });
                         return;
                     }
-                    case MslConstants$ResponseCode.USER_REAUTH:
+                    case MslConstants.ResponseCode.USER_REAUTH:
                     {
                         userReauth(requestHeader, payloads);
                         return;
                     }
-                    case MslConstants$ResponseCode.KEYX_REQUIRED:
+                    case MslConstants.ResponseCode.KEYX_REQUIRED:
                     {
                         // This error will only be received by trusted network clients
                         // and peer-to-peer entities that do not have a master token.
                         // Make sure the use the error header message ID + 1.
-                        var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
+                        var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                         var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                         var recipient = resendMsgCtx.getRecipient();
-                        MessageBuilder$createRequest(ctx, null, null, recipient, messageId, {
+                        MessageBuilder.createRequest(ctx, null, null, recipient, messageId, {
                             result: function(requestBuilder) {
                                 InterruptibleExecutor(callback, function() {
                                     if (ctx.isPeerToPeer()) {
@@ -1217,7 +1228,7 @@ var MslControl$MslChannel;
                         });
                         return;
                     }
-                    case MslConstants$ResponseCode.EXPIRED:
+                    case MslConstants.ResponseCode.EXPIRED:
                     {
                         // Grab the newest master token and its read lock.
                         this.getNewestMasterToken(service, ctx, timeout, {
@@ -1238,10 +1249,10 @@ var MslControl$MslChannel;
                                     }
 
                                     // Resend the request.
-                                    var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
+                                    var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                                     var recipient = resendMsgCtx.getRecipient();
-                                    MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
+                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
                                         result: function(requestBuilder) {
                                             InterruptibleExecutor(callback, function() {
                                                 if (ctx.isPeerToPeer()) {
@@ -1265,16 +1276,16 @@ var MslControl$MslChannel;
                                                 };
                                             }, self);
                                         },
-                                        error: function(e) { callback.error(e); }
+                                        error: callback.error,
                                     }, self);
                                 }, self);
                             },
-                            timeout: function() { callback.timeout(); },
-                            error: function(e) { callback.error(e); }
+                            timeout: callback.timeout,
+                            error: callback.error,
                         });
                         return;
                     }
-                    case MslConstants$ResponseCode.REPLAYED:
+                    case MslConstants.ResponseCode.REPLAYED:
                     {
                         // This error will be received if the previous request's non-
                         // replayable ID is not accepted by the remote entity. In this
@@ -1299,10 +1310,10 @@ var MslControl$MslChannel;
                                     }
 
                                     // Resend the request.
-                                    var messageId = MessageBuilder$incrementMessageId(errorHeader.messageId);
+                                    var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
                                     var recipient = resendMsgCtx.getRecipient();
-                                    MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
+                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
                                         result: function(requestBuilder) {
                                             InterruptibleExecutor(callback, function() {
                                                 if (ctx.isPeerToPeer()) {
@@ -1320,12 +1331,12 @@ var MslControl$MslChannel;
                                                 };
                                             }, self);
                                         },
-                                        error: function(e) { callback.error(e); }
+                                        error: callback.error,
                                     });
                                 }, self);
                             },
-                            timeout: function() { callback.timeout(); },
-                            error: function(e) { callback.error(e); }
+                            timeout: callback.timeout,
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1353,16 +1364,16 @@ var MslControl$MslChannel;
         	// The data-reauth error codes also delete tokens in case those errors
         	// are returned when a token does exist.
             switch (errorHeader.errorCode) {
-	            case MslConstants$ResponseCode.ENTITY_REAUTH:
-	            case MslConstants$ResponseCode.ENTITYDATA_REAUTH:
+	            case MslConstants.ResponseCode.ENTITY_REAUTH:
+	            case MslConstants.ResponseCode.ENTITYDATA_REAUTH:
 	            {
 	                // The old master token is invalid. Delete the old
 	                // crypto context and any bound service tokens.
 	                this.deleteMasterToken(ctx, requestHeader.masterToken);
 	                break;
 	            }
-	            case MslConstants$ResponseCode.USER_REAUTH:
-	            case MslConstants$ResponseCode.USERDATA_REAUTH:
+	            case MslConstants.ResponseCode.USER_REAUTH:
+	            case MslConstants.ResponseCode.USERDATA_REAUTH:
 	            {
 	                // The old user ID token is invalid. Delete the old user ID
 	                // token and any bound service tokens. It is okay to stomp on
@@ -1467,7 +1478,7 @@ var MslControl$MslChannel;
                                 attachUser(masterToken, userIdToken, userAuthDataDelayed);
                             }, self);
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 } else {
                     attachUser(masterToken, userIdToken, userAuthDataDelayed);
@@ -1494,7 +1505,7 @@ var MslControl$MslChannel;
                                         prepare(masterToken, userIdToken, userAuthDataDelayed);
                                     }, self);
                                 },
-                                error: function(e) { callback.error(e); }
+                                error: callback.error,
                             });
                         } else {
                             prepare(masterToken, userIdToken, userAuthDataDelayed);
@@ -1542,7 +1553,7 @@ var MslControl$MslChannel;
                                         perform(masterToken, userIdToken, handshake, keyRequests);
                                     }, self);
                                 },
-                                error: function(e) { callback.error(e); }
+                                error: callback.error,
                             });
                             return;
                         }
@@ -1599,16 +1610,16 @@ var MslControl$MslChannel;
                                                     write(request, handshake);
                                                 }, self);
                                             },
-                                            timeout: function() { callback.timeout(); },
-                                            error: function(e) { callback.error(e); }
+                                            timeout: callback.timeout,
+                                            error: callback.error,
                                         });
                                     }, self);
                                 },
-                                timeout: function() { callback.timeout(); },
-                                error: function(e) { callback.error(e); }
+                                timeout: callback.timeout,
+                                error: callback.error,
                             });
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 }, self);
             }
@@ -1628,8 +1639,8 @@ var MslControl$MslChannel;
                                 return new SendResult(request, handshake);
                             }, self);
                         },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
+                        timeout: callback.timeout,
+                        error: callback.error,
                     });
                 } else {
                     InterruptibleExecutor(callback, function() {
@@ -1735,10 +1746,10 @@ var MslControl$MslChannel;
                                         // request message ID).
                                         var errorCode = (errorHeader) ? errorHeader.errorCode : null;
                                         if (responseHeader ||
-                                            (errorCode != MslConstants$ResponseCode.FAIL && errorCode != MslConstants$ResponseCode.TRANSIENT_FAILURE && errorCode != MslConstants$ResponseCode.ENTITY_REAUTH && errorCode != MslConstants$ResponseCode.ENTITYDATA_REAUTH))
+                                            (errorCode != MslConstants.ResponseCode.FAIL && errorCode != MslConstants.ResponseCode.TRANSIENT_FAILURE && errorCode != MslConstants.ResponseCode.ENTITY_REAUTH && errorCode != MslConstants.ResponseCode.ENTITYDATA_REAUTH))
                                         {
                                             var responseMessageId = (responseHeader) ? responseHeader.messageId : errorHeader.messageId;
-                                            var expectedMessageId = MessageBuilder$incrementMessageId(request.messageId);
+                                            var expectedMessageId = MessageBuilder.incrementMessageId(request.messageId);
                                             if (responseMessageId != expectedMessageId) {
                                                 throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId)
                                                     .setMasterToken(masterToken)
@@ -1833,12 +1844,12 @@ var MslControl$MslChannel;
                                     });
                                 }, self);
                             },
-                            timeout: function() { callback.timeout(); },
-                            error: function(e) { callback.error(e); }
+                            timeout: callback.timeout,
+                            error: callback.error,
                         });
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error,
                 });
             }, self);
         },
@@ -2298,9 +2309,8 @@ var MslControl$MslChannel;
             function tryAcquisition(masterToken, userIdToken) {
                 InterruptibleExecutor(callback, function() {
                     // Stop and throw an exception if aborted.
-                    if (service.isAborted()) {
+                    if (service.isAborted())
                         throw new MslInterruptedException('acquireRenewalLock aborted.');
-                    }
 
                     // If we do not have a master token or the master token should be
                     // renewed, or we do not have a user ID token but the message is
@@ -2419,7 +2429,7 @@ var MslControl$MslChannel;
         }
     });
 
-    MslControl = util.Class.create({
+    var MslControl = module.exports = Class.create({
         /**
          * Create a new instance of MSL control.
          *
@@ -2588,7 +2598,7 @@ var MslControl$MslChannel;
          *
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
-         * @param {MslControl$ApplicationError} err error type.
+         * @param {ApplicationError} err error type.
          * @param {OutputStream} out remote entity output stream.
          * @param {MessageHeader} request request header to create the response from.
          * @param {number} timeout read/write timeout in milliseconds.
@@ -2752,14 +2762,14 @@ var MslControl$MslChannel;
      */
     function sendError(service, ctrl, ctx, debugCtx, requestHeader, recipient, messageId, error, userMessage, output, timeout, callback) {
         // Create error header.
-        MessageBuilder$createErrorResponse(ctx, recipient, messageId, error, userMessage, {
+        MessageBuilder.createErrorResponse(ctx, recipient, messageId, error, userMessage, {
             result: function(errorHeader) {
                 if (debugCtx) debugCtx.sentHeader(errorHeader);
                 
                 // Determine encoder format.
                 var encoder = ctx.getMslEncoderFactory();
                 var capabilities = (requestHeader)
-                    ? MessageCapabilities$intersection(ctx.getMessageCapabilities(), requestHeader.messageCapabilities)
+                    ? MessageCapabilities.intersection(ctx.getMessageCapabilities(), requestHeader.messageCapabilities)
                     : ctx.getMessageCapabilities();
                 var formats = (capabilities) ? capabilities.encoderFormats : null;
                 var format = encoder.getPreferredFormat(formats);
@@ -2797,7 +2807,7 @@ var MslControl$MslChannel;
      * <p>This class will only be used by trusted-network servers and peer-to-
      * peer servers.</p>
      */
-    ReceiveService = util.Class.create({
+    var ReceiveService = Class.create({
         /**
          * Create a new message receive service.
          *
@@ -2893,7 +2903,7 @@ var MslControl$MslChannel;
                             }
                             sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), null, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
-                                timeout: function() { callback.timeout(); },
+                                timeout: callback.timeout,
                                 error: function(re) {
                                     InterruptibleExecutor(callback, function() {
                                         // If we were cancelled then return null.
@@ -2959,7 +2969,7 @@ var MslControl$MslChannel;
                                }
                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                    result: function(success) { callback.error(toThrow); },
-                                   timeout: function() { callback.timeout(); },
+                                   timeout: callback.timeout,
                                    error: function(re) {
                                        InterruptibleExecutor(callback, function() {
                                            // If we were cancelled then return null.
@@ -3126,7 +3136,7 @@ var MslControl$MslChannel;
                                 }
                                 sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
-                                    timeout: function() { callback.timeout(); },
+                                    timeout: callback.timeout,
                                     error: function(re) {
                                         InterruptibleExecutor(callback, function() {
                                             // If we were cancelled then return null.
@@ -3150,7 +3160,7 @@ var MslControl$MslChannel;
      * <p>This class will only be used trusted network servers and peer-to-peer
      * servers.</p>
      */
-    RespondService = util.Class.create({
+    var RespondService = Class.create({
         /**
          * Create a new message respond service.
          *
@@ -3235,7 +3245,7 @@ var MslControl$MslChannel;
                     var requestHeader = this._request.getMessageHeader();
                     
                     // Do nothing if we cannot send one more message.
-                    if (msgCount + 1 > MslConstants$MAX_MESSAGES) {
+                    if (msgCount + 1 > MslConstants.MAX_MESSAGES) {
                         // Release the master token lock.
                         this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
 
@@ -3255,7 +3265,7 @@ var MslControl$MslChannel;
                     if (securityRequired) {
                         // Try to send an error response.
                         var recipient = getIdentity(this._request);
-                        var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
+                        var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, securityRequired, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
@@ -3281,7 +3291,7 @@ var MslControl$MslChannel;
                     if (this._msgCtx.getUser() && !builder.getMasterToken() && !builder.getKeyExchangeData()) {
                         // Try to send an error response.
                         var recipient = getIdentity(this._request);
-                        var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
+                        var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
@@ -3372,7 +3382,7 @@ var MslControl$MslChannel;
                 // Do nothing if we cannot send and receive two more messages.
                 //
                 // Make sure to release the master token lock.
-                if (msgCount + 2 > MslConstants$MAX_MESSAGES) {
+                if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
                     this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
                     return null;
                 }
@@ -3385,7 +3395,7 @@ var MslControl$MslChannel;
                     // response.
                     this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
                     var recipient = getIdentity(this._request);
-                    var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
+                    var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                         result: function(success) { callback.result(null); },
                         timeout: callback.timeout,
@@ -3597,7 +3607,7 @@ var MslControl$MslChannel;
 
                                             // Maybe we can send an error response.
                                             var recipient = getIdentity(this._request);
-                                            var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
+                                            var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                                             var mslError, userMessage, toThrow;
                                             if (e instanceof MslException) {
                                                 mslError = e.error;
@@ -3616,7 +3626,7 @@ var MslControl$MslChannel;
                                             }
                                             sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
-                                                timeout: function() { callback.timeout(); },
+                                                timeout: callback.timeout,
                                                 error: function(re) {
                                                     InterruptibleExecutor(callback, function() {
                                                         // If we were cancelled then return null.
@@ -3649,7 +3659,7 @@ var MslControl$MslChannel;
 
                                             // Maybe we can send an error response.
                                             var recipient = getIdentity(this._request);
-                                            var requestMessageId = MessageBuilder$decrementMessageId(builder.getMessageId());
+                                            var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                                             var mslError, userMessage, toThrow;
                                             if (e instanceof MslException) {
                                                 mslError = e.error;
@@ -3668,7 +3678,7 @@ var MslControl$MslChannel;
                                             }
                                             sendError(this, this._ctrl, this._ctx, debugCtx, messageHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
-                                                timeout: function() { callback.timeout(); },
+                                                timeout: callback.timeout,
                                                 error: function(re) {
                                                     InterruptibleExecutor(callback, function() {
                                                         // If we were cancelled then return false.
@@ -3731,14 +3741,14 @@ var MslControl$MslChannel;
      * <p>This class will only be used trusted network servers and peer-to-peer
      * entities.</p>
      */
-    ErrorService = util.Class.create({
+    var ErrorService = Class.create({
         /**
          * Create a new error service.
          *
          * @param {MslControlImpl} ctrl parent MSL control.
          * @param {MslContext} ctx MSL context.
          * @param {MessageContext} msgCtx message context.
-         * @param {MslControl$ApplicationError} err the application error.
+         * @param {ApplicationError} err the application error.
          * @param {OutputStream} out remote entity output stream.
          * @param {MessageHeader} request request message header.
          * @param {number} timeout read/write timeout in milliseconds.
@@ -3798,11 +3808,11 @@ var MslControl$MslChannel;
             InterruptibleExecutor(callback, function() {
                 // Identify the correct MSL error.
                 var err;
-                if (this._appError == MslControl$ApplicationError.ENTITY_REJECTED) {
+                if (this._appError == ApplicationError.ENTITY_REJECTED) {
                     err = (this._request.masterToken)
                         ? MslError.MASTERTOKEN_REJECTED_BY_APP
                         : MslError.ENTITY_REJECTED_BY_APP;
-                } else if (this._appError == MslControl$ApplicationError.USER_REJECTED) {
+                } else if (this._appError == ApplicationError.USER_REJECTED) {
                     err = (this._request.userIdToken)
                         ? MslError.USERIDTOKEN_REJECTED_BY_APP
                         : MslError.USER_REJECTED_BY_APP;
@@ -3856,7 +3866,7 @@ var MslControl$MslChannel;
      * <p>This class will only be used by trusted network clients, peer-to-peer
      * clients, and peer-to-peer servers.</p>
      */
-    RequestService = util.Class.create({
+    var RequestService = Class.create({
         /**
          * Create a new message request service.
          *
@@ -3958,7 +3968,7 @@ var MslControl$MslChannel;
                 // Do not do anything if cannot send and receive two more messages.
                 //
                 // Make sure to release the master token lock.
-                if (msgCount + 2 > MslConstants$MAX_MESSAGES) {
+                if (msgCount + 2 > MslConstants.MAX_MESSAGES) {
                     var tokenTicket = builderTokenTicket.tokenTicket;
                     this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
                     this._maxMessagesHit = true;
@@ -4143,8 +4153,8 @@ var MslControl$MslChannel;
                                 }
                             }, self);
                         },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
+                        timeout: callback.timeout,
+                        error: callback.error,
                     });
                 }, self);
 
@@ -4502,4 +4512,8 @@ var MslControl$MslChannel;
             }
         }
     });
-})();
+    
+    // Exports.
+    module.exports.ApplicationError = ApplicationError;
+    module.exports.MslChannel = MslChannel;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslControl'));

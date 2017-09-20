@@ -31,15 +31,17 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslArray;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodable = require('../io/MslEncodable.js');
 
     /**
      * @interface
      */
-    MslArray = util.Class.create({
+    var MslArray = module.exports = Class.create({
         /**
          * Create a new {@code MslArray} from the given optional object array.
          * 
@@ -76,6 +78,8 @@ var MslArray;
          *         type.
          */
         get: function get(index) {
+            const MslObject = require('../io/MslObject.js');
+            
             if (index < 0 || index >= this.list.length)
                 throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
             var o = this.list[index];
@@ -194,6 +198,8 @@ var MslArray;
          *         type.
          */
         getMslObject: function getMslObject(index, encoder) {
+            const MslObject = require('../io/MslObject.js');
+            
             var o = this.get(index);
             if (o instanceof MslObject)
                 return o;
@@ -288,6 +294,8 @@ var MslArray;
          *         exceeds the number of elements in the array.
          */
         opt: function opt(index) {
+            const MslObject = require('../io/MslObject.js');
+            
             if (index < 0 || index >= this.list.length)
                 throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
             var o = this.list[index];
@@ -421,6 +429,8 @@ var MslArray;
          *         exceeds the number of elements in the array.
          */
         optMslObject: function optMslObject(index, encoder) {
+            const MslObject = require('../io/MslObject.js');
+            
             var o = this.opt(index);
             if (o instanceof MslObject)
                 return o;
@@ -511,6 +521,8 @@ var MslArray;
          * @throws TypeError if the value is of an unsupported type.
          */
         put: function put(index, value) {
+            const MslObject = require('../io/MslObject.js');
+            
             if (index < -1)
                 throw new RangeError("MslArray[" + index + "] is negative.");
             
@@ -743,10 +755,12 @@ var MslArray;
          *         with the same elements in the same order.
          */
         equals: function equals(that) {
+            const MslEncoderUtils = require('../io/MslEncoderUtils.js');
+            
         	if (this == that) return true;
         	if (!(that instanceof MslArray)) return false;
         	try {
-        		return MslEncoderUtils$equalArrays(this, that);
+        		return MslEncoderUtils.equalArrays(this, that);
         	} catch (e) {
         		if (e instanceof MslEncoderException) return false;
         		throw e;
@@ -755,7 +769,9 @@ var MslArray;
         
         /** @inheritDoc */
         toString: function toString() {
-        	return MslEncoderFactory$stringify(this.list);
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
+        	return MslEncoderFactory.stringify(this.list);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslArray'));

@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 describe("ReadWriteLock", function() {
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const ReadWriteLock = require('../../../../../core/src/main/javascript/util/ReadWriteLock.js');
+    
     var TIMEOUT = 75;
     var DELAY = 1;
     var NAME = "name";

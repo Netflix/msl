@@ -19,19 +19,34 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SymmetricWrappedExchange;
-var SymmetricWrappedExchange$KeyId;
-var SymmetricWrappedExchange$RequestData;
-var SymmetricWrappedExchange$RequestData$parse;
-var SymmetricWrappedExchange$ResponseData;
-var SymmetricWrappedExchange$ResponseData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const KeyRequestData = require('../keyx/KeyRequestData.js');
+	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const KeyResponseData = require('../keyx/KeyResponseData.js');
+	const Arrays = require('../util/Arrays.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const MslMasterTokenException = require('../MslMasterTokenException.js');
+	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslException = require('../MslException.js');
+	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	
     /**
      * Key ID.
      * @enum {string}
      */
-    var KeyId = SymmetricWrappedExchange$KeyId = {
+    var KeyId = {
         PSK: "PSK",
         SESSION: "SESSION",
     };
@@ -67,7 +82,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * <li>{@code keyid} identifies the key that should be used to wrap the session keys</li>
      * </ul></p>
      */
-    var RequestData = SymmetricWrappedExchange$RequestData = KeyRequestData.extend({
+    var RequestData = KeyRequestData.extend({
         /**
          * Create a new symmetric key wrapped key request data instance with
          * the specified key ID.
@@ -96,7 +111,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof SymmetricWrappedExchange$RequestData)) return false;
+            if (!(that instanceof RequestData)) return false;
             return equals.base.call(this, that) && this.keyId == that.keyId;
         },
 
@@ -115,7 +130,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var RequestData$parse = SymmetricWrappedExchange$RequestData$parse = function RequestData$parse(keyDataMo) {
+    var RequestData$parse = function RequestData$parse(keyDataMo) {
         try {
             var keyId = keyDataMo.getString(KEY_KEY_ID);
             if (!KeyId[keyId])
@@ -144,7 +159,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * <li>{@code hmackey} the wrapped session HMAC key</li>
      * </ul></p>
      */
-    var ResponseData = SymmetricWrappedExchange$ResponseData = KeyResponseData.extend({
+    var ResponseData = KeyResponseData.extend({
         /**
          * Create a new symmetric key wrapped key response data instance with
          * the provided master token, specified key ID and wrapped encryption
@@ -181,17 +196,17 @@ var SymmetricWrappedExchange$ResponseData$parse;
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof SymmetricWrappedExchange$ResponseData)) return false;
+            if (!(that instanceof ResponseData)) return false;
             return equals.base.call(this, that) && this.keyId == that.keyId &&
-                Arrays$equal(this.encryptionKey, that.encryptionKey) &&
-                Arrays$equal(this.hmacKey, that.hmacKey);
+                Arrays.equal(this.encryptionKey, that.encryptionKey) &&
+                Arrays.equal(this.hmacKey, that.hmacKey);
         },
 
         /** @inheritDoc */
         uniqueKey: function uniqueKey() {
             return uniqueKey.base.call(this) + ':' + this.keyId +
-                ':' + Arrays$hashCode(this.encryptionKey) +
-                ':' + Arrays$hashCode(this.hmacKey);
+                ':' + Arrays.hashCode(this.encryptionKey) +
+                ':' + Arrays.hashCode(this.hmacKey);
         },
     });
 
@@ -206,7 +221,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
      * @throws MslCryptoException if an encoded key is invalid.
      * @throws MslKeyExchangeException if the key ID is not recognized.
      */
-    var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         try {
             var keyId = keyDataMo.getString(KEY_KEY_ID);
             if (!KeyId[keyId])
@@ -274,7 +289,7 @@ var SymmetricWrappedExchange$ResponseData$parse;
         });
     }
 
-    SymmetricWrappedExchange = KeyExchangeFactory.extend({
+    var SymmetricWrappedExchange = module.exports = KeyExchangeFactory.extend({
         /**
          * Create a new symmetric wrapped key exchange factory.
          * 
@@ -536,4 +551,11 @@ var SymmetricWrappedExchange$ResponseData$parse;
             }
         },
     });
-})();
+    
+    // Exports.
+    module.exports.KeyId = KeyId;
+    module.exports.RequestData = RequestData;
+    module.exports.RequestData.parse = RequestData$parse;
+    module.exports.ResponseData = ResponseData;
+    module.exports.ResponseData.parse = ResponseData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SymmetricWrappedExchange'));

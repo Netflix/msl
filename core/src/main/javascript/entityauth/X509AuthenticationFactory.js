@@ -22,53 +22,67 @@
  * @param store X.509 certificate authority store.
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var X509AuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * Construct a new X.509 asymmetric keys authentication factory instance.
-     *
-     * @param {X509Store} X.509 certificate authority store.
-     */
-    init: function init(store) {
-        init.base.call(this, EntityAuthenticationScheme.X509);
-
-        // The properties.
-        var props = {
-            store: { value: store, writable: false, enumerable: false, configurable: false }
-        };
-        Object.defineProperties(this, props);
-    },
-
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return X509AuthenticationData$parse(entityAuthMo);
-        });
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof X509AuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-
-        // Extract X.509 authentication data.
-        var cert = authdata.x509cert;
-        var identity = cert.getSubjectString();
-        var publicKey = cert.subjectPublicKeyRSA;
-
-        // Verify entity certificate.
-        try {
-            if (!this.store.verify(cert))
-                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.hex).setEntityAuthenticationData(authdata);
-        } catch (e) {
-            if (!(e instanceof MslException))
-                throw new MslEntityAuthException(MslError.X509CERT_PARSE_ERROR, cert.hex, e).setEntityAuthenticationData(authdata);
-            else
-                e.setEntityAuthenticationData(authdata);
-            throw e;
-        }
-
-        // Return the crypto context.
-        return new RsaCryptoContext(ctx, identity, null, publicKey, RsaCryptoContext$Mode.SIGN_VERIFY);
-    },
-});
+(function(require, module) {
+    "use strict";
+    
+    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const X509AuthenticationData = require('../entityauth/X509AuthenticationData.js');
+    const MslInternalException = require('../MslInternalException.js');
+    const MslEntityAuthException = require('../MslEntityAuthException.js');
+    const MslError = require('../MslError.js');
+    const MslException = require('../MslException.js');
+    const RsaCryptoContext = require('../crypto/RsaCryptoContext.js');
+    
+	var X509AuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+	    /**
+	     * Construct a new X.509 asymmetric keys authentication factory instance.
+	     *
+	     * @param {X509Store} X.509 certificate authority store.
+	     */
+	    init: function init(store) {
+	        init.base.call(this, EntityAuthenticationScheme.X509);
+	
+	        // The properties.
+	        var props = {
+	            store: { value: store, writable: false, enumerable: false, configurable: false }
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	
+	    /** @inheritDoc */
+	    createData: function createData(ctx, entityAuthMo, callback) {
+	        AsyncExecutor(callback, function() {
+	            return X509AuthenticationData.parse(entityAuthMo);
+	        });
+	    },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(ctx, authdata) {
+	        // Make sure we have the right kind of entity authentication data.
+	        if (!(authdata instanceof X509AuthenticationData))
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+	
+	        // Extract X.509 authentication data.
+	        var cert = authdata.x509cert;
+	        var identity = cert.getSubjectString();
+	        var publicKey = cert.subjectPublicKeyRSA;
+	
+	        // Verify entity certificate.
+	        try {
+	            if (!this.store.verify(cert))
+	                throw new MslEntityAuthException(MslError.X509CERT_VERIFICATION_FAILED, cert.hex).setEntityAuthenticationData(authdata);
+	        } catch (e) {
+	            if (!(e instanceof MslException))
+	                throw new MslEntityAuthException(MslError.X509CERT_PARSE_ERROR, cert.hex, e).setEntityAuthenticationData(authdata);
+	            else
+	                e.setEntityAuthenticationData(authdata);
+	            throw e;
+	        }
+	
+	        // Return the crypto context.
+	        return new RsaCryptoContext(ctx, identity, null, publicKey, RsaCryptoContext.Mode.SIGN_VERIFY);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('X509AuthenticationFactory'));

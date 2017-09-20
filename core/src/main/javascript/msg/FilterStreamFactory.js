@@ -20,26 +20,32 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var FilterStreamFactory = util.Class.create({
-    /**
-     * Return a new input stream that has the provided input stream as its
-     * backing source. If no filtering is desired then the original input
-     * stream must be returned.
-     *
-     * @param {InputStream} input the input stream to wrap.
-     * @return {InputStream} a new filter input stream backed by the provided input stream or
-     *         the original input stream..
-     */
-    getInputStream: function(input) {},
-
-    /**
-     * Return a new output stream that has the provided output stream as its
-     * backing destination. If no filtering is desired then the original output
-     * stream must be returned.
-     *
-     * @param {OutputStream} output the output stream to wrap.
-     * @return {OutputStream} a new filter output stream backed by the provided output stream
-     *         or the original output stream.
-     */
-    getOutputStream: function(output) {},
-});
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	
+	var FilterStreamFactory = module.exports = Class.create({
+	    /**
+	     * Return a new input stream that has the provided input stream as its
+	     * backing source. If no filtering is desired then the original input
+	     * stream must be returned.
+	     *
+	     * @param {InputStream} input the input stream to wrap.
+	     * @return {InputStream} a new filter input stream backed by the provided input stream or
+	     *         the original input stream..
+	     */
+	    getInputStream: function(input) {},
+	
+	    /**
+	     * Return a new output stream that has the provided output stream as its
+	     * backing destination. If no filtering is desired then the original output
+	     * stream must be returned.
+	     *
+	     * @param {OutputStream} output the output stream to wrap.
+	     * @return {OutputStream} a new filter output stream backed by the provided output stream
+	     *         or the original output stream.
+	     */
+	    getOutputStream: function(output) {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('FilterStreamFactory'));

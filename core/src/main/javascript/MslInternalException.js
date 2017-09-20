@@ -20,10 +20,12 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslInternalException;
-
-(function() {
-    MslInternalException = util.Class.create(new Error());
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('./util/Class.js');
+	
+    var MslInternalException = module.exports = Class.create(new Error());
 
     var proto = {
         /**
@@ -70,4 +72,4 @@ var MslInternalException;
 
     // Attach methods.
     MslInternalException.mixin(proto);
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslInternalException'));

@@ -20,6 +20,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EmailPasswordAuthenticationData", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -41,7 +53,7 @@ describe("EmailPasswordAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -81,7 +93,7 @@ describe("EmailPasswordAuthenticationData", function() {
         
         var moData, moAuthdata;
         runs(function() {
-            moData = EmailPasswordAuthenticationData$parse(authdata);
+            moData = EmailPasswordAuthenticationData.parse(authdata);
             expect(moData.scheme).toEqual(data.scheme);
             expect(moData.email).toEqual(data.email);
             expect(moData.password).toEqual(data.password);
@@ -144,7 +156,7 @@ describe("EmailPasswordAuthenticationData", function() {
         var userdata;
         runs(function() {
             var mo = encoder.parseObject(encode);
-            UserAuthenticationData$parse(ctx, null, mo, {
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function(x) { userdata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -208,7 +220,7 @@ describe("EmailPasswordAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_EMAIL);
             var f = function() {
-                EmailPasswordAuthenticationData$parse(authdata);
+                EmailPasswordAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -229,7 +241,7 @@ describe("EmailPasswordAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_PASSWORD);
             var f = function() {
-                EmailPasswordAuthenticationData$parse(authdata);
+                EmailPasswordAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
@@ -242,7 +254,7 @@ describe("EmailPasswordAuthenticationData", function() {
         runs(function() {
             dataA.getAuthData(encoder, ENCODER_FORMAT, {
                 result: function(authdata) {
-                    dataA2 = EmailPasswordAuthenticationData$parse(authdata);
+                    dataA2 = EmailPasswordAuthenticationData.parse(authdata);
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -267,7 +279,7 @@ describe("EmailPasswordAuthenticationData", function() {
         runs(function() {
             dataA.getAuthData(encoder, ENCODER_FORMAT, {
                 result: function(authdata) {
-                    dataA2 = EmailPasswordAuthenticationData$parse(authdata);
+                    dataA2 = EmailPasswordAuthenticationData.parse(authdata);
                 },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

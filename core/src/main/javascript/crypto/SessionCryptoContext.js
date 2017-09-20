@@ -20,32 +20,40 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SessionCryptoContext = SymmetricCryptoContext.extend({
-    /**
-     * <p>Construct a new session crypto context from the provided master
-     * token.</p>
-     *
-     * <p>If an identity, encryption key, and HMAC key are provided then they
-     * are assumed to be the same as what is inside the master token, which may
-     * be untrusted.</p>
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MasterToken} masterToken the master token. May be untrusted if
-     *        the identity, encryption key, and HMAC key are provided.
-     * @param {?string=} identity entity identity. May be {@code null}.
-     * @param {CipherKey=} encryptionKey encryption key.
-     * @param {CipherKey=} signatureKey signature key.
-     * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslCryptoException if the encryption key length is unsupported.
-     */
-    init: function init(ctx, masterToken, identity, encryptionKey, signatureKey) {
-        if (identity !== undefined || encryptionKey || signatureKey) {
-            var keyId = (identity) ? identity + '_' + masterToken.sequenceNumber : '' + masterToken.sequenceNumber;
-            init.base.call(this, ctx, keyId, encryptionKey, signatureKey, null);
-        } else {
-            if (!masterToken.isDecrypted())
-                throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
-            init.base.call(this, ctx, masterToken.identity + '_' + masterToken.sequenceNumber, masterToken.encryptionKey, masterToken.signatureKey, null);
-        }
-    },
-});
+(function (require, module) {
+    "use strict";
+    
+    const SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
+    const MslMasterTokenException = require('../MslMasterTokenException.js');
+    const MslError = require('../MslError.js');
+    
+	var SessionCryptoContext = module.exports = SymmetricCryptoContext.extend({
+	    /**
+	     * <p>Construct a new session crypto context from the provided master
+	     * token.</p>
+	     *
+	     * <p>If an identity, encryption key, and HMAC key are provided then they
+	     * are assumed to be the same as what is inside the master token, which may
+	     * be untrusted.</p>
+	     *
+	     * @param {MslContext} ctx MSL context.
+	     * @param {MasterToken} masterToken the master token. May be untrusted if
+	     *        the identity, encryption key, and HMAC key are provided.
+	     * @param {?string=} identity entity identity. May be {@code null}.
+	     * @param {SecretKey=} encryptionKey encryption key.
+	     * @param {SecretKey=} signatureKey signature key.
+	     * @throws MslMasterTokenException if the master token is not trusted.
+	     * @throws MslCryptoException if the encryption key length is unsupported.
+	     */
+	    init: function init(ctx, masterToken, identity, encryptionKey, signatureKey) {
+	        if (identity !== undefined || encryptionKey || signatureKey) {
+	            var keyId = (identity) ? identity + '_' + masterToken.sequenceNumber : '' + masterToken.sequenceNumber;
+	            init.base.call(this, ctx, keyId, encryptionKey, signatureKey, null);
+	        } else {
+	            if (!masterToken.isDecrypted())
+	                throw new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, masterToken);
+	            init.base.call(this, ctx, masterToken.identity + '_' + masterToken.sequenceNumber, masterToken.encryptionKey, masterToken.signatureKey, null);
+	        }
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SessionCryptoContext'));

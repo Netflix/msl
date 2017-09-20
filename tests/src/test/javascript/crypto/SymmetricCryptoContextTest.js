@@ -20,6 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SymmetricCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -54,20 +68,20 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 var aes128Bytes = new Uint8Array(16);
                 random.nextBytes(aes128Bytes);
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 /* TODO AES-CMAC is not supported by any browsers yet. We need to check
                  * based on the MslCrypto$WebCryptoVersion, once it is supported.
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CMAC, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CMAC, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { AES_CMAC_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 */
                 AES_CMAC_KEY = true;
                 
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -121,7 +135,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var ciphertextA = undefined, ciphertextB;
+            var ciphertextA, ciphertextB;
             runs(function() {
                 cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertextA = c; },
@@ -141,7 +155,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(ciphertextA).not.toEqual(ciphertextB);
             });
 
-            var plaintextA = undefined, plaintextB;
+            var plaintextA, plaintextB;
             runs(function() {
                 cryptoContext.decrypt(ciphertextA, encoder, {
                     result: function(p) { plaintextA = p; },
@@ -177,7 +191,7 @@ describe("SymmetricCryptoContext", function() {
             var envelope;
             runs(function() {
                 var envelopeMo = encoder.parseObject(ciphertext);
-                MslCiphertextEnvelope$parse(envelopeMo, null, {
+                MslCiphertextEnvelope.parse(envelopeMo, null, {
                     result: function(e) { envelope = e; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -189,7 +203,7 @@ describe("SymmetricCryptoContext", function() {
                 var ciphertext = envelope.ciphertext;
                 ++ciphertext[ciphertext.length / 2];
                 ++ciphertext[ciphertext.length - 1];
-                MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, ciphertext, {
+                MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, ciphertext, {
                     result: function(e) { shortEnvelope = e; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
@@ -236,7 +250,7 @@ describe("SymmetricCryptoContext", function() {
             var envelope;
             runs(function() {
                 var envelopeMo = encoder.parseObject(ciphertext);
-                MslCiphertextEnvelope$parse(envelopeMo, null, {
+                MslCiphertextEnvelope.parse(envelopeMo, null, {
                     result: function(x) { envelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -247,7 +261,7 @@ describe("SymmetricCryptoContext", function() {
             runs(function() {
                 var ciphertext = envelope.ciphertext;
                 ciphertext = new Uint8Array(ciphertext.buffer, 0, ciphertext.length / 2);
-                MslCiphertextEnvelope$create(envelope.keyId, envelope.iv, ciphertext, {
+                MslCiphertextEnvelope.create(envelope.keyId, envelope.iv, ciphertext, {
                     result: function(x) { shortEnvelope = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -373,7 +387,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var ciphertextA = undefined, ciphertextB;
+            var ciphertextA, ciphertextB;
             runs(function() {
                 cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
                     result: function(c) { ciphertextA = c; },
@@ -393,7 +407,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(ciphertextA).not.toEqual(ciphertextB);
             });
 
-            var plaintextA = undefined, plaintextB;
+            var plaintextA, plaintextB;
             runs(function() {
                 cryptoContext.decrypt(ciphertextA, encoder, {
                     result: function(p) { plaintextA = p; },
@@ -603,7 +617,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var signatureA = undefined, signatureB;
+            var signatureA, signatureB;
             runs(function() {
                 cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureA = s; },
@@ -623,7 +637,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(signatureB).not.toEqual(signatureA);
             });
 
-            var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+            var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
                 cryptoContext.verify(messageA, signatureA, encoder, {
                     result: function(v) { verifiedAA = v; },
@@ -684,7 +698,7 @@ describe("SymmetricCryptoContext", function() {
             var messageB = new Uint8Array(32);
             random.nextBytes(messageB);
 
-            var signatureA = undefined, signatureB;
+            var signatureA, signatureB;
             runs(function() {
                 cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
                     result: function(s) { signatureA = s; },
@@ -704,7 +718,7 @@ describe("SymmetricCryptoContext", function() {
                 expect(signatureB).not.toEqual(signatureA);
             });
 
-            var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+            var verifiedAA, verifiedBB, verifiedBA;
             runs(function() {
                 cryptoContext.verify(messageA, signatureA, encoder, {
                     result: function(v) { verifiedAA = v; },

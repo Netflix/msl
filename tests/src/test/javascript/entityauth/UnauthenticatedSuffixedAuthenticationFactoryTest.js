@@ -20,6 +20,17 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const UnauthenticatedSuffixedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UnauthenticatedSuffixedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -40,7 +51,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.NONE_SUFFIXED, false, {
+                MockMslContext.create(EntityAuthenticationScheme.NONE_SUFFIXED, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -92,7 +103,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     

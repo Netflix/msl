@@ -914,11 +914,11 @@ public class MessageHeader extends Header {
         // Create the encoding.
         final MslObject header = encoder.createObject();
         if (masterToken != null)
-            header.put(HeaderKeys.KEY_MASTER_TOKEN, masterToken);
+            header.put(Header.KEY_MASTER_TOKEN, masterToken);
         else
-            header.put(HeaderKeys.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
-        header.put(HeaderKeys.KEY_HEADERDATA, ciphertext);
-        header.put(HeaderKeys.KEY_SIGNATURE, signature);
+            header.put(Header.KEY_ENTITY_AUTHENTICATION_DATA, entityAuthData);
+        header.put(Header.KEY_HEADERDATA, ciphertext);
+        header.put(Header.KEY_SIGNATURE, signature);
         final byte[] encoding = encoder.encodeObject(header, format);
         
         // Cache and return the encoding.

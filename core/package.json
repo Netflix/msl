@@ -1,0 +1,29 @@
+{
+  "name": "msl-core",
+  "version": "1.1212.0",
+  "description": "Message Security Layer",
+  "keywords": [
+    "msl",
+    "message security layer",
+    "netflix"
+  ],
+  "homepage": "https://github.com/Netflix/msl",
+  "bugs": {
+    "url": "https://github.com/Netflix/msl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:Netflix/msl.git"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "npm run all",
+    "lint": "find src/test -type f -name '*.js' | xargs jshint",
+    "version": "echo `git describe --dirty`",
+    "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
+  },
+  "dependencies": {
+    "clarinet": "^0.11.0",
+    "jsrsasign": "^7.2.2"
+  }
+}

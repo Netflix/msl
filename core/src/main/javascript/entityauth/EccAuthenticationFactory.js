@@ -19,57 +19,70 @@
  *
  * @implements {EntityAuthenticationFactory}
  */
-var EccAuthenticationFactory = EntityAuthenticationFactory.extend({
-    /**
-     * <p>Construct a new ECC asymmetric keys authentication factory
-     * instance.</p>
-     * 
-     * <p>If a key pair ID is specified for the local entity the ECC key store
-     * must contain a matching private key (a public key is optional).</p>
-     *
-     * @param {?string} keyPairId local entity key pair ID.
-     * @param {EccStore} store ECC public key store.
-     * @constructor
-     */
-    init: function init(keyPairId, store) {
-        init.base.call(this, EntityAuthenticationScheme.ECC);
-
-        // The properties.
-        var props = {
-            keyPairId: { value: keyPairId, writable: false, enumerable: false, configurable: false },
-            store: { value: store, writable: false, enumerable: false, configurable: false }
-        };
-        Object.defineProperties(this, props);
-    },
-
-    /** @inheritDoc */
-    createData: function createData(ctx, entityAuthMo, callback) {
-        AsyncExecutor(callback, function() {
-            return EccAuthenticationData$parse(entityAuthMo);
-        });
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Make sure we have the right kind of entity authentication data.
-        if (!(authdata instanceof EccAuthenticationData))
-            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
-
-        // Extract ECC authentication data.
-        var identity = authdata.identity;
-        var pubkeyid = authdata.publicKeyId;
-        var publicKey = this.store.getPublicKey(pubkeyid);
-        var privateKey = this.store.getPrivateKey(pubkeyid);
-        
-        // The local entity must have a private key.
-        if (pubkeyid == this.keyPairId && !privateKey)
-            throw new MslEntityAuthException(MslError.ECC_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
-        
-        // Remote entities must have a public key.
-        else if (pubkeyid != this.keyPairId && !publicKey)
-            throw new MslEntityAuthException(MslError.ECC_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
-
-        // Return the crypto context.
-        return new EccCryptoContext(ctx, privateKey, publicKey);
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const EccAuthenticationData = require('../entityauth/EccAuthenticationData.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslEntityAuthException = require('../MslEntityAuthException.js');
+	const MslError = require('../MslError.js');
+	const EccCryptoContext = require('../crypto/EccCryptoContext.js');
+	
+	var EccAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
+	    /**
+	     * <p>Construct a new ECC asymmetric keys authentication factory
+	     * instance.</p>
+	     * 
+	     * <p>If a key pair ID is specified for the local entity the ECC key store
+	     * must contain a matching private key (a public key is optional).</p>
+	     *
+	     * @param {?string} keyPairId local entity key pair ID.
+	     * @param {EccStore} store ECC public key store.
+	     * @constructor
+	     */
+	    init: function init(keyPairId, store) {
+	        init.base.call(this, EntityAuthenticationScheme.ECC);
+	
+	        // The properties.
+	        var props = {
+	            keyPairId: { value: keyPairId, writable: false, enumerable: false, configurable: false },
+	            store: { value: store, writable: false, enumerable: false, configurable: false }
+	        };
+	        Object.defineProperties(this, props);
+	    },
+	
+	    /** @inheritDoc */
+	    createData: function createData(ctx, entityAuthMo, callback) {
+	        AsyncExecutor(callback, function() {
+	            return EccAuthenticationData.parse(entityAuthMo);
+	        });
+	    },
+	
+	    /** @inheritDoc */
+	    getCryptoContext: function getCryptoContext(ctx, authdata) {
+	        // Make sure we have the right kind of entity authentication data.
+	        if (!(authdata instanceof EccAuthenticationData))
+	            throw new MslInternalException("Incorrect authentication data type " + authdata + ".");
+	
+	        // Extract ECC authentication data.
+	        var identity = authdata.identity;
+	        var pubkeyid = authdata.publicKeyId;
+	        var publicKey = this.store.getPublicKey(pubkeyid);
+	        var privateKey = this.store.getPrivateKey(pubkeyid);
+	        
+	        // The local entity must have a private key.
+	        if (pubkeyid == this.keyPairId && !privateKey)
+	            throw new MslEntityAuthException(MslError.ECC_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
+	        
+	        // Remote entities must have a public key.
+	        else if (pubkeyid != this.keyPairId && !publicKey)
+	            throw new MslEntityAuthException(MslError.ECC_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(authdata);
+	
+	        // Return the crypto context.
+	        return new EccCryptoContext(ctx, privateKey, publicKey);
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EccAuthenticationFactory'));

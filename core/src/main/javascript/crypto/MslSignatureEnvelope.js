@@ -20,12 +20,18 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslSignatureEnvelope;
-var MslSignatureEnvelope$create;
-var MslSignatureEnvelope$parse;
-var MslSignatureEnvelope$Version;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const Class = require("../util/Class.js");
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const MslCryptoException = require('../MslCryptoException.js');
+	const MslConstants = require('../MslConstants.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	
     /**
      * Key version.
      * @const
@@ -46,7 +52,7 @@ var MslSignatureEnvelope$Version;
     var KEY_SIGNATURE = "signature";
 
     /** Versions. */
-    var Version = MslSignatureEnvelope$Version = {
+    var Version = {
         /**
          * <p>Version 1.</p>
          *
@@ -81,7 +87,7 @@ var MslSignatureEnvelope$Version;
         V2 : 2,
     };
 
-    MslSignatureEnvelope = util.Class.create({
+    var MslSignatureEnvelope = module.exports = Class.create({
         /**
          * Create a new signature envelope with the provided data.
          *
@@ -148,7 +154,7 @@ var MslSignatureEnvelope$Version;
      *        callback the callback functions that will receive the envelope
      *        or any thrown exceptions.
      */
-    MslSignatureEnvelope$create = function MslSignatureEnvelope$create(/* variable arguments */) {
+    var MslSignatureEnvelope$create = function MslSignatureEnvelope$create(/* variable arguments */) {
         var version,
             signature,
             algorithm,
@@ -183,7 +189,7 @@ var MslSignatureEnvelope$Version;
      * signature version is provided then the MSL object is parsed accordingly.
      *
      * @param {Uint8Array} envelope the raw envelope bytes.
-     * @param {?MslSignatureEnvelope$Version} version the envelope version.
+     * @param {?Version} version the envelope version.
      *        May be null.
      * @param {MslEncoderFactory} MSL encoder factory.
      * @param {{result: function(MslSignatureEnvelope), error: function(Error)}}
@@ -194,7 +200,7 @@ var MslSignatureEnvelope$Version;
      * @throws MslEncodingException if there is an error parsing the envelope.
      * @see #getBytes()
      */
-    MslSignatureEnvelope$parse = function MslSignatureEnvelope$parse(envelope, version, encoder, callback) {
+    var MslSignatureEnvelope$parse = function MslSignatureEnvelope$parse(envelope, version, encoder, callback) {
         AsyncExecutor(callback, function() {
             if (version) {
                 switch (version) {
@@ -211,7 +217,7 @@ var MslSignatureEnvelope$Version;
                                 throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + envelope);
 
                             // Grab algorithm.
-                            var algorithm = MslConstants$SignatureAlgo$fromString(envelopeMo.getString(KEY_ALGORITHM));
+                            var algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
                             if (!algorithm)
                                 throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + envelope);
 
@@ -283,7 +289,7 @@ var MslSignatureEnvelope$Version;
                     return new MslSignatureEnvelope(envelopeVersion, null, envelope);
                 case Version.V2:
                     try {
-                        var algorithm = MslConstants$SignatureAlgo$fromString(envelopeMo.getString(KEY_ALGORITHM));
+                        var algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
                         var signature = envelopeMo.getBytes(KEY_SIGNATURE);
 
                         // Verify algorithm.
@@ -306,4 +312,9 @@ var MslSignatureEnvelope$Version;
             }
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = MslSignatureEnvelope$create;
+    module.exports.parse = MslSignatureEnvelope$parse;
+    module.exports.Version = Version;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslSignatureEnvelope'));

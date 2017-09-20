@@ -21,8 +21,25 @@
  */
 // Do not run these tests unless using legacy Web Crypto.
 describe("JsonWebEncryptionCryptoContext", function() {
+    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const JsonWebEncryptionCryptoContext = require('../../../../../core/src/main/javascript/crypto/JsonWebEncryptionCryptoContext.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
 // Do nothing unless executing in the legacy Web Crypto environment.
-if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
+if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
     /** Encoding charset. */
     var UTF_8 = "utf-8";
     /** Encoder format. */
@@ -55,7 +72,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
      * @throws JSONException if there is an error parsing the serialization.
      */
     function get(serialization, key) {
-        var serializationJo = JSON.parse(textEncoding$getString(serialization, UTF_8));
+        var serializationJo = JSON.parse(textEncoding.getString(serialization, UTF_8));
         var recipients = serializationJo[KEY_RECIPIENTS];
         var recipient = recipients[0];
         switch (key) {
@@ -83,7 +100,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
      *         serialization.
      */
     function replace(serialization, key, value) {
-        var serializationJo = JSON.parse(textEncoding$getString(serialization, UTF_8));
+        var serializationJo = JSON.parse(textEncoding.getString(serialization, UTF_8));
         var recipients = serializationJo[KEY_RECIPIENTS];
         var recipient = recipients[0];
         switch (key) {
@@ -91,7 +108,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 // Return immediately after replacing because this creates a
                 // malformed serialization.
                 serializationJo[KEY_RECIPIENTS] = value;
-                return textEncoding$getBytes(JSON.stringify(serializationJo), UTF_8);
+                return textEncoding.getBytes(JSON.stringify(serializationJo), UTF_8);
             case KEY_HEADER:
                 recipient[KEY_HEADER] = value;
                 break;
@@ -112,7 +129,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         }
         recipients[0] = recipient;
         serializationJo[KEY_RECIPIENTS] = recipients;
-        return textEncoding$getBytes(JSON.stringify(serializationJo), UTF_8);
+        return textEncoding.getBytes(JSON.stringify(serializationJo), UTF_8);
     }
     
     /**
@@ -125,7 +142,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
      *         serialization.
      */
     function remove(serialization, key) {
-        var serializationJo = JSON.parse(textEncoding$getString(serialization, UTF_8));
+        var serializationJo = JSON.parse(textEncoding.getString(serialization, UTF_8));
         var recipients = serializationJo[KEY_RECIPIENTS];
         var recipient = recipients[0];
         switch (key) {
@@ -133,7 +150,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 // Return immediately after removing because this creates a
                 // malformed serialization.
                 delete serializationJo[KEY_RECIPIENTS];
-                return textEncoding$getBytes(JSON.stringify(serializationJo), UTF_8);
+                return textEncoding.getBytes(JSON.stringify(serializationJo), UTF_8);
             case KEY_HEADER:
                 delete recipient[KEY_HEADER];
                 break;
@@ -154,12 +171,12 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         }
         recipients[0] = recipient;
         serializationJo[KEY_RECIPIENTS] = recipients;
-        return textEncoding$getBytes(JSON.stringify(serializationJo), UTF_8);
+        return textEncoding.getBytes(JSON.stringify(serializationJo), UTF_8);
     }
     
     // Shortcuts.
-    var Algorithm = JsonWebEncryptionCryptoContext$Algorithm;
-    var Encryption = JsonWebEncryptionCryptoContext$Encryption;
+    var Algorithm = JsonWebEncryptionCryptoContext.Algorithm;
+    var Encryption = JsonWebEncryptionCryptoContext.Encryption;
     
     /** Crypto context key ID. */
     var KEY_ID = "keyId";
@@ -190,7 +207,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -199,11 +216,11 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 random.nextBytes(aes128Bytes);
                 var hmac256Bytes = new Uint8Array(32);
                 random.nextBytes(hmac256Bytes);
-                CipherKey$import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
+                SecretKey.import(aes128Bytes, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
                     result: function(k) { AES_128_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                CipherKey$import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
+                SecretKey.import(hmac256Bytes, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function(k) { HMAC_256_KEY = k; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -218,7 +235,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 
                 var keydata = new Uint8Array(16);
                 random.nextBytes(keydata);
-                CipherKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                SecretKey.import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(key) { AES_WRAP_KEY = key; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -337,7 +354,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         it("invalid serialization", function() {
             var exception;
             runs(function() {
-                var wrapped = textEncoding$getBytes("x", UTF_8);
+                var wrapped = textEncoding.getBytes("x", UTF_8);
                 cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -487,7 +504,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -537,7 +554,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -587,7 +604,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -637,7 +654,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_CIPHERTEXT, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_CIPHERTEXT, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -687,7 +704,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -715,7 +732,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, base64$encode(at, true));
+                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, Base64.encode(at, true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -741,10 +758,10 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 expect(header[KEY_ALGORITHM]).not.toBeNull();
                 delete header[KEY_ALGORITHM];
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(header.toString(), true));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(header.toString(), true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -770,9 +787,9 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 header[KEY_ALGORITHM] = "x";
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -798,10 +815,10 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 expect(header[KEY_ENCRYPTION]).not.toBeNull();
                 delete header[KEY_ENCRYPTION];
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -827,9 +844,9 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 header[KEY_ENCRYPTION] = "x";
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -856,7 +873,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var ecek = new Uint8Array(137);
                 random.nextBytes(ecek);
-                var badWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode(ecek, true));
+                var badWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode(ecek, true));
                 cryptoContext.unwrap(badWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -883,7 +900,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var iv = new Uint8Array(31);
                 random.nextBytes(iv);
-                var badWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode(iv, true));
+                var badWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode(iv, true));
                 cryptoContext.unwrap(badWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -919,7 +936,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var wrongWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode(ecek, true));
+                var wrongWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode(ecek, true));
                 cryptoContext.unwrap(wrongWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -946,7 +963,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var iv = new Uint8Array(16);
                 random.nextBytes(iv);
-                var wrongWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode(iv, true));
+                var wrongWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode(iv, true));
                 cryptoContext.unwrap(wrongWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1064,7 +1081,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
         it("invalid serialization", function() {
             var exception;
             runs(function() {
-                var wrapped = textEncoding$getBytes("x", UTF_8);
+                var wrapped = textEncoding.getBytes("x", UTF_8);
                 cryptoContext.unwrap(wrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1214,7 +1231,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1264,7 +1281,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1314,7 +1331,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1364,7 +1381,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_CIPHERTEXT, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_CIPHERTEXT, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1414,7 +1431,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, base64$encode("x", true));
+                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, Base64.encode("x", true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1442,7 +1459,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, base64$encode(at, true));
+                var missingWrapped = replace(wrapped, KEY_INTEGRITY_VALUE, Base64.encode(at, true));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1468,10 +1485,10 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 expect(header[KEY_ALGORITHM]).not.toBeNull();
                 delete header[KEY_ALGORITHM];
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1497,9 +1514,9 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 header[KEY_ALGORITHM] = "x";
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1525,10 +1542,10 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 expect(header[KEY_ENCRYPTION]).not.toBeNull();
                 delete header[KEY_ENCRYPTION];
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1554,9 +1571,9 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             var exception;
             runs(function() {
                 var headerB64 = get(wrapped, KEY_HEADER);
-                var header = JSON.parse(textEncoding$getString(base64$decode(headerB64, true), UTF_8));
+                var header = JSON.parse(textEncoding.getString(Base64.decode(headerB64, true), UTF_8));
                 header[KEY_ENCRYPTION] = "x";
-                var missingWrapped = replace(wrapped, KEY_HEADER, base64$encode(textEncoding$getBytes(header, UTF_8, true)));
+                var missingWrapped = replace(wrapped, KEY_HEADER, Base64.encode(textEncoding.getBytes(header, UTF_8, true)));
                 cryptoContext.unwrap(missingWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1583,7 +1600,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var ecek = new Uint8Array(137);
                 random.nextBytes(ecek);
-                var badWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode(ecek, true));
+                var badWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode(ecek, true));
                 cryptoContext.unwrap(badWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1610,7 +1627,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var iv = new Uint8Array(31);
                 random.nextBytes(iv);
-                var badWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode(iv, true));
+                var badWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode(iv, true));
                 cryptoContext.unwrap(badWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1646,7 +1663,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             
             var exception;
             runs(function() {
-                var wrongWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, base64$encode(ecek, true));
+                var wrongWrapped = replace(wrapped, KEY_ENCRYPTED_KEY, Base64.encode(ecek, true));
                 cryptoContext.unwrap(wrongWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1673,7 +1690,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
             runs(function() {
                 var iv = new Uint8Array(16);
                 random.nextBytes(iv);
-                var wrongWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, base64$encode(iv, true));
+                var wrongWrapped = replace(wrapped, KEY_INITIALIZATION_VECTOR, Base64.encode(iv, true));
                 cryptoContext.unwrap(wrongWrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoAlgorithm.ENCRYPT_DECRYPT, encoder, {
                     result: function() {},
                     error: function(e) { exception = e; }
@@ -1699,7 +1716,7 @@ if (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY) {
                 runs(function() {
                     var keydata = new Uint8Array(16);
                     random.nextBytes(keydata);
-                    CipherKey$import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
+                    SecretKey.import(keydata, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                         result: function(key) { secretKey = key; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

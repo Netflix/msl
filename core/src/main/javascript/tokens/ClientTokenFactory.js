@@ -22,49 +22,56 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var ClientTokenFactory = TokenFactory.extend({
-    /** @inheritDoc */
-    isMasterTokenRevoked: function isMasterTokenRevoked(ctx, masterToken, callback) {
-        callback.result(null);
-    },
-    
-    /** @inheritDoc */
-    acceptNonReplayableId: function acceptNonReplayableId(ctx, masterToken, nonReplayableId, callback) {
-        callback.result(null);
-    },
-    
-    /** @inheritDoc */
-    createMasterToken: function createMasterToken(ctx, entityToken, encryptionKey, hmacKey, issuerData, callback) {
-        callback.error(new MslInternalException("Creating master tokens is unsupported by the token factory."));
-    },
-
-    /** @inheritDoc */
-    isMasterTokenRenewable: function isMasterTokenRenewable(ctx, masterToken, callback) {
-        callback.result(null);
-    },
-    
-    /** @inheritDoc */
-    renewMasterToken: function renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
-        callback.error(new MslInternalException("Renewing master tokens is unsupported by the token factory."));
-    },
-
-    /** @inheritDoc */
-    isUserIdTokenRevoked: function isUserIdTokenRevoked(ctx, masterToken, userIdToken, callback) {
-        callback.result(null);
-    },
-    
-    /** @inheritDoc */
-    createUserIdToken: function createUserIdToken(ctx, user, masterToken, callback) {
-        callback.error(new MslInternalException("Creating user ID tokens is unsupported by the token factory."));
-    },
-
-    /** @inheritDoc */
-    renewUserIdToken: function renewUserIdToken(ctx, userIdToken, masterToken, callback) {
-        callback.error(new MslInternalException("Renewing user ID tokens is unsupported by the token factory."));
-    },
-    
-    /** @inheritDoc */
-    createUser: function createUser(ctx, userdata, callback) {
-        callback.error(new MslInternalException("Creating users is unsupported by the token factory."));
-    },
-});
+(function(require, module) {
+	"use strict";
+	
+	const TokenFactory = require('../tokens/TokenFactory.js');
+	const MslInternalException = require('../MslInternalException.js');
+	
+	var ClientTokenFactory = module.exports = TokenFactory.extend({
+	    /** @inheritDoc */
+	    isMasterTokenRevoked: function isMasterTokenRevoked(ctx, masterToken, callback) {
+	        callback.result(null);
+	    },
+	    
+	    /** @inheritDoc */
+	    acceptNonReplayableId: function acceptNonReplayableId(ctx, masterToken, nonReplayableId, callback) {
+	        callback.result(null);
+	    },
+	    
+	    /** @inheritDoc */
+	    createMasterToken: function createMasterToken(ctx, entityToken, encryptionKey, hmacKey, issuerData, callback) {
+	        callback.error(new MslInternalException("Creating master tokens is unsupported by the token factory."));
+	    },
+	
+	    /** @inheritDoc */
+	    isMasterTokenRenewable: function isMasterTokenRenewable(ctx, masterToken, callback) {
+	        callback.result(null);
+	    },
+	    
+	    /** @inheritDoc */
+	    renewMasterToken: function renewMasterToken(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
+	        callback.error(new MslInternalException("Renewing master tokens is unsupported by the token factory."));
+	    },
+	
+	    /** @inheritDoc */
+	    isUserIdTokenRevoked: function isUserIdTokenRevoked(ctx, masterToken, userIdToken, callback) {
+	        callback.result(null);
+	    },
+	    
+	    /** @inheritDoc */
+	    createUserIdToken: function createUserIdToken(ctx, user, masterToken, callback) {
+	        callback.error(new MslInternalException("Creating user ID tokens is unsupported by the token factory."));
+	    },
+	
+	    /** @inheritDoc */
+	    renewUserIdToken: function renewUserIdToken(ctx, userIdToken, masterToken, callback) {
+	        callback.error(new MslInternalException("Renewing user ID tokens is unsupported by the token factory."));
+	    },
+	    
+	    /** @inheritDoc */
+	    createUser: function createUser(ctx, userdata, callback) {
+	        callback.error(new MslInternalException("Creating users is unsupported by the token factory."));
+	    },
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('ClientTokenFactory'));

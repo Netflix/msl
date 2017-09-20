@@ -26,19 +26,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PublicMessageContext = MessageContext.extend({
-    /** @inheritDoc */
-    isEncrypted: function isEncrypted() {
-        return false;
-    },
-    
-    /** @inheritDoc */
-    isIntegrityProtected: function isIntegrityProtected() {
-        return true;
-    },
-    
-    /** @inheritDoc */
-    isNonReplayable: function isNonReplayable() {
-        return false;
-    }
-});
+(function(require, module) {
+	"use strict";
+
+	const MessageContext = require('../msg/MessageContext.js');
+	
+	var PublicMessageContext = module.exports = MessageContext.extend({
+	    /** @inheritDoc */
+	    isEncrypted: function isEncrypted() {
+	        return false;
+	    },
+	    
+	    /** @inheritDoc */
+	    isIntegrityProtected: function isIntegrityProtected() {
+	        return true;
+	    },
+	    
+	    /** @inheritDoc */
+	    isNonReplayable: function isNonReplayable() {
+	        return false;
+	    }
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PublicMessageContext'))

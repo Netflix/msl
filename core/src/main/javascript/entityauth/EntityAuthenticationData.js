@@ -34,16 +34,22 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var EntityAuthenticationData;
-var EntityAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const MslEncodable = require('../io/MslEncodable.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEntityAuthException = require('../MslEntityAuthException.js');
+	const MslError = require('../MslError.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	
     /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key entity authentication data. */
     var KEY_AUTHDATA = "authdata";
 
-    EntityAuthenticationData = MslEncodable.extend({
+    var EntityAuthenticationData = module.exports = MslEncodable.extend({
         /**
          * <p>Create a new entity authentication data object with the specified
          * entity authentication scheme.</p>
@@ -144,7 +150,7 @@ var EntityAuthenticationData$parse;
      * @throws MslCryptoException if there is an error creating the entity
      *         authentication data crypto.
      */
-    EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthMo, callback) {
+    var EntityAuthenticationData$parse = function EntityAuthenticationData$parse(ctx, entityAuthMo, callback) {
         AsyncExecutor(callback, function() {
             try {
                 var schemeName = entityAuthMo.getString(KEY_SCHEME);
@@ -168,4 +174,7 @@ var EntityAuthenticationData$parse;
             }
         });
     };
-})();
+    
+    // Exports.
+    module.exports.parse = EntityAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('EntityAuthenticationData'));

@@ -15,48 +15,33 @@
  */
 
 /**
- * Diffie-Hellman parameter specification.
- */
-var DHParameterSpec = util.Class.create({
-    /**
-     * Create a new Diffie-Hellman parameter specification with the provided
-     * prime modulus and base generator.
-     * 
-     * @param {Uint8Array} p prime modulus (big-endian).
-     * @param {Uint8Array} g base generator (big-endian).
-     */
-    init: function init(p, g) {
-        // Set properties.
-        var props = {
-            p: { value: p, writable: false, configurable: false },
-            g: { value: g, writable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    }
-});
-
-/**
  * Diffie-Hellman parameters by parameter ID.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var DiffieHellmanParameters = util.Class.create({
-    /**
-     * @return {Object.<string,DHParameterSpec>} the map of Diffie-Hellman parameters by parameter ID.
-     * @throws MslKeyExchangeException if there is an error accessing the
-     *         parameters.
-     */
-    getParameterSpecs: function() {},
-    
-    /**
-     * Returns the Diffie-Hellman parameter specification identified by the
-     * parameters ID.
-     * 
-     * @param {string} id the parameters ID.
-     * @return {DHParameterSpec} the parameter specification or null if the parameters ID is
-     *         not recognized.
-     * @throws MslKeyExchangeException if there is an error accessing the
-     *         parameter specification.
-     */
-    getParameterSpec: function(id) {},
-});
+(function(require, module) {
+	"use strict";
+
+	const Class = require('../util/Class.js');
+		
+	var DiffieHellmanParameters = module.exports = Class.create({
+	    /**
+	     * @return {Object.<string,DHParameterSpec>} the map of Diffie-Hellman parameters by parameter ID.
+	     * @throws MslKeyExchangeException if there is an error accessing the
+	     *         parameters.
+	     */
+	    getParameterSpecs: function() {},
+	    
+	    /**
+	     * Returns the Diffie-Hellman parameter specification identified by the
+	     * parameters ID.
+	     * 
+	     * @param {string} id the parameters ID.
+	     * @return {DHParameterSpec} the parameter specification or null if the parameters ID is
+	     *         not recognized.
+	     * @throws MslKeyExchangeException if there is an error accessing the
+	     *         parameter specification.
+	     */
+	    getParameterSpec: function(id) {},
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('DiffieHellmanParameters'));

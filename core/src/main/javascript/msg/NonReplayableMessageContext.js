@@ -26,19 +26,25 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var NonReplayableMessageContext = MessageContext.extend({
-    /** @inheritDoc */
-    isEncrypted: function isEncrypted() {
-        return true;
-    },
-    
-    /** @inheritDoc */
-    isIntegrityProtected: function isIntegrityProtected() {
-        return true;
-    },
-    
-    /** @inheritDoc */
-    isNonReplayable: function isNonReplayable() {
-        return true;
-    }
-});
+(function(require, module) {
+	"use strict";
+
+	const MessageContext = require('../msg/MessageContext.js');
+	
+	var NonReplayableMessageContext = module.exports = MessageContext.extend({
+	    /** @inheritDoc */
+	    isEncrypted: function isEncrypted() {
+	        return true;
+	    },
+	    
+	    /** @inheritDoc */
+	    isIntegrityProtected: function isIntegrityProtected() {
+	        return true;
+	    },
+	    
+	    /** @inheritDoc */
+	    isNonReplayable: function isNonReplayable() {
+	        return true;
+	    }
+	});
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NonReplayableMessageContext'))

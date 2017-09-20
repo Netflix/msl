@@ -18,6 +18,20 @@
  * ECC crypto context unit tests.
  */
 describe("EccCryptoContext", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** ECC public key A. */
     var publicKeyA;
     /** ECC private key A. */
@@ -86,29 +100,27 @@ describe("EccCryptoContext", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 
-                var extractable = true;
                 var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
                 _algo['namedCurve'] = ECDSA_KEYPAIR_A.publicKeyJSON['crv'];
                 
-                PublicKey$import(ECDSA_KEYPAIR_A.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                PublicKey.import(ECDSA_KEYPAIR_A.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
                     result: function (pubkey) { publicKeyA = pubkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                PrivateKey$import(ECDSA_KEYPAIR_A.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                PrivateKey.import(ECDSA_KEYPAIR_A.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
                     result: function (privkey) { privateKeyA = privkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                PublicKey$import(ECDSA_KEYPAIR_B.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+                PublicKey.import(ECDSA_KEYPAIR_B.publicKeyJSON, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
                     result: function (pubkey) { publicKeyB = pubkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-
-                PrivateKey$import(ECDSA_KEYPAIR_B.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+                PrivateKey.import(ECDSA_KEYPAIR_B.privateKeyJSON, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
                     result: function (privkey) { privateKeyB = privkey; },
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });

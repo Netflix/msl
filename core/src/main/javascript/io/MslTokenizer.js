@@ -20,12 +20,14 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslTokenizer;
+(function(require, module) {
+	"use strict";
 
-(function() {
-    "use strict";
+	const Class = require('../util/Class.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslInternalException = require('../MslInternalException.js');
 
-    MslTokenizer = util.Class.create({
+    var MslTokenizer = module.exports = Class.create({
         /**
          * <p>Create a new tokenizer.</p>
          */
@@ -129,4 +131,4 @@ var MslTokenizer;
             }, self);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslTokenizer'));

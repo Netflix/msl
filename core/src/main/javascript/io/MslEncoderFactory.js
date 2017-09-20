@@ -25,18 +25,27 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslEncoderFactory;
-var MslEncoderFactory$quote;
-var MslEncoderFactory$stringify;
-
-(function() {
+(function(require, module) {
+	"use strict";
+	
+	const Base64 = require('../util/Base64.js');
+	const MslObject = require('../io/MslObject.js');
+	const MslArray = require('../io/MslArray.js');
+	const Class = require('../util/Class.js');
+	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+	const JsonMslObject = require('../io/JsonMslObject.js');
+	const JsonMslArray = require('../io/JsonMslArray.js');
+    
     /**
      * Escape a string to be output as a single line of text.
      * 
      * @param {?string} s the string. May be {@code null}.
      * @returns {string} the escaped string.
      */
-    var quote = MslEncoderFactory$quote = function MslEncoderFactory$quote(s) {
+    var MslEncoderFactory$quote = function MslEncoderFactory$quote(s) {
         var json = JSON.stringify(s);
         return json
             .replace(/[\"]/g, '\\"')
@@ -55,11 +64,11 @@ var MslEncoderFactory$stringify;
      * @param {?} value the value to convert to a string. May be {@code null}.
      * @return {string} the string.
      */
-    var stringify = MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
+    var MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
     	if (v instanceof MslObject || v instanceof MslArray) {
     		return v.toString();
     	} else if (v instanceof Uint8Array) {
-    	    return base64$encode(v);
+    	    return Base64.encode(v);
     	} else {
     		var json = JSON.stringify(v);
     		return json
@@ -74,7 +83,7 @@ var MslEncoderFactory$stringify;
     	}
     };
     
-    MslEncoderFactory = util.Class.create({
+    var MslEncoderFactory = module.exports = Class.create({
         /**
          * Returns the most preferred encoder format from the provided set of
          * formats.
@@ -84,10 +93,7 @@ var MslEncoderFactory$stringify;
          * @return {MslEncoderFormat} the preferred format from the provided set or the default format
          *         if format set is {@code null} or empty.
          */
-        getPreferredFormat: function getPreferredFormat(formats) {
-            // We don't know about any other formats right now.
-            return MslEncoderFormat.JSON;
-        },
+        getPreferredFormat: function(formats) {},
         
         /**
          * <p>Create a new {@link MslTokenizer}.</p>
@@ -121,7 +127,7 @@ var MslEncoderFactory$stringify;
                                 if (bytes == null || bytes.length < 1)
                                     throw new new MslEncoderException("Failure reading the byte stream identifier.");
                                 var id = bytes[0];
-                                format = MslEncoderFormat$getFormat(id);
+                                format = MslEncoderFormat.getFormat(id);
                                 bufferedSource.reset();
                                 return this.generateTokenizer(bufferedSource, format);
                             }, self);
@@ -180,7 +186,7 @@ var MslEncoderFactory$stringify;
             
             // Identify the encoder format.
             var id = encoding[0];
-            var format = MslEncoderFormat$getFormat(id);
+            var format = MslEncoderFormat.getFormat(id);
             if (!format)
                 throw new MslEncoderException("Unidentified encoder format ID: (byte)" + id + ".");
             return format;
@@ -226,4 +232,8 @@ var MslEncoderFactory$stringify;
             return new MslArray(collection);
         },
     });
-})();
+    
+    // Exports.
+    module.exports.quote = MslEncoderFactory$quote;
+    module.exports.stringify = MslEncoderFactory$stringify;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslEncoderFactory'));

@@ -30,11 +30,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var UserIdTokenAuthenticationData;
-var UserIdTokenAuthenticationData$parse;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	const UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
+	const MslInternalException = require('../MslInternalException.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodingException = require('../MslEncodingException.js');
+	const MslError = require('../MslError.js');
+	const MasterToken = require('../tokens/MasterToken.js');
+	const UserIdToken = require('../tokens/UserIdToken.js');
+	const MslException = require('../MslException.js');
+	const MslUserAuthException = require('../MslUserAuthException.js');
     
     /**
      * Key master token key.
@@ -49,7 +58,7 @@ var UserIdTokenAuthenticationData$parse;
      */
     var KEY_USER_ID_TOKEN = "useridtoken";
     
-    UserIdTokenAuthenticationData = UserAuthenticationData.extend({
+    var UserIdTokenAuthenticationData = module.exports = UserAuthenticationData.extend({
         /**
          * Construct a new user ID token authentication data instance from the
          * provided master token and user ID token.
@@ -112,7 +121,7 @@ var UserIdTokenAuthenticationData$parse;
      * @throws MslUserAuthException if the token data is invalid or the user ID
      *         token is not bound to the master token.
      */
-    UserIdTokenAuthenticationData$parse = function UserIdTokenAuthenticationData$parse(ctx, userIdTokenAuthMo, callback) {
+    var UserIdTokenAuthenticationData$parse = function UserIdTokenAuthenticationData$parse(ctx, userIdTokenAuthMo, callback) {
         AsyncExecutor(callback, function() {
             // Extract master token and user ID token representations.
             var encoder = ctx.getMslEncoderFactory();
@@ -128,9 +137,9 @@ var UserIdTokenAuthenticationData$parse;
             
             // Convert any MslExceptions into MslUserAuthException because we don't
             // want to trigger entity or user re-authentication incorrectly.
-            MasterToken$parse(ctx, masterTokenMo, {
+            MasterToken.parse(ctx, masterTokenMo, {
                 result: function(masterToken) {
-                    UserIdToken$parse(ctx, userIdTokenMo, masterToken, {
+                    UserIdToken.parse(ctx, userIdTokenMo, masterToken, {
                         result: function(userIdToken) {
                             AsyncExecutor(callback, function() {
                                 return new UserIdTokenAuthenticationData(masterToken, userIdToken);
@@ -154,5 +163,8 @@ var UserIdTokenAuthenticationData$parse;
                 },
             });
         });
-    }
-})();
+    };
+    
+    // Exports.
+    module.exports.parse = UserIdTokenAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('UserIdTokenAuthenticationData'));

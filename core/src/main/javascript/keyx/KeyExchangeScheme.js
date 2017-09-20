@@ -21,16 +21,15 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var KeyExchangeScheme;
-var KeyExchangeScheme$getScheme;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
     
     /** Map of names onto schemes. */
     var schemes = {};
     
-    KeyExchangeScheme = util.Class.create({
+    var KeyExchangeScheme = module.exports = Class.create({
         /**
          * Define a key exchange scheme with the specified name.
          * 
@@ -42,18 +41,18 @@ var KeyExchangeScheme$getScheme;
                 name: { value: name, writable: false, configurable: false },
             };
             Object.defineProperties(this, props);
-            
+    
             // Add this scheme to the map.
             schemes[name] = this;
         },
-        
+
         /** @inheritDoc */
         toString: function toString() {
             return this.name;
         },
     });
     
-    util.Class.mixin(KeyExchangeScheme,
+    Class.mixin(KeyExchangeScheme,
     /** @lends {KeyExchangeScheme} */
     ({
         /** Asymmetric key wrapped. */
@@ -67,14 +66,19 @@ var KeyExchangeScheme$getScheme;
         /** Symmetric key wrapped. */
         SYMMETRIC_WRAPPED : new KeyExchangeScheme("SYMMETRIC_WRAPPED"),
     }));
-    Object.freeze(KeyExchangeScheme);
 
     /**
      * @param {string} name the key exchange scheme name.
      * @return {?KeyExchangeScheme} the scheme identified by the specified name or {@code null} if
      *         there is none.
      */
-    KeyExchangeScheme$getScheme = function KeyExchangeScheme$getScheme(name) {
+    var KeyExchangeScheme$getScheme = function KeyExchangeScheme$getScheme(name) {
         return (schemes[name]) ? schemes[name] : null;
     };
-})();
+    
+    // Exports.
+    Object.defineProperties(KeyExchangeScheme, {
+        getScheme: { value: KeyExchangeScheme$getScheme, writable: false, enumerable: false, configurable: false },
+    });
+    Object.freeze(KeyExchangeScheme);
+})(require, (typeof module !== 'undefined') ? module : mkmodule('KeyExchangeScheme'));

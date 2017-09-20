@@ -20,6 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("PresharedAuthenticationFactory", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const PresharedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationFactory.js');
+    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MockKeySetStore = require('../../../main/javascript/entityauth/MockKeySetStore.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -39,7 +54,7 @@ describe("PresharedAuthenticationFactory", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -98,7 +113,7 @@ describe("PresharedAuthenticationFactory", function() {
         waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
 
         runs(function() {
-            expect(MslEncoderUtils$equalObjects(dataMo, authdataMo)).toBeTruthy();
+            expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
         });
     });
     

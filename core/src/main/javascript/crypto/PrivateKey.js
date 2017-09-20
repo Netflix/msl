@@ -19,14 +19,60 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PrivateKey;
-var PrivateKey$create;
-var PrivateKey$import;
-
-(function () {
+(function(require, module) {
     "use strict";
+    
+    const Class = require('../util/Class.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslCrypto = require('../crypto/MslCrypto.js');
+    const KeyFormat = require('../crypto/KeyFormat.js');
+    const MslError = require('../MslError.js');
+    const Base64 = require('../util/Base64.js');
 
-    PrivateKey = util.Class.create({
+    /**
+     * Normalize private key input into expected Web Crypto API format.
+     *
+     * @param {string|Uint8Array|object} input Base64-encoded, raw or JSON key
+     *        data (PKCS#8|JWK).
+     * @param {KeyFormat} format provided key format (PKCS#8|JWK).
+     * @return {Uint8Array|object} DER-encoded PCKS#8 or JSON Web Key object.
+     * @throws MslCryptoException if the key data is invalid.
+     */
+    function normalizePrivkeyInput(input, format) {
+        // PKCS#8 must be either a Base64-encoded string or the raw bytes.
+        if (format == KeyFormat.PKCS8) {
+            if (input instanceof Uint8Array)
+                return input;
+            if (typeof input === 'string') {
+                try {
+                    return Base64.decode(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
+                }
+            }
+            throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + JSON.stringify(input), e);
+        }
+        
+        // JWK must either be a JSON string or a JavaScript object.
+        if (format == KeyFormat.JWK) {
+            if (typeof input === 'string') {
+                try {
+                    input = JSON.parse(input);
+                } catch (e) {
+                    throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
+                }
+            }
+            if (typeof input === 'object' && input.constructor === Object)
+                return input;
+            throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, format + " " + input, e);
+        }
+        
+        // Invalid format.
+        throw new MslCryptoException(MslError.INVALID_PRIVATE_KEY, "Invalid format '" + format + "'", e);
+    }
+
+    var PrivateKey = module.exports = Class.create({
         /**
          * Create a new private key from an original private key.
          *
@@ -37,7 +83,7 @@ var PrivateKey$import;
          * @param {{result: function(PrivateKey), error: function(Error)}}
          *        callback the callback will receive the new private key
          *        or any thrown exceptions.
-         * @param {Uint8Array=} encopded optional raw key encoding.
+         * @param {Uint8Array=} encoded optional raw key encoding.
          * @throws MslCryptoException if the key is extractable but
          *         extraction fails.
          */
@@ -53,9 +99,9 @@ var PrivateKey$import;
                         createKey(new Uint8Array(result));
                     };
                     var onerror = function(e) {
-                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.PKCS8));
+                        callback.error(new MslCryptoException(MslError.KEY_EXPORT_ERROR, KeyFormat.PKCS8, e));
                     };
-                    mslCrypto['exportKey'](KeyFormat.PKCS8, rawKey)
+                    MslCrypto['exportKey'](KeyFormat.PKCS8, rawKey)
                         .then(oncomplete, onerror);
                 } else {
                     createKey(encoded);
@@ -99,7 +145,7 @@ var PrivateKey$import;
      * @throws MslCryptoException if the key is extractable but
      *         extraction fails
      */
-    PrivateKey$create = function PrivateKey$create(rawKey, callback) {
+    var PrivateKey$create = function PrivateKey$create(rawKey, callback) {
         new PrivateKey(rawKey, callback);
     };
 
@@ -117,18 +163,21 @@ var PrivateKey$import;
      *        or any thrown exceptions.
      * @throws MslCryptoException if the key data is invalid.
      */
-    PrivateKey$import = function PrivateKey$import(input, algo, usages, format, callback) {
+    var PrivateKey$import = function PrivateKey$import(input, algo, usages, format, callback) {
         AsyncExecutor(callback, function() {
-            input = KeyFormat.normalizePrivkeyInput(input, format);
-
+            var keydata = normalizePrivkeyInput(input, format);
             var oncomplete = function(result) {
-                new PrivateKey(result, callback, input);
+                new PrivateKey(result, callback, keydata);
             };
             var onerror = function(e) {
-                callback.error(new MslCryptoException(MslError.INVALID_PRIVATE_KEY));
+                callback.error(new MslCryptoException(MslError.INVALID_PRIVATE_KEY, null, e));
             };
-            mslCrypto["importKey"](format, input, algo, true, usages)
+            MslCrypto["importKey"](format, keydata, algo, true, usages)
                 .then(oncomplete, onerror);
         });
     };
-})();
+    
+    // Exports.
+    module.exports.create = PrivateKey$create;
+    module.exports.import = PrivateKey$import;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PrivateKey'));

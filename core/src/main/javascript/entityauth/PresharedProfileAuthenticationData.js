@@ -30,11 +30,15 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var PresharedProfileAuthenticationData;
-var PresharedProfileAuthenticationData$parse;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslError = require('../MslError.js');
     
     /**
      * Key entity preshared keys identity.
@@ -56,7 +60,7 @@ var PresharedProfileAuthenticationData$parse;
      */
     var CONCAT_CHAR = "-";
 
-    PresharedProfileAuthenticationData = EntityAuthenticationData.extend({
+    var PresharedProfileAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * Construct a new preshared keys authentication data instance from the
          * specified entity preshared keys identity and profile.
@@ -112,7 +116,7 @@ var PresharedProfileAuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    PresharedProfileAuthenticationData$parse = function PresharedProfileAuthenticationData$parse(authMo) {
+    var PresharedProfileAuthenticationData$parse = function PresharedProfileAuthenticationData$parse(authMo) {
         try {
             var pskid = authMo.getString(KEY_PSKID);
             var profile = authMo.getString(KEY_PROFILE);
@@ -123,4 +127,7 @@ var PresharedProfileAuthenticationData$parse;
             throw e;
         }
     };
-})();
+    
+    // Exports.
+    module.exports.parse = PresharedProfileAuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('PresharedProfileAuthenticationData'));

@@ -20,6 +20,16 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UnauthenticatedAuthenticationData", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+    const EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -41,7 +51,7 @@ describe("UnauthenticatedAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.X509, false, {
+                MockMslContext.create(EntityAuthenticationScheme.X509, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -83,7 +93,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         runs(function() {
             expect(encode).not.toBeNull();
 
-            moData = UnauthenticatedAuthenticationData$parse(authdata);
+            moData = UnauthenticatedAuthenticationData.parse(authdata);
             expect(moData.getIdentity()).toEqual(data.getIdentity());
             expect(moData.scheme).toEqual(data.scheme);
             moData.getAuthData(encoder, ENCODER_FORMAT, {
@@ -152,7 +162,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         
         var entitydata;
         runs(function() {
-            EntityAuthenticationData$parse(ctx, mo, {
+            EntityAuthenticationData.parse(ctx, mo, {
                 result: function(x) { entitydata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -214,7 +224,7 @@ describe("UnauthenticatedAuthenticationData", function() {
         runs(function() {
             authdata.remove(KEY_IDENTITY);
             var f = function() {
-                UnauthenticatedAuthenticationData$parse(authdata);
+                UnauthenticatedAuthenticationData.parse(authdata);
             };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
     	});
@@ -229,7 +239,7 @@ describe("UnauthenticatedAuthenticationData", function() {
             dataB = new UnauthenticatedAuthenticationData(identityB);
             MslTestUtils.toMslObject(encoder, dataA, {
                 result: function(mo) {
-                    EntityAuthenticationData$parse(ctx, mo, {
+                    EntityAuthenticationData.parse(ctx, mo, {
                         result: function(x) { dataA2 = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });

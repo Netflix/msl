@@ -19,38 +19,49 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockUnauthenticatedAuthenticationFactory = UnauthenticatedAuthenticationFactory.extend({
-    /**
-     * Create a new test unauthenticated authentication factory.
-     */
-    init: function init() {
-        init.base.call(this, new MockAuthenticationUtils());
-
-        // Define properties.
-        var props = {
-            _revokedIdentity: { value: null, writable: true, enumerable: false, configurable: false },
-        };
-        Object.defineProperties(this, props);
-    },
-
-    /** @inheritDoc */
-    getCryptoContext: function getCryptoContext(ctx, authdata) {
-        // Check for revocation.
-        if (authdata instanceof UnauthenticatedAuthenticationData) {
-            var identity = authdata.identity;
-            if (this._revokedIdentity && identity == this._revokedIdentity)
-                throw new MslEntityAuthException(MslError.ENTITY_REVOKED, identity);
-        }
-        return getCryptoContext.base.call(this, ctx, authdata);
-    },
-
-    /**
-     * Set the revoked entity identity. If {@code null} all identities are
-     * accepted.
-     * 
-     * @param {string} identity revoked entity identity. May be {@code null}.
-     */
-    setRevokedIdentity: function setRevokedIdentity(identity) {
-        this._revokedIdentity = identity;
-    },
-});
+(function(require, module) {
+    "use strict";
+    
+    const UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
+    const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    
+    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+    
+    var MockUnauthenticatedAuthenticationFactory = module.exports = UnauthenticatedAuthenticationFactory.extend({
+        /**
+         * Create a new test unauthenticated authentication factory.
+         */
+        init: function init() {
+            init.base.call(this, new MockAuthenticationUtils());
+    
+            // Define properties.
+            var props = {
+                _revokedIdentity: { value: null, writable: true, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+    
+        /** @inheritDoc */
+        getCryptoContext: function getCryptoContext(ctx, authdata) {
+            // Check for revocation.
+            if (authdata instanceof UnauthenticatedAuthenticationData) {
+                var identity = authdata.identity;
+                if (this._revokedIdentity && identity == this._revokedIdentity)
+                    throw new MslEntityAuthException(MslError.ENTITY_REVOKED, identity);
+            }
+            return getCryptoContext.base.call(this, ctx, authdata);
+        },
+    
+        /**
+         * Set the revoked entity identity. If {@code null} all identities are
+         * accepted.
+         * 
+         * @param {string} identity revoked entity identity. May be {@code null}.
+         */
+        setRevokedIdentity: function setRevokedIdentity(identity) {
+            this._revokedIdentity = identity;
+        },
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockUnauthenticatedAuthenticationFactory'));

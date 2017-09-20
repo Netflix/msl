@@ -20,6 +20,30 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SymmetricWrappedExchangeSuite", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
 	
@@ -55,11 +79,11 @@ describe("SymmetricWrappedExchangeSuite", function() {
     beforeEach(function() {
     	if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { pskCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                MockMslContext$create(EntityAuthenticationScheme.NONE, false, {
+                MockMslContext.create(EntityAuthenticationScheme.NONE, false, {
                     result: function(c) { unauthCtx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -81,11 +105,9 @@ describe("SymmetricWrappedExchangeSuite", function() {
     });
     
     // Shortcuts
-    var KeyId = SymmetricWrappedExchange$KeyId;
-	var RequestData = SymmetricWrappedExchange$RequestData;
-	var ResponseData = SymmetricWrappedExchange$ResponseData;
-	var RequestData$parse = SymmetricWrappedExchange$RequestData$parse;
-	var ResponseData$parse = SymmetricWrappedExchange$ResponseData$parse;
+    var KeyId = SymmetricWrappedExchange.KeyId;
+	var RequestData = SymmetricWrappedExchange.RequestData;
+	var ResponseData = SymmetricWrappedExchange.ResponseData;
     
     /** Request data unit tests. */
     describe("RequestData", function() {
@@ -107,7 +129,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	
-	            var moReq = RequestData$parse(keydata);
+	            var moReq = RequestData.parse(keydata);
 	            expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
 	            expect(moReq.keyId).toEqual(req.keyId);
 	            moReq.getKeydata(encoder, ENCODER_FORMAT, {
@@ -141,7 +163,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	
-	            var moReq = RequestData$parse(keydata);
+	            var moReq = RequestData.parse(keydata);
 	            expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
 	            expect(moReq.keyId).toEqual(req.keyId);
 	            moReq.getKeydata(encoder, ENCODER_FORMAT, {
@@ -188,7 +210,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, mo, {
+                KeyRequestData.parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -219,7 +241,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	keydata.remove(KEY_KEY_ID);
             	var f = function() {
-            		RequestData$parse(keydata);
+            		RequestData.parse(keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -239,7 +261,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            keydata.put(KEY_KEY_ID, "x");
 	            var f = function() {
-	            	RequestData$parse(keydata);
+	            	RequestData.parse(keydata);
 	            };
 	            expect(f).toThrow(new MslKeyExchangeException(MslError.UNIDENTIFIED_KEYX_KEY_ID));
             });
@@ -252,7 +274,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = RequestData$parse(keydata);
+            			dataA2 = RequestData.parse(keydata);
             		},
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -305,7 +327,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	
-	            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            var joResp = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
 	            expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
 	            expect(joResp.hmacKey).toEqual(resp.hmacKey);
 	            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
@@ -338,7 +360,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	var masterToken;
         	runs(function() {
         		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
-        		MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
+        		MasterToken.parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -368,7 +390,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 
             var keyResponseData;
             runs(function() {
-            	KeyResponseData$parse(pskCtx, mo, {
+            	KeyResponseData.parse(pskCtx, mo, {
             		result: function(data) { keyResponseData = data; },
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -402,7 +424,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	keydata.remove(KEY_KEY_ID);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -422,7 +444,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	keydata.remove(KEY_ENCRYPTION_KEY);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -442,7 +464,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
             	keydata.remove(KEY_HMAC_KEY);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -468,7 +490,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            dataB = new ResponseData(masterTokenB, KeyId.PSK, ENCRYPTION_KEY, HMAC_KEY);
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
 	            	},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -496,7 +518,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            		dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
 	            	},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -518,8 +540,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals encryption key", function() {
-            var encryptionKeyA = Arrays$copyOf(ENCRYPTION_KEY);
-            var encryptionKeyB = Arrays$copyOf(ENCRYPTION_KEY);
+            var encryptionKeyA = Arrays.copyOf(ENCRYPTION_KEY);
+            var encryptionKeyB = Arrays.copyOf(ENCRYPTION_KEY);
             ++encryptionKeyB[0];
             var dataA = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, encryptionKeyA, HMAC_KEY);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, encryptionKeyB, HMAC_KEY);
@@ -527,7 +549,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            		dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
 	            	},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -549,8 +571,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         });
         
         it("equals HMAC key", function() {
-            var hmacKeyA = Arrays$copyOf(HMAC_KEY);
-            var hmacKeyB = Arrays$copyOf(HMAC_KEY);
+            var hmacKeyA = Arrays.copyOf(HMAC_KEY);
+            var hmacKeyB = Arrays.copyOf(HMAC_KEY);
             ++hmacKeyB[0];
             var dataA = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, hmacKeyA);
             var dataB = new ResponseData(PSK_MASTER_TOKEN, KeyId.PSK, ENCRYPTION_KEY, hmacKeyB);
@@ -558,7 +580,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            		dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
 	            	},
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -623,8 +645,8 @@ describe("SymmetricWrappedExchangeSuite", function() {
         /**
          * @param {MslContext} ctx MSL context.
          * @param {string} identity entity identity.
-         * @param {CipherKey} encryptionKey master token encryption key.
-         * @param {CipherKey hmacKey master token HMAC key.
+         * @param {SecretKey} encryptionKey master token encryption key.
+         * @param {SecretKey hmacKey master token HMAC key.
          * @param callback
          * @throws MslEncodingException if there is an error encoding the JSON
          *         data.
@@ -637,7 +659,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         	AsyncExecutor(callback, function() {
 	            var renewalWindow = new Date(Date.now() + 1000);
 	            var expiration = new Date(Date.now() + 2000);
-	            MasterToken$create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
+	            MasterToken.create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey, {
 		        	result: function(masterToken) {
 		        		AsyncExecutor(callback, function() {
 		        		    MslTestUtils.toMslObject(encoder, masterToken, {
@@ -646,7 +668,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	                                    var signature = mo.getBytes("signature");
 	                                    ++signature[1];
 	                                    mo.put("signature", signature);
-	                                    MasterToken$parse(ctx, mo, callback);
+	                                    MasterToken.parse(ctx, mo, callback);
 		        		            });
 		        		        },
 		        		        error: callback.error,

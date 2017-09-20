@@ -24,6 +24,15 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("UserAuthenticationData", function() {
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    const UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
+    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key user authentication data. */
@@ -38,7 +47,7 @@ describe("UserAuthenticationData", function() {
     beforeEach(function() {
         if (!initialized) {
             runs(function() {
-                MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -57,7 +66,7 @@ describe("UserAuthenticationData", function() {
             var mo = encoder.createObject();
             mo.put(KEY_SCHEME + "x", UserAuthenticationScheme.EMAIL_PASSWORD.name);
             mo.put(KEY_AUTHDATA, encoder.createObject());
-            UserAuthenticationData$parse(ctx, null, mo, {
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -76,7 +85,7 @@ describe("UserAuthenticationData", function() {
 	        var mo = encoder.createObject();
 	        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
 	        mo.put(KEY_AUTHDATA + "x", encoder.createObject());
-	        UserAuthenticationData$parse(ctx, null, mo, {
+	        UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -95,7 +104,7 @@ describe("UserAuthenticationData", function() {
 	        var mo = encoder.createObject();
 	        mo.put(KEY_SCHEME, "x");
 	        mo.put(KEY_AUTHDATA, encoder.createObject());
-	        UserAuthenticationData$parse(ctx, null, mo, {
+	        UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
@@ -111,7 +120,7 @@ describe("UserAuthenticationData", function() {
     it("authentication factory not found", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -124,7 +133,7 @@ describe("UserAuthenticationData", function() {
             var mo = encoder.createObject();
             mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
             mo.put(KEY_AUTHDATA, encoder.createObject());
-            UserAuthenticationData$parse(ctx, null, mo, {
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });

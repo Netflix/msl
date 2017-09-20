@@ -33,18 +33,33 @@
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var X509AuthenticationData;
-var X509AuthenticationData$parse;
+(function(require, module) {
+    "use strict";
 
-(function() {
+    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    const AsyncExecutor = require("../util/AsyncExecutor.js");
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const MslEncodingException = require('../MslEncodingException.js');
+    const MslCryptoException = require('../MslCryptoException.js');
+    const MslError = require('../MslError.js');
+    const X509 = require('../crypto/X509.js');
+    
+    const hex2b64 = require('jsrsasign').hex2b64;
+    
     /**
      * Key entity X.509 certificate.
      * @const
      * @type {string}
      */
     var KEY_X509_CERT = "x509certificate";
+    
+    /** X.509 PEM header. */
+    var PEM_HEADER = "-----BEGIN CERTIFICATE-----\n";
+    /** X.509 PEM footer. */
+    var PEM_FOOTER = "\n-----END CERTIFICATE-----";
 
-    X509AuthenticationData = EntityAuthenticationData.extend({
+    var X509AuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**
          * <p>Construct a new X.509 asymmetric keys authentication data instance from
          * the provided X.509 certificate.</p>
@@ -101,7 +116,7 @@ var X509AuthenticationData$parse;
      * @throws MslEncodingException if there is an error parsing the entity
      *         authentication data.
      */
-    X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthMo) {
+    var X509AuthenticationData$parse = function X509AuthenticationData$parse(x509AuthMo) {
         var certB64;
         try {
             certB64 = x509AuthMo.getString(KEY_X509_CERT);
@@ -114,10 +129,19 @@ var X509AuthenticationData$parse;
         // Convert to X.509 certificate.
         var x509 = new X509();
         try {
+            // Add certificate header and footer if necessary.
+            certB64 = certB64.trim();
+            if (!certB64.startsWith(PEM_HEADER))
+                certB64 = PEM_HEADER + certB64;
+            if (!certB64.endsWith(PEM_FOOTER))
+                certB64 = certB64 + PEM_FOOTER;
             x509.readCertPEM(certB64);
         } catch (e) {
             throw new MslCryptoException(MslError.X509CERT_PARSE_ERROR, certB64, e);
         }
         return new X509AuthenticationData(x509);
     };
-})();
+    
+    // Exports.
+    module.exports.parse = X509AuthenticationData$parse;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('X509AuthenticationData'));

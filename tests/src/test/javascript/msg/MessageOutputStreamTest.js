@@ -24,6 +24,30 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageOutputStream", function() {
+    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
+    const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
+    const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    const InterruptibleExecutor = require('../../../../../core/src/main/javascript/util/InterruptibleExecutor.js');
+    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    const MslIoException = require('../../../../../core/src/main/javascript/MslIoException.js');
+
+    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
     
@@ -32,7 +56,7 @@ describe("MessageOutputStream", function() {
     /** Maximum payload chunk data size in bytes. */
     var MAX_DATA_SIZE = 10 * 1024;
     /** Compressible data. */
-    var COMPRESSIBLE_DATA = textEncoding$getBytes(
+    var COMPRESSIBLE_DATA = textEncoding.getBytes(
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
         "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me."
@@ -58,16 +82,15 @@ describe("MessageOutputStream", function() {
     var ERROR_HEADER;
     
     // Shortcuts.
-    var HeaderData = MessageHeader$HeaderData;
-    var HeaderPeerData = MessageHeader$HeaderPeerData;
-    var CompressionAlgorithm = MslConstants$CompressionAlgorithm;
-    var CompressionAlgorithm$getPreferredAlgorithm = MslConstants$CompressionAlgorithm$getPreferredAlgorithm;
+    var HeaderData = MessageHeader.HeaderData;
+    var HeaderPeerData = MessageHeader.HeaderPeerData;
+    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
     
     var initialized = false;
     beforeEach(function() {
     	if (!initialized) {
     	    runs(function() {
-    	        MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+    	        MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
     	            result: function(c) { ctx = c; },
     	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     	        });
@@ -86,11 +109,11 @@ describe("MessageOutputStream", function() {
     		runs(function() {
 	    		var headerData = new HeaderData(null, 1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
 	    		var peerData = new HeaderPeerData(null, null, null);
-	    		MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+	    		MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
 	    			result: function(x) { MESSAGE_HEADER = x; },
 	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	    		});
-	    		ErrorHeader$create(ctx, ENTITY_AUTH_DATA, null, 1, MslConstants$ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+	    		ErrorHeader.create(ctx, ENTITY_AUTH_DATA, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
 	    			result: function(x) { ERROR_HEADER = x; },
 	    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	    		});
@@ -110,7 +133,7 @@ describe("MessageOutputStream", function() {
     it("message header stream", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -163,7 +186,7 @@ describe("MessageOutputStream", function() {
             var headerMo = first;
 
             // The reconstructed header should be equal to the original.
-            Header$parseHeader(ctx, headerMo, cryptoContexts, {
+            Header.parseHeader(ctx, headerMo, cryptoContexts, {
                 result: function(x) { header = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -204,7 +227,7 @@ describe("MessageOutputStream", function() {
 	        // Verify the payload.
 	        var cryptoContext = messageHeader.cryptoContext;
 	        expect(cryptoContext).not.toBeNull();
-	        PayloadChunk$parse(ctx, payloadMo, cryptoContext, {
+	        PayloadChunk.parse(ctx, payloadMo, cryptoContext, {
 	        	result: function(x) { payload = x; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -240,7 +263,7 @@ describe("MessageOutputStream", function() {
     it("error header stream", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -293,7 +316,7 @@ describe("MessageOutputStream", function() {
             var headerMo = first;
 		
             // The reconstructed header should be equal to the original.
-            Header$parseHeader(ctx, headerMo, cryptoContexts, {
+            Header.parseHeader(ctx, headerMo, cryptoContexts, {
                 result: function(x) { header = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -326,7 +349,7 @@ describe("MessageOutputStream", function() {
     it("write with offsets", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -395,7 +418,7 @@ describe("MessageOutputStream", function() {
         	var headerMo = first;
 
         	// We assume the reconstructed header is equal to the original.
-        	Header$parseHeader(ctx, headerMo, cryptoContexts, {
+        	Header.parseHeader(ctx, headerMo, cryptoContexts, {
         		result: function(x) { header = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -435,7 +458,7 @@ describe("MessageOutputStream", function() {
         	// Verify the payload.
         	var cryptoContext = messageHeader.cryptoContext;
         	expect(cryptoContext).not.toBeNull();
-        	PayloadChunk$parse(ctx, payloadMo, cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMo, cryptoContext, {
         		result: function(x) { payload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -471,7 +494,7 @@ describe("MessageOutputStream", function() {
     it("write", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -537,7 +560,7 @@ describe("MessageOutputStream", function() {
         	var headerMo = first;
 
         	// We assume the reconstructed header is equal to the original.
-        	Header$parseHeader(ctx, headerMo, cryptoContexts, {
+        	Header.parseHeader(ctx, headerMo, cryptoContexts, {
         		result: function(x) { header = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -577,7 +600,7 @@ describe("MessageOutputStream", function() {
         	// Verify the payload.
         	var cryptoContext = messageHeader.cryptoContext;
         	expect(cryptoContext).not.toBeNull();
-        	PayloadChunk$parse(ctx, payloadMo, cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMo, cryptoContext, {
         		result: function(x) { payload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -612,7 +635,7 @@ describe("MessageOutputStream", function() {
     it("write with compression", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -620,10 +643,10 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return mos; }, "mos", 100);
 
-        var first = Arrays$copyOf(COMPRESSIBLE_DATA, 0, COMPRESSIBLE_DATA.length);
-        var secondA = Arrays$copyOf(first, 0, 2 * first.length);
+        var first = Arrays.copyOf(COMPRESSIBLE_DATA, 0, COMPRESSIBLE_DATA.length);
+        var secondA = Arrays.copyOf(first, 0, 2 * first.length);
         secondA.set(first, first.length);
-		var secondB = Arrays$copyOf(first, 0, 3 * first.length);
+		var secondB = Arrays.copyOf(first, 0, 3 * first.length);
 		secondB.set(first, first.length);
 		secondB.set(first, 2 * first.length);
 	    
@@ -753,7 +776,7 @@ describe("MessageOutputStream", function() {
         var messageHeader;
         runs(function() {
 	        // Verify the number and contents of the payloads.
-	        Header$parseHeader(ctx, headerMo, cryptoContexts, {
+	        Header.parseHeader(ctx, headerMo, cryptoContexts, {
 	        	result: function(x) { messageHeader = x; },
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
@@ -764,15 +787,15 @@ describe("MessageOutputStream", function() {
         runs(function() {
         	var cryptoContext = messageHeader.cryptoContext;
         	expect(payloadMos.length).toEqual(3);
-        	PayloadChunk$parse(ctx, payloadMos[0], cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMos[0], cryptoContext, {
         		result: function(x) { firstPayload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	PayloadChunk$parse(ctx, payloadMos[1], cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMos[1], cryptoContext, {
         		result: function(x) { secondPayload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
-        	PayloadChunk$parse(ctx, payloadMos[2], cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMos[2], cryptoContext, {
         		result: function(x) { thirdPayload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -781,8 +804,8 @@ describe("MessageOutputStream", function() {
         
         runs(function() {
         	expect(firstPayload.data).toEqual(first);
-        	expect(Arrays$copyOf(secondPayload.data, 0, secondA.length)).toEqual(secondA);
-        	expect(Arrays$copyOf(secondPayload.data, secondA.length, secondB.length)).toEqual(secondB);
+        	expect(Arrays.copyOf(secondPayload.data, 0, secondA.length)).toEqual(secondA);
+        	expect(Arrays.copyOf(secondPayload.data, secondA.length, secondB.length)).toEqual(secondB);
         	expect(thirdPayload.data.length).toEqual(0);
 	        expect(thirdPayload.isEndOfMessage()).toBeTruthy();
 	        
@@ -798,7 +821,7 @@ describe("MessageOutputStream", function() {
     it("flush", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -931,7 +954,7 @@ describe("MessageOutputStream", function() {
         var messageHeader;
         runs(function() {
         	// Verify the number and contents of the payloads.
-        	Header$parseHeader(ctx, headerMo, cryptoContexts, {
+        	Header.parseHeader(ctx, headerMo, cryptoContexts, {
         		result: function(x) { messageHeader = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -942,15 +965,15 @@ describe("MessageOutputStream", function() {
         runs(function() {
         	var cryptoContext = messageHeader.cryptoContext;
         	expect(payloadMos.length).toEqual(3);
-        	PayloadChunk$parse(ctx, payloadMos[0], cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMos[0], cryptoContext, {
         		result: function(x) { firstPayload = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$parse(ctx, payloadMos[1], cryptoContext, {
+            PayloadChunk.parse(ctx, payloadMos[1], cryptoContext, {
                 result: function(x) { secondPayload = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            PayloadChunk$parse(ctx, payloadMos[2], cryptoContext, {
+            PayloadChunk.parse(ctx, payloadMos[2], cryptoContext, {
                 result: function(x) { thirdPayload = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -958,8 +981,8 @@ describe("MessageOutputStream", function() {
         waitsFor(function() { return firstPayload && secondPayload && thirdPayload; }, "payloads", 100);
         
         runs(function() {
-	        expect(Arrays$copyOf(secondPayload.data, 0, secondA.length)).toEqual(secondA);
-	        expect(Arrays$copyOf(secondPayload.data, secondA.length, secondB.length)).toEqual(secondB);
+	        expect(Arrays.copyOf(secondPayload.data, 0, secondA.length)).toEqual(secondA);
+	        expect(Arrays.copyOf(secondPayload.data, secondA.length, secondB.length)).toEqual(secondB);
 	        expect(firstPayload.data).toEqual(first);
 	
 	        expect(thirdPayload.data.length).toEqual(0);
@@ -977,7 +1000,7 @@ describe("MessageOutputStream", function() {
     it("write to an error header stream", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1012,7 +1035,7 @@ describe("MessageOutputStream", function() {
         runs(function() {
             var headerData = new HeaderData(null, 1, null, false, true, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1021,7 +1044,7 @@ describe("MessageOutputStream", function() {
         
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, messageHeader, messageHeader.cryptoContext, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, messageHeader, messageHeader.cryptoContext, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1054,7 +1077,7 @@ describe("MessageOutputStream", function() {
     it("closed", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1088,7 +1111,7 @@ describe("MessageOutputStream", function() {
     it("flush an error header stream", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, ERROR_HEADER, null, ENCODER_FORMAT, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1118,7 +1141,7 @@ describe("MessageOutputStream", function() {
     it("stop caching", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1191,7 +1214,7 @@ describe("MessageOutputStream", function() {
     it("call close multiple times", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { throw new Error("Timed out waiting for mos."); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1255,7 +1278,7 @@ describe("MessageOutputStream", function() {
         	var headerMo = first;
 
         	// We assume the reconstructed header is equal to the original.
-        	Header$parseHeader(ctx, headerMo, cryptoContexts, {
+        	Header.parseHeader(ctx, headerMo, cryptoContexts, {
         		result: function(x) { header = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1295,7 +1318,7 @@ describe("MessageOutputStream", function() {
         	// Verify the payload.
         	var cryptoContext = messageHeader.cryptoContext;
         	expect(cryptoContext).not.toBeNull();
-        	PayloadChunk$parse(ctx, payloadMo, cryptoContext, {
+        	PayloadChunk.parse(ctx, payloadMo, cryptoContext, {
         		result: function(x) { payload = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -1331,7 +1354,7 @@ describe("MessageOutputStream", function() {
     it("stress write", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mos."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1463,7 +1486,7 @@ describe("MessageOutputStream", function() {
 
         var header;
         runs(function() {
-        	Header$parseHeader(ctx, headerMo, cryptoContexts, {
+        	Header.parseHeader(ctx, headerMo, cryptoContexts, {
         		result: function(x) { header = x; },
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
@@ -1477,7 +1500,7 @@ describe("MessageOutputStream", function() {
         	var cryptoContext = header.cryptoContext;
         	
         	function parse(index) {
-                PayloadChunk$parse(ctx, payloadMos[index], cryptoContext, {
+                PayloadChunk.parse(ctx, payloadMos[index], cryptoContext, {
                     result: function(x) { parsedPayloads[index] = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1526,7 +1549,7 @@ describe("MessageOutputStream", function() {
     it("no context compression algorithms", function() {
         var ctx;
         runs(function() {
-            MockMslContext$create(EntityAuthenticationScheme.PSK, false, {
+            MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1539,7 +1562,7 @@ describe("MessageOutputStream", function() {
             
             // The intersection of compression algorithms is computed when a
             // response header is generated.
-            MessageBuilder$createResponse(ctx, MESSAGE_HEADER, {
+            MessageBuilder.createResponse(ctx, MESSAGE_HEADER, {
                 result: function(x) { responseBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
@@ -1557,7 +1580,7 @@ describe("MessageOutputStream", function() {
 
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1603,7 +1626,7 @@ describe("MessageOutputStream", function() {
         runs(function() {
             var headerData = new HeaderData(null, 1, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1612,7 +1635,7 @@ describe("MessageOutputStream", function() {
         
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1656,7 +1679,7 @@ describe("MessageOutputStream", function() {
     it("best compression algorithm", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1686,7 +1709,7 @@ describe("MessageOutputStream", function() {
             
             var capabilities = ctx.getMessageCapabilities();
             var algos = capabilities.compressionAlgorithms;
-            var bestAlgo = CompressionAlgorithm$getPreferredAlgorithm(algos);
+            var bestAlgo = CompressionAlgorithm.getPreferredAlgorithm(algos);
             expect(payloads[0].compressionAlgo).toEqual(bestAlgo);
         });
     });
@@ -1694,7 +1717,7 @@ describe("MessageOutputStream", function() {
     it("set compression algorithm", function() {
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, MESSAGE_HEADER, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1747,7 +1770,7 @@ describe("MessageOutputStream", function() {
         runs(function() {
             var headerData = new HeaderData(null, 1, null, false, false, capabilities, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
-            MessageHeader$create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+            MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -1757,7 +1780,7 @@ describe("MessageOutputStream", function() {
 
         var mos;
         runs(function() {
-            MessageOutputStream$create(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
+            MessageOutputStream.create(ctx, destination, messageHeader, PAYLOAD_CRYPTO_CONTEXT, null, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

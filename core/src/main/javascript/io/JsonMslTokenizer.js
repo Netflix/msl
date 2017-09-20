@@ -20,10 +20,17 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var JsonMslTokenizer;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const MslTokenizer = require('../io/MslTokenizer.js');
+	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const ClarinetParser = require('../io/ClarinetParser.js');
+	const JsonMslObject = require('../io/JsonMslObject.js');
+	const MslConstants = require('../MslConstants.js');
+	const textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Delay time between read attempts in milliseconds.
@@ -41,7 +48,7 @@ var JsonMslTokenizer;
      */
     var MAX_CHARACTERS = 10 * 1024 * 1024;
     
-    JsonMslTokenizer = MslTokenizer.extend({
+    var JsonMslTokenizer = module.exports = MslTokenizer.extend({
         /**
          * <p>Create a new JSON MSL tokenizer that will read tokens off the
          * provided input stream.</p>
@@ -59,7 +66,7 @@ var JsonMslTokenizer;
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
-                _charset: { value: MslConstants$DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
+                _charset: { value: MslConstants.DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
                 _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
                 /** @type {ClarinetParser} */
@@ -100,9 +107,9 @@ var JsonMslTokenizer;
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
                         } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.");
+                        	throw new MslEncoderException("Invalid JSON text encoding.", e);
                         }
                         var parser = new ClarinetParser(json);
     
@@ -138,7 +145,7 @@ var JsonMslTokenizer;
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding$getString(data, this._charset));
+                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
                         } catch (e) {
                         	throw new MslEncoderException("Invalid JSON text encoding.");
                         }
@@ -202,4 +209,4 @@ var JsonMslTokenizer;
             }, self);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('JsonMslTokenizer'));

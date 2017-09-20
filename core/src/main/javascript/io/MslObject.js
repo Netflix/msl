@@ -34,15 +34,17 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MslObject;
-
-(function() {
-    "use strict";
+(function(require, module) {
+	"use strict";
+	
+	const Class = require('../util/Class.js');
+	const MslEncoderException = require('../io/MslEncoderException.js');
+	const MslEncodable = require('../io/MslEncodable.js');
 
     /**
      * @interface
      */
-    MslObject = util.Class.create({
+	var MslObject = module.exports = Class.create({
         /**
          * Create a new {@code MslObject} from the given optional object.
          * 
@@ -83,13 +85,16 @@ var MslObject;
          *         type or the value is {@code null}.
          */
         get: function get(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
                 throw new TypeError("Unsupported key.");
             var o = this.map[key];
             if (o === null || o === undefined)
-                throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] not found.");
+                throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] not found.");
             if (o instanceof Object && o.constructor === Object)
                 return new MslObject(o);
             if (o instanceof Array)
@@ -107,12 +112,14 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getBoolean: function getBoolean(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Boolean)
                 return o.valueOf();
             if (typeof o === 'boolean')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a boolean.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a boolean.");
         },
         
         /**
@@ -125,10 +132,12 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getBytes: function getBytes(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Uint8Array)
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not binary data.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not binary data.");
         },
         
         /**
@@ -141,12 +150,14 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getDouble: function getDouble(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof Number)
                 return o.valueOf();
             if (typeof o === 'number')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -159,13 +170,15 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getInt: function getInt(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             // The << 0 operation converts to a signed 32-bit integer.
             if (o instanceof Number)
                 return o.valueOf() << 0;
             if (typeof o === 'number')
                 return o << 0;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -178,12 +191,15 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getMslArray: function getMslArray(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            const MslArray = require('../io/MslArray.js');
+            
             var o = this.get(key);
             if (o instanceof MslArray)
                 return o;
             if (o instanceof Array)
                 return new MslArray(o);
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslArray.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslArray.");
         },
         
         /**
@@ -197,6 +213,8 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getMslObject: function getMslObject(key, encoder) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof MslObject)
                 return o;
@@ -211,11 +229,11 @@ var MslObject;
                     return encoder.parseObject(o);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
-                        throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslObject.");
+                        throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslObject.");
                     throw e;
                 }
             }
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a MslObject.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a MslObject.");
         },
         
         /**
@@ -228,13 +246,15 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getLong: function getLong(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             // I don't know of a better way than using parseInt().
             if (o instanceof Number)
                 return parseInt(o.valueOf());
             if (typeof o === 'number')
                 return parseInt(o);
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a number.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a number.");
         },
         
         /**
@@ -247,12 +267,14 @@ var MslObject;
          *         proper type or the value is {@code null}.
          */
         getString: function getString(key) {
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
             var o = this.get(key);
             if (o instanceof String)
                 return o.valueOf();
             if (typeof o === 'string')
                 return o;
-            throw new MslEncoderException("MslObject[" + MslEncoderFactory$quote(key) + "] is not a string.");
+            throw new MslEncoderException("MslObject[" + MslEncoderFactory.quote(key) + "] is not a string.");
         },
     
         /**
@@ -276,6 +298,8 @@ var MslObject;
          * @throws TypeError if the key is not a string.
          */
         opt: function opt(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
@@ -392,6 +416,8 @@ var MslObject;
          * @throws TypeError if the key is not a string.
          */
         optMslArray: function optMslArray(key) {
+            const MslArray = require('../io/MslArray.js');
+            
             var o = this.opt(key);
             if (o instanceof MslArray)
                 return o;
@@ -494,6 +520,8 @@ var MslObject;
          *         value is of an unsupported type.
          */
         put: function put(key, value) {
+            const MslArray = require('../io/MslArray.js');
+            
             if (key instanceof String)
                 key = key.valueOf();
             if (typeof key !== 'string')
@@ -729,10 +757,12 @@ var MslObject;
          *         with the same keys and values.
          */
         equals: function equals(that) {
+            const MslEncoderUtils = require('../io/MslEncoderUtils.js');
+            
         	if (this == that) return true;
         	if (!(that instanceof MslObject)) return false;
         	try {
-        		return MslEncoderUtils$equalObjects(this, that);
+        		return MslEncoderUtils.equalObjects(this, that);
 	    	} catch (e) {
 	    		if (e instanceof MslEncoderException) return false;
 	    		throw e;
@@ -741,7 +771,9 @@ var MslObject;
         
         /** @inheritDoc */
         toString: function toString() {
-        	return MslEncoderFactory$stringify(this.map);
+            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            
+        	return MslEncoderFactory.stringify(this.map);
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslObject'));

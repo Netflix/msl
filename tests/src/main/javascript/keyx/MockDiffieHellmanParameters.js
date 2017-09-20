@@ -19,21 +19,20 @@
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var MockDiffieHellmanParameters;
-var MockDiffieHellmanParameters$DEFAULT_ID;
-var MockDiffieHellmanParameters$getDefaultParameters;
-
-(function() {
+(function(require, module) {
     "use strict";
+    
+    const DiffieHellmanParameters = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanParameters.js');
+    const DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
 
     /** Default parameters. */
     var p = new Uint8Array([23]);
     var g = new Uint8Array([5]);
     
     /** Default parameter ID. */
-    var DEFAULT_ID = MockDiffieHellmanParameters$DEFAULT_ID = "default1";
+    var DEFAULT_ID = "default1";
     
-    MockDiffieHellmanParameters = DiffieHellmanParameters.extend({
+    var MockDiffieHellmanParameters = module.exports = DiffieHellmanParameters.extend({
         /**
          * Create a new test Diffie-Hellman parameters instance.
          */
@@ -79,10 +78,14 @@ var MockDiffieHellmanParameters$getDefaultParameters;
      * 
      * @return the default test parameters.
      */
-    MockDiffieHellmanParameters$getDefaultParameters = function MockDiffieHellmanParameters$getDefaultParameters() {
+    var MockDiffieHellmanParameters$getDefaultParameters = function MockDiffieHellmanParameters$getDefaultParameters() {
         var params = new MockDiffieHellmanParameters();
-        var paramSpec = new DHParameterSpec(p, g);
+        var paramSpec = new DhParameterSpec(p, g);
         params.addParameterSpec(DEFAULT_ID, paramSpec);
         return params;
     };
-})();
+    
+    // Exports.
+    module.exports.DEFAULT_ID = DEFAULT_ID;
+    module.exports.getDefaultParameters = MockDiffieHellmanParameters$getDefaultParameters;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockDiffieHellmanParameters'));

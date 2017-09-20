@@ -38,7 +38,8 @@ public class MslUtils {
      * 
      * @param compressionAlgo the compression algorithm.
      * @param data the data to compress.
-     * @return the compressed data.
+     * @return the compressed data or null if the compressed data would be larger than the
+     *         uncompressed data.
      * @throws MslException if there is an error compressing the data.
      */
     public static byte[] compress(final CompressionAlgorithm compressionAlgo, final byte[] data) throws MslException {
@@ -53,7 +54,8 @@ public class MslUtils {
                     } finally {
                         gzos.close();
                     }
-                    return baos.toByteArray();
+                    final byte[] compressed = baos.toByteArray();
+                    return (compressed.length < data.length) ? compressed : null;
                 }
                 case LZW:
                 {
@@ -64,7 +66,8 @@ public class MslUtils {
                     } finally {
                         lzwos.close();
                     }
-                    return baos.toByteArray();
+                    final byte[] compressed = baos.toByteArray();
+                    return (compressed.length < data.length)? compressed : null; 
                 }
                 default:
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());

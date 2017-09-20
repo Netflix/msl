@@ -13,31 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var MockEccAuthenticationFactory;
-var MockEccAuthenticationFactory$create;
-
-(function() {
+(function(require, module) {
     "use strict";
-
-    /** ECC keypair */
-    var ECDSA_KEYPAIR = {
-        publicKeyJSON: {
-            "kty": "EC",
-            "crv": "P-256",
-            "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
-            "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
-            "use": "sig",
-            "kid": "A"
-        },
-        privateKeyJSON: {
-            "kty": "EC",
-            "crv": "P-256",
-            "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
-            "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
-            "d":   "870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE",
-            "use": "sig",
-            "kid": "Apriv"
-        }
+    
+    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    const EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
+    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
+    const EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
+    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    const WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
+    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    
+    /** ECC public key. */
+    var ECC_PUBKEY_JWK = {
+        "kty": "EC",
+        "crv": "P-256",
+        "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+        "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
+        "use": "sig",
+        "kid": "A"
+    };
+    /** ECC private key. */
+    var ECC_PRIVKEY_JWK = {
+        "kty": "EC",
+        "crv": "P-256",
+        "x":   "MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4",
+        "y":   "4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM",
+        "d":   "870MB6gfuTJ4HtUnUvYMyJpr5eUZNP4Bk43bVdj3eAE",
+        "use": "sig",
+        "kid": "Apriv"
     };
 
 	/**
@@ -71,7 +81,7 @@ var MockEccAuthenticationFactory$create;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    MockEccAuthenticationFactory = EccAuthenticationFactory.extend({
+    var MockEccAuthenticationFactory = module.exports = EccAuthenticationFactory.extend({
     	/**
     	 * Create a new test ECC authentication factory.
     	 * 
@@ -129,36 +139,38 @@ var MockEccAuthenticationFactory$create;
      *        callback the callback functions that will receive the factory
      *        or any thrown exceptions.
      */
-    MockEccAuthenticationFactory$create = function MockEccAuthenticationFactory$create(store, callback) {
+    var MockEccAuthenticationFactory$create = function MockEccAuthenticationFactory$create(store, callback) {
         new MockEccAuthenticationFactory(store, callback);
     };
     
+    // Exports.
+    module.exports.create = MockEccAuthenticationFactory$create;
+    
     // Expose public static properties.
-    MockEccAuthenticationFactory.ECC_ESN = ECC_ESN;
-    MockEccAuthenticationFactory.ECC_PUBKEY_ID = ECC_PUBKEY_ID;
+    module.exports.ECC_ESN = ECC_ESN;
+    module.exports.ECC_PUBKEY_ID = ECC_PUBKEY_ID;
 
     (function() {
-        var extractable = true;
         var _algo = WebCryptoAlgorithm.ECDSA_SHA256;
-        _algo['namedCurve'] = ECDSA_KEYPAIR.publicKeyJSON['crv'];
-                
-        PublicKey$import(ECDSA_KEYPAIR.publicKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
+        _algo['namedCurve'] = WebCryptoNamedCurve.P_256;
+        
+        PublicKey.import(ECC_PUBKEY_JWK, _algo, WebCryptoUsage.VERIFY, KeyFormat.JWK, {
             result: function (pubkey) {
-                ECC_PUBKEY = MockEccAuthenticationFactory.ECC_PUBKEY = pubkey;
+                ECC_PUBKEY = module.exports.ECC_PUBKEY = pubkey;
                 keysDefined.signalAll();
             },
             error: function(e) {
-                throw new MslInternalException("Hard-coded RSA key failure.", e);
+                throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
-        PrivateKey$import(ECDSA_KEYPAIR.privateKeyJSON, WebCryptoAlgorithm.ECDSA_SHA256, WebCryptoUsage.SIGN, KeyFormat.JWK, {
+        PrivateKey.import(ECC_PRIVKEY_JWK, _algo, WebCryptoUsage.SIGN, KeyFormat.JWK, {
             result: function (privkey) {
-                ECC_PRIVKEY = MockEccAuthenticationFactory.ECC_PRIVKEY = privkey;
+                ECC_PRIVKEY = module.exports.ECC_PRIVKEY = privkey;
                 keysDefined.signalAll();
             },
             error: function(e) {
-                throw new MslInternalException("Hard-coded RSA key failure.", e);
+                throw new MslInternalException("Hard-coded ECC key failure.", e);
             }
         });
     })();
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MockEccAuthenticationFactory'));

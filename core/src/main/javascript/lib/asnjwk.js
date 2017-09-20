@@ -1,4 +1,23 @@
-(function (global) {
+/**
+ * Copyright (c) 2012-2016 Netflix, Inc.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+(function(require, module) {
+"use strict";
+
+const Base64 = require('../util/Base64.js');
+
 /** @const */
 var DEBUG=false;
 //================================================================================
@@ -43,8 +62,6 @@ function hexDump(abv, idx, len) {
 /** @type {{Util:Object}} */
 
 var AbvStream = (function () {
-"use strict";
-
 function My(input, position) {
     if (input instanceof AbvStream) {
         DEBUG && debugAssert(!position);
@@ -118,15 +135,9 @@ My.prototype = {
 };
 
 return My;
-
 }());
 //================================================================================
 // asn1.js
-
-var ASN1 = {};
-
-(function () {
-"use strict";
 
 /** @enum {number} */
 var tagClass = {
@@ -888,7 +899,7 @@ function buildRsaSpki(rsaPublicKey) {
 };
 
 function parseRsaSpki(spkiDer) {
-    var spkiAsn = ASN1.parse(spkiDer);
+    var spkiAsn = parse(spkiDer);
     if (!isRsaSpki) {
         return undefined;
     }
@@ -925,7 +936,7 @@ function buildRsaPkcs8(rsaPrivateKey) {
 }
 
 function parseRsaPkcs8(pkcs8Der) {
-    var pkcs8Asn1 = ASN1.parse(pkcs8Der);
+    var pkcs8Asn1 = parse(pkcs8Der);
     if (!isRsaPkcs8(pkcs8Asn1)) {
         return undefined;
     }
@@ -969,16 +980,16 @@ function buildRsaJwk(rsaKey, alg, keyOps, ext) {
         'alg': alg,
         'key_ops' : keyOps || [],
         'ext': ext == undefined ? false : ext,
-        'n': base64$encode(rsaKey.n, true),
-        'e': base64$encode(rsaKey.e, true)
+        'n': Base64.encode(rsaKey.n, true),
+        'e': Base64.encode(rsaKey.e, true)
     };
     if (rsaKey instanceof RsaPrivateKey) {
-        jwk['d']  = base64$encode(rsaKey.d, true);
-        jwk['p']  = base64$encode(rsaKey.p, true);
-        jwk['q']  = base64$encode(rsaKey.q, true);
-        jwk['dp'] = base64$encode(rsaKey.dp, true);
-        jwk['dq'] = base64$encode(rsaKey.dq, true);
-        jwk['qi'] = base64$encode(rsaKey.qi, true);
+        jwk['d']  = Base64.encode(rsaKey.d, true);
+        jwk['p']  = Base64.encode(rsaKey.p, true);
+        jwk['q']  = Base64.encode(rsaKey.q, true);
+        jwk['dp'] = Base64.encode(rsaKey.dp, true);
+        jwk['dq'] = Base64.encode(rsaKey.dq, true);
+        jwk['qi'] = Base64.encode(rsaKey.qi, true);
     }
     return jwk;
 }
@@ -1004,23 +1015,23 @@ function parseRsaJwk(jwk) {
         keyOps = jwk['key_ops'];
     }
     var ext = jwk['ext'];
-    var n = base64$decode(jwk['n'], true);
-    var e = base64$decode(jwk['e'], true);
+    var n = Base64.decode(jwk['n'], true);
+    var e = Base64.decode(jwk['e'], true);
     if (!jwk['d']) {
         return new RsaPublicKey(n, e, ext, keyOps);
     } else {
-        var d = base64$decode(jwk['d'], true);
-        var p = base64$decode(jwk['p'], true);
-        var q = base64$decode(jwk['q'], true);
-        var dp = base64$decode(jwk['dp'], true);
-        var dq = base64$decode(jwk['dq'], true);
-        var qi = base64$decode(jwk['qi'], true);
+        var d = Base64.decode(jwk['d'], true);
+        var p = Base64.decode(jwk['p'], true);
+        var q = Base64.decode(jwk['q'], true);
+        var dp = Base64.decode(jwk['dp'], true);
+        var dq = Base64.decode(jwk['dq'], true);
+        var qi = Base64.decode(jwk['qi'], true);
         return new RsaPrivateKey(n, e, d, p, q, dp, dq, qi, jwk['alg'], keyOps, ext);
     }
 }
 
 function rsaDerToJwk(der, alg, keyOps, extractable) {
-    var asn = ASN1.parse(der);
+    var asn = parse(der);
     if (!asn) {
         return undefined;
     }
@@ -1115,44 +1126,36 @@ function webCryptoAlgorithmToJwkAlg(webCryptoAlgorithm) {
     }
 }
 
+function parse(abv) {
+    asn1ParseRecursionDepth = 0;
+    return asn1Parse(new Asn1Token(abv), 0, abv.length);
+};
+
 // external interface
 
 // Debug builds include these named symbols plus the Release symbols below. The
 // symbols here get renamed in Release builds.
-ASN1.parse = function(abv) {
-    asn1ParseRecursionDepth = 0;
-    return asn1Parse(new Asn1Token(abv), 0, abv.length);
-};
-ASN1.show = asn1Show;
-ASN1.isRsaSpki = isRsaSpki;
-ASN1.isRsaPkcs8 = isRsaPkcs8;
-ASN1.NodeFactory = NodeFactory;
-ASN1.Builder = Builder;
-ASN1.tagVal = tagVal;
-ASN1.RsaPublicKey = RsaPublicKey;
-ASN1.RsaPrivateKey = RsaPrivateKey;
-ASN1.buildRsaSpki = buildRsaSpki;
-ASN1.parseRsaSpki = parseRsaSpki;
-ASN1.buildRsaPkcs8 = buildRsaPkcs8;
-ASN1.parseRsaPkcs8 = parseRsaPkcs8;
-ASN1.buildRsaJwk = buildRsaJwk;
-ASN1.parseRsaJwk = parseRsaJwk;
-ASN1.RsaDer = RsaDer;
+module.exports.parse = parse;
+module.exports.show = asn1Show;
+module.exports.isRsaSpki = isRsaSpki;
+module.exports.isRsaPkcs8 = isRsaPkcs8;
+module.exports.NodeFactory = NodeFactory;
+module.exports.Builder = Builder;
+module.exports.tagVal = tagVal;
+module.exports.RsaPublicKey = RsaPublicKey;
+module.exports.RsaPrivateKey = RsaPrivateKey;
+module.exports.buildRsaSpki = buildRsaSpki;
+module.exports.parseRsaSpki = parseRsaSpki;
+module.exports.buildRsaPkcs8 = buildRsaPkcs8;
+module.exports.parseRsaPkcs8 = parseRsaPkcs8;
+module.exports.buildRsaJwk = buildRsaJwk;
+module.exports.parseRsaJwk = parseRsaJwk;
+module.exports.RsaDer = RsaDer;
 
 // Release builds export only these named symbols.
-ASN1['rsaDerToJwk'] = rsaDerToJwk;
-ASN1['jwkToRsaDer'] = jwkToRsaDer;
-ASN1['webCryptoAlgorithmToJwkAlg'] = webCryptoAlgorithmToJwkAlg;
-ASN1['webCryptoUsageToJwkKeyOps'] = webCryptoUsageToJwkKeyOps;
+module.exports['rsaDerToJwk'] = rsaDerToJwk;
+module.exports['jwkToRsaDer'] = jwkToRsaDer;
+module.exports['webCryptoAlgorithmToJwkAlg'] = webCryptoAlgorithmToJwkAlg;
+module.exports['webCryptoUsageToJwkKeyOps'] = webCryptoUsageToJwkKeyOps;
 
-}());
-//================================================================================
-// module.js
-
-(function (global) {
-"use strict";
-
-global['ASN1'] = ASN1;
-
-}(global));
-}(this));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('asnjwk'));

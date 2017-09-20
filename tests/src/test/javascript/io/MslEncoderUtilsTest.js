@@ -14,6 +14,12 @@
  * limitations under the License.
  */
 describe("MslEncoderUtils", function() {
+    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    const MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
+    const MslArray = require('../../../../../core/src/main/javascript/io/MslArray.js');
+    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    
     var KEY_BOOLEAN = "boolean";
     var KEY_NUMBER = "number";
     var KEY_STRING = "string";
@@ -32,7 +38,7 @@ describe("MslEncoderUtils", function() {
     function randomString(random) {
         var raw = new Uint8Array(1 + random.nextInt(MAX_STRING_CHARS - 1));
         random.nextBytes(raw);
-        return base64$encode(raw);
+        return Base64.encode(raw);
     }
     
     /**
@@ -165,21 +171,21 @@ describe("MslEncoderUtils", function() {
     it("merge nulls", function() {
         var mo1 = null;
         var mo2 = null;
-        var merged = MslEncoderUtils$merge(mo1, mo2);
+        var merged = MslEncoderUtils.merge(mo1, mo2);
         expect(merged).toBeNull();
     });
     
     it("merge first null", function() {
         var mo1 = null;
         var mo2 = deepMo;
-        var merged = MslEncoderUtils$merge(mo1, mo2);
+        var merged = MslEncoderUtils.merge(mo1, mo2);
         expect(merged).toEqual(mo2);
     });
     
     it("merge second null", function() {
         var mo1 = deepMo;
         var mo2 = null;
-        var merged = MslEncoderUtils$merge(mo1, mo2);
+        var merged = MslEncoderUtils.merge(mo1, mo2);
         expect(merged).toEqual(mo1);
     });
     
@@ -194,7 +200,7 @@ describe("MslEncoderUtils", function() {
         mo2.put("key2", 34);
         
         // Ensure second overwites first.
-        var merged = MslEncoderUtils$merge(mo1, mo2);
+        var merged = MslEncoderUtils.merge(mo1, mo2);
         for (var key in merged) {
             var value = merged[key];
             if (key == "key1" || key == "key2") {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2015 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2016 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,20 +21,20 @@
  * @author Kevin Gallagher <keving@netflix.com>
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var mslCrypto;
-var MslCrypto$WebCryptoVersion;
-var MslCrypto$setWebCryptoVersion;
-var MslCrypto$getWebCryptoVersion;
-var MslCrypto$setCryptoSubtle;
-
-(function(){
+(function(require, module) {
     "use strict";
+
+    const MslInternalException = require('../MslInternalException.js');
+    const KeyFormat = require('../crypto/KeyFormat.js');
+    
+    const ASN1 = require('../lib/asnjwk.js');
+    const textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Web Crypto API version.
      * @enum {number}
      */
-    var WebCryptoVersion = MslCrypto$WebCryptoVersion = {
+    var WebCryptoVersion = {
         /** Legacy version with JWE+JWK wrap/unwrap. */
         LEGACY: 1,
         /** 2014.01 version with JWK decrypt+import wrap/unwrap. */
@@ -53,7 +53,7 @@ var MslCrypto$setCryptoSubtle;
         /** Latest (most compatible) version. */
         LATEST: 3,
     };
-    Object.freeze(MslCrypto$WebCryptoVersion);
+    Object.freeze(WebCryptoVersion);
 
     // Default to the latest Web Crypto version.
     var mslCrypto$version = WebCryptoVersion.LATEST;
@@ -62,18 +62,18 @@ var MslCrypto$setCryptoSubtle;
      * <p>Set the Web Crypto version that should be used by MSL. This will
      * override the default version detected.</p>
      *
-     * @param {MslCrypto$WebCryptoVersion} version Web Crypto version to use.
+     * @param {WebCryptoVersion} version Web Crypto version to use.
      */
-    MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
+    var MslCrypto$setWebCryptoVersion = function MslCrypto$setWebCryptoVersion(version) {
         mslCrypto$version = version;
     };
 
     /**
      * <p>Return the Web Crypto version that is being used.</p>
      *
-     * @return {MslCrypto$WebCryptoVersion} the Web Crypto version in use.
+     * @return {WebCryptoVersion} the Web Crypto version in use.
      */
-    MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
+    var MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
     	return mslCrypto$version;
     };
 
@@ -82,11 +82,11 @@ var MslCrypto$setCryptoSubtle;
     if (typeof window !== "undefined") {
         if (window.msCrypto) {
             nfCryptoSubtle = window.msCrypto.subtle;
-            MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.LEGACY);
+            MslCrypto$setWebCryptoVersion(WebCryptoVersion.LEGACY);
         } else if (window.crypto) {
             if (window.crypto.webkitSubtle) {
                 nfCryptoSubtle = window.crypto.webkitSubtle;
-                MslCrypto$setWebCryptoVersion(MslCrypto$WebCryptoVersion.V2014_02_SAFARI);
+                MslCrypto$setWebCryptoVersion(WebCryptoVersion.V2014_02_SAFARI);
             } else if (window.crypto.subtle) {
                 nfCryptoSubtle = window.crypto.subtle;
             }
@@ -98,7 +98,7 @@ var MslCrypto$setCryptoSubtle;
      *
      * @param {object} the new crypto subtle interface.
      */
-    MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
+    var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
     	nfCryptoSubtle = cryptoSubtle;
     };
 
@@ -153,15 +153,13 @@ var MslCrypto$setCryptoSubtle;
     	return op;
     }
 
-    mslCrypto = {
+    var MslCrypto = module.exports = {
         'encrypt': function(algorithm, key, buffer) {
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                    // Return an ArrayBufferView instead of the ArrayBuffer as a workaround for
-                    // MSL-164.
                 	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
@@ -250,6 +248,19 @@ var MslCrypto$setCryptoSubtle;
                     throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
             }
         },
+        
+        'deriveBits': function(algorithm, baseKey, length) {
+            switch (mslCrypto$version) {
+                case WebCryptoVersion.LEGACY:
+                case WebCryptoVersion.V2014_01:
+                case WebCryptoVersion.V2014_02:
+                case WebCryptoVersion.V2014_02_SAFARI:
+                    var op = nfCryptoSubtle.deriveBits(algorithm, baseKey, length);
+                    return promisedOperation(op);
+                default:
+                    throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
+            }
+        },
 
         'importKey': function(format, keyData, algorithm, extractable, keyUsage) {
             var ext = normalizeExtractable(extractable);
@@ -262,16 +273,15 @@ var MslCrypto$setCryptoSubtle;
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
-                        return Promise.resolve().then(function() {
-                            var alg = ASN1.webCryptoAlgorithmToJwkAlg(algorithm);
-                            var keyOps = ASN1.webCryptoUsageToJwkKeyOps(ku);
-                            var jwkObj = ASN1.rsaDerToJwk(keyData, alg, keyOps, ext);
-                            if (!jwkObj) {
-                                throw new Error("Could not make valid JWK from DER input");
-                            }
-                            var jwk = JSON.stringify(jwkObj);
-                            return nfCryptoSubtle.importKey(KeyFormat.JWK, utf8$getBytes(jwk), algorithm, ext, ku);
-                        });
+                        var alg = ASN1.webCryptoAlgorithmToJwkAlg(algorithm);
+                        var keyOps = ASN1.webCryptoUsageToJwkKeyOps(ku);
+                        var jwkObj = ASN1.rsaDerToJwk(keyData, alg, keyOps, ext);
+                        if (!jwkObj) {
+                            throw new Error("Could not make valid JWK from DER input");
+                        }
+                        var jwk = JSON.stringify(jwkObj);
+                        var op = nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
+                        return promisedOperation(op);
                     } else {
                         var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
 						return promisedOperation(op);
@@ -292,7 +302,7 @@ var MslCrypto$setCryptoSubtle;
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
 						var op = nfCryptoSubtle.exportKey(KeyFormat.JWK, key);
                         return promisedOperation(op).then(function (result) {
-                            var jwkObj = JSON.parse(utf8$getString(new Uint8Array(result)));
+                            var jwkObj = JSON.parse(textEncoding.getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
                             if (!rsaKey) {
                                 throw new Error("Could not make valid DER from JWK input");
@@ -344,4 +354,10 @@ var MslCrypto$setCryptoSubtle;
             return promisedOperation(op);
         },
     };
-})();
+
+    // Exports.
+    module.exports.WebCryptoVersion = WebCryptoVersion;
+    module.exports.setWebCryptoVersion = MslCrypto$setWebCryptoVersion;
+    module.exports.getWebCryptoVersion = MslCrypto$getWebCryptoVersion;
+    module.exports.setCryptoSubtle = MslCrypto$setCryptoSubtle;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslCrypto'));

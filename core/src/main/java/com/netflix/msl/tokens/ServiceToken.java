@@ -186,7 +186,7 @@ public class ServiceToken implements MslEncodable {
             
             // Only use compression if the compressed data is smaller than the
             // uncompressed data.
-            if (compressed.length < data.length) {
+            if (compressed != null && compressed.length < data.length) {
                 this.compressionAlgo = compressionAlgo;
                 this.compressedServicedata = compressed;
             } else {
