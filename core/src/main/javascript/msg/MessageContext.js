@@ -229,8 +229,8 @@
 	     * data can be sent. The builder for handshake messages may lack a master
 	     * token, user ID token, and other bound service tokens.</p>
 	     * 
-	     * <p>This is a synchronous callback; the processor should finish using the
-	     * builder before returning from the function.</p>
+	     * <p>The processor must not attempt to access or retain a reference to the
+	     * builder after this function completes.</p>
 	     * 
 	     * <p>This method will be called multiple times. The set of service tokens
 	     * managed by the provided message service token builder may be different
@@ -259,10 +259,9 @@
 	     * use the provided {@code MessageOutputStream} to write its application
 	     * data. This method will only be called once.</p>
 	     * 
-	     * <p>This is a synchronous callback; the processor should not retain a
-	     * handle to the message output stream after returning from the function.
-	     * It is okay for this method to be long-running as the data will be
-	     * streamed.</p>
+	     * <p>The processor must not attempt to access or retain a reference to the
+	     * message output stream after this function completes. It is okay for this
+	     * method to be long-running as the data will be streamed.</p>
 	     * 
 	     * <p>If application data must be sent before the remote entity can reply
 	     * then this method must call {@link MessageOutputStream#flush()} before
