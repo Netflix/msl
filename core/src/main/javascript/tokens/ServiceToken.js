@@ -720,13 +720,12 @@
                 // If encrypted, and we were able to verify the data then we better
                 // be able to decrypt it. (An exception is thrown if decryption
                 // fails.)
-                var compressedServicedata, servicedata;
                 if (verified) {
                     var ciphertext = data;
                     if (encrypted && ciphertext.length > 0) {
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(compressedServicedata) {
-                                var servicedata = (compressionAlgo)
+                                let servicedata = (compressionAlgo)
                                     ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                                     : compressedServicedata;
                                 reconstruct(encoder, tokendataBytes, signatureBytes, verified,
@@ -744,8 +743,8 @@
                             },
                         });
                     } else {
-                        compressedServicedata = ciphertext;
-                        servicedata = (compressionAlgo)
+                        let compressedServicedata = ciphertext;
+                        let servicedata = (compressionAlgo)
                             ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
@@ -753,8 +752,8 @@
                             compressedServicedata, servicedata);
                     }
                 } else {
-                    compressedServicedata = data;
-                    servicedata = (data.length == 0) ? new Uint8Array(0) : null;
+                    let compressedServicedata = data;
+                    let servicedata = (data.length == 0) ? new Uint8Array(0) : null;
                     reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                         name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                         compressedServicedata, servicedata);

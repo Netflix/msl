@@ -61,7 +61,7 @@
             if (source instanceof Array) {
                 ja = source;
             } else if (source instanceof MslArray) {
-            	for (var i = 0; i < source.size(); ++i)
+            	for (let i = 0; i < source.size(); ++i)
             		ja.push(source.opt(i));
             } else if (source instanceof Uint8Array) {
                 try {
@@ -79,8 +79,8 @@
             
             // Shallow copy the source data into this MSL array.
             try {
-                for (var j = 0; j < ja.length; ++j)
-                    this.put(-1, ja[j]);
+                for (let i = 0; i < ja.length; ++i)
+                    this.put(-1, ja[i]);
             } catch (e) {
                 if (e instanceof TypeError)
                     throw new MslEncoderException("Invalid MSL array encoding.", e);
@@ -177,75 +177,74 @@
     			    
 	    			if (i >= size)
 	    				return ja;
-	    			
-	    			var jsonValue;
+
 	    			var value = this.opt(i);
-	        		if (value instanceof Uint8Array) {
-	        			ja.push(Base64.encode(value));
-	        			next(ja, size, i+1);
-	        		} else if (value instanceof JsonMslObject) {
-	        			value.toJSONObject(encoder, {
-	        				result: function(o) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				ja.push(o);
-	        	        			next(ja, size, i+1);
-	        	    			}, self);
-	        				},
-	        				error: callback.error,
-	        			});
-	        		} else if (value instanceof JsonMslArray) {
-	        			value.toJSONArray(encoder, {
-	        				result: function(a) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				ja.push(a);
-	        	        			next(ja, size, i+1);
-	        	    			}, self);
-	        				},
-	        				error: callback.error,
-	        			});
-	        		} else if (value instanceof MslObject) {
-	        			jsonValue = new JsonMslObject(encoder, value);
-	        			jsonValue.toJSONObject(encoder, {
-	        				result: function(o) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				ja.push(o);
-	        	        			next(ja, size, i+1);
-	        	    			}, self);
-	        				},
-	        				error: callback.error,
-	        			});
-	        		} else if (value instanceof MslArray) {
-	        			jsonValue = new JsonMslArray(encoder, value);
-	        			jsonValue.toJSONArray(encoder, {
-	        				result: function(a) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				ja.push(a);
-	        	        			next(ja, size, i+1);
-	        	    			}, self);
-	        				},
-	        				error: callback.error,
-	        			});
-	        		} else if (value instanceof MslEncodable) {
-	        			value.toMslEncoding(encoder, MslEncoderFormat.JSON, {
-	        				result: function(json) {
-	        					AsyncExecutor(callback, function() {
-	        						var jsonValue = new JsonMslObject(encoder, json);
-	        						jsonValue.toJSONObject(encoder, {
-	        	        				result: function(o) {
-	        	        	    			AsyncExecutor(callback, function() {
-	        	        	    				ja.push(o);
-	        	        	        			next(ja, size, i+1);
-	        	        	    			}, self);
-	        	        				},
-	        	        				error: callback.error,
-	        						});
-	        					}, self);
-	        				},
-	        				error: callback.error,
-	        			});
-	        		} else {
-	        			ja.push(value);
-	        			next(ja, size, i+1);
+	    			if (value instanceof Uint8Array) {
+	    			    ja.push(Base64.encode(value));
+	    			    next(ja, size, i+1);
+	    			} else if (value instanceof JsonMslObject) {
+	    			    value.toJSONObject(encoder, {
+	    			        result: function(o) {
+	    			            AsyncExecutor(callback, function() {
+	    			                ja.push(o);
+	    			                next(ja, size, i+1);
+	    			            }, self);
+	    			        },
+	    			        error: callback.error,
+	    			    });
+	    			} else if (value instanceof JsonMslArray) {
+	    			    value.toJSONArray(encoder, {
+	    			        result: function(a) {
+	    			            AsyncExecutor(callback, function() {
+	    			                ja.push(a);
+	    			                next(ja, size, i+1);
+	    			            }, self);
+	    			        },
+	    			        error: callback.error,
+	    			    });
+	    			} else if (value instanceof MslObject) {
+	    			    let jsonValue = new JsonMslObject(encoder, value);
+	    			    jsonValue.toJSONObject(encoder, {
+	    			        result: function(o) {
+	    			            AsyncExecutor(callback, function() {
+	    			                ja.push(o);
+	    			                next(ja, size, i+1);
+	    			            }, self);
+	    			        },
+	    			        error: callback.error,
+	    			    });
+	    			} else if (value instanceof MslArray) {
+	    			    let jsonValue = new JsonMslArray(encoder, value);
+	    			    jsonValue.toJSONArray(encoder, {
+	    			        result: function(a) {
+	    			            AsyncExecutor(callback, function() {
+	    			                ja.push(a);
+	    			                next(ja, size, i+1);
+	    			            }, self);
+	    			        },
+	    			        error: callback.error,
+	    			    });
+	    			} else if (value instanceof MslEncodable) {
+	    			    value.toMslEncoding(encoder, MslEncoderFormat.JSON, {
+	    			        result: function(json) {
+	    			            AsyncExecutor(callback, function() {
+	    			                var jsonValue = new JsonMslObject(encoder, json);
+	    			                jsonValue.toJSONObject(encoder, {
+	    			                    result: function(o) {
+	    			                        AsyncExecutor(callback, function() {
+	    			                            ja.push(o);
+	    			                            next(ja, size, i+1);
+	    			                        }, self);
+	    			                    },
+	    			                    error: callback.error,
+	    			                });
+	    			            }, self);
+	    			        },
+	    			        error: callback.error,
+	    			    });
+	    			} else {
+	    			    ja.push(value);
+	    			    next(ja, size, i+1);
 	        		}
     			}, self);
         	}
