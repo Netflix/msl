@@ -108,7 +108,7 @@
                     _compressionAlgo: { value: compressionAlgo, writable: true, enumerable: false, configurable: false },
                     _payloadSequenceNumber: { value: 1, writable: true, enumerable: false, configurable: false },
                     /** @type {Array.<Uint8Array>} */
-                    _currentPayload: { value: new Array(), writable: true, enumerable: false, configurable: false },
+                    _currentPayload: { value: [], writable: true, enumerable: false, configurable: false },
                     /** @type {boolean} */
                     _closed: { value: false, writable: true, enumerable: false, configurable: false },
                     /** @type {boolean} */
@@ -116,7 +116,7 @@
                     /** @type {boolean} */
                     _caching: { value: true, writable: true, enumerable: false, configurable: false },
                     /** @type {Array.<PayloadChunk>} */
-                    _payloads: { value: new Array(), writable: false, enumerable: false, configurable: false },
+                    _payloads: { value: [], writable: false, enumerable: false, configurable: false },
                     // Set true once the header has been sent and payloads may
                     // be written.
                     _ready: { value: false, writable: true, enumerable: false, configurable: false },

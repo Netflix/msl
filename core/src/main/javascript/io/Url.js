@@ -318,7 +318,7 @@
                                 // this allows the stream to return already-parsed JSON
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
-                                    this.getJSON = function () { return self._json };
+                                    this.getJSON = function () { return self._json; };
                                 }
 
                                 content = result.response.content || textEncoding.getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json), UTF_8);

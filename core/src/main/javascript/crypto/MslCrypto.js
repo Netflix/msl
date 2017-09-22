@@ -263,13 +263,15 @@
         },
 
         'importKey': function(format, keyData, algorithm, extractable, keyUsage) {
+            var op;
+            
             var ext = normalizeExtractable(extractable);
             var ku = normalizeKeyUsage(keyUsage);
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
-                    var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                    op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
@@ -280,10 +282,10 @@
                             throw new Error("Could not make valid JWK from DER input");
                         }
                         var jwk = JSON.stringify(jwkObj);
-                        var op = nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
+                        op = nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
                         return promisedOperation(op);
                     } else {
-                        var op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
+                        op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
 						return promisedOperation(op);
                     }
                 default:
@@ -292,15 +294,17 @@
         },
 
         'exportKey': function(format, key) {
+            var op;
+            
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
-                    var op = nfCryptoSubtle.exportKey(format, key);
+                    op = nfCryptoSubtle.exportKey(format, key);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
-						var op = nfCryptoSubtle.exportKey(KeyFormat.JWK, key);
+						op = nfCryptoSubtle.exportKey(KeyFormat.JWK, key);
                         return promisedOperation(op).then(function (result) {
                             var jwkObj = JSON.parse(textEncoding.getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
@@ -310,8 +314,8 @@
                             return rsaKey.getDer().buffer;
                         });
                     } else {
-                        var op = nfCryptoSubtle.exportKey(format, key);
-						return promisedOperation(op);
+                        op = nfCryptoSubtle.exportKey(format, key);
+                        return promisedOperation(op);
                     }
                 default:
                     throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
@@ -319,7 +323,7 @@
         },
 
         'wrapKey': function(format, keyToWrap, wrappingKey, wrappingAlgorithm) {
-        	var op;
+            var op;
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
                     op = nfCryptoSubtle.wrapKey(keyToWrap, wrappingKey, wrappingAlgorithm);
@@ -336,7 +340,7 @@
         },
 
         'unwrapKey': function(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, extractable, usage) {
-        	var op;
+            var op;
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
                     op = nfCryptoSubtle.unwrapKey(wrappedKey, unwrappedKeyAlgorithm, unwrappingKey);

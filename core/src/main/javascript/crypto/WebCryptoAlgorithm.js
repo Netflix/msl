@@ -76,7 +76,7 @@
 	        default:
 	            return false;
 	    }
-	}
+	};
 
     /**
      * @param {WebCryptoAlgorithm} algo the Web Crypto algorithm.
@@ -92,7 +92,7 @@
             default:
                 return false;
         }
-	}
+	};
 	
 	// Exports.
 	Object.defineProperties(WebCryptoAlgorithm, {

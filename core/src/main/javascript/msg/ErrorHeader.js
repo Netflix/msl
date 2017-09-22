@@ -161,7 +161,7 @@
 
                 // Construct the error data.
                 var encoder = ctx.getMslEncoderFactory();
-                var errordata = encoder.createObject();
+                errordata = encoder.createObject();
                 if (recipient) errordata.put(KEY_RECIPIENT, recipient);
                 errordata.put(KEY_TIMESTAMP, timestampSeconds);
                 errordata.put(KEY_MESSAGE_ID, messageId);

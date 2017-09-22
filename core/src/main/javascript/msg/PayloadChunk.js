@@ -206,7 +206,7 @@
                 cryptoContext: { value: cryptoContext, writable: false, enumerable: false, configurable: false },
                 /** @type {Object<MslEncoderFormat,Uint8Array>} */
                 encodings: { value: {}, writable: false, enumerable: false, configurable: false },
-            }
+            };
             Object.defineProperties(this, props);
         },
 

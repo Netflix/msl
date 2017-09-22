@@ -211,7 +211,7 @@
         AsyncExecutor(callback, function() {
             return new MasterTokenProtectedAuthenticationData(ctx, masterToken, authdata);
         });
-    }
+    };
 
     /**
      * <p>Construct a new master token protected entity authentication data

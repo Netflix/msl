@@ -117,7 +117,7 @@
                     Object.defineProperties(self, props);
                     return this;
                 }, self);
-            };
+            }
         },
 
         /**

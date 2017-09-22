@@ -211,12 +211,14 @@
      */
     var MslCiphertextEnvelope$parse = function MslCiphertextEnvelope$parse(mo, version, callback) {
         AsyncExecutor(callback, function() {
+            var v;
+            
             // If a version was not specified, determine the envelope version.
             if (!version) {
                 try {
                     version = mo.getInt(KEY_VERSION);
                     var identified = false;
-                    for (var v in Version) {
+                    for (v in Version) {
                         if (Version[v] == version) {
                             identified = true;
                             break;
@@ -253,7 +255,7 @@
                 case Version.V2:
                     try {
                         // Version 2 envelopes use the cipher specification.
-                        var v = mo.getInt(KEY_VERSION);
+                        v = mo.getInt(KEY_VERSION);
                         if (v != Version.V2)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo);
                         keyIdOrSpec = MslConstants.CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));
