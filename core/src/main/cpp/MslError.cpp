@@ -268,6 +268,7 @@ const MslError MslError::KEYX_INVALID_ENCRYPTION_KEY(7019, ResponseCode::FAIL, "
 const MslError MslError::KEYX_INVALID_HMAC_KEY(7020, ResponseCode::FAIL, "Key exchange HMAC key is invalid.");
 const MslError MslError::KEYX_INVALID_WRAPDATA(7021, ResponseCode::FAIL, "Key exchange wrap data is invalid.");
 const MslError MslError::UNSUPPORTED_KEYX_SCHEME(7022, ResponseCode::FAIL, "Unsupported key exchange scheme.");
+const MslError MslError::KEYX_IDENTITY_NOT_FOUND (7023, ResponseCode::FAIL, "Key exchange identity not found.");
 
 // 9 Internal Errors
 const MslError MslError::INTERNAL_EXCEPTION(9000, ResponseCode::TRANSIENT_FAILURE, "Internal exception.");
