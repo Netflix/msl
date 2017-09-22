@@ -293,7 +293,7 @@
         this.timestampSeconds = timestampSeconds;
         this.messageCryptoContext = messageCryptoContext;
         this.headerdata = headerdata;
-    };
+    }
 
     /**
      * Return a properties configuration for the provided property values.
@@ -596,20 +596,20 @@
                     var capabilities = headerData.capabilities;
                     var recipient = (encrypted) ? headerData.recipient : null;
                     var messageId = headerData.messageId;
-                    var keyRequestData = (headerData.keyRequestData) ? headerData.keyRequestData : new Array();
+                    var keyRequestData = (headerData.keyRequestData) ? headerData.keyRequestData : [];
                     var keyResponseData = headerData.keyResponseData;
                     var userAuthData = headerData.userAuthData;
                     var userIdToken = headerData.userIdToken;
-                    var serviceTokens = (headerData.serviceTokens) ? headerData.serviceTokens : new Array();
+                    var serviceTokens = (headerData.serviceTokens) ? headerData.serviceTokens : [];
                     var peerMasterToken, peerUserIdToken, peerServiceTokens;
                     if (ctx.isPeerToPeer()) {
                         peerMasterToken = peerData.peerMasterToken;
                         peerUserIdToken = peerData.peerUserIdToken;
-                        peerServiceTokens = (peerData.peerServiceTokens) ? peerData.peerServiceTokens : new Array();
+                        peerServiceTokens = (peerData.peerServiceTokens) ? peerData.peerServiceTokens : [];
                     } else {
                         peerMasterToken = null;
                         peerUserIdToken = null;
-                        peerServiceTokens = new Array();
+                        peerServiceTokens = [];
                     }
 
                     // Grab token verification master tokens.
@@ -721,7 +721,7 @@
                         userAuthData, userIdToken,
                         serviceTokens,
                         peerMasterToken, peerUserIdToken, peerServiceTokens,
-                        user, messageCryptoContext)
+                        user, messageCryptoContext);
                     Object.defineProperties(this, props);
                     return this;
                 }, self);
@@ -929,7 +929,7 @@
         function addServiceToken(tokensMa, index, callback) {
             AsyncExecutor(callback, function() {
                 if (index >= tokensMa.size()) {
-                    var serviceTokens = new Array();
+                    var serviceTokens = [];
                     for (var key in serviceTokensMap)
                         serviceTokens.push(serviceTokensMap[key]);
                     return serviceTokens;
@@ -960,7 +960,7 @@
             if (tokensMa) {
                 addServiceToken(tokensMa, 0, callback);
             } else {
-                return new Array();
+                return [];
             }
         });
     }
@@ -1000,7 +1000,7 @@
                     if (!headerdataMo.has(KEY_PEER_USER_ID_TOKEN))
                         return null;
                     var encoder = ctx.getMslEncoderFactory();
-                    var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)
+                    var peerUserIdTokenMo = headerdataMo.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder);
                     UserIdToken.parse(ctx, peerUserIdTokenMo, masterToken, callback);
                 } catch (e) {
                     if (e instanceof MslEncoderException)
@@ -1030,7 +1030,7 @@
                 return {
                     peerMasterToken: null,
                     peerUserIdToken: null,
-                    peerServiceTokens: new Array(),
+                    peerServiceTokens: [],
                 };
             }
 

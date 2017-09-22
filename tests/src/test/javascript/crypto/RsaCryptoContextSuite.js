@@ -210,7 +210,7 @@ describe("RsaCryptoContext", function() {
     			cryptoContext.encrypt(message, encoder, ENCODER_FORMAT, {
     				result: function(c) { ciphertext = c; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});;
+    			});
     		});
     		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
     		

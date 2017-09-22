@@ -355,7 +355,7 @@ function(encoding, compressionAlgo) {
     });
     
     it("unmapped crypto context", function() {
-        var serviceToken = undefined, cryptoContexts = {};
+        var serviceToken, cryptoContexts = {};
         runs(function() {
             ServiceToken.create(ctx, NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPTED, compressionAlgo, CRYPTO_CONTEXT, {
                 result: function(token) { serviceToken = token; },
@@ -376,43 +376,43 @@ function(encoding, compressionAlgo) {
 
         var encode;
         runs(function() {
-        	serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
-        		result: function(x) { encode = x; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            serviceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { encode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return encode; }, "encode", 100);
 
         var moServiceToken;
         runs(function() {
-        	var mo = encoder.parseObject(encode);
+            var mo = encoder.parseObject(encode);
 
-        	ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
-        		result: function(token) { moServiceToken = token; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            ServiceToken.parse(ctx, mo, MASTER_TOKEN, USER_ID_TOKEN, cryptoContexts, {
+                result: function(token) { moServiceToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return encode && moServiceToken; }, "json string and moServiceToken", 100);
 
         var moEncode;
         runs(function() {
-	        expect(moServiceToken.isDecrypted()).toBeFalsy();
-	        expect(moServiceToken.isDeleted()).toBeFalsy();
-	        expect(moServiceToken.isVerified()).toBeFalsy();
-	        expect(moServiceToken.data).toBeNull();
-	        expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
-	        expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
-	        expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
-	        expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
-	        expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
-	        expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
-	        expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
-	        expect(moServiceToken.name).toEqual(serviceToken.name);
+            expect(moServiceToken.isDecrypted()).toBeFalsy();
+            expect(moServiceToken.isDeleted()).toBeFalsy();
+            expect(moServiceToken.isVerified()).toBeFalsy();
+            expect(moServiceToken.data).toBeNull();
+            expect(moServiceToken.isBoundTo(MASTER_TOKEN)).toEqual(serviceToken.isBoundTo(MASTER_TOKEN));
+            expect(moServiceToken.isBoundTo(USER_ID_TOKEN)).toEqual(serviceToken.isBoundTo(USER_ID_TOKEN));
+            expect(moServiceToken.isMasterTokenBound()).toEqual(serviceToken.isMasterTokenBound());
+            expect(moServiceToken.isUserIdTokenBound()).toEqual(serviceToken.isUserIdTokenBound());
+            expect(moServiceToken.isUnbound()).toEqual(serviceToken.isUnbound());
+            expect(moServiceToken.mtSerialNumber).toEqual(serviceToken.mtSerialNumber);
+            expect(moServiceToken.uitSerialNumber).toEqual(serviceToken.uitSerialNumber);
+            expect(moServiceToken.name).toEqual(serviceToken.name);
             expect(moServiceToken.compressionAlgo).toEqual(serviceToken.compressionAlgo);
-	        moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
-        		result: function(x) { moEncode = x; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            moServiceToken.toMslEncoding(encoder, ENCODER_FORMAT, {
+                result: function(x) { moEncode = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return moEncode; }, "moEncode", 100);
         
@@ -840,20 +840,20 @@ function(encoding, compressionAlgo) {
         
         var mo;
         runs(function() {
-        	MslTestUtils.toMslObject(encoder, serviceToken, {
-        		result: function(x) { mo = x; },
+            MslTestUtils.toMslObject(encoder, serviceToken, {
+                result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            });
         });
         waitsFor(function() { return mo; }, "mo", 100);
         
-        var exception;
+        var modifiedTokendata;
         runs(function() {
-	        var tokendata = mo.getBytes(KEY_TOKENDATA);
-	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            tokendataMo.put(KEY_MASTER_TOKEN_SERIAL_NUMBER, "x");
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
-            	result: function(x) { modifiedTokendata = x; },
+                result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1093,7 +1093,7 @@ function(encoding, compressionAlgo) {
 	        var tokendataMo = encoder.parseObject(tokendata);
 	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, -1);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
-            	result: function(x) { modifiedTokendata = x; },
+                result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
@@ -1108,7 +1108,7 @@ function(encoding, compressionAlgo) {
 	        	error: function(e) { exception = e; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);;
+        waitsFor(function() { return exception; }, "exception", 100);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -1125,21 +1125,21 @@ function(encoding, compressionAlgo) {
             });
         });
         waitsFor(function() { return serviceToken; }, "serviceToken", 100);
-        
+
         var mo;
         runs(function() {
-        	MslTestUtils.toMslObject(encoder, serviceToken, {
-        		result: function(x) { mo = x; },
+            MslTestUtils.toMslObject(encoder, serviceToken, {
+                result: function(x) { mo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            });
         });
         waitsFor(function() { return mo; }, "mo", 100);
-        
+
         var modifiedTokendata;
         runs(function() {
-	        var tokendata = mo.getBytes(KEY_TOKENDATA);
-	        var tokendataMo = encoder.parseObject(tokendata);
-	        tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
+            var tokendata = mo.getBytes(KEY_TOKENDATA);
+            var tokendataMo = encoder.parseObject(tokendata);
+            tokendataMo.put(KEY_USER_ID_TOKEN_SERIAL_NUMBER, MslConstants.MAX_LONG_VALUE + 2);
             encoder.encodeObject(tokendataMo, ENCODER_FORMAT, {
             	result: function(x) { modifiedTokendata = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }

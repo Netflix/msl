@@ -361,7 +361,7 @@ describe("SimpleMslStore", function() {
     				case 3:
     					store.removeCryptoContext(masterToken);
     					break;
-    				};
+    				}
     				callback.add(1);
     			},
     			error: function(err) { callback.error(new MslInternalException("Unexpected master token stress test exception.", err)); }
@@ -818,81 +818,81 @@ describe("SimpleMslStore", function() {
      * @param callback
      */
     function userIdTokenStressor(ctx, store, count, callback) {
-    	var r = new Random();
-    	for (var i = 0; i < count; ++i) {
-    		var tokenIndex = r.nextInt(count);
-    		MslTestUtils.getMasterToken(ctx, tokenIndex, 1, {
-    			result: function(masterToken) {
-    				var userId = r.nextInt(count);
-    				MslTestUtils.getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory.USER, {
-    					result: function(userIdToken) {
-    						var option = r.nextInt(3);
-    						switch (option) {
-    						case 0:
-    							store.setCryptoContext(masterToken, new NullCryptoContext());
-    							store.addUserIdToken(USER_ID + userId, userIdToken);
-    							break;
-    						case 1:
-    							store.getUserIdToken(USER_ID + userId);
-    							break;
-    						case 2:
-    							store.removeUserIdToken(userIdToken);
-    							break;
-    						};
-    						callback.add(1);
-    					},
-    					error: function(err) { callback.error(new MslInternalException("Unexpected user ID token stressor exception.", err)); }
-    				});
-    			},
-    			error: function(err) { callback.error(new MslInternalException("Unexpected user ID token stressor exception.", err)); }
-    		});
-    	}
-    };
+        var r = new Random();
+        for (var i = 0; i < count; ++i) {
+            var tokenIndex = r.nextInt(count);
+            MslTestUtils.getMasterToken(ctx, tokenIndex, 1, {
+                result: function(masterToken) {
+                    var userId = r.nextInt(count);
+                    MslTestUtils.getUserIdToken(ctx, masterToken, userId, MockEmailPasswordAuthenticationFactory.USER, {
+                        result: function(userIdToken) {
+                            var option = r.nextInt(3);
+                            switch (option) {
+                                case 0:
+                                    store.setCryptoContext(masterToken, new NullCryptoContext());
+                                    store.addUserIdToken(USER_ID + userId, userIdToken);
+                                    break;
+                                case 1:
+                                    store.getUserIdToken(USER_ID + userId);
+                                    break;
+                                case 2:
+                                    store.removeUserIdToken(userIdToken);
+                                    break;
+                            }
+                            callback.add(1);
+                        },
+                        error: function(err) { callback.error(new MslInternalException("Unexpected user ID token stressor exception.", err)); }
+                    });
+                },
+                error: function(err) { callback.error(new MslInternalException("Unexpected user ID token stressor exception.", err)); }
+            });
+        }
+    }
     
     it("user ID token stress test", function() {
-    	var ops = 0;
-    	runs(function() {
-	        for (var i = 0; i < 5 * MAX_TOKENS; ++i) {
-	        	userIdTokenStressor(ctx, store, MAX_TOKENS, {
-	        		add: function(r) { ops += r; },
-	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-	        	});
-	        }
-    	});
-    	waitsFor(function() { return ops == 5 * MAX_TOKENS * MAX_TOKENS; }, "user ID token stress test to complete", 5000);
+        var ops = 0;
+        runs(function() {
+            for (var i = 0; i < 5 * MAX_TOKENS; ++i) {
+                userIdTokenStressor(ctx, store, MAX_TOKENS, {
+                    add: function(r) { ops += r; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+        });
+        waitsFor(function() { return ops == 5 * MAX_TOKENS * MAX_TOKENS; }, "user ID token stress test to complete", 5000);
     });
-    
+
     it("store master bound service tokens", function() {
         var masterToken;
         runs(function() {
-        	MslTestUtils.getMasterToken(ctx, 1, 1, {
-        		result: function(token) { masterToken = token; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return masterToken; }, "master token not received", 100);
-        
+
         var tokens;
         runs(function() {
-        	MslTestUtils.getServiceTokens(ctx, masterToken, null, {
-        		result: function(tks) { tokens = tks; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.getServiceTokens(ctx, masterToken, null, {
+                result: function(tks) { tokens = tks; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return tokens; }, "tokens not received", 100);
-        
+
         runs(function() {
-	        var cryptoContext = new NullCryptoContext();
-	        store.setCryptoContext(masterToken, cryptoContext);
-	        
-	        var emptyTokens = store.getServiceTokens(masterToken, null);
-	        expect(emptyTokens).not.toBeNull();
-	        expect(emptyTokens.length).toEqual(0);
-	        
-	        store.addServiceTokens(tokens);
-	        var storedTokens = store.getServiceTokens(masterToken, null);
-	        expect(storedTokens).not.toBeNull();
-	        expect(serviceTokensEqual(tokens, storedTokens)).toBeTruthy();
+            var cryptoContext = new NullCryptoContext();
+            store.setCryptoContext(masterToken, cryptoContext);
+
+            var emptyTokens = store.getServiceTokens(masterToken, null);
+            expect(emptyTokens).not.toBeNull();
+            expect(emptyTokens.length).toEqual(0);
+
+            store.addServiceTokens(tokens);
+            var storedTokens = store.getServiceTokens(masterToken, null);
+            expect(storedTokens).not.toBeNull();
+            expect(serviceTokensEqual(tokens, storedTokens)).toBeTruthy();
         });
     });
     
@@ -1154,7 +1154,7 @@ describe("SimpleMslStore", function() {
 	        masterBoundTokens.forEach(function(masterBoundToken) {
 	        	unboundAndMasterBoundTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
 	        }, this);
-	        var unboundAndMasterBoundTokens = new Array();
+	        var unboundAndMasterBoundTokens = [];
 	        for (var key in unboundAndMasterBoundTokensMap)
 	        	unboundAndMasterBoundTokens.push(unboundAndMasterBoundTokensMap[key]);
 	        expect(storedMasterBoundTokens).toEqual(unboundAndMasterBoundTokens);
@@ -1208,53 +1208,55 @@ describe("SimpleMslStore", function() {
         waitsFor(function() { return masterBoundTokens && userBoundTokens && unboundTokens; }, "service tokens not received", 100);
         
         runs(function() {
-	        var cryptoContext = new NullCryptoContext();
-	        
-	        store.setCryptoContext(masterToken, cryptoContext);
-	        store.addUserIdToken(USER_ID, userIdToken);
-	        store.addServiceTokens(masterBoundTokens);
-	        store.addServiceTokens(userBoundTokens);
-	        store.addServiceTokens(unboundTokens);
-	        
-	        store.removeServiceTokens(null, null, null);
-	        
-	        // This should only return the unbound and master bound tokens.
-	        var storedMasterBoundTokens = store.getServiceTokens(masterToken, null);
-	        expect(storedMasterBoundTokens).not.toBeNull();
-	        var unboundAndMasterBoundTokensMap = {};
-	        unboundTokens.forEach(function(unboundToken) {
-	        	unboundAndMasterBoundTokensMap[unboundToken.uniqueKey()] = unboundToken;
-	        }, this);
-	        masterBoundTokens.forEach(function(masterBoundToken) {
-	        	unboundAndMasterBoundTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
-	        }, this);
-	        var unboundAndMasterBoundTokens = new Array();
-	        for (var key in unboundAndMasterBoundTokensMap)
-	        	unboundAndMasterBoundTokens.push(unboundAndMasterBoundTokensMap[key]);
-	        expect(serviceTokensEqual(unboundAndMasterBoundTokens, storedMasterBoundTokens)).toBeTruthy();
-	        
-	        // This should return all of the tokens.
-	        var storedUserBoundTokens = store.getServiceTokens(masterToken, userIdToken);
-	        expect(storedUserBoundTokens).not.toBeNull();
-	        var allTokensMap = {};
-	        unboundTokens.forEach(function(unboundToken) {
-	        	allTokensMap[unboundToken.uniqueKey()] = unboundToken;
-	        }, this);
-	        userBoundTokens.forEach(function(userBoundToken) {
-	        	allTokensMap[userBoundToken.uniqueKey()] = userBoundToken;
-	        }, this);
-	        masterBoundTokens.forEach(function(masterBoundToken) {
-	        	allTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
-	        }, this);
-	        var allTokens = new Array();
-	        for (var key in allTokensMap)
-	        	allTokens.push(allTokensMap[key]);
-	        expect(serviceTokensEqual(allTokens, storedUserBoundTokens)).toBeTruthy();
-	        
-	        // This should only return the unbound tokens.
-	        var storedUnboundTokens = store.getServiceTokens(null, null);
-	        expect(storedUnboundTokens).not.toBeNull();
-	        expect(serviceTokensEqual(unboundTokens, storedUnboundTokens)).toBeTruthy();
+            var key;
+            
+            var cryptoContext = new NullCryptoContext();
+
+            store.setCryptoContext(masterToken, cryptoContext);
+            store.addUserIdToken(USER_ID, userIdToken);
+            store.addServiceTokens(masterBoundTokens);
+            store.addServiceTokens(userBoundTokens);
+            store.addServiceTokens(unboundTokens);
+
+            store.removeServiceTokens(null, null, null);
+
+            // This should only return the unbound and master bound tokens.
+            var storedMasterBoundTokens = store.getServiceTokens(masterToken, null);
+            expect(storedMasterBoundTokens).not.toBeNull();
+            var unboundAndMasterBoundTokensMap = {};
+            unboundTokens.forEach(function(unboundToken) {
+                unboundAndMasterBoundTokensMap[unboundToken.uniqueKey()] = unboundToken;
+            }, this);
+            masterBoundTokens.forEach(function(masterBoundToken) {
+                unboundAndMasterBoundTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
+            }, this);
+            var unboundAndMasterBoundTokens = [];
+            for (key in unboundAndMasterBoundTokensMap)
+                unboundAndMasterBoundTokens.push(unboundAndMasterBoundTokensMap[key]);
+            expect(serviceTokensEqual(unboundAndMasterBoundTokens, storedMasterBoundTokens)).toBeTruthy();
+
+            // This should return all of the tokens.
+            var storedUserBoundTokens = store.getServiceTokens(masterToken, userIdToken);
+            expect(storedUserBoundTokens).not.toBeNull();
+            var allTokensMap = {};
+            unboundTokens.forEach(function(unboundToken) {
+                allTokensMap[unboundToken.uniqueKey()] = unboundToken;
+            }, this);
+            userBoundTokens.forEach(function(userBoundToken) {
+                allTokensMap[userBoundToken.uniqueKey()] = userBoundToken;
+            }, this);
+            masterBoundTokens.forEach(function(masterBoundToken) {
+                allTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
+            }, this);
+            var allTokens = [];
+            for (key in allTokensMap)
+                allTokens.push(allTokensMap[key]);
+            expect(serviceTokensEqual(allTokens, storedUserBoundTokens)).toBeTruthy();
+
+            // This should only return the unbound tokens.
+            var storedUnboundTokens = store.getServiceTokens(null, null);
+            expect(storedUnboundTokens).not.toBeNull();
+            expect(serviceTokensEqual(unboundTokens, storedUnboundTokens)).toBeTruthy();
         });
     });
 
@@ -1313,12 +1315,12 @@ describe("SimpleMslStore", function() {
 	        masterBoundTokens.forEach(function(masterBoundToken) {
 	        	allTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
 	        }, this);
-	        var allTokens = new Array();
+	        var allTokens = [];
 	        for (var key in allTokensMap)
 	        	allTokens.push(allTokensMap[key]);
 	        
 	        var random = new Random();
-	        var removedTokens = new Array();
+	        var removedTokens = [];
 	        allTokens.forEach(function(token) {
 	            if (random.nextBoolean()) return;
 	            store.removeServiceTokens(token.name, null, null);
@@ -1402,7 +1404,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("get service tokens with mismatched tokens", function() {
-    	var masterToken = undefined, mismatchedMasterToken;
+    	var masterToken, mismatchedMasterToken;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterToken = token; },
@@ -1460,7 +1462,7 @@ describe("SimpleMslStore", function() {
     });
     
     it("remove service tokens with mismatched tokens", function() {
-    	var masterToken = undefined, mismatchedMasterToken;
+    	var masterToken, mismatchedMasterToken;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterToken = token; },
@@ -1491,7 +1493,7 @@ describe("SimpleMslStore", function() {
     });
 
     it("removing old master token does not remove service tokens", function() {
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
         	MslTestUtils.getMasterToken(ctx, 1, 1, {
         		result: function(token) { masterTokenA = token; },
@@ -1535,52 +1537,54 @@ describe("SimpleMslStore", function() {
         waitsFor(function() { return masterBoundServiceTokens && serviceTokensA && serviceTokensB; }, "service tokens not received", 100);
 
         runs(function() {
-	        var cryptoContext = new NullCryptoContext();
-	        var userIdA = USER_ID + "A";
-	        var userIdB = USER_ID + "B";
-	
-	        store.setCryptoContext(masterTokenA, cryptoContext);
-	        store.setCryptoContext(masterTokenB, cryptoContext);
-	        store.addUserIdToken(userIdA, userIdTokenA);
-	        store.addUserIdToken(userIdB, userIdTokenB);
-	        store.addServiceTokens(masterBoundServiceTokens);
-	        store.addServiceTokens(serviceTokensA);
-	        store.addServiceTokens(serviceTokensB);
-	
-	        // We still have a master token with serial number 1 so no service
-	        // tokens should have been deleted.
-	        store.removeCryptoContext(masterTokenA);
-	        var storedServiceTokensA = store.getServiceTokens(masterTokenB, userIdTokenA);
-	        var storedServiceTokensB = store.getServiceTokens(masterTokenB, userIdTokenB);
-	        var expectedServiceTokensAMap = {};
-	        masterBoundServiceTokens.forEach(function(masterBoundServiceToken) {
-	        	expectedServiceTokensAMap[masterBoundServiceToken.uniqueKey()] = masterBoundServiceToken;
-	        }, this);
-	        serviceTokensA.forEach(function(serviceTokenA) {
-	        	expectedServiceTokensAMap[serviceTokenA.uniqueKey()] = serviceTokenA;
-	        }, this);
-	        var expectedServiceTokensA = new Array();
-	        for (var key in expectedServiceTokensAMap)
-	        	expectedServiceTokensA.push(expectedServiceTokensAMap[key]);
-	        expect(storedServiceTokensA).toEqual(expectedServiceTokensA);
-	        var expectedServiceTokensBMap = {};
-	        masterBoundServiceTokens.forEach(function(masterBoundServiceToken) {
-	        	expectedServiceTokensBMap[masterBoundServiceToken.uniqueKey()] = masterBoundServiceToken;
-	        }, this);
-	        serviceTokensB.forEach(function(serviceTokenB) {
-	        	expectedServiceTokensBMap[serviceTokenB.uniqueKey()] = serviceTokenB;
-	        }, this);
-	        var expectedServiceTokensB = new Array();
-	        for (var key in expectedServiceTokensBMap)
-	        	expectedServiceTokensB.push(expectedServiceTokensBMap[key]);
-	        expect(storedServiceTokensB).toEqual(expectedServiceTokensB);
+            var key;
+
+            var cryptoContext = new NullCryptoContext();
+            var userIdA = USER_ID + "A";
+            var userIdB = USER_ID + "B";
+
+            store.setCryptoContext(masterTokenA, cryptoContext);
+            store.setCryptoContext(masterTokenB, cryptoContext);
+            store.addUserIdToken(userIdA, userIdTokenA);
+            store.addUserIdToken(userIdB, userIdTokenB);
+            store.addServiceTokens(masterBoundServiceTokens);
+            store.addServiceTokens(serviceTokensA);
+            store.addServiceTokens(serviceTokensB);
+
+            // We still have a master token with serial number 1 so no service
+            // tokens should have been deleted.
+            store.removeCryptoContext(masterTokenA);
+            var storedServiceTokensA = store.getServiceTokens(masterTokenB, userIdTokenA);
+            var storedServiceTokensB = store.getServiceTokens(masterTokenB, userIdTokenB);
+            var expectedServiceTokensAMap = {};
+            masterBoundServiceTokens.forEach(function(masterBoundServiceToken) {
+                expectedServiceTokensAMap[masterBoundServiceToken.uniqueKey()] = masterBoundServiceToken;
+            }, this);
+            serviceTokensA.forEach(function(serviceTokenA) {
+                expectedServiceTokensAMap[serviceTokenA.uniqueKey()] = serviceTokenA;
+            }, this);
+            var expectedServiceTokensA = [];
+            for (key in expectedServiceTokensAMap)
+                expectedServiceTokensA.push(expectedServiceTokensAMap[key]);
+            expect(storedServiceTokensA).toEqual(expectedServiceTokensA);
+            var expectedServiceTokensBMap = {};
+            masterBoundServiceTokens.forEach(function(masterBoundServiceToken) {
+                expectedServiceTokensBMap[masterBoundServiceToken.uniqueKey()] = masterBoundServiceToken;
+            }, this);
+            serviceTokensB.forEach(function(serviceTokenB) {
+                expectedServiceTokensBMap[serviceTokenB.uniqueKey()] = serviceTokenB;
+            }, this);
+            var expectedServiceTokensB = [];
+            for (key in expectedServiceTokensBMap)
+                expectedServiceTokensB.push(expectedServiceTokensBMap[key]);
+            expect(storedServiceTokensB).toEqual(expectedServiceTokensB);
         });
     });
     
     it("removing final master token removes service tokens", function() {
         // Master token B has a new serial number, to invalidate the old master
         // token and its user ID tokens.
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
     	runs(function() {
     		MslTestUtils.getMasterToken(ctx, 1, 1, {
     			result: function(token) { masterTokenA = token; },
@@ -1644,33 +1648,33 @@ describe("SimpleMslStore", function() {
 	        expect(serviceTokensEqual(serviceTokensB, storedServiceTokensB)).toBeTruthy();
         });
     });
-    
+
     it("clear crypto contexts leaves unbound service tokens", function() {
         // Master token B has a new serial number, to invalidate the old master
         // token and its user ID tokens.
-        var masterTokenA = undefined, masterTokenB;
-    	runs(function() {
-    		MslTestUtils.getMasterToken(ctx, 1, 1, {
-    			result: function(token) { masterTokenA = token; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    		MslTestUtils.getMasterToken(ctx, 1, 2, {
-    			result: function(token) { masterTokenB = token; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
-        
-    	var userIdTokenA, userIdTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
-        	MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
-        		result: function(token) { userIdTokenA = token; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
-        	MslTestUtils.getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory.USER, {
-        		result: function(token) { userIdTokenB = token; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterTokenA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getMasterToken(ctx, 1, 2, {
+                result: function(token) { masterTokenB = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+
+        var userIdTokenA, userIdTokenB;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterTokenA, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdTokenA = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            MslTestUtils.getUserIdToken(ctx, masterTokenB, 2, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdTokenB = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
         waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
 
@@ -1690,29 +1694,29 @@ describe("SimpleMslStore", function() {
             });
         });
         waitsFor(function() { return unboundServiceTokens && serviceTokensA && serviceTokensB; }, "service tokens not received", 100);
-        
+
         runs(function() {
-        	var cryptoContext = new NullCryptoContext();
-        	var userIdA = USER_ID + "A";
-        	var userIdB = USER_ID + "B";
+            var cryptoContext = new NullCryptoContext();
+            var userIdA = USER_ID + "A";
+            var userIdB = USER_ID + "B";
 
-        	store.setCryptoContext(masterTokenA, cryptoContext);
-        	store.setCryptoContext(masterTokenB, cryptoContext);
-        	store.addUserIdToken(userIdA, userIdTokenA);
-        	store.addUserIdToken(userIdB, userIdTokenB);
-        	store.addServiceTokens(unboundServiceTokens);
-        	store.addServiceTokens(serviceTokensA);
-        	store.addServiceTokens(serviceTokensB);
+            store.setCryptoContext(masterTokenA, cryptoContext);
+            store.setCryptoContext(masterTokenB, cryptoContext);
+            store.addUserIdToken(userIdA, userIdTokenA);
+            store.addUserIdToken(userIdB, userIdTokenB);
+            store.addServiceTokens(unboundServiceTokens);
+            store.addServiceTokens(serviceTokensA);
+            store.addServiceTokens(serviceTokensB);
 
-        	// All bound service tokens should be deleted.
-        	store.clearCryptoContexts();
-        	expect(store.getServiceTokens(masterTokenA, userIdTokenA)).toEqual(unboundServiceTokens);
-        	expect(store.getServiceTokens(masterTokenB, userIdTokenB)).toEqual(unboundServiceTokens);
-        	var storedServiceTokens = store.getServiceTokens(null, null);
-        	expect(serviceTokensEqual(unboundServiceTokens, storedServiceTokens)).toBeTruthy();
+            // All bound service tokens should be deleted.
+            store.clearCryptoContexts();
+            expect(store.getServiceTokens(masterTokenA, userIdTokenA)).toEqual(unboundServiceTokens);
+            expect(store.getServiceTokens(masterTokenB, userIdTokenB)).toEqual(unboundServiceTokens);
+            var storedServiceTokens = store.getServiceTokens(null, null);
+            expect(serviceTokensEqual(unboundServiceTokens, storedServiceTokens)).toBeTruthy();
         });
     });
-    
+
     it("remove user ID token removes correct service tokens", function() {
         var masterToken;
         runs(function() {
@@ -1776,7 +1780,7 @@ describe("SimpleMslStore", function() {
 	        serviceTokensB.forEach(function(token) {
 	        	expectedServiceTokensMap[token.uniqueKey()] = token;
 	        }, this);
-	        var expectedServiceTokens = new Array();
+	        var expectedServiceTokens = [];
 	        for (var key in expectedServiceTokensMap)
 	        	expectedServiceTokens.push(expectedServiceTokensMap[key]);
 	        expect(serviceTokensEqual(expectedServiceTokens, storedServiceTokens)).toBeTruthy();

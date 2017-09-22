@@ -916,7 +916,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var data = new Uint8Array(32);
             random.nextBytes(data);
             
-            var requestCryptoContext = undefined, responseCryptoContext;
+            var requestCryptoContext, responseCryptoContext;
             runs(function() {
             	requestCryptoContext = keyxData.cryptoContext;
 	            var keyResponseData = keyxData.keyResponseData;
@@ -929,7 +929,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
-            var requestCiphertext = undefined, responseCiphertext;
+            var requestCiphertext, responseCiphertext;
             runs(function() {
                 expect(responseCryptoContext).not.toBeNull();requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
@@ -947,7 +947,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             });
 
             // Signatures should always be equal.
-            var requestSignature = undefined, responseSignature;
+            var requestSignature, responseSignature;
             runs(function() {
                 requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
@@ -966,7 +966,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             });
             
             // Plaintext should always be equal to the original message.
-            var requestPlaintext = undefined, responsePlaintext;
+            var requestPlaintext, responsePlaintext;
             runs(function() {
                 requestCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },
@@ -1019,7 +1019,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             var data = new Uint8Array(32);
             random.nextBytes(data);
 
-            var requestCryptoContext = undefined, responseCryptoContext;
+            var requestCryptoContext, responseCryptoContext;
             runs(function() {
             	requestCryptoContext = keyxData.cryptoContext;
 	            var keyResponseData = keyxData.keyResponseData;
@@ -1032,7 +1032,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
-            var requestCiphertext = undefined, responseCiphertext;
+            var requestCiphertext, responseCiphertext;
             runs(function() {
                 expect(responseCryptoContext).not.toBeNull();requestCryptoContext.encrypt(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestCiphertext = data; },
@@ -1050,7 +1050,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             });
 
             // Signatures should always be equal.
-            var requestSignature = undefined, responseSignature;
+            var requestSignature, responseSignature;
             runs(function() {
                 requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                     result: function(data) { requestSignature = data; },
@@ -1069,7 +1069,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             });
             
             // Plaintext should always be equal to the original message.
-            var requestPlaintext = undefined, responsePlaintext;
+            var requestPlaintext, responsePlaintext;
             runs(function() {
                 requestCryptoContext.decrypt(responseCiphertext, encoder, {
                     result: function(data) { requestPlaintext = data; },

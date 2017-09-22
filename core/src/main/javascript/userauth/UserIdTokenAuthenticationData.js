@@ -152,7 +152,7 @@
                                 throw e;
                             });
                         },
-                    })
+                    });
                 },
                 error: function(e) {
                     AsyncExecutor(callback, function() {

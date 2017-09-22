@@ -29,7 +29,7 @@ var DEBUG_BREAK_ON_ERROR = false;
 
 function debugLog(message) {
   console.log(message);
-};
+}
 
 function debugAssert(b, message) {
   if (!b) {
@@ -39,13 +39,13 @@ function debugAssert(b, message) {
     //console.log(message || 'Assertion failed', { 'StackTrace': getStackTrace(my.debugAssert) });
     debugLog(message || 'Assertion failed');
   }
-};
+}
 
 function hexDump(abv, idx, len) {
     var hexDigits = "0123456789ABCDEF";
     function hexByte(b) {
         return hexDigits.charAt((b >> 4) & 0xF) + hexDigits.charAt(b & 0xF);
-    };
+    }
     var start = idx || 0;
     var end = len ? start + len : abv.length;
     var s = "";
@@ -54,7 +54,7 @@ function hexDump(abv, idx, len) {
         s += hexByte(abv[i]);
     }
     return s;
-};
+}
 
 //================================================================================
 // abvStream.js
@@ -71,7 +71,7 @@ function My(input, position) {
         this.abv = input;
         this.position = position || 0;
     }
-};
+}
 
 My.prototype = {
     readByte: function () {
@@ -469,7 +469,7 @@ function buildDer(node, stream) {
         }
     }
     return true;
-};
+}
 
 
 //  var Asn1Token = function(abv, parent, constr, tag, didx, dlen)
@@ -569,7 +569,7 @@ function decodeLength(stream) {
     for (var i = 0; i < len; ++i)
         buf = (buf << 8) | stream.readByte();
     return buf;
-};
+}
 
 function hasContent(stream, tag, len) {
     if (tag & 0x20)
@@ -585,7 +585,7 @@ function hasContent(stream, tag, len) {
     var subLength = decodeLength(s);
     var isContent = ((s.getPosition() - stream.getPosition()) + subLength == len);
     return isContent;
-};
+}
 
 var asn1ParseRecursionDepth = 0,
     asn1ParseMaxRecursionDepth = 8;
@@ -637,7 +637,7 @@ function asn1Parse(rootToken, start, len) {
         
         // The remaining bytes are the payload. We have enough info now to fill
         // in the token object.
-        token.constructed = tagByte & 0x20;;
+        token.constructed = tagByte & 0x20;
         token.tagClass = (tagByte & 0xC0) >> 6;
         token.tag = tokenTag;
         token.dataLen = tokenLength;
@@ -717,7 +717,7 @@ function oidIsRsaEncryption(abv, idx, len) {
         }
     }
     return true;
-};
+}
 
 function asn1Show(rootToken, rootDepth) {
     if (!DEBUG) {
@@ -759,10 +759,10 @@ function asn1Show(rootToken, rootDepth) {
                     break;
                 case tagVal.INTEGER:
                     output += "(" + token.dataLen * 8 + " bit) ";
-                    // intentional fallthru
+                    /* falls through */
                 case tagVal.UTF8_STRING:
                     output += hexDump(abv, token.dataIdx, token.dataLen);
-                    // intentional fallthru
+                    /* falls through */
                 case tagVal.OBJECT_IDENTIFIER:
                     if (oidIsRsaEncryption(abv, token.dataIdx, token.dataLen)) {
                         output += " (rsaEncryption)";
@@ -781,6 +781,7 @@ function asn1Show(rootToken, rootDepth) {
                 case tagVal.UNIVERSAL_STRING:
                 case tagVal.CHARACTER_STRING:
                 case tagVal.BMP_STRING:
+                    /* falls through */
                 default:
                     break;
             }
@@ -896,7 +897,7 @@ function buildRsaSpki(rsaPublicKey) {
           builder.addChild(NodeFactory.createIntegerNode(rsaPublicKey.n));
           builder.addSibling(NodeFactory.createIntegerNode(rsaPublicKey.e));
     return rootNode;
-};
+}
 
 function parseRsaSpki(spkiDer) {
     var spkiAsn = parse(spkiDer);
@@ -1129,7 +1130,7 @@ function webCryptoAlgorithmToJwkAlg(webCryptoAlgorithm) {
 function parse(abv) {
     asn1ParseRecursionDepth = 0;
     return asn1Parse(new Asn1Token(abv), 0, abv.length);
-};
+}
 
 // external interface
 

@@ -32,8 +32,8 @@
 	     */
 	    init: function init(json) {
 	        var parser = clarinet.parser();
-	        var values = new Array();
-	        var stack = new Array();
+	        var values = [];
+	        var stack = [];
 	        var currentObject;
 	        var currentArray;
 	        var currentKey;

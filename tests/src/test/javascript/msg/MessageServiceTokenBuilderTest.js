@@ -116,7 +116,7 @@ describe("MessageServiceTokenBuilder", function() {
 			});
 			waitsFor(function() { return SERVICE_TOKENS && PEER_SERVICE_TOKENS; }, "service tokens not received", 100);
 			runs(function() { initialized = true; });
-		};
+		}
 	});
 
 	afterEach(function() {
@@ -640,7 +640,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 		
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
@@ -678,7 +678,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUnboundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -706,7 +706,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 		
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
@@ -741,7 +741,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addMasterBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -772,7 +772,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addMasterBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -800,7 +800,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
@@ -835,7 +835,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -863,7 +863,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -894,7 +894,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1032,7 +1032,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, del;
+		var tokenBuilder, del;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, {
@@ -1054,7 +1054,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 			expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
@@ -1118,7 +1118,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUnboundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1146,7 +1146,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 		
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -1182,7 +1182,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addMasterBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1212,7 +1212,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -1241,7 +1241,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
 		    tokenBuilder.addMasterBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1263,7 +1263,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -1299,7 +1299,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 		    tokenBuilder.addUserBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1327,7 +1327,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -1359,7 +1359,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -1388,7 +1388,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, add;
+		var tokenBuilder, add;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
 		    tokenBuilder.addUserBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO, {
@@ -1469,7 +1469,7 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", 100);
 
-		var tokenBuilder = undefined, del;
+		var tokenBuilder, del;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			msgBuilder.addPeerServiceToken(serviceToken);

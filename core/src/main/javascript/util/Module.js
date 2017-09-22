@@ -32,7 +32,7 @@
 			var end = path.lastIndexOf('.js');
 			var type = (end < 0 || end < begin) ? path : path.substring(begin, end);
 			return scope.mkmodule(type).exports;
-		}
+		};
 	}
 	
 	/**

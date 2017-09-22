@@ -37,7 +37,8 @@
                 encryptionKey: { value: encryptionKey, writable: false, configurable: false },
                 hmacKey: { value: hmacKey, writable: false, configurable: false },
                 wrappingKey: { value: wrappingKey, writable: false, configurable: false },
-            }
+            };
+            Object.defineProperties(this, props);
         },
     });
 

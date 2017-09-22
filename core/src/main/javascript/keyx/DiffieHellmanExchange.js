@@ -347,7 +347,7 @@
                     var onerror = function(e) {
                         callback.error(new MslCryptoException(MslError.DIGEST_ERROR, "Error computing SHA-384 of shared secret.", e));
                     };
-                    mslCrypto['digest'](WebCryptoAlgorithm.SHA_384, sharedSecret).then(oncomplete, onerror);
+                    MslCrypto['digest'](WebCryptoAlgorithm.SHA_384, sharedSecret).then(oncomplete, onerror);
                 }, self);
             }
             

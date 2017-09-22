@@ -153,7 +153,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var ciphertextA = undefined, ciphertextB;
+        var ciphertextA, ciphertextB;
         runs(function() {
         	cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextA = c; },
@@ -173,7 +173,7 @@ describe("SessionCryptoContext", function() {
 	        expect(ciphertextA).not.toEqual(ciphertextB);
         });
         
-        var plaintextA = undefined, plaintextB;
+        var plaintextA, plaintextB;
         runs(function() {
 	        cryptoContext.decrypt(ciphertextA, encoder, {
 	        	result: function(p) { plaintextA = p; },
@@ -214,7 +214,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var ciphertextA = undefined, ciphertextB;
+        var ciphertextA, ciphertextB;
         runs(function() {
         	cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
         		result: function(c) { ciphertextA = c; },
@@ -234,7 +234,7 @@ describe("SessionCryptoContext", function() {
 	        expect(ciphertextA).not.toEqual(ciphertextB);
         });
         
-        var plaintextA = undefined, plaintextB;
+        var plaintextA, plaintextB;
         runs(function() {
 	        cryptoContext.decrypt(ciphertextA, encoder, {
 	        	result: function(p) { plaintextA = p; },
@@ -529,7 +529,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var ciphertextA = undefined, ciphertextB;
+        var ciphertextA, ciphertextB;
         runs(function() {
 	        cryptoContext.encrypt(messageA, encoder, ENCODER_FORMAT, {
 	        	result: function(c) { ciphertextA = c; },
@@ -549,7 +549,7 @@ describe("SessionCryptoContext", function() {
 	        expect(ciphertextA).not.toEqual(ciphertextB);
         });
         
-        var plaintextA = undefined, plaintextB;
+        var plaintextA, plaintextB;
         runs(function() {
         	cryptoContext.decrypt(ciphertextA, encoder, {
         		result: function(p) { plaintextA = p; },
@@ -573,7 +573,7 @@ describe("SessionCryptoContext", function() {
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
         var encryptionKey = MockPresharedAuthenticationFactory.KPE;
         var signatureKey = MockPresharedAuthenticationFactory.KPH;
-    	var cryptoContextA = undefined, cryptoContextB;
+    	var cryptoContextA, cryptoContextB;
     	runs(function() {
     		getUntrustedMasterToken(ctx, encryptionKey, signatureKey, {
     			result: function(masterToken) {
@@ -691,7 +691,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var signatureA = undefined, signatureB;
+        var signatureA, signatureB;
         runs(function() {
         	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
@@ -711,7 +711,7 @@ describe("SessionCryptoContext", function() {
 	        expect(signatureB).not.toEqual(signatureA);
         });
         
-        var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+        var verifiedAA, verifiedBB, verifiedBA;
         runs(function() {
         	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },
@@ -809,7 +809,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var signatureA = undefined, signatureB;
+        var signatureA, signatureB;
         runs(function() {
         	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
@@ -829,7 +829,7 @@ describe("SessionCryptoContext", function() {
 	        expect(signatureB).not.toEqual(signatureA);
         });
         
-        var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+        var verifiedAA, verifiedBB, verifiedBA;
         runs(function() {
         	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },
@@ -873,7 +873,7 @@ describe("SessionCryptoContext", function() {
         var messageB = new Uint8Array(32);
         random.nextBytes(messageB);
         
-        var signatureA = undefined, signatureB;
+        var signatureA, signatureB;
         runs(function() {
         	cryptoContext.sign(messageA, encoder, ENCODER_FORMAT, {
         		result: function(s) { signatureA = s; },
@@ -893,7 +893,7 @@ describe("SessionCryptoContext", function() {
 	        expect(signatureB).not.toEqual(signatureA);
         });
 
-        var verifiedAA = undefined, verifiedBB = undefined, verifiedBA;
+        var verifiedAA, verifiedBB, verifiedBA;
         runs(function() {
         	cryptoContext.verify(messageA, signatureA, encoder, {
         		result: function(v) { verifiedAA = v; },

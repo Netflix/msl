@@ -79,8 +79,8 @@
             
             // Shallow copy the source data into this MSL array.
             try {
-                for (var i = 0; i < ja.length; ++i)
-                    this.put(-1, ja[i]);
+                for (var j = 0; j < ja.length; ++j)
+                    this.put(-1, ja[j]);
             } catch (e) {
                 if (e instanceof TypeError)
                     throw new MslEncoderException("Invalid MSL array encoding.", e);
@@ -178,6 +178,7 @@
 	    			if (i >= size)
 	    				return ja;
 	    			
+	    			var jsonValue;
 	    			var value = this.opt(i);
 	        		if (value instanceof Uint8Array) {
 	        			ja.push(Base64.encode(value));
@@ -203,7 +204,7 @@
 	        				error: callback.error,
 	        			});
 	        		} else if (value instanceof MslObject) {
-	        			var jsonValue = new JsonMslObject(encoder, value);
+	        			jsonValue = new JsonMslObject(encoder, value);
 	        			jsonValue.toJSONObject(encoder, {
 	        				result: function(o) {
 	        	    			AsyncExecutor(callback, function() {
@@ -212,9 +213,9 @@
 	        	    			}, self);
 	        				},
 	        				error: callback.error,
-	        			})
+	        			});
 	        		} else if (value instanceof MslArray) {
-	        			var jsonValue = new JsonMslArray(encoder, value);
+	        			jsonValue = new JsonMslArray(encoder, value);
 	        			jsonValue.toJSONArray(encoder, {
 	        				result: function(a) {
 	        	    			AsyncExecutor(callback, function() {

@@ -557,7 +557,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         });
         
         it("equals master token", function() {
-        	var masterTokenA = undefined, masterTokenB;
+        	var masterTokenA, masterTokenB;
             runs(function() {
             	MslTestUtils.getMasterToken(ctx, 1, 1, {
             		result: function(token) { masterTokenA = token; },

@@ -102,6 +102,8 @@ describe("DefaultMslEncoderFactory", function() {
      *         {@code null} if the type is {@code null}.
      */
     function createTypedValue(type) {
+        var innerType;
+        
         if ("boolean" == type)
             return random.nextBoolean();
         if ("Uint8Array" == type) {
@@ -115,13 +117,13 @@ describe("DefaultMslEncoderFactory", function() {
             return random.nextInt();
         if ("MslArray" == type) {
             var ma = encoder.createArray();
-            var innerType = getRandomType();
+            innerType = getRandomType();
             ma.put(-1, createTypedValue(innerType));
             return ma;
         }
         if ("MslObject" == type) {
             var mo = encoder.createObject();
-            var innerType = getRandomType();
+            innerType = getRandomType();
             mo.put(MSL_OBJECT_KEY, createTypedValue(innerType));
             return mo;
         }
@@ -455,11 +457,11 @@ describe("DefaultMslEncoderFactory", function() {
 	        							writePayload(index + 1);
 	        						},
 	    			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-	    			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-	        					})
+	    			                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        					});
 	        				},
-			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        				timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+	        				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        			});
 	        		}
 	        		writePayload(0);
@@ -476,8 +478,8 @@ describe("DefaultMslEncoderFactory", function() {
 	        	                
 	        	                initialized = true;
 	        				},
-			                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
-			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+	        				timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+	        				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        			});
 	        		}
 	        	});
@@ -685,44 +687,46 @@ describe("DefaultMslEncoderFactory", function() {
             expect(mo).not.toBeNull();
 
             // Populate it with some stuff.
+            var key, value, type, typedValue;
+            var expected;
             var map = {};
             var types = {};
-            for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                var key = MSL_OBJECT_KEY + ":" + i;
+            for (var j = 0; j < MAX_NUM_ELEMENTS; ++j) {
+                key = MSL_OBJECT_KEY + ":" + j;
                 var typeValue = createRandomValue();
-                var type = typeValue.type;
-                var value = typeValue.value;
+                type = typeValue.type;
+                value = typeValue.value;
                 types[key] = type;
                 map[key] = value;
                 mo.put(key, value);
             }
 
             // Verify object state.
-            for (var key in map) {
-                var expected = map[key];
-                var value = mo.get(key);
+            for (key in map) {
+                expected = map[key];
+                value = mo.get(key);
                 expect(value).toEqual(expected);
-                var type = types[key];
-                var typedValue = getTypedField(key, type, mo);
+                type = types[key];
+                typedValue = getTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions.
-            for (var key in map) {
-                var expected = map[key];
-                var value = mo.opt(key);
+            for (key in map) {
+                expected = map[key];
+                value = mo.opt(key);
                 expect(value).toEqual(expected);
-                var type = types[key];
-                var typedValue = optTypedField(key, type, mo);
+                type = types[key];
+                typedValue = optTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions with mismatched type.
-            for (var key in map) {
-                var expected = map[key];
-                var type = types[key];
+            for (key in map) {
+                expected = map[key];
+                type = types[key];
                 var randomType = getRandomType();
-                var typedValue = optTypedField(key, randomType, mo);
+                typedValue = optTypedField(key, randomType, mo);
                 
                 // opt function returns the value if the type is correct...
                 if (type == randomType) {
@@ -786,75 +790,80 @@ describe("DefaultMslEncoderFactory", function() {
 
         it("create object from map", function() {
             // Generate some values.
+            var key, type, value;
             var map = {};
             var types = {};
             for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                var key = MSL_OBJECT_KEY + ":" + i;
+                key = MSL_OBJECT_KEY + ":" + i;
                 var typeValue = createRandomValue();
-                var type = typeValue.type;
-                var value = typeValue.value;
+                type = typeValue.type;
+                value = typeValue.value;
                 map[key] = value;
                 types[key] = type;
-            };
+            }
 
             // Create the object.
             var mo = encoder.createObject(map);
             expect(mo).not.toBeNull();
 
             // Verify object state.
-            for (var key in map) {
+            for (key in map) {
                 var expected = map[key];
-                var type = types[key];
-                var value = mo.get(key);
+                type = types[key];
+                value = mo.get(key);
                 expect(value).toEqual(expected);
-                var typedValue = getTypedField(key, type, mo);
+                typedValue = getTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
         });
 
         it("create array", function() {
+            var j;
+            
             // Create the array.
             var ma = encoder.createArray();
             expect(ma).not.toBeNull();
 
             // Populate it with some stuff.
+            var value, type, typedValue;
+            var expected;
             var list = [];
             var types = [];
-            for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
+            for (j = 0; j < MAX_NUM_ELEMENTS; ++j) {
                 var typeValue = createRandomValue();
-                var type = typeValue.type;
-                var value = typeValue.value;
+                type = typeValue.type;
+                value = typeValue.value;
                 list.push(value);
                 types.push(type);
                 ma.put(-1, value);
-            };
+            }
 
             // Verify array state.
-            for (var i = 0; i < list.length; ++i) {
-                var expected = list[i];
-                var value = ma.get(i);
+            for (j = 0; j < list.length; ++j) {
+                expected = list[j];
+                value = ma.get(j);
                 expect(value).toEqual(expected);
-                var type = types[i];
-                var typedValue = getTypedElement(i, type, ma);
+                type = types[j];
+                typedValue = getTypedElement(j, type, ma);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions.
-            for (var i = 0; i < list.length; ++i) {
-                var expected = list[i];
-                var value = ma.opt(i);
+            for (j = 0; j < list.length; ++j) {
+                expected = list[j];
+                value = ma.opt(j);
                 expect(value).toEqual(expected);
-                var type = types[i];
-                var typedValue = optTypedElement(i, type, ma);
+                type = types[j];
+                typedValue = optTypedElement(j, type, ma);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions with mismatched type.
-            for (var i = 0; i < list.length; ++i) {
-                var expected = list[i];
-                var type = types[i];
+            for (j = 0; j < list.length; ++j) {
+                expected = list[j];
+                type = types[j];
                 var randomType = getRandomType();
-                var typedValue = optTypedElement(i, randomType, ma);
+                typedValue = optTypedElement(j, randomType, ma);
                 
                 // opt function returns the value if the type is correct...
                 if (type == randomType) {
@@ -862,7 +871,7 @@ describe("DefaultMslEncoderFactory", function() {
                 }
                 // Boolean expects false...
                 else if ("boolean" == randomType) {
-                	expect(typeof typedValue).toEqual("boolean");
+                    expect(typeof typedValue).toEqual("boolean");
                     expect(typedValue).toBeFalsy();
                 }
                 // Numbers may be cross-retrieved...
@@ -919,27 +928,28 @@ describe("DefaultMslEncoderFactory", function() {
 
         it("create array from collection", function() {
             // Generate some elements.
+            var value, type;
             var list = [];
             var types = [];
             for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
                 var typeValue = createRandomValue();
-                var type = typeValue.type;
-                var value = typeValue.value;
+                type = typeValue.type;
+                value = typeValue.value;
                 list.push(value);
                 types.push(type);
-            };
+            }
 
             // Create the array.
             var ma = encoder.createArray(list);
             expect(ma).not.toBeNull();
 
             // Verify array state.
-            for (var i = 0; i < list.length; ++i) {
-                var expected = list[i];
-                var value = ma.get(i);
+            for (var j = 0; j < list.length; ++j) {
+                var expected = list[j];
+                value = ma.get(j);
                 expect(value).toEqual(expected);
-                var type = types[i];
-                var typedValue = getTypedElement(i, type, ma);
+                type = types[j];
+                var typedValue = getTypedElement(j, type, ma);
                 expect(typedValue).toEqual(expected);
             }
         });
@@ -972,11 +982,11 @@ describe("DefaultMslEncoderFactory", function() {
         });
         
         it("object get null value", function() {
-        	var f = function() {
+            var f = function() {
                 var mo = encoder.createObject();
                 getTypedField(MSL_OBJECT_KEY, type, mo);
-        	};
-        	expect(f).toThrow(new MslEncoderException);
+            };
+            expect(f).toThrow(new MslEncoderException());
         });
         
         it("object opt with null key", function() {
@@ -1013,7 +1023,7 @@ describe("DefaultMslEncoderFactory", function() {
                 expect(mo.has(MSL_OBJECT_KEY)).toBeTruthy();
                 putTypedField(MSL_OBJECT_KEY, type, null, mo);
                 expect(mo.has(MSL_OBJECT_KEY)).toBeFalsy();
-            };
+            }
         });
         
         it("array get with negative index", function() {
@@ -1031,7 +1041,7 @@ describe("DefaultMslEncoderFactory", function() {
 	            expect(ma.size()).toEqual(1);
 	            getTypedElement(0, type, ma);
             };
-            expect(f).toThrow(new MslEncoderException);
+            expect(f).toThrow(new MslEncoderException());
         });
         
         it("array opt with negative index", function() {

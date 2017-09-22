@@ -233,7 +233,7 @@
             s2[i] = ma2.opt(i);
         }
         return Arrays.containEachOther(s1, s2);
-    }
+    };
     
     /**
      * Merge two MSL objects into a single MSL object. If the same key is

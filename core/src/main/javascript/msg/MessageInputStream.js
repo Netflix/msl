@@ -197,75 +197,75 @@
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-            	var encoder = ctx.getMslEncoderFactory();
-            	encoder.createTokenizer(source, null, timeout, {
-            		result: setProperties,
-            		timeout: callback.timeout,
-            		error: callback.error,
-            	})
+                var encoder = ctx.getMslEncoderFactory();
+                encoder.createTokenizer(source, null, timeout, {
+                    result: setProperties,
+                    timeout: callback.timeout,
+                    error: callback.error,
+                });
             }, self);
             
             function setProperties(tokenizer) {
-            	InterruptibleExecutor(callback, function() {
-            		// Set properties.
-            		var props = {
-            			_ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
-            			_source: { value: source, writable: false, enumerable: false, configurable: false },
-            			_tokenizer: { value: tokenizer, writable: false, enumerable: false, configurable: false },
-            			_header: { value: undefined, writable: true, enumerable: false, configurable: false },
-            			_cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
-            			_keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
-            			_payloadSequenceNumber: { value: 1, writable: true, enuemrable: false, configurable: false },
-            			_eom: { value: false, writable: true, enumerable: false, configurable: false },
-            			_handshake: { value: null, writable: true, enumerable: false, configurable: false },
-            			_closeSource: { value: false, writable: true, enumerable: false, configurable: false },
-            			/** @type {Array.<Uint8Array>} */
-            			_payloads: { value: new Array(), writable: true, enumerable: false, configurable: false },
-            			_payloadIndex: { value: -1, writable: true, enumerable: false, configurable: false },
-            			_payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
-            			_markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
-            			_currentPayload: { value: null, writable: true, enumerable: false, configurable: false },
-            			_readException: { value: null, writable: true, enumerable: false, configurable: false },
-            			// Set true once the header has been read and payloads may
-            			// be read.
-            			_ready: { value: false, writable: true, enumerable: false, configurable: false },
-            			// Use a blocking queue as a semaphore.
-            			_readyQueue: { value: new BlockingQueue(), writable: false, enumerable: false, configurable: false },
-            			_aborted: { value: false, writable: true, enumerable: false, configurable: false },
-            			// If timed out reading the header then deliver the timeout
-            			// at the next operation.
-            			_timedout: { value: false, writable: true, enumerable: false, configurable: false },
-            			// If an error occurs while reading the header then deliver
-            			// it at the next operation.
-            			_errored: { value: null, writable: true, enumerable: false, configurable: false },
-            		};
-            		Object.defineProperties(this, props);
+                InterruptibleExecutor(callback, function() {
+                    // Set properties.
+                    var props = {
+                        _ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+                        _source: { value: source, writable: false, enumerable: false, configurable: false },
+                        _tokenizer: { value: tokenizer, writable: false, enumerable: false, configurable: false },
+                        _header: { value: undefined, writable: true, enumerable: false, configurable: false },
+                        _cryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
+                        _keyxCryptoContext: { value: undefined, writable: true, enumerable: false, configurable: false },
+                        _payloadSequenceNumber: { value: 1, writable: true, enuemrable: false, configurable: false },
+                        _eom: { value: false, writable: true, enumerable: false, configurable: false },
+                        _handshake: { value: null, writable: true, enumerable: false, configurable: false },
+                        _closeSource: { value: false, writable: true, enumerable: false, configurable: false },
+                        /** @type {Array.<Uint8Array>} */
+                        _payloads: { value: [], writable: true, enumerable: false, configurable: false },
+                        _payloadIndex: { value: -1, writable: true, enumerable: false, configurable: false },
+                        _payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
+                        _markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
+                        _currentPayload: { value: null, writable: true, enumerable: false, configurable: false },
+                        _readException: { value: null, writable: true, enumerable: false, configurable: false },
+                        // Set true once the header has been read and payloads may
+                        // be read.
+                        _ready: { value: false, writable: true, enumerable: false, configurable: false },
+                        // Use a blocking queue as a semaphore.
+                        _readyQueue: { value: new BlockingQueue(), writable: false, enumerable: false, configurable: false },
+                        _aborted: { value: false, writable: true, enumerable: false, configurable: false },
+                        // If timed out reading the header then deliver the timeout
+                        // at the next operation.
+                        _timedout: { value: false, writable: true, enumerable: false, configurable: false },
+                        // If an error occurs while reading the header then deliver
+                        // it at the next operation.
+                        _errored: { value: null, writable: true, enumerable: false, configurable: false },
+                    };
+                    Object.defineProperties(this, props);
 
-            		this._tokenizer.more(-1, {
-            			result: function(available) {
-            				if (!available) {
-            					self._errored = new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
-            					ready();
-            					return;
-            				}
-            				parseHeader();
-            			},
-            			timeout: function() {
-            				self._timedout = true;
-            				ready();
-            			},
-            			error: function(e) {
-            				if (e instanceof MslEncoderException)
-            					e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
-            				self._errored = e;
-            				ready();
-            			}
-            		});
+                    this._tokenizer.more(-1, {
+                        result: function(available) {
+                            if (!available) {
+                                self._errored = new MslEncodingException(MslError.MESSAGE_DATA_MISSING);
+                                ready();
+                                return;
+                            }
+                            parseHeader();
+                        },
+                        timeout: function() {
+                            self._timedout = true;
+                            ready();
+                        },
+                        error: function(e) {
+                            if (e instanceof MslEncoderException)
+                                e = new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
+                            self._errored = e;
+                            ready();
+                        }
+                    });
 
-            		// Return this immediately instead of after reading the header
-            		// so the read can be aborted.
-            		return this;
-            	}, self);
+                    // Return this immediately instead of after reading the header
+                    // so the read can be aborted.
+                    return this;
+                }, self);
             }
 
             function ready() {
@@ -520,10 +520,10 @@
                             result: function(notRenewable) {
                                 if (notRenewable) {
                                     self._errored = new MslMessageException(notRenewable, "Master token is expired and not renewable.")
-                                    .setMasterToken(masterToken)
-                                    .setUserIdToken(messageHeader.userIdToken)
-                                    .setUserAuthenticationData(messageHeader.userAuthenticationData)
-                                    .setMessageId(messageHeader.messageId);;
+                                        .setMasterToken(masterToken)
+                                        .setUserIdToken(messageHeader.userIdToken)
+                                        .setUserAuthenticationData(messageHeader.userAuthenticationData)
+                                        .setMessageId(messageHeader.messageId);
                                     ready();
                                 } else {
                                     checkNonReplayableId(ctx, messageHeader);

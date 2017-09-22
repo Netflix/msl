@@ -141,7 +141,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
-        })
+        });
     });
     
     it("authenticate", function() {

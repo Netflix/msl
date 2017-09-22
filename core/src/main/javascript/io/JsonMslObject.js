@@ -90,18 +90,20 @@
             Object.defineProperties(this, props);
             
             try {
+                var key;
+                
                 // MslObject
                 if (source instanceof MslObject) {
-                	var keys = source.getKeys();
-                	for (var i = 0; i < keys.length; ++i) {
-                		var key = keys[i];
+                    var keys = source.getKeys();
+                    for (var i = 0; i < keys.length; ++i) {
+                        key = keys[i];
                         this.put(key, source.opt(key));
-                	}
+                    }
                 }
 
                 // Object
                 else if (source instanceof Object && source.constructor === Object) {
-                    for (var key in source) {
+                    for (key in source) {
                         if (!(key instanceof String) && typeof key !== 'string')
                             throw new MslEncoderException("Invalid JSON object encoding.");
                         this.put(key, source[key]);
@@ -114,7 +116,7 @@
                     var jo = JSON.parse(json);
                     if (!(jo instanceof Object) || jo.constructor !== Object)
                         throw new MslEncoderException("Invalid JSON object encoding.");
-                    for (var key in jo) {
+                    for (key in jo) {
                         if (!(key instanceof String) && typeof key !== 'string')
                             throw new MslEncoderException("Invalid JSON object encoding.");
                         this.put(key, jo[key]);
@@ -220,7 +222,8 @@
     			    
 	    			if (i >= keys.length)
 	    				return jo;
-	    			
+
+	    			var jsonValue;
 	    			var key = keys[i];
 	    			var value = this.opt(key);
 	        		if (value instanceof Uint8Array) {
@@ -247,24 +250,24 @@
 	        				error: callback.error,
 	        			});
 	        		} else if (value instanceof MslObject) {
-	        			var jsonValue = new JsonMslObject(encoder, value);
+	        			jsonValue = new JsonMslObject(encoder, value);
 	        			jsonValue.toJSONObject(encoder, {
-	        				result: function(o) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				jo[key] = o;
-	        	    				next(jo, keys, i+1);
-	        	    			}, self);
+	        			    result: function(o) {
+	        			        AsyncExecutor(callback, function() {
+	        			            jo[key] = o;
+	        			            next(jo, keys, i+1);
+	        			        }, self);
 	        				},
 	        				error: callback.error,
-	        			})
+	        			});
 	        		} else if (value instanceof MslArray) {
-	        			var jsonValue = new JsonMslArray(encoder, value);
+	        			jsonValue = new JsonMslArray(encoder, value);
 	        			jsonValue.toJSONArray(encoder, {
-	        				result: function(a) {
-	        	    			AsyncExecutor(callback, function() {
-	        	    				jo[key] = a;
-	        	    				next(jo, keys, i+1);
-	        	    			}, self);
+	        			    result: function(a) {
+	        			        AsyncExecutor(callback, function() {
+	        			            jo[key] = a;
+	        			            next(jo, keys, i+1);
+	        			        }, self);
 	        				},
 	        				error: callback.error,
 	        			});

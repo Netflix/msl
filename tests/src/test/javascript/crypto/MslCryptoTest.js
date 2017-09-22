@@ -548,7 +548,6 @@ describe("MslCrypto", function() {
         /** SHA-256 signature. */
         var SHA256_SIG_B64 = "M2E7LE9hms3EzEcVK02/9eDO6wflYSgWsr0vA1ahNXKrueoE4bPtNtZ9Ex78UmfncJbrYF/BX0JCXovxPOCLhkqgoAdVZ6z14I22eFa+mf7t04Fa8ZxjbqZq39HpL7Y4wjxAIu5GBOzZik81QGrF7TDzEXgt+oL6oNifejn2THYQveIyk9rd2kkmYqhX5txQG39w8ILDJdtnDocphKHjQKiPZCBiWrSqk0nybmCuZtqpIRWi4qjcVq4x28vUtMnM403ev2fW/Ha6dJl3HF3TfKPdNpI2vKf8SvRKsjmI6afpdSt7hPEXsPbvIVr3y07lFFJMOGRNVivb0Sfo/YOhEA==";
 
-        var plaintext;
         var privateKey, publicKey;
 
         var initialized = false;
@@ -644,7 +643,7 @@ describe("MslCrypto", function() {
     function toHexString(byteArray) {
         return Array.from(byteArray, function(byte) {
           return '0x' + ('0' + (byte & 0xFF).toString(16)).slice(-2);
-        }).join(', ')
+        }).join(', ');
       }
     
     parameterize("SHA", shaData, function(algo, plaintext, sha) {

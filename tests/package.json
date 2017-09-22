@@ -23,7 +23,16 @@
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
+  "jshintConfig": {
+    "esversion": 6
+  },
   "dependencies": {
     "jsrsasign": "^7.2.2"
+  },
+  "devDependencies": {
+    "ec-key": "0.0.2",
+    "elliptic": "^6.4.0",
+    "jshint": "^2.9.5",
+    "ursa": "^0.9.4"
   }
 }

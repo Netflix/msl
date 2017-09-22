@@ -169,7 +169,7 @@
                 throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "servicetoken " + serviceTokenMo, e);
             throw e;
         }
-    };
+    }
 
     /**
      * Create a new token data container object.
@@ -183,7 +183,7 @@
         this.tokendataBytes = tokendataBytes;
         this.signatureBytes = signatureBytes;
         this.verified = verified;
-    };
+    }
 
     var ServiceToken = module.exports = MslEncodable.extend({
         /**
@@ -720,6 +720,7 @@
                 // If encrypted, and we were able to verify the data then we better
                 // be able to decrypt it. (An exception is thrown if decryption
                 // fails.)
+                var compressedServicedata, servicedata;
                 if (verified) {
                     var ciphertext = data;
                     if (encrypted && ciphertext.length > 0) {
@@ -743,8 +744,8 @@
                             },
                         });
                     } else {
-                        var compressedServicedata = ciphertext;
-                        var servicedata = (compressionAlgo)
+                        compressedServicedata = ciphertext;
+                        servicedata = (compressionAlgo)
                             ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
@@ -752,8 +753,8 @@
                             compressedServicedata, servicedata);
                     }
                 } else {
-                    var compressedServicedata = data;
-                    var servicedata = (data.length == 0) ? new Uint8Array(0) : null;
+                    compressedServicedata = data;
+                    servicedata = (data.length == 0) ? new Uint8Array(0) : null;
                     reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                         name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                         compressedServicedata, servicedata);

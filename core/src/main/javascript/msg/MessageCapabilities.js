@@ -189,14 +189,14 @@
             // Extract languages.
             var languages = [];
             var langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
-            for (var i = 0; langs && i < langs.size(); ++i)
-                languages.push(langs.getString(i));
+            for (var j = 0; langs && j < langs.size(); ++j)
+                languages.push(langs.getString(j));
             
             // Extract encoder formats.
             var encoderFormats = [];
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
-            for (var i = 0; formats && i < formats.size(); ++i) {
-                var format = formats.getString(i);
+            for (var k = 0; formats && k < formats.size(); ++k) {
+                var format = formats.getString(k);
                 var encoderFormat = MslEncoderFormat.getFormat(format);
                 // Ignore unsupported formats.
                 if (encoderFormat)

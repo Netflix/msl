@@ -197,7 +197,7 @@
                             var onerror = function(e) {
                                 callback.error(new MslCryptoException(MslError.DECRYPT_ERROR, null, e));
                             };
-                            mslCrypto['decrypt'](self.transform, self.privateKey, envelope.ciphertext)
+                            MslCrypto['decrypt'](self.transform, self.privateKey, envelope.ciphertext)
                                 .then(oncomplete, onerror);
                         } catch (e) {
                             if (!(e instanceof MslException))

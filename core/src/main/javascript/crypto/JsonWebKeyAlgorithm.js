@@ -44,6 +44,8 @@
      *         none.
      */
     var JsonWebKeyAlgorithm$fromWebCryptoAlgorithm = function JsonWebKeyAlgorithm$fromWebCryptoAlgorithm(wcAlgo, nCryptoKey) {
+        var rawkey;
+        
         // We must compare by name because Web Crypto algorithm objects are not
         // strictly defined.
         switch (wcAlgo['name']) {
@@ -56,12 +58,12 @@
             case WebCryptoAlgorithm.RSA_OAEP['name']:
                 return JsonWebKeyAlgorithm.RSA_OAEP;
             case WebCryptoAlgorithm.A128KW['name']:
-                var rawkey = nCryptoKey.rawkey;
+                rawkey = nCryptoKey.rawkey;
                 if (rawkey.length == 128/8)
                     return JsonWebKeyAlgorithm.A128KW;
                 return null;
             case WebCryptoAlgorithm.AES_CBC['name']:
-                var rawkey = nCryptoKey.rawkey;
+                rawkey = nCryptoKey.rawkey;
                 if (rawkey.length == 128/8)
                     return JsonWebKeyAlgorithm.A128CBC;
                 return null;

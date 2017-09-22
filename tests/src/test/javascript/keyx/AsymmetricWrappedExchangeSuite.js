@@ -713,7 +713,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 300);;
+            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 300);
 
             runs(function() {
                 expect(keyResponseData).not.toBeNull();
@@ -790,7 +790,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
         });
 
         it("equals master token", function() {
-            var masterTokenA = undefined, masterTokenB;
+            var masterTokenA, masterTokenB;
             runs(function() {
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
                     result: function(token) { masterTokenA = token; },
@@ -1140,7 +1140,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 var data = new Uint8Array(32);
                 random.nextBytes(data);
 
-                var requestCryptoContext = undefined, responseCryptoContext;
+                var requestCryptoContext, responseCryptoContext;
                 runs(function() {
                     requestCryptoContext = keyxData.cryptoContext;
                     var keyResponseData = keyxData.keyResponseData;
@@ -1153,7 +1153,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
 
                 // Ciphertext won't always be equal depending on how it was
                 // enveloped. So we cannot check for equality or inequality.
-                var requestCiphertext = undefined, responseCiphertext;
+                var requestCiphertext, responseCiphertext;
                 runs(function() {
                     expect(responseCryptoContext).not.toBeNull();
 
@@ -1173,7 +1173,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
 
                 // Signatures should always be equal.
-                var requestSignature = undefined, responseSignature;
+                var requestSignature, responseSignature;
                 runs(function() {
                     requestCryptoContext.sign(data, encoder, ENCODER_FORMAT, {
                         result: function(data) { requestSignature = data; },
@@ -1192,7 +1192,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
 
                 // Plaintext should always be equal to the original message.
-                var requestPlaintext = undefined, responsePlaintext;
+                var requestPlaintext, responsePlaintext;
                 runs(function() {
                     requestCryptoContext.decrypt(responseCiphertext, encoder, {
                         result: function(data) { requestPlaintext = data; },
