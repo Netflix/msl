@@ -28,7 +28,7 @@
 	        return utf8$getString(bytes);
 	    }
 	    throw new Error("unsupported encoding");
-	};
+	}
 	
 	/**
 	 * @param {string} str string to encode
@@ -41,7 +41,7 @@
 	        return utf8$getBytes(str);
 	    }
 	    throw new Error("unsupported encoding");
-	};
+	}
 	
 	/**
 	 * @param {Uint8Array} bytes encoded data
@@ -77,7 +77,7 @@
 	    }
 	
 	    return str;
-	};
+	}
 	
 	/**
 	 * @param {string} str string to encode
@@ -127,7 +127,7 @@
 	    }
 	
 	    return bytes;
-	};
+	}
 	
 	// Exports.
 	module.exports.getString = textEncoding$getString;

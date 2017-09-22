@@ -30,7 +30,7 @@
 	    return obj !== null &&
 	        typeof obj === 'object' &&
 	        obj.constructor === Object;
-	};
+	}
 	
 	/**
 	 * Extend an object with other objects like extend but if properties are also objects in both recursively extend them as well

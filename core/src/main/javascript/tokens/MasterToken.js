@@ -230,7 +230,7 @@
         this.tokendataBytes = tokendataBytes;
         this.signatureBytes = signatureBytes;
         this.verified = verified;
-    };
+    }
 
     var MasterToken = module.exports = MslEncodable.extend({
         /**
@@ -469,6 +469,8 @@
          * @return {boolean} true if this master token is newer than the provided one.
          */
         isNewerThan: function isNewerThan(that) {
+            var cutoff;
+            
             // If the sequence numbers are equal then compare the expiration dates.
             if (this.sequenceNumber == that.sequenceNumber)
                 return this.expiration > that.expiration;
@@ -476,13 +478,13 @@
             // If this sequence number is bigger than that sequence number, make
             // sure that sequence number is not less than the cutoff.
             if (this.sequenceNumber > that.sequenceNumber) {
-                var cutoff = this.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
+                cutoff = this.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
                 return that.sequenceNumber >= cutoff;
             }
 
             // If this sequence number is smaller than that sequence number, make
             // sure this sequence number is less than the cutoff.
-            var cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
+            cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
             return this.sequenceNumber < cutoff;
         },
         

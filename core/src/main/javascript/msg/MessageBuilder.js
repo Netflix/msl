@@ -280,6 +280,8 @@
      */
     function getUserIdToken(ctx, requestHeader, masterToken, callback) {
         AsyncExecutor(callback, function() {
+            var tokenFactory;
+            
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
             var requestMessageId = requestHeader.messageId;
@@ -294,7 +296,7 @@
                     userIdToken.isExpired(null) ||
                     !userIdToken.isBoundTo(masterToken))
                 {
-                    var tokenFactory = ctx.getTokenFactory();
+                    tokenFactory = ctx.getTokenFactory();
                     tokenFactory.renewUserIdToken(ctx, userIdToken, masterToken, callback);
                     return;
                 }
@@ -320,7 +322,7 @@
                     }
                     user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
                 }
-                var tokenFactory = ctx.getTokenFactory();
+                tokenFactory = ctx.getTokenFactory();
                 tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 return;
             }
@@ -719,10 +721,10 @@
             var self = this;
             AsyncExecutor(callback, function() {
                 var response = (this._keyExchangeData) ? this._keyExchangeData.keyResponseData : null;
-                var tokens = new Array();
+                var tokens = [];
                 for (var name in this._serviceTokens)
                     tokens.push(this._serviceTokens[name]);
-                var keyRequests = new Array();
+                var keyRequests = [];
                 for (var key in this._keyRequestData)
                     keyRequests.push(this._keyRequestData[key]);
                 var nonReplayableId;
@@ -734,9 +736,9 @@
                     nonReplayableId = null;
                 }
                 var headerData = new MessageHeader.HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
-                var peerTokens = new Array();
-                for (var name in this._peerServiceTokens)
-                    peerTokens.push(this._peerServiceTokens[name]);
+                var peerTokens = [];
+                for (var peerName in this._peerServiceTokens)
+                    peerTokens.push(this._peerServiceTokens[peerName]);
                 var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
                 MessageHeader.create(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
@@ -849,7 +851,7 @@
             }
 
             // Remove any service tokens that will no longer be bound.
-            var tokens = new Array();
+            var tokens = [];
             for (var name in this._serviceTokens)
                 tokens.push(this._serviceTokens[name]);
             tokens.forEach(function(token) {
@@ -1086,7 +1088,7 @@
          *         the built message.
          */
         getServiceTokens: function getServiceTokens() {
-            var tokens = new Array();
+            var tokens = [];
             for (var name in this._serviceTokens)
                 tokens.push(this._serviceTokens[name]);
             return tokens;
@@ -1271,7 +1273,7 @@
          *         the built message.
          */
         getPeerServiceTokens: function getPeerServiceTokens() {
-            var tokens = new Array();
+            var tokens = [];
             for (var name in this._peerServiceTokens)
                 tokens.push(this._peerServiceTokens[name]);
             return tokens;

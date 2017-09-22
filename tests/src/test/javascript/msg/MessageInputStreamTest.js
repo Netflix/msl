@@ -79,16 +79,16 @@ describe("MessageInputStream", function() {
     /** MSL encoder factory. */
     var encoder;
     /** Header service token crypto contexts. */
-    var cryptoContexts = new Array();
+    var cryptoContexts = [];
     /** Message payloads (initially empty). */
-    var payloads = new Array();
+    var payloads = [];
     
     var MESSAGE_HEADER;
     var ERROR_HEADER;
     var ENTITY_AUTH_DATA;
-    var KEY_REQUEST_DATA = new Array();
+    var KEY_REQUEST_DATA = [];
     var KEY_RESPONSE_DATA;
-    var KEYX_CRYPTO_CONTEXT = undefined, ALT_MSL_CRYPTO_CONTEXT;
+    var KEYX_CRYPTO_CONTEXT, ALT_MSL_CRYPTO_CONTEXT;
     
     var SEQ_NO = 1;
     var MSG_ID = 42;
@@ -1435,7 +1435,7 @@ describe("MessageInputStream", function() {
         
         var mis;
         runs(function() {
-            var keyRequestData = new Array();
+            var keyRequestData = [];
             MessageInputStream.create(ctx, is, keyRequestData, cryptoContexts, TIMEOUT, {
                 result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
@@ -1461,7 +1461,7 @@ describe("MessageInputStream", function() {
     });
     
     it("incompatible key request data for message with key response data", function() {
-        var keyRequestData = new Array();
+        var keyRequestData = [];
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.SESSION));
         
@@ -1547,7 +1547,7 @@ describe("MessageInputStream", function() {
     it("one compatible key request data for message with key response data", function() {
         // Populate the key request data such that the compatible data requires
         // iterating through one of the incompatible ones.
-        var keyRequestData = new Array();
+        var keyRequestData = [];
         var keyRequest = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
         keyRequestData.push(keyRequest);
@@ -2280,7 +2280,7 @@ describe("MessageInputStream", function() {
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
                 error: function(e) { exception = e; }
             });
-        })
+        });
         waitsFor(function() { return exception; }, "exception", 100);
         
         runs(function() {
@@ -2429,7 +2429,7 @@ describe("MessageInputStream", function() {
             
             largestNonReplayableId = incrementNonReplayableId(largestNonReplayableId);
             nonReplayableId = incrementNonReplayableId(nonReplayableId);
-            ++i
+            ++i;
             iterate();
         }
     });
@@ -3492,7 +3492,7 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", 100);
 
-        var appdata = undefined, buffer;
+        var appdata, buffer;
         var firstRead = 0;
         var beginningOffset, beginningLength;
         runs(function() {
@@ -3514,7 +3514,7 @@ describe("MessageInputStream", function() {
     	});
     	waitsFor(function() { return firstRead > 0; }, "first read", 1000);
 
-    	var reread = undefined, rereadLength;
+    	var reread, rereadLength;
         var expectedBeginning;
         runs(function() {
         	expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);

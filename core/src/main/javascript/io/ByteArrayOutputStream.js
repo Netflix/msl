@@ -37,7 +37,7 @@
 	            /** @type {Uint8Array} */
 	            _result: { value: new Uint8Array(0), writable: true, enuemrable: false, configurable: false },
 	            /** @type {Array.<{data: Uint8Array}>} */
-	            _buffered: { value: new Array(), writable: false, enumerable: false, configurable: false },
+	            _buffered: { value: [], writable: false, enumerable: false, configurable: false },
 	        };
 	        Object.defineProperties(this, props);
 	    },

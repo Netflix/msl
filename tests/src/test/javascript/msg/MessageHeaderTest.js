@@ -149,7 +149,7 @@ describe("MessageHeader", function() {
     var CAPABILITIES = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
     var CAPABILITIES_MO;
 
-	var KEY_REQUEST_DATA = new Array();
+	var KEY_REQUEST_DATA = [];
 	var KEY_REQUEST_DATA_MA;
 	var KEY_RESPONSE_DATA, KEY_RESPONSE_DATA_MO;
 	
@@ -160,7 +160,7 @@ describe("MessageHeader", function() {
 	var PEER_MASTER_TOKEN, PEER_MASTER_TOKEN_MO;
 	var PEER_USER_ID_TOKEN, PEER_USER_ID_TOKEN_MO;
 
-	var PEER_KEY_REQUEST_DATA = new Array();
+	var PEER_KEY_REQUEST_DATA = [];
 	var PEER_KEY_REQUEST_DATA_MA;
 	var PEER_KEY_RESPONSE_DATA, PEER_KEY_RESPONSE_DATA_MO;
 	var CRYPTO_CONTEXTS = {};
@@ -1456,8 +1456,8 @@ describe("MessageHeader", function() {
         
 		var messageHeader;
 		runs(function() {
-            var serviceTokens = new Array();
-            var keyRequestData = new Array();
+            var serviceTokens = [];
+            var keyRequestData = [];
             builder.set(KEY_RECIPIENT, null);
             builder.set(KEY_CAPABILITIES, null);
             builder.set(KEY_KEY_REQUEST_DATA, keyRequestData);
@@ -1465,7 +1465,7 @@ describe("MessageHeader", function() {
             builder.set(KEY_USER_AUTHENTICATION_DATA, null);
             builder.set(KEY_SERVICE_TOKENS, serviceTokens);
             var headerData = builder.build();
-			var peerServiceTokens = new Array();
+			var peerServiceTokens = [];
 			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
 			MessageHeader.create(p2pCtx, PEER_ENTITY_AUTH_DATA, null, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
@@ -1562,8 +1562,8 @@ describe("MessageHeader", function() {
         
 		var messageHeader;
 		runs(function() {
-			var serviceTokens = new Array();
-			var keyRequestData = new Array();
+			var serviceTokens = [];
+			var keyRequestData = [];
 	        builder.set(KEY_RECIPIENT, null);
 	        builder.set(KEY_CAPABILITIES, null);
 	        builder.set(KEY_KEY_REQUEST_DATA, keyRequestData);
@@ -1571,7 +1571,7 @@ describe("MessageHeader", function() {
 	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
 	        builder.set(KEY_SERVICE_TOKENS, serviceTokens);
 			var headerData = builder.build();
-			var peerServiceTokens = new Array();
+			var peerServiceTokens = [];
 			var peerData = new HeaderPeerData(null, null, peerServiceTokens);
 			MessageHeader.create(p2pCtx, null, PEER_MASTER_TOKEN, headerData, peerData, {
 				result: function(token) { messageHeader = token; },
@@ -2820,7 +2820,7 @@ describe("MessageHeader", function() {
 		});
 		waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
 
-        var exception =undefined;
+        var exception;
         runs(function() {
             // Remove support for the user authentication scheme will now fail
             // user authentication.
@@ -7126,9 +7126,9 @@ describe("MessageHeader", function() {
 
 		var messageHeaderA, messageHeaderB, messageHeaderC;
 		runs(function() {
-            var keyRequestDataA = new Array();
+            var keyRequestDataA = [];
             keyRequestDataA.add(new SymmetricWrappedExchange.RequestData(KeyId.SESSION));
-            var keyRequestDataB = new Array();
+            var keyRequestDataB = [];
             keyRequestDataB.add(new SymmetricWrappedExchange.RequestData(KeyId.PSK));
             var headerDataA = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataA).build();
             var headerDataB = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataB).build();
@@ -7192,7 +7192,7 @@ describe("MessageHeader", function() {
 		
 		var keyxDataA, keyxDataB;
 		runs(function() {
-            var keyRequestData = KEY_REQUEST_DATA.toArray(new KeyRequestData[0])[0];
+            var keyRequestData = KEY_REQUEST_DATA[0];
             var factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());		
 			factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN, {
 				result: function(x) { keyxDataA = x; },
@@ -7631,7 +7631,7 @@ describe("MessageHeader", function() {
 	});
 
 	xit("equals peer service tokens", function() {
-		var peerServiceTokensA = undefined, peerServiceTokensB;
+		var peerServiceTokensA, peerServiceTokensB;
 		runs(function() {
 			MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, {
 				result: function(tks) { peerServiceTokensA = tks; },

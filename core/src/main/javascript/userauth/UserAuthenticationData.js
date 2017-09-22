@@ -135,7 +135,7 @@
                         }, self);
                     },
                     error: callback.error,
-                })
+                });
             }, self);
         },
     });

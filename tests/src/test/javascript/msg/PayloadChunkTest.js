@@ -677,7 +677,7 @@ describe("PayloadChunk", function() {
         });
         waitsFor(function() { return hmacKeyA && hmacKeyB; }, "HMAC keys", 100);
 
-    	var cryptoContextA = undefined, cryptoContextB;
+    	var cryptoContextA, cryptoContextB;
     	var chunk;
     	runs(function() {
             cryptoContextA = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, hmacKeyA, null);

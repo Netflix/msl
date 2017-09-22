@@ -122,7 +122,7 @@
                 var toPad = 4 - overhang;
                 for (var i = 0; i < toPad; ++i) {
                     s += padchar;
-                };
+                }
             }
         }
 

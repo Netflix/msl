@@ -164,7 +164,7 @@
         this.tokendataBytes = tokendataBytes;
         this.signatureBytes = signatureBytes;
         this.verified = verified;
-    };
+    }
 
     var UserIdToken = module.exports = MslEncodable.extend({
         /**
@@ -205,7 +205,7 @@
             if (!creationData) {
                 // Construct the user data.
                 var encoder = ctx.getMslEncoderFactory();
-                var userdata = encoder.createObject();
+                userdata = encoder.createObject();
                 if (issuerData)
                     userdata.put(KEY_ISSUER_DATA, issuerData);
                 userdata.put(KEY_IDENTITY, user.getEncoded());
@@ -221,7 +221,6 @@
             }
 
             // The properties.
-            var mtSerialNumber = masterToken.serialNumber;
             var props = {
                 /**
                  * MSL context.
@@ -386,7 +385,7 @@
                 // crypto context is capable of encrypting and signing with the same
                 // keys, even if it is capable of decrypting and verifying.
                 if (this.tokendataBytes != null || this.signatureBytes != null) {
-                    encodeToken(this.tokendataBytes, this.signatureBytes)
+                    encodeToken(this.tokendataBytes, this.signatureBytes);
                 }
                 // 
                 // Otherwise create the token data and signature.
@@ -658,7 +657,7 @@
                         });
                     },
                     error: callback.error,
-                })
+                });
             });
         }
         

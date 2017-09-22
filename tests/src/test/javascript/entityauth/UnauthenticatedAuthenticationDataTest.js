@@ -167,7 +167,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return entitydata }, "entitydata", 100);
+        waitsFor(function() { return entitydata; }, "entitydata", 100);
 
         var moData, moAuthdata;
         runs(function() {

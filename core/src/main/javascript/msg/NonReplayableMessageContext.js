@@ -47,4 +47,4 @@
 	        return true;
 	    }
 	});
-})(require, (typeof module !== 'undefined') ? module : mkmodule('NonReplayableMessageContext'))
+})(require, (typeof module !== 'undefined') ? module : mkmodule('NonReplayableMessageContext'));

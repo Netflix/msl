@@ -168,7 +168,7 @@ describe("NullCryptoContext", function() {
 			expect(signatureB).toEqual(signatureA);
 		});
 		
-		var verifiedB = undefined, verifiedA;
+		var verifiedB, verifiedA;
 		runs(function() {
 			cryptoContext.verify(messageB, signatureB, encoder, {
 				result: function(v) { verifiedB = v; },
