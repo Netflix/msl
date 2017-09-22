@@ -2687,7 +2687,7 @@ describe("MasterToken", function() {
     it("equals serial number", function() {
         var serialNumberA = 1;
         var serialNumberB = 2;
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, SEQUENCE_NUMBER, serialNumberA, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
@@ -2729,7 +2729,7 @@ describe("MasterToken", function() {
     it("equals sequence number", function() {
         var sequenceNumberA = 1;
         var sequenceNumberB = 2;
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken.create(ctx, RENEWAL_WINDOW, EXPIRATION, sequenceNumberA, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },
@@ -2771,7 +2771,7 @@ describe("MasterToken", function() {
     it("equals expiration", function() {
     	var expirationA = new Date(EXPIRATION.getTime());
         var expirationB = new Date(EXPIRATION.getTime() + 10000);
-        var masterTokenA = undefined, masterTokenB;
+        var masterTokenA, masterTokenB;
         runs(function() {
             MasterToken.create(ctx, RENEWAL_WINDOW, expirationA, SEQUENCE_NUMBER, SERIAL_NUMBER, ISSUER_DATA, IDENTITY, ENCRYPTION_KEY, SIGNATURE_KEY, {
                 result: function(token) { masterTokenA = token; },

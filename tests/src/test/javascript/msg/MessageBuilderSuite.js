@@ -129,7 +129,7 @@ describe("MessageBuilder", function() {
 			    ALT_MSL_CRYPTO_CONTEXT = new SymmetricCryptoContext(trustedNetCtx, "clientMslCryptoContext", encryptionKey, hmacKey, wrappingKey);
 			    USER_AUTH_DATA = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
 			    
-			    KEY_REQUEST_DATA = new Array();
+			    KEY_REQUEST_DATA = [];
 			    {
 			        /* FIXME Web Crypto needs Diffie-Hellman
 			        var params = trustedNetCtx.getDhParameterSpecs()[PARAMETERS_ID];
@@ -145,7 +145,7 @@ describe("MessageBuilder", function() {
 			        KEY_REQUEST_DATA.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
 			    }
 
-			    PEER_KEY_REQUEST_DATA = new Array();
+			    PEER_KEY_REQUEST_DATA = [];
 			    {
 			        PEER_KEY_REQUEST_DATA.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.SESSION));
 			        PEER_KEY_REQUEST_DATA.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
@@ -487,7 +487,7 @@ describe("MessageBuilder", function() {
 		});
 
 		it("p2p create request", function() {
-			var serviceTokens = undefined, peerServiceTokens;
+			var serviceTokens, peerServiceTokens;
 			runs(function() {
 			    MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, {
 			        result: function(t) { serviceTokens = t; },
@@ -1558,7 +1558,7 @@ describe("MessageBuilder", function() {
 		});
 
 		it("add peer service token with mismatched peer user ID token", function() {
-			var userIdTokenA = undefined, userIdTokenB;
+			var userIdTokenA, userIdTokenB;
 			runs(function() {
 			    MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
 			        result: function(t) { userIdTokenA = t; },
@@ -2622,7 +2622,7 @@ describe("MessageBuilder", function() {
 		});
 		
 		it("create peer response with entity authentication data", function() {
-		    var serviceTokens = undefined, peerServiceTokens;
+		    var serviceTokens, peerServiceTokens;
             runs(function() {
                 MslTestUtils.getServiceTokens(p2pCtx, null, null, {
                     result: function(t) { serviceTokens = t; },
@@ -2824,7 +2824,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return responseBuilder; }, "responseBuilder not received", 200);
 			
-			var serviceTokens = undefined, peerServiceTokens;
+			var serviceTokens, peerServiceTokens;
 			runs(function() {
 				
 				MslTestUtils.getServiceTokens(p2pCtx, null, null, {
@@ -4214,7 +4214,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return remoteResponse; }, "remoteResponse not received", 200);
 			
-			var keyResponseData = undefined, localResponse;
+			var keyResponseData, localResponse;
 			runs(function() {
 	            keyResponseData = remoteResponse.keyResponseData;
 	            expect(keyResponseData).not.toBeNull();
@@ -4275,7 +4275,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return remoteResponse; }, "remoteResponse not received", 200);
 			
-			var keyResponseData = undefined, localResponse;
+			var keyResponseData, localResponse;
 			runs(function() {
 	            expect(remoteResponse.masterToken).toBeNull();
 	            expect(remoteResponse.peerMasterToken).toBeNull();
@@ -4294,7 +4294,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return keyResponseData && localResponse; }, "keyResponseData and localResponse not received", 100);
 			
-			var localMasterToken = undefined, remoteSecondResponse;
+			var localMasterToken, remoteSecondResponse;
 			runs(function() {
 	            localMasterToken = localResponse.masterToken;
 	            expect(localMasterToken).not.toBeNull();
@@ -5932,7 +5932,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return responseBuilder; }, "responseBuilder not received", 200);
 
-            var messageHeader = undefined, updatedServiceTokens;
+            var messageHeader, updatedServiceTokens;
             runs(function() {
                 // The message service tokens will include all unbound service
                 // tokens.
@@ -5953,7 +5953,7 @@ describe("MessageBuilder", function() {
 		});
 
 		it("set authentication tokens", function() {
-			var serviceTokens = undefined, peerServiceTokens;
+			var serviceTokens, peerServiceTokens;
 			runs(function() {
 			    MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
 			        result: function(tokens) { serviceTokens = tokens; },
@@ -6021,7 +6021,7 @@ describe("MessageBuilder", function() {
 		});
 
 		it("set existing authentication tokens", function() {
-			var serviceTokens = undefined, peerServiceTokens;
+			var serviceTokens, peerServiceTokens;
 			runs(function() {
 			    MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
 			        result: function(tokens) { serviceTokens = tokens; },
@@ -6246,7 +6246,7 @@ describe("MessageBuilder", function() {
 			});
 			waitsFor(function() { return request; }, "request not received", 100);
 			
-			var serviceTokens = undefined, peerServiceTokens;
+			var serviceTokens, peerServiceTokens;
 			runs(function() {
 			    MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, {
 			        result: function(tokens) { serviceTokens = tokens; },

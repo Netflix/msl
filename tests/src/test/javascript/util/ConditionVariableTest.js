@@ -242,6 +242,7 @@ describe("ConditionVariable", function() {
                 return;
             }
             
+            var ticket;
             var r = random.nextInt(10);
             switch (r) {
                 case 0:
@@ -251,7 +252,7 @@ describe("ConditionVariable", function() {
                 }
                 case 1:
                 {
-                    var ticket = tickets.shift();
+                    ticket = tickets.shift();
                     if (ticket)
                         ++expectedSignaled;
                     cv.signal();
@@ -266,7 +267,7 @@ describe("ConditionVariable", function() {
                 }
                 case 3:
                 {
-                    var ticket = tickets.shift();
+                    ticket = tickets.shift();
                     if (ticket) {
                         ++expectedCancelled;
                         cv.cancel(ticket);
@@ -283,7 +284,7 @@ describe("ConditionVariable", function() {
                 default:
                 {
                     var name = nextName();
-                    var ticket = cv.wait(TIMEOUT, counter.getCallback(name));
+                    ticket = cv.wait(TIMEOUT, counter.getCallback(name));
                     tickets.push(ticket);
                     ++numWaiters;
                     break;
