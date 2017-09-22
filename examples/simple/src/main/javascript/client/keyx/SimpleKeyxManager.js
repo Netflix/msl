@@ -136,7 +136,7 @@ var SimpleKeyxManager$KeyPair;
                         throw new Error("error generating RSA keys.");
                     }, self);
                 };
-                mslCrypto["generateKey"]({
+                MslCrypto["generateKey"]({
                     'name': WebCryptoAlgorithm.RSA_OAEP['name'],
                     'modulusLength': 2048,
                     'publicExponent': new Uint8Array([0x01, 0x00, 0x01]),
