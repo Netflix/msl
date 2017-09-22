@@ -18,7 +18,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "npm run all",
-    "lint": "find -E src/main/javascript -type f -name '*.js' ! -regex '.*/(jsrsasign|clarinet|promise).js' | xargs jshint",
+    "lint": "find -E src/main/javascript -type f -name '*.js' ! -regex '.*/(jsrsasign|clarinet|promise).js' | xargs jshint --verbose",
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },

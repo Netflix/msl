@@ -280,8 +280,6 @@
      */
     function getUserIdToken(ctx, requestHeader, masterToken, callback) {
         AsyncExecutor(callback, function() {
-            var tokenFactory;
-            
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
             var requestMessageId = requestHeader.messageId;
@@ -296,7 +294,7 @@
                     userIdToken.isExpired(null) ||
                     !userIdToken.isBoundTo(masterToken))
                 {
-                    tokenFactory = ctx.getTokenFactory();
+                    let tokenFactory = ctx.getTokenFactory();
                     tokenFactory.renewUserIdToken(ctx, userIdToken, masterToken, callback);
                     return;
                 }
@@ -322,7 +320,7 @@
                     }
                     user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
                 }
-                tokenFactory = ctx.getTokenFactory();
+                let tokenFactory = ctx.getTokenFactory();
                 tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 return;
             }

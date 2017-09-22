@@ -179,7 +179,7 @@
             // Extract compression algorithms.
             var compressionAlgos = [];
             var algos = capabilitiesMo.optMslArray(KEY_COMPRESSION_ALGOS);
-            for (var i = 0; algos && i < algos.size(); ++i) {
+            for (let i = 0; algos && i < algos.size(); ++i) {
                 var algo = algos.getString(i);
                 // Ignore unsupported algorithms.
                 if (MslConstants.CompressionAlgorithm[algo])
@@ -189,14 +189,14 @@
             // Extract languages.
             var languages = [];
             var langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
-            for (var j = 0; langs && j < langs.size(); ++j)
-                languages.push(langs.getString(j));
+            for (let i = 0; langs && i < langs.size(); ++i)
+                languages.push(langs.getString(i));
             
             // Extract encoder formats.
             var encoderFormats = [];
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
-            for (var k = 0; formats && k < formats.size(); ++k) {
-                var format = formats.getString(k);
+            for (let i = 0; formats && i < formats.size(); ++i) {
+                var format = formats.getString(i);
                 var encoderFormat = MslEncoderFormat.getFormat(format);
                 // Ignore unsupported formats.
                 if (encoderFormat)

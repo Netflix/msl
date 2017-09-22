@@ -1143,8 +1143,6 @@
             }
 
             InterruptibleExecutor(callback, function() {
-                var reauthCode;
-                
                 // Handle the error.
                 var requestHeader = sent.request.getMessageHeader();
                 var payloads = sent.request.getPayloads();
@@ -1156,7 +1154,7 @@
                         // If the MSL context cannot provide new entity authentication
                         // data then return null. This function should never return
                         // null.
-                        reauthCode = errorCode;
+                        let reauthCode = errorCode;
                         ctx.getEntityAuthenticationData(reauthCode, {
                             result: function(entityAuthData) {
                                 InterruptibleExecutor(callback, function() {
@@ -1177,7 +1175,7 @@
                     {
                         // If the message context cannot provide user authentication
                         // data then return null.
-                        reauthCode = errorCode;
+                        let reauthCode = errorCode;
                         msgCtx.getUserAuthData(reauthCode, false, true, {
                             result: function(userAuthData) {
                                 InterruptibleExecutor(callback, function() {
@@ -2407,7 +2405,7 @@
             // In trusted network mode deliver the header master token. This may be
             // null.
             else if (!ctx.isPeerToPeer()) {
-                var masterToken = messageHeader.masterToken;
+                let masterToken = messageHeader.masterToken;
                 if (masterToken)
                     queue.add(masterToken);
                 else
@@ -2417,9 +2415,9 @@
             // In peer-to-peer mode deliver the peer master token. This may be
             // null.
             else {
-                var peerMasterToken = messageHeader.peerMasterToken;
-                if (peerMasterToken)
-                    queue.add(peerMasterToken);
+                let masterToken = messageHeader.peerMasterToken;
+                if (masterToken)
+                    queue.add(masterToken);
                 else
                     queue.add(NULL_MASTER_TOKEN);
             }
@@ -3238,8 +3236,6 @@
             var self = this;
 
             InterruptibleExecutor(callback, function() {
-                var recipient, requestMessageId;
-                
                 var tokenTicket;
                 try {
                     var builder = builderTokenTicket.builder;
@@ -3267,8 +3263,8 @@
                         securityRequired = null;
                     if (securityRequired) {
                         // Try to send an error response.
-                        recipient = getIdentity(this._request);
-                        requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                        let recipient = getIdentity(this._request);
+                        let requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, securityRequired, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
@@ -3293,8 +3289,8 @@
                     // client must re-initiate the transaction.
                     if (this._msgCtx.getUser() && !builder.getMasterToken() && !builder.getKeyExchangeData()) {
                         // Try to send an error response.
-                        recipient = getIdentity(this._request);
-                        requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                        let recipient = getIdentity(this._request);
+                        let requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                         sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,

@@ -202,9 +202,6 @@
      */
     var MslSignatureEnvelope$parse = function MslSignatureEnvelope$parse(envelope, version, encoder, callback) {
         AsyncExecutor(callback, function() {
-            var envelopeMo, algorithm, signature;
-            var v;
-            
             if (version) {
                 switch (version) {
                     case Version.V1:
@@ -212,20 +209,20 @@
                     case Version.V2:
                         try {
                             // We expect the byte representation to be a MSL object.
-                            envelopeMo = encoder.parseObject(envelope);
+                            let envelopeMo = encoder.parseObject(envelope);
 
                             // Verify version.
-                            v = envelopeMo.getInt(KEY_VERSION);
+                            let v = envelopeMo.getInt(KEY_VERSION);
                             if (Version.V2 != v)
                                 throw new MslCryptoException(MslError.UNSUPPORTED_SIGNATURE_ENVELOPE, "signature envelope " + envelope);
 
                             // Grab algorithm.
-                            algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
+                            let algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
                             if (!algorithm)
                                 throw new MslCryptoException(MslError.UNIDENTIFIED_ALGORITHM, "signature envelope " + envelope);
 
                             // Grab signature.
-                            signature = envelopeMo.getBytes(KEY_SIGNATURE);
+                            let signature = envelopeMo.getBytes(KEY_SIGNATURE);
 
                             // Return the envelope.
                             return new MslSignatureEnvelope(Version.V2, algorithm, signature);
@@ -240,6 +237,7 @@
             }
 
             // Attempt to convert this to a MSL object.
+            var envelopeMo;
             try {
                 // If this is a MSL object, we expect the byte representation to be
                 // decodable.
@@ -267,7 +265,7 @@
                         envelopeVersion = Version.V1;
                     }
                     var recognized = false;
-                    for (v in Version) {
+                    for (let v in Version) {
                         if (Version[v] == envelopeVersion) {
                             recognized = true;
                             break;
@@ -291,8 +289,8 @@
                     return new MslSignatureEnvelope(envelopeVersion, null, envelope);
                 case Version.V2:
                     try {
-                        algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
-                        signature = envelopeMo.getBytes(KEY_SIGNATURE);
+                        let algorithm = MslConstants.SignatureAlgo.fromString(envelopeMo.getString(KEY_ALGORITHM));
+                        let signature = envelopeMo.getBytes(KEY_SIGNATURE);
 
                         // Verify algorithm.
                         if (!algorithm) {
