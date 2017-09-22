@@ -294,7 +294,6 @@ describe("BlockingQueue", function() {
                 return;
             }
             
-            var ticket;
             var r = random.nextInt(7);
             switch (r) {
                 case 0:
@@ -304,7 +303,7 @@ describe("BlockingQueue", function() {
                 }
                 case 1:
                 {
-                    ticket = tickets.pop();
+                    let ticket = tickets.pop();
                     if (ticket)
                         queue.cancel(ticket);
                     break;
@@ -318,15 +317,15 @@ describe("BlockingQueue", function() {
                 case 3:
                 case 4:
                 {
-                    var item = items.shift();
+                    let item = items.shift();
                     expectedItems.push(item);
                     queue.add(item);
                     break;
                 }
                 default:
                 {
-                    var name = nextName();
-                    ticket = queue.poll(TIMEOUT, consumer.getCallback(name));
+                    let name = nextName();
+                    let ticket = queue.poll(TIMEOUT, consumer.getCallback(name));
                     tickets.push(ticket);
                     ++numConsumers;
                     break;

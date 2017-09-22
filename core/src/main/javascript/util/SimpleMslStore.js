@@ -302,20 +302,20 @@
 
                 // Master token bound?
                 if (token.isMasterTokenBound()) {
-                    var mtTokenSet = this.mtServiceTokens[token.mtSerialNumber];
-                    if (!mtTokenSet)
-                        mtTokenSet = {};
-                    mtTokenSet[token.uniqueKey()] = token;
-                    this.mtServiceTokens[token.mtSerialNumber] = mtTokenSet;
+                    let tokenSet = this.mtServiceTokens[token.mtSerialNumber];
+                    if (!tokenSet)
+                        tokenSet = {};
+                    tokenSet[token.uniqueKey()] = token;
+                    this.mtServiceTokens[token.mtSerialNumber] = tokenSet;
                 }
 
                 // User ID token bound?
                 if (token.isUserIdTokenBound()) {
-                    var uitTokenSet = this.uitServiceTokens[token.uitSerialNumber];
-                    if (!uitTokenSet)
-                        uitTokenSet = {};
-                    uitTokenSet[token.uniqueKey()] = token;
-                    this.uitServiceTokens[token.uitSerialNumber] = uitTokenSet;
+                    let tokenSet = this.uitServiceTokens[token.uitSerialNumber];
+                    if (!tokenSet)
+                        tokenSet = {};
+                    tokenSet[token.uniqueKey()] = token;
+                    this.uitServiceTokens[token.uitSerialNumber] = tokenSet;
                 }
             }, this);
         },
@@ -342,10 +342,10 @@
             if (masterToken) {
                 var mtTokens = this.mtServiceTokens[masterToken.serialNumber];
                 if (mtTokens) {
-                    for (var mtKey in mtTokens) {
-                        var mtToken = mtTokens[mtKey];
+                    for (let key in mtTokens) {
+                        var mtToken = mtTokens[key];
                         if (!mtToken.isUserIdTokenBound())
-                            serviceTokens[mtKey] = mtToken;
+                            serviceTokens[key] = mtToken;
                     }
                 }
             }
@@ -355,27 +355,23 @@
             if (userIdToken) {
                 var uitTokens = this.uitServiceTokens[userIdToken.serialNumber];
                 if (uitTokens) {
-                    for (var uitKey in uitTokens) {
-                        var uitToken = uitTokens[uitKey];
+                    for (let key in uitTokens) {
+                        var uitToken = uitTokens[key];
                         if (uitToken.isBoundTo(masterToken))
-                            serviceTokens[uitKey] = uitToken;
+                            serviceTokens[key] = uitToken;
                     }
                 }
             }
 
             // Convert the map of service tokens into an array.
             var list = [];
-            for (var stKey in serviceTokens)
-                list.push(serviceTokens[stKey]);
+            for (let key in serviceTokens)
+                list.push(serviceTokens[key]);
             return list;
         },
 
         /** @inheritDoc */
         removeServiceTokens: function removeServiceTokens(name, masterToken, userIdToken) {
-            var mtSerialNumber, uitSerialNumber;
-            var mtTokenSet, uitTokenSet;
-            var mtBoundKeys, uitBoundKeys;
-            
             // Validate arguments.
             if (userIdToken && masterToken && !userIdToken.isBoundTo(masterToken))
                 throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.mtSerialNumber + "; mt " + masterToken.serialNumber);
@@ -391,37 +387,37 @@
                 }, this);
 
                 // Remove all master bound tokens with the specified name.
-                for (mtSerialNumber in this.mtServiceTokens) {
-                    mtTokenSet = this.mtServiceTokens[mtSerialNumber];
-                    mtBoundKeys = Object.keys(mtTokenSet);
+                for (let mtSerialNumber in this.mtServiceTokens) {
+                    let tokenSet = this.mtServiceTokens[mtSerialNumber];
+                    let mtBoundKeys = Object.keys(tokenSet);
                     mtBoundKeys.forEach(function(key) {
-                        var token = mtTokenSet[key];
+                        var token = tokenSet[key];
 
                         // Skip if the name was provided and it does not match.
                         if (token.name != name)
                             return;
 
                         // Remove the token.
-                        delete mtTokenSet[key];
+                        delete tokenSet[key];
                     }, this);
-                    this.mtServiceTokens[mtSerialNumber] = mtTokenSet;
+                    this.mtServiceTokens[mtSerialNumber] = tokenSet;
                 }
 
                 // Remove all user ID tokens with the specified name.
-                for (uitSerialNumber in this.uitServiceTokens) {
-                    uitTokenSet = this.uitServiceTokens[uitSerialNumber];
-                    uitBoundKeys = Object.keys(uitTokenSet);
+                for (let uitSerialNumber in this.uitServiceTokens) {
+                    let tokenSet = this.uitServiceTokens[uitSerialNumber];
+                    let uitBoundKeys = Object.keys(tokenSet);
                     uitBoundKeys.forEach(function(key) {
-                        var token = uitTokenSet[key];
+                        var token = tokenSet[key];
 
                         // Skip if the name was provided and it does not match.
                         if (token.name != name)
                             return;
 
                         // Remove the token.
-                        delete uitTokenSet[key];
+                        delete tokenSet[key];
                     }, this);
-                    this.uitServiceTokens[uitSerialNumber] = uitTokenSet;
+                    this.uitServiceTokens[uitSerialNumber] = tokenSet;
                 }
             }
 
@@ -429,28 +425,28 @@
             // remove all tokens bound to the master token. If a name was also
             // provided then limit removal to tokens with the specified name.
             if (masterToken && !userIdToken) {
-                mtTokenSet = this.mtServiceTokens[masterToken.serialNumber];
-                if (mtTokenSet) {
-                    mtBoundKeys = Object.keys(mtTokenSet);
+                let tokenSet = this.mtServiceTokens[masterToken.serialNumber];
+                if (tokenSet) {
+                    let mtBoundKeys = Object.keys(tokenSet);
                     mtBoundKeys.forEach(function(key) {
-                        var token = mtTokenSet[key];
+                        var token = tokenSet[key];
 
                         // Skip if the name was provided and it does not match.
                         if (name && token.name != name)
                             return;
 
                         // Remove the token.
-                        delete mtTokenSet[key];
+                        delete tokenSet[key];
                     }, this);
-                    this.mtServiceTokens[masterToken.serialNumber] = mtTokenSet;
+                    this.mtServiceTokens[masterToken.serialNumber] = tokenSet;
                 }
 
                 // Remove all user ID tokens (with the specified name if any).
-                for (uitSerialNumber in this.uitServiceTokens) {
-                    uitTokenSet = this.uitServiceTokens[uitSerialNumber];
-                    uitBoundKeys = Object.keys(uitTokenSet);
+                for (let uitSerialNumber in this.uitServiceTokens) {
+                    let tokenSet = this.uitServiceTokens[uitSerialNumber];
+                    let uitBoundKeys = Object.keys(tokenSet);
                     uitBoundKeys.forEach(function(key) {
-                        var token = uitTokenSet[key];
+                        var token = tokenSet[key];
 
                         // Skip if the name was provided and it does not match.
                         if (name && token.name != name)
@@ -461,9 +457,9 @@
                             return;
 
                         // Remove the token.
-                        delete uitTokenSet[key];
+                        delete tokenSet[key];
                     }, this);
-                    this.uitServiceTokens[uitSerialNumber] = uitTokenSet;
+                    this.uitServiceTokens[uitSerialNumber] = tokenSet;
                 }
             }
 
@@ -472,11 +468,11 @@
             // with the specified name. If a master token was also provided then
             // limit removal to tokens bound to the master token.
             if (userIdToken) {
-                uitTokenSet = this.uitServiceTokens[userIdToken.serialNumber];
-                if (uitTokenSet) {
-                    uitBoundKeys = Object.keys(uitTokenSet);
+                let tokenSet = this.uitServiceTokens[userIdToken.serialNumber];
+                if (tokenSet) {
+                    let uitBoundKeys = Object.keys(tokenSet);
                     uitBoundKeys.forEach(function(key) {
-                        var token = uitTokenSet[key];
+                        var token = tokenSet[key];
 
                         // Skip if the name was provided and it does not match.
                         if (name && token.name != name)
@@ -488,9 +484,9 @@
                             return;
 
                         // Remove the token.
-                        delete uitTokenSet[key];
+                        delete tokenSet[key];
                     }, this);
-                    this.uitServiceTokens[userIdToken.serialNumber] = uitTokenSet;
+                    this.uitServiceTokens[userIdToken.serialNumber] = tokenSet;
                 }
             }
         },
