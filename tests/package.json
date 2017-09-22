@@ -19,7 +19,7 @@
   "scripts": {
     "build": "npm run all",
     "test": "find src/test -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions src/main/javascript/lib/jasmine/msl-helpers.js",
-    "lint": "find src/test -type f -name '*.js' | xargs jshint",
+    "lint": "find src/test -type f -name '*.js' | xargs jshint --verbose",
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
