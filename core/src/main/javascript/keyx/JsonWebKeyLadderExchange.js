@@ -427,6 +427,7 @@
      * Create the crypto context identified by the mechanism.
      *
      * @param {MslContext} ctx MSL context.
+     * @param {KeySetStore} store key set store.
      * @param {Mechanism} mechanism the wrap key wrapping mechanism.
      * @param {Uint8Array} wrapdata the wrap key previous wrapping key data. May be null.
      * @param {string} identity the entity identity.
@@ -438,7 +439,7 @@
      * @throws MslEntityAuthException if there is a problem with the entity
      *         identity.
      */
-    function createCryptoContext(ctx, mechanism, wrapdata, identity, callback) {
+    function createCryptoContext(ctx, store, mechanism, wrapdata, identity, callback) {
         AsyncExecutor(callback, function() {
             switch (mechanism) {
                 // FIXME: For PSK/MGK we need some way to get an ICryptoContext
@@ -446,14 +447,11 @@
                 // the WrapCryptoContextRepository can be used for that.
                 case Mechanism.PSK:
                 {
-                    var authdata = new PresharedAuthenticationData(identity);
-                    var factory = ctx.getEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
-                    if (!factory)
-                        throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism);
-                    var cryptoContext = factory.getCryptoContext(ctx, authdata);
-                    // FIXME: Get a handle to KPW.
-                    var kpw = undefined;
-                    return new AesKwJwkCryptoContext(kpw);
+                    var keys = store.getKeys(identity);
+                    if (!keys)
+                        throw new MslKeyExchangeException(MslError.KEYX_IDENTITY_NOT_FOUND, "jwkle " + identity);
+                    var kxw = keys.wrappingKey;
+                    return new AesKwJwkCryptoContext(kxw);
                 }
                 case Mechanism.WRAP:
                 {
@@ -478,14 +476,16 @@
         /**
          * Create a new JSON Web Key ladder key exchange factory.
          *
+         * @param {KeySetStore} store key set store.
          * @param {WrapCryptoContextRepository} repository the wrapping key crypto context repository.
          * @param {AuthenticationUtils} authutils authentication utilities.
          */
-        init: function init(repository, authutils) {
+        init: function init(store, repository, authutils) {
             init.base.call(this, KeyExchangeScheme.JWK_LADDER);
 
             // The properties.
             var props = {
+                store: { value: store, writable: false, enumerable: false, configurable: false },
                 repository: { value: repository, writable: false, enumerable: false, configurable: false },
                 authutils: { value: authutils, writable: false, enumerable: false, configurable: false },
             };
@@ -594,7 +594,7 @@
                     var prevWrapdata = request.wrapdata;
 
                     // Wrap wrapping key using specified wrapping key.
-                    createCryptoContext(ctx, mechanism, prevWrapdata, identity, {
+                    createCryptoContext(ctx, this.store, mechanism, prevWrapdata, identity, {
                         result: function (wrapKeyCryptoContext) {
                             wrapKeyCryptoContext.wrap(wrapKey, {
                                 result: function(wrappedWrapJwk) {
@@ -729,14 +729,11 @@
                             switch (mechanism) {
                                 case Mechanism.PSK:
                                 {
-                                    var authdata = new PresharedAuthenticationData(identity);
-                                    var factory = ctx.getEntityAuthenticationFactory(EntityAuthenticationScheme.PSK);
-                                    if (!factory)
-                                        throw new MslKeyExchangeException(MslError.UNSUPPORTED_KEYX_MECHANISM, mechanism).setEntityAuthenticationData(entityAuthData);
-                                    var cryptoContext = factory.getCryptoContext(ctx, authdata);
-                                    // FIXME: Get a handle to KPW.
-                                    var kpw = undefined;
-                                    wrapKeyCryptoContext = new AesKwJwkCryptoContext(kpw);
+                                    var keys = this.store.getKeys(identity);
+                                    if (!keys)
+                                        throw new MslKeyExchangeException(MslError.KEYX_IDENTITY_NOT_FOUND, "jwkle " + identity).setEntity(entityAuthData);
+                                    var kxw = keys.wrappingKey;
+                                    wrapKeyCryptoContext = new AesKwJwkCryptoContext(kxw);
                                     break;
                                 }
                                 case Mechanism.WRAP:

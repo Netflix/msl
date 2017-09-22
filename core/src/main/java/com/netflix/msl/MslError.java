@@ -262,7 +262,8 @@ public class MslError {
     public static final MslError KEYX_INVALID_HMAC_KEY = new MslError(7020, ResponseCode.FAIL, "Key exchange HMAC key is invalid.");
     public static final MslError KEYX_INVALID_WRAPDATA = new MslError(7021, ResponseCode.FAIL, "Key exchange wrap data is invalid.");
     public static final MslError UNSUPPORTED_KEYX_SCHEME = new MslError(7022, ResponseCode.FAIL, "Unsupported key exchange scheme.");
-
+    public static final MslError KEYX_IDENTITY_NOT_FOUND = new MslError(7023, ResponseCode.FAIL, "Key exchange identity not found.");
+    
     // 9 Internal Errors
     public static final MslError INTERNAL_EXCEPTION = new MslError(9000, ResponseCode.TRANSIENT_FAILURE, "Internal exception.");
     public static final MslError MSL_COMMS_FAILURE = new MslError(9001, ResponseCode.FAIL, "Error communicating with MSL entity.");
