@@ -118,17 +118,17 @@
          * @return {number} a random number.
          */
         nextDouble: function nextDouble() {
-        	// Ask for 64 random bits, but we will only use 53 of them to
-        	// compute the number.
-        	var b = new Uint32Array(2);
-        	nfCrypto.getRandomValues(b);
-        	// Use the least significant bit for the sign.
-        	var sign = b[1] & 0x1;
-        	// Use the top 52 bits for the mantissa.
-        	var mantissa = b[0] * SHIFT_20 + b[1] >> 12;
-        	// Convert to a number between [0,1).
-        	var multiplier = mantissa * POW_NEGATIVE_52;
-        	return ((sign) ? 1 : -1) * multiplier * Number.MAX_VALUE;
+            // Ask for 64 random bits, but we will only use 53 of them to
+            // compute the number.
+            var b = new Uint32Array(2);
+            nfCrypto.getRandomValues(b);
+            // Use the least significant bit for the sign.
+            var sign = b[1] & 0x1;
+            // Use the top 52 bits for the mantissa.
+            var mantissa = b[0] * SHIFT_20 + b[1] >> 12;
+            // Convert to a number between [0,1).
+            var multiplier = mantissa * POW_NEGATIVE_52;
+            return ((sign) ? 1 : -1) * multiplier * Number.MAX_VALUE;
         },
 
         /**
