@@ -17,7 +17,7 @@
 #include <crypto/JcaAlgorithm.h>
 #include <crypto/JsonWebEncryptionCryptoContext.h>
 #include <entityauth/EntityAuthenticationScheme.h>
-#include <io/MslEncoderutils.h>
+#include <io/MslEncoderUtils.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslObject.h>
