@@ -30,6 +30,7 @@ import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * User: skommidi
@@ -76,10 +77,7 @@ public class ServerTokenFactory extends MockTokenFactory {
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         this.sequenceNumber++;
         final long sequenceNumber = this.sequenceNumber;
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, null, identity, encryptionKey, hmacKey);
     }

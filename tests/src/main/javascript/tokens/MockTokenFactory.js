@@ -34,6 +34,7 @@
     const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
     const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
     const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    const MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
     
     const MockMslUser = require('../tokens/MockMslUser.js');
 
@@ -142,10 +143,7 @@
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
                 var sequenceNumber = 0;
-                var serialNumber = -1;
-                do {
-                    serialNumber = ctx.getRandom().nextLong();
-                } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+                var serialNumber = MslUtils.getRandomLong(ctx);
                 var identity = entityAuthData.getIdentity();
                 MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
@@ -208,10 +206,7 @@
                 var issuerData = null;
                 var renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
                 var expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
-                var serialNumber = -1;
-                do {
-                    serialNumber = ctx.getRandom().nextLong();
-                } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+                var serialNumber = MslUtils.getRandomLong(ctx);
                 UserIdToken.create(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user, callback);
             }, this);
         },
