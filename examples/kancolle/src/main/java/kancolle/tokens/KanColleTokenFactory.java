@@ -41,6 +41,7 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * <p>The KanColle token factory.</p>
@@ -161,10 +162,7 @@ public class KanColleTokenFactory implements TokenFactory {
         final Date renewal = new Date(ctx.getTime() + mtRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + mtExpirationOffset);
         final long sequenceNumber = 0;
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewal, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
@@ -247,10 +245,7 @@ public class KanColleTokenFactory implements TokenFactory {
         final long now = ctx.getTime();
         final Date renewal = new Date(now + uitRenewalOffset);
         final Date expiration = new Date(now + uitExpirationOffset);
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         final MslObject issuerData = null;
         return new UserIdToken(ctx, renewal, expiration, masterToken, serialNumber, issuerData, user);
     }
