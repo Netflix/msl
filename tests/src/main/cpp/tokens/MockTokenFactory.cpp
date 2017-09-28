@@ -42,6 +42,7 @@
 #include <tokens/MasterToken.h>
 #include <tokens/UserIdToken.h>
 #include <util/MslContext.h>
+#include <util/MslUtils.h>
 
 #include <gtest/gtest.h>
 #include <tokens/MockMslUser.h>
@@ -129,10 +130,7 @@ shared_ptr<MasterToken> MockTokenFactory::createMasterToken(
     shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
     shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
     const int64_t sequenceNumber = 0;
-    int64_t serialNumber = -1;
-    do {
-        serialNumber = ctx->getRandom()->nextLong();
-    } while (serialNumber < 0 || serialNumber > MslConstants::MAX_LONG_VALUE);
+    const int64_t serialNumber = MslUtils::getRandomLong(ctx);
     const string identity = entityAuthData->getIdentity();
     return make_shared<MasterToken>(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
 }
@@ -202,10 +200,7 @@ shared_ptr<UserIdToken> MockTokenFactory::createUserIdToken(shared_ptr<MslContex
     shared_ptr<MslObject> issuerData;
     shared_ptr<Date> renewalWindow = make_shared<Date>(ctx->getTime() + RENEWAL_OFFSET);
     shared_ptr<Date> expiration = make_shared<Date>(ctx->getTime() + EXPIRATION_OFFSET);
-    int64_t serialNumber = -1;
-    do {
-        serialNumber = ctx->getRandom()->nextLong();
-    } while (serialNumber < 0 || serialNumber > MslConstants::MAX_LONG_VALUE);
+    const int64_t serialNumber = MslUtils::getRandomLong(ctx);
     return make_shared<UserIdToken>(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
 }
 

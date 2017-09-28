@@ -32,6 +32,8 @@ typedef std::vector<uint8_t> ByteArray;
 
 namespace util {
 
+class MslContext;
+
 /**
  * Utility methods.
  */
@@ -119,6 +121,17 @@ bool sharedPtrCompare(const std::shared_ptr<T>& a, const std::shared_ptr<T>& b)
 
 // Case-insensitive string compare.
 bool insStringCompare(std::string const& a, std::string const& b);
+
+
+/**
+ * Returns a random number between zero and the maximum long value as
+ * defined by {@link MslConstants#MAX_LONG_VALUE}, inclusive.
+ *
+ * @param ctx MSL context.
+ * @return a random number between zero and the maximum long value,
+ *         inclusive.
+ */
+int64_t getRandomLong(std::shared_ptr<MslContext> ctx);
 
 } // namespace MslUtils
 

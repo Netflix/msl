@@ -89,6 +89,11 @@
                 MslCrypto$setWebCryptoVersion(WebCryptoVersion.V2014_02_SAFARI);
             } else if (window.crypto.subtle) {
                 nfCryptoSubtle = window.crypto.subtle;
+            } else {
+                // The Web Cryptography API defines window.crypto as well as
+                // window.crypto.subtle but restricts the existence of the
+                // subtle attribute to secure contexts.
+                throw new ReferenceError("Expected window.crypto.subtle but it was undefined. It may be unavailable if running in an insecure context.");
             }
         }
     }

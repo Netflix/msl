@@ -44,6 +44,7 @@ import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * <p>A server-side memory-backed token factory.</p>
@@ -67,9 +68,6 @@ public class ServerTokenFactory implements TokenFactory {
 
     /** app context */
     private final AppContext appCtx;
-
-    /** number of bits in MslConstants.MAX_LONG_VALUE, used for more efficient serial number generation algorithm */
-    private static final int MAX_LONG_VALUE_BITS = BigInteger.valueOf(MslConstants.MAX_LONG_VALUE).bitLength();
 
     /**
      * @param appCtx application context
@@ -188,7 +186,7 @@ public class ServerTokenFactory implements TokenFactory {
         final Date renewalWindow = new Date(ctx.getTime() + renewalOffset);
         final Date expiration = new Date(ctx.getTime() + expirationOffset);
         final long sequenceNumber = 0;
-        final long serialNumber = generateSerialNumber(ctx.getRandom());
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
         
         // Remember the sequence number.
@@ -265,7 +263,7 @@ public class ServerTokenFactory implements TokenFactory {
         final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + uitRenewalOffset);
         final Date expiration = new Date(ctx.getTime() + uitExpirationOffset);
-        final long serialNumber = generateSerialNumber(ctx.getRandom());
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
     }
 
@@ -297,20 +295,6 @@ public class ServerTokenFactory implements TokenFactory {
     @Override
     public String toString() {
         return SharedUtil.toString(this);
-    }
-    
-    /**
-     * helper - generate random serial number in [0 ... MslConstants.MAX_LONG_VALUE] range
-     * @param r random numbers generator
-     * @return random serial number in the [0 MslConstants.MAX_LONG_VALUE] range
-     */
-    private long generateSerialNumber(final Random r) {
-        long serialNumber = -1L;
-        do {
-            serialNumber = new BigInteger(MAX_LONG_VALUE_BITS, r).longValue();
-            appCtx.info(String.format("%s: Serial Number %x, Max %x", this, serialNumber, MslConstants.MAX_LONG_VALUE));
-        } while (serialNumber > MslConstants.MAX_LONG_VALUE);
-        return serialNumber;
     }
 
     /** Map of entity identities onto sequence numbers. */

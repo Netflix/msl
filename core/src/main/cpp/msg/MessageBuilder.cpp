@@ -208,7 +208,7 @@ shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> 
         shared_ptr<UserIdToken> userIdToken,
         string recipient)
 {
-	const int64_t messageId = ctx->getRandom()->nextLong(MslConstants::MAX_LONG_VALUE);
+	const int64_t messageId = MslUtils::getRandomLong(ctx);
 	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
 	return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
 }
@@ -358,7 +358,7 @@ shared_ptr<ErrorHeader> MessageBuilder::createErrorResponse(shared_ptr<MslContex
 	}
 	// Otherwise use a random message ID.
 	else {
-	    messageId = ctx->getRandom()->nextLong(MslConstants::MAX_LONG_VALUE);
+	    messageId = MslUtils::getRandomLong(ctx);
 	}
 	const ResponseCode errorCode = error.getResponseCode();
 	const int32_t internalCode = error.getInternalCode();

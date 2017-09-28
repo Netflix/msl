@@ -15,7 +15,9 @@
  */
 
 #include <util/MslUtils.h>
+#include <crypto/IRandom.h>
 #include <util/Base64.h>
+#include <util/MslContext.h>
 #include <assert.h>
 #include <MslError.h>
 #include <MslException.h>
@@ -35,6 +37,7 @@
 #include <memory>
 
 using namespace std;
+using namespace netflix::msl::crypto;
 
 namespace {
 
@@ -143,6 +146,21 @@ bool insStringCompare_pred(unsigned char a, unsigned char b) {
     return tolower(a) == tolower(b);
 }
 
+/**
+ * Return true if the number is a non-negative power of two. Zero is
+ * considered a power of two and will return true.
+ *
+ * @param n the number to test.
+ * @return true if the number is a non-negative power of two.
+ */
+bool is_power_of_2(int64_t n) {
+    // If the number is a power of two, a binary AND operation between
+    // the number and itself minus one will equal zero.
+	if (n < 0) return false;
+    if (n == 0) return true;
+    return (n & (n - 1)) == 0;
+}
+
 } // namespace anonymous
 
 namespace netflix {
@@ -249,6 +267,28 @@ bool insStringCompare(std::string const& a, std::string const& b)
 {
     if (a.size() != b.size()) return false;
     return equal(b.begin(), b.end(), a.begin(), insStringCompare_pred);
+}
+
+int64_t getRandomLong(shared_ptr<MslContext> ctx) {
+    // If the maximum long value is a power of 2, then we can perform a
+    // bitmask on the randomly generated long value to restrict to our
+    // target number space.
+    bool isPowerOf2 = is_power_of_2(MslConstants::MAX_LONG_VALUE);
+
+    // Generate the random value.
+    shared_ptr<IRandom> r = ctx->getRandom();
+    int64_t n = -1;
+    do {
+        n = r->nextLong();
+
+        // Perform a bitmask if permitted, which will force this loop
+        // to exit immediately.
+        if (isPowerOf2)
+            n &= (MslConstants::MAX_LONG_VALUE - 1);
+    } while (n < 0 || n > MslConstants::MAX_LONG_VALUE);
+
+    // Return the random value.
+    return n;
 }
 
 } // namespace MslUtils
