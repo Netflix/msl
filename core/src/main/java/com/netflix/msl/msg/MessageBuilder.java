@@ -57,6 +57,7 @@ import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * <p>A message builder provides methods for building messages.</p>
@@ -208,11 +209,7 @@ public class MessageBuilder {
      *         corresponding master token.
      */
     public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final String recipient) throws MslException {
-        long messageId = -1;
-        final Random random = ctx.getRandom();
-        do {
-            messageId = random.nextLong();
-        } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
+        final long messageId = MslUtils.getRandomLong(ctx);
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
         return new MessageBuilder(ctx, recipient, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
     }
@@ -390,10 +387,7 @@ public class MessageBuilder {
         }
         // Otherwise use a random message ID.
         else {
-            final Random random = ctx.getRandom();
-            do {
-                messageId = random.nextLong();
-            } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
+            messageId = MslUtils.getRandomLong(ctx);
         }
         final ResponseCode errorCode = error.getResponseCode();
         final int internalCode = error.getInternalCode();

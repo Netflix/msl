@@ -31,6 +31,7 @@ import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.MslContext;
+import com.netflix.msl.util.MslUtils;
 
 /**
  * Token factory for unit tests.
@@ -127,10 +128,7 @@ public class MockTokenFactory implements TokenFactory {
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
         final long sequenceNumber = 0;
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         final String identity = entityAuthData.getIdentity();
         return new MasterToken(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey);
     }
@@ -208,10 +206,7 @@ public class MockTokenFactory implements TokenFactory {
         final MslObject issuerData = null;
         final Date renewalWindow = new Date(ctx.getTime() + RENEWAL_OFFSET);
         final Date expiration = new Date(ctx.getTime() + EXPIRATION_OFFSET);
-        long serialNumber = -1;
-        do {
-            serialNumber = ctx.getRandom().nextLong();
-        } while (serialNumber < 0 || serialNumber > MslConstants.MAX_LONG_VALUE);
+        final long serialNumber = MslUtils.getRandomLong(ctx);
         return new UserIdToken(ctx, renewalWindow, expiration, masterToken, serialNumber, issuerData, user);
     }
 

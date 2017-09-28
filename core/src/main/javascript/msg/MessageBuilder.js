@@ -36,6 +36,7 @@
 	const MessageHeader = require('../msg/MessageHeader.js');
 	const ServiceToken = require('../tokens/ServiceToken.js');
 	const NullCryptoContext = require('../crypto/NullCryptoContext.js');
+	const MslUtils = require('../util/MslUtils.js');
 	
     /**
      * Empty service token data.
@@ -240,10 +241,7 @@
     var MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, callback) {
         AsyncExecutor(callback, function() {
             if (messageId == undefined || messageId == null) {
-                var random = ctx.getRandom();
-                do {
-                    messageId = random.nextLong();
-                } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
+                messageId = MslUtils.getRandomLong(ctx);
             } else {
                 if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
                     throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
@@ -469,10 +467,7 @@
                         }
                         // Otherwise use a random message ID.
                         else {
-                            var random = ctx.getRandom();
-                            do {
-                                messageId = random.nextLong();
-                            } while (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE);
+                            messageId = MslUtils.getRandomLong(ctx);
                         }
                         var errorCode = error.responseCode;
                         var internalCode = error.internalCode;
