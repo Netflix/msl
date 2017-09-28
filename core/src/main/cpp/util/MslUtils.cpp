@@ -153,9 +153,10 @@ bool insStringCompare_pred(unsigned char a, unsigned char b) {
  * @param n the number to test.
  * @return true if the number is a non-negative power of two.
  */
-bool is_power_of_2(uint64_t n) {
+bool is_power_of_2(int64_t n) {
     // If the number is a power of two, a binary AND operation between
     // the number and itself minus one will equal zero.
+	if (n < 0) return false;
     if (n == 0) return true;
     return (n & (n - 1)) == 0;
 }
