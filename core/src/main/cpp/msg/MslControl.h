@@ -645,6 +645,7 @@ private: // methods
      * @param request message header of the previously sent message, if any,
      *        the received message is responding to. May be null.
      * @return the received message.
+     * @throws IOException if there is a problem reading from the input stream.
      * @throws MslEncodingException if there is an error parsing the message.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header or creating the message payload crypto context.

@@ -112,8 +112,7 @@ MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
     const MslEncoderFormat format = MslEncoderFormat::getFormat(id);
     if (format == MslEncoderFormat::INVALID) {
         stringstream ss;
-        ss << "Unidentified encoder format ID: (byte)0x" << hex
-                << static_cast<unsigned>(id) << ".";
+        ss << "Unidentified encoder format ID: (byte)0x" << hex << static_cast<unsigned>(id) << ".";
         throw MslEncoderException(ss.str());
     }
     return format;
@@ -121,19 +120,27 @@ MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
 
 shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStream> source)
 {
-    // Identify the encoder format.
-    const int WIDTH = 4;
+    // Read the byte stream identifier.
+    const int WIDTH = 1;
     ByteArray buffer(WIDTH);
     source->mark();
-    source->read(buffer, 0, WIDTH, TIMEOUT); // TODO: Someone has to tell me this timeout.
-    source->reset();
-    shared_ptr<ByteArray> firstBytes = make_shared<ByteArray>(buffer.begin(), buffer.begin() + WIDTH);
-    MslEncoderFormat format;
-    try {
-        format = parseFormat(firstBytes);
-    } catch (const MslEncoderException& e) {
-        throw MslEncoderException("Failure reading the byte stream identifier.", e);
+    const int count = source->read(buffer, 0, WIDTH, TIMEOUT); // TODO: Someone has to tell me this timeout.
+    if (count == -1)
+        throw new MslEncoderException("End of stream reached when attempting to read the byte stream identifier.");
+    if (count == 0)
+        throw new MslEncoderException("Timeout when attempting to read the byte stream identifier.");
+
+    // Identify the encoder format.
+    const uint8_t id = buffer[0];
+    const MslEncoderFormat format = MslEncoderFormat::getFormat(id);
+    if (format == MslEncoderFormat::INVALID) {
+        stringstream ss;
+        ss << "Unidentified encoder format ID: (byte)0x" << hex << static_cast<unsigned>(id) << ".";
+        throw MslEncoderException(ss.str());
     }
+
+    // Reset the input stream and return the tokenizer.
+    source->reset();
     return generateTokenizer(source, format);
 }
 

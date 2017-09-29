@@ -85,8 +85,10 @@ public:
      *
      * @param source the binary data to tokenize.
      * @return the {@link MslTokenizer}.
-     * @throws MslEncoderException if there is a problem reading the byte
-     *         stream identifier or if the encoder format is not supported.
+     * @throws IOException if there is a problem reading the byte stream
+     *         identifier.
+     * @throws MslEncoderException if the encoder format is not recognized or
+     *         is not supported.
      */
     std::shared_ptr<MslTokenizer> createTokenizer(std::shared_ptr<InputStream> source);
 
