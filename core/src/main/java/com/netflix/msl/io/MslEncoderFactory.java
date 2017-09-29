@@ -151,22 +151,26 @@ public abstract class MslEncoderFactory {
      * 
      * @param source the binary data to tokenize.
      * @return the {@link MslTokenizer}.
-     * @throws MslEncoderException if there is a problem reading the byte
-     *         stream identifier or if the encoder format is not supported.
+     * @throws IOException if there is a problem reading the byte stream
+     *         identifier.
+     * @throws MslEncoderException if the encoder format is not recognized or
+     *         is not supported.
      */
-    public MslTokenizer createTokenizer(final InputStream source) throws MslEncoderException {
+    public MslTokenizer createTokenizer(final InputStream source) throws IOException, MslEncoderException {
+        // Read the byte stream identifier.
         final InputStream bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
+        bufferedSource.mark(1);
+        final byte id = (byte)bufferedSource.read();
+        if (id == -1)
+            throw new MslEncoderException("End of stream reached when attempting to read the byte stream identifier.");
         
         // Identify the encoder format.
-        final MslEncoderFormat format;
-        try {
-            bufferedSource.mark(1);
-            final byte id = (byte)bufferedSource.read();
-            format = MslEncoderFormat.getFormat(id);
-            bufferedSource.reset();
-        } catch (final IOException e) {
-            throw new MslEncoderException("Failure reading the byte stream identifier.", e);
-        }
+        final MslEncoderFormat format = MslEncoderFormat.getFormat(id);
+        if (format == null)
+            throw new MslEncoderException("Unidentified encoder format ID: (byte)" + id + ".");
+        
+        // Reset the input stream and return the tokenizer.
+        bufferedSource.reset();
         return generateTokenizer(bufferedSource, format);
     }
     

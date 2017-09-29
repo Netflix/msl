@@ -62,6 +62,7 @@ public:
      *        response data.
      * @param cryptoContexts the map of service token names onto crypto
      *        contexts used to decrypt and verify service tokens.
+     * @throws IOException if there is a problem reading from the input stream.
      * @throws MslEncodingException if there is an error parsing the message.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header or creating the message payload crypto context.

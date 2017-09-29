@@ -2157,6 +2157,20 @@ public:
                 throw MslErrorResponseException("Error receiving the message header->", rt, e);
             }
             throw e;
+        } catch (const IOException& e) {
+            // If we were cancelled then return null.
+//            if (cancelled(t)) return nullptr;  // FIXME: How to handle cancellation?
+
+            // Maybe we can send an error message.
+            try {
+                mslControl->sendError(ctx, debugCtx, nullptr, string(), -1, MslError::MSL_COMMS_FAILURE, string(), out);
+            } catch (const IException& rt) {
+                // If we were cancelled then return null.
+//                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
+
+                throw MslErrorResponseException("Error receiving the message header->", rt, e);
+            }
+            throw e;
         } catch (const IException& t) {
             // If we were cancelled then return null.
 //            if (cancelled(t)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2167,7 +2181,6 @@ public:
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
-
 
                 throw MslErrorResponseException("Error receiving the message header->", rt, t);
             }
