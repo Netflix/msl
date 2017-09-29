@@ -2318,7 +2318,7 @@ public class MslControl {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
                     
-                    throw new MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
+                    throw new MslErrorResponseException("Error receiving the message header.", rt, e);
                 }
                 throw e;
             } catch (final Throwable t) {
