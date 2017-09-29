@@ -218,6 +218,8 @@ public class MSLHttpListener implements IHttpListener {
         try {
             final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
             mis = new WiretapMessageInputStream(this.ctx, byteArrayInputStream, this.msgCtx.getKeyRequestData(), this.msgCtx.getCryptoContexts());
+        } catch (final IOException e) {
+            throw new WiretapException(e.getMessage(), e);
         } catch (final MslException e) {
             throw new WiretapException(e.getMessage(), e);
         }

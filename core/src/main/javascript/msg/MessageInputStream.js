@@ -172,6 +172,7 @@
          * @param {{result: function(MessageInputStream), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the message input
          *        stream, or any thrown exceptions.
+         * @throws IOException if there is a problem reading from the input stream.
          * @throws MslEncodingException if there is an error parsing the message.
          * @throws MslCryptoException if there is an error decrypting or verifying
          *         the header or creating the message payload crypto context.
@@ -1291,6 +1292,7 @@
      * @param {{result: function(MessageInputStream), timeout: function(), error: function(Error)}}
      *        callback the callback that will receive the message input
      *        stream, or any thrown exceptions.
+     * @throws IOException if there is a problem reading from the input stream.
      * @throws MslEncodingException if there is an error parsing the message.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header or creating the message payload crypto context.

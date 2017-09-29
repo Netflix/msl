@@ -178,6 +178,7 @@ public class MessageInputStream extends InputStream {
      *        response data.
      * @param cryptoContexts the map of service token names onto crypto
      *        contexts used to decrypt and verify service tokens.
+     * @throws IOException if there is a problem reading from the input stream.
      * @throws MslEncodingException if there is an error parsing the message.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header or creating the message payload crypto context.
@@ -199,7 +200,7 @@ public class MessageInputStream extends InputStream {
      *         authentication data or a master token, or a token is improperly
      *         bound to another token.
      */
-    public MessageInputStream(final MslContext ctx, final InputStream source, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
+    public MessageInputStream(final MslContext ctx, final InputStream source, final Set<KeyRequestData> keyRequestData, final Map<String,ICryptoContext> cryptoContexts) throws IOException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslUserIdTokenException, MslMessageException, MslException {
         // Parse the header.
         this.ctx = ctx;
         this.source = source;
