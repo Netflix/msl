@@ -26,18 +26,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
-	"use strict";
-	
-	const Base64 = require('../util/Base64.js');
-	const MslObject = require('../io/MslObject.js');
-	const MslArray = require('../io/MslArray.js');
-	const Class = require('../util/Class.js');
-	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
-	const JsonMslObject = require('../io/JsonMslObject.js');
-	const JsonMslArray = require('../io/JsonMslArray.js');
+    "use strict";
+    
+    const Base64 = require('../util/Base64.js');
+    const MslObject = require('../io/MslObject.js');
+    const MslArray = require('../io/MslArray.js');
+    const Class = require('../util/Class.js');
+    const MslEncoderFormat = require('../io/MslEncoderFormat.js');
+    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    const MslEncoderException = require('../io/MslEncoderException.js');
+    const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+    const JsonMslObject = require('../io/JsonMslObject.js');
+    const JsonMslArray = require('../io/JsonMslArray.js');
     
     /**
      * Escape a string to be output as a single line of text.
@@ -65,22 +65,22 @@
      * @return {string} the string.
      */
     var MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
-    	if (v instanceof MslObject || v instanceof MslArray) {
-    		return v.toString();
-    	} else if (v instanceof Uint8Array) {
-    	    return Base64.encode(v);
-    	} else {
-    		var json = JSON.stringify(v);
-    		return json
-    			.replace(/[\"]/g, '\\"')
-    			.replace(/[\\]/g, '\\\\')
-    			.replace(/[\/]/g, '\\/')
-    			.replace(/[\b]/g, '\\b')
-    			.replace(/[\f]/g, '\\f')
-    			.replace(/[\n]/g, '\\n')
-    			.replace(/[\r]/g, '\\r')
-    			.replace(/[\t]/g, '\\t');
-    	}
+        if (v instanceof MslObject || v instanceof MslArray) {
+            return v.toString();
+        } else if (v instanceof Uint8Array) {
+            return Base64.encode(v);
+        } else {
+            var json = JSON.stringify(v);
+            return json
+                .replace(/[\"]/g, '\\"')
+                .replace(/[\\]/g, '\\\\')
+                .replace(/[\/]/g, '\\/')
+                .replace(/[\b]/g, '\\b')
+                .replace(/[\f]/g, '\\f')
+                .replace(/[\n]/g, '\\n')
+                .replace(/[\r]/g, '\\r')
+                .replace(/[\t]/g, '\\t');
+        }
     };
     
     var MslEncoderFactory = module.exports = Class.create({
