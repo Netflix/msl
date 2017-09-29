@@ -1645,6 +1645,7 @@ public class MslControl {
      * @param request message header of the previously sent message, if any,
      *        the received message is responding to. May be null.
      * @return the received message.
+     * @throws IOException if there is a problem reading from the input stream.
      * @throws MslEncodingException if there is an error parsing the message.
      * @throws MslCryptoException if there is an error decrypting or verifying
      *         the header or creating the message payload crypto context.
@@ -1668,7 +1669,7 @@ public class MslControl {
      * @throws InterruptedException if the thread is interrupted while trying
      *         to delete an old master token the received message is replacing.
      */
-    private MessageInputStream receive(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final MessageHeader request) throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException, InterruptedException {
+    private MessageInputStream receive(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final MessageHeader request) throws IOException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, MslException, InterruptedException {
         // Grab the response.
         final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
         if (request != null)
@@ -2304,6 +2305,20 @@ public class MslControl {
                     if (cancelled(rt)) return null;
                     
                     throw new MslErrorResponseException("Error receiving the message header.", rt, e);
+                }
+                throw e;
+            } catch (final IOException e) {
+                // If we were cancelled then return null.
+                if (cancelled(e)) return null;
+                
+                // Maybe we can send an error response.
+                try {
+                    sendError(ctx, debugCtx, null, null, null, MslError.MSL_COMMS_FAILURE, null, out);
+                } catch (final Throwable rt) {
+                    // If we were cancelled then return null.
+                    if (cancelled(rt)) return null;
+                    
+                    throw new MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
                 }
                 throw e;
             } catch (final Throwable t) {
