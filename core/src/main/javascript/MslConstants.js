@@ -22,7 +22,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const WebCryptoAlgorithm = require('./crypto/WebCryptoAlgorithm.js');
+	var WebCryptoAlgorithm = require('./crypto/WebCryptoAlgorithm.js');
 
     /** RFC-4327 defines UTF-8 as the default encoding. */
     var MslConstants$DEFAULT_CHARSET = "utf-8";

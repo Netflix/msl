@@ -22,26 +22,27 @@
 (function(require, module) {
 	"use strict";
 	
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Arrays = require('../util/Arrays.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const PublicKey = require('../crypto/PublicKey.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
-	const KeyFormat = require('../crypto/KeyFormat.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const KeyResponseData = require('../keyx/KeyResponseData.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const MslMasterTokenException = require('../MslMasterTokenException.js');
-	const MslCrypto = require('../crypto/MslCrypto.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
-	const MslException = require('../MslException.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Arrays = require('../util/Arrays.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var PublicKey = require('../crypto/PublicKey.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var KeyFormat = require('../crypto/KeyFormat.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var MslCrypto = require('../crypto/MslCrypto.js');
+	var KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	var MslException = require('../MslException.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 
 	/**
      * Key Diffie-Hellman parameters ID.
@@ -413,7 +414,7 @@
 
             // Construct encryption and HMAC keys.
             function constructKeys(parametersId, params, requestPublicKey, responsePublicKey, responsePrivateKey) {
-                this.deriveSessionKeys(requestPublicKey, responsePrivateKey, params, {
+                self.deriveSessionKeys(requestPublicKey, responsePrivateKey, params, {
                     result: function(sessionKeys) {
                         AsyncExecutor(callback, function() {
                             // Create the master token.

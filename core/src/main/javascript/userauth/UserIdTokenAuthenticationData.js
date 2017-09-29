@@ -33,17 +33,17 @@
 (function(require, module) {
 	"use strict";
 	
-	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
-	const UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const UserIdToken = require('../tokens/UserIdToken.js');
-	const MslException = require('../MslException.js');
-	const MslUserAuthException = require('../MslUserAuthException.js');
+	var UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	var UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var UserIdToken = require('../tokens/UserIdToken.js');
+	var MslException = require('../MslException.js');
+	var MslUserAuthException = require('../MslUserAuthException.js');
     
     /**
      * Key master token key.

@@ -36,18 +36,18 @@
 (function(require, module) {
 	"use strict";
 	
-	const OutputStream = require('../io/OutputStream.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MessageHeader = require('../msg/MessageHeader.js');
-	const MessageCapabilities = require('../msg/MessageCapabilities.js');
-    const PayloadChunk = require('../msg/PayloadChunk.js');
-	const MslConstants = require('../MslConstants.js');
-	const BlockingQueue = require('../util/BlockingQueue.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslIoException = require('../MslIoException.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const ErrorHeader = require('../msg/ErrorHeader.js');
-	const MslException = require('../MslException.js');
+	var OutputStream = require('../io/OutputStream.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MessageHeader = require('../msg/MessageHeader.js');
+	var MessageCapabilities = require('../msg/MessageCapabilities.js');
+    var PayloadChunk = require('../msg/PayloadChunk.js');
+	var MslConstants = require('../MslConstants.js');
+	var BlockingQueue = require('../util/BlockingQueue.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslIoException = require('../MslIoException.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var ErrorHeader = require('../msg/ErrorHeader.js');
+	var MslException = require('../MslException.js');
     
     var MessageOutputStream = module.exports = OutputStream.extend({
         /**

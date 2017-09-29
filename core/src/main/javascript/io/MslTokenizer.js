@@ -23,9 +23,9 @@
 (function(require, module) {
 	"use strict";
 
-	const Class = require('../util/Class.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var Class = require('../util/Class.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslInternalException = require('../MslInternalException.js');
 
     var MslTokenizer = module.exports = Class.create({
         /**

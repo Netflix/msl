@@ -16,12 +16,12 @@
 (function(require, module) {
 	"use strict";
 	
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslObject = require('../io/MslObject.js');
-	const MslArray = require('../io/MslArray.js');
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const Arrays = require('../util/Arrays.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslObject = require('../io/MslObject.js');
+	var MslArray = require('../io/MslArray.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var Arrays = require('../util/Arrays.js');
     
     /**
      * Create a MSL array from a collection of objects that are either one of

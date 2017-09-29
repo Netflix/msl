@@ -19,20 +19,20 @@
  *
  */
 describe("EccAuthenticationFactory", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const MslEncoderFactory = require('../../../../../core/src/main/javascript/io/MslEncoderFactory.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
-    const EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
-    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    const EccStore = require('../../../../../core/src/main/javascript/entityauth/EccStore.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var MslEncoderFactory = require('../../../../../core/src/main/javascript/io/MslEncoderFactory.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
+    var EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
+    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var EccStore = require('../../../../../core/src/main/javascript/entityauth/EccStore.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -89,6 +89,7 @@ describe("EccAuthenticationFactory", function() {
         });
         waitsFor(function() { return authdata; }, "authdata", 100);
 
+        var dataMo, authdataMo;
         runs(function() {
             expect(authdata).not.toBeNull();
             expect(authdata instanceof EccAuthenticationData).toBeTruthy();

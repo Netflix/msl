@@ -20,25 +20,25 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("DefaultMslEncoderFactory", function() {
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    const MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
-    const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    var ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    var MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
+    var ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    var PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
 
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;
@@ -115,14 +115,14 @@ describe("DefaultMslEncoderFactory", function() {
             return random.nextInt();
         if ("MslArray" == type) {
             var ma = encoder.createArray();
-            let innerType = getRandomType();
-            ma.put(-1, createTypedValue(innerType));
+            var maInnerType = getRandomType();
+            ma.put(-1, createTypedValue(maInnerType));
             return ma;
         }
         if ("MslObject" == type) {
             var mo = encoder.createObject();
-            let innerType = getRandomType();
-            mo.put(MSL_OBJECT_KEY, createTypedValue(innerType));
+            var moInnerType = getRandomType();
+            mo.put(MSL_OBJECT_KEY, createTypedValue(moInnerType));
             return mo;
         }
         if ("long" == type)
@@ -680,6 +680,8 @@ describe("DefaultMslEncoderFactory", function() {
         }
 
         it("create object", function() {
+            var key, type, value, expected, typedValue;
+            
             // Create the object.
             var mo = encoder.createObject();
             expect(mo).not.toBeNull();
@@ -687,42 +689,42 @@ describe("DefaultMslEncoderFactory", function() {
             // Populate it with some stuff.
             var map = {};
             var types = {};
-            for (let i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                let key = MSL_OBJECT_KEY + ":" + i;
-                let typeValue = createRandomValue();
-                let type = typeValue.type;
-                let value = typeValue.value;
+            for (var j = 0; j < MAX_NUM_ELEMENTS; ++j) {
+                key = MSL_OBJECT_KEY + ":" + j;
+                var typeValue = createRandomValue();
+                type = typeValue.type;
+                value = typeValue.value;
                 types[key] = type;
                 map[key] = value;
                 mo.put(key, value);
             }
 
             // Verify object state.
-            for (let key in map) {
-                let expected = map[key];
-                let value = mo.get(key);
+            for (key in map) {
+                expected = map[key];
+                value = mo.get(key);
                 expect(value).toEqual(expected);
-                let type = types[key];
+                type = types[key];
                 typedValue = getTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions.
-            for (let key in map) {
-                let expected = map[key];
-                let value = mo.opt(key);
+            for (key in map) {
+                expected = map[key];
+                value = mo.opt(key);
                 expect(value).toEqual(expected);
-                let type = types[key];
-                let typedValue = optTypedField(key, type, mo);
+                type = types[key];
+                typedValue = optTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions with mismatched type.
-            for (let key in map) {
-                let expected = map[key];
-                let type = types[key];
-                let randomType = getRandomType();
-                let typedValue = optTypedField(key, randomType, mo);
+            for (key in map) {
+                expected = map[key];
+                type = types[key];
+                var randomType = getRandomType();
+                typedValue = optTypedField(key, randomType, mo);
                 
                 // opt function returns the value if the type is correct...
                 if (type == randomType) {
@@ -785,14 +787,16 @@ describe("DefaultMslEncoderFactory", function() {
         });
 
         it("create object from map", function() {
+            var key, type, value;
+            
             // Generate some values.
             var map = {};
             var types = {};
-            for (let i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                let key = MSL_OBJECT_KEY + ":" + i;
-                let typeValue = createRandomValue();
-                let type = typeValue.type;
-                let value = typeValue.value;
+            for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
+                key = MSL_OBJECT_KEY + ":" + i;
+                var typeValue = createRandomValue();
+                type = typeValue.type;
+                value = typeValue.value;
                 map[key] = value;
                 types[key] = type;
             }
@@ -802,17 +806,19 @@ describe("DefaultMslEncoderFactory", function() {
             expect(mo).not.toBeNull();
 
             // Verify object state.
-            for (let key in map) {
-                let expected = map[key];
-                let type = types[key];
-                let value = mo.get(key);
+            for (key in map) {
+                var expected = map[key];
+                type = types[key];
+                value = mo.get(key);
                 expect(value).toEqual(expected);
-                let typedValue = getTypedField(key, type, mo);
+                var typedValue = getTypedField(key, type, mo);
                 expect(typedValue).toEqual(expected);
             }
         });
 
         it("create array", function() {
+            var type, value, expected, typedValue;
+            
             // Create the array.
             var ma = encoder.createArray();
             expect(ma).not.toBeNull();
@@ -820,41 +826,41 @@ describe("DefaultMslEncoderFactory", function() {
             // Populate it with some stuff.
             var list = [];
             var types = [];
-            for (let i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                let typeValue = createRandomValue();
-                let type = typeValue.type;
-                let value = typeValue.value;
+            for (var m = 0; m < MAX_NUM_ELEMENTS; ++m) {
+                var typeValue = createRandomValue();
+                type = typeValue.type;
+                value = typeValue.value;
                 list.push(value);
                 types.push(type);
                 ma.put(-1, value);
             }
 
             // Verify array state.
-            for (let i = 0; i < list.length; ++i) {
-                let expected = list[i];
-                let value = ma.get(i);
+            for (var n = 0; n < list.length; ++n) {
+                expected = list[n];
+                value = ma.get(n);
                 expect(value).toEqual(expected);
-                let type = types[i];
-                let typedValue = getTypedElement(i, type, ma);
+                type = types[n];
+                typedValue = getTypedElement(n, type, ma);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions.
-            for (let i = 0; i < list.length; ++i) {
-                let expected = list[i];
-                let value = ma.opt(i);
+            for (var o = 0; o < list.length; ++o) {
+                expected = list[o];
+                value = ma.opt(o);
                 expect(value).toEqual(expected);
-                let type = types[i];
-                let typedValue = optTypedElement(i, type, ma);
+                type = types[o];
+                typedValue = optTypedElement(o, type, ma);
                 expect(typedValue).toEqual(expected);
             }
             
             // Verify opt functions with mismatched type.
-            for (let i = 0; i < list.length; ++i) {
-                let expected = list[i];
-                let type = types[i];
-                let randomType = getRandomType();
-                let typedValue = optTypedElement(i, randomType, ma);
+            for (var p = 0; p < list.length; ++p) {
+                expected = list[p];
+                type = types[p];
+                var randomType = getRandomType();
+                typedValue = optTypedElement(p, randomType, ma);
                 
                 // opt function returns the value if the type is correct...
                 if (type == randomType) {
@@ -918,13 +924,15 @@ describe("DefaultMslEncoderFactory", function() {
         });
 
         it("create array from collection", function() {
+            var type, value;
+            
             // Generate some elements.
             var list = [];
             var types = [];
-            for (let i = 0; i < MAX_NUM_ELEMENTS; ++i) {
-                let typeValue = createRandomValue();
-                let type = typeValue.type;
-                let value = typeValue.value;
+            for (var i = 0; i < MAX_NUM_ELEMENTS; ++i) {
+                var typeValue = createRandomValue();
+                type = typeValue.type;
+                value = typeValue.value;
                 list.push(value);
                 types.push(type);
             }
@@ -934,12 +942,12 @@ describe("DefaultMslEncoderFactory", function() {
             expect(ma).not.toBeNull();
 
             // Verify array state.
-            for (let i = 0; i < list.length; ++i) {
-                let expected = list[i];
-                let value = ma.get(i);
+            for (var j = 0; j < list.length; ++j) {
+                var expected = list[j];
+                value = ma.get(j);
                 expect(value).toEqual(expected);
-                let type = types[i];
-                let typedValue = getTypedElement(i, type, ma);
+                type = types[j];
+                var typedValue = getTypedElement(j, type, ma);
                 expect(typedValue).toEqual(expected);
             }
         });

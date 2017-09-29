@@ -26,20 +26,20 @@
 (function(require, module) {
 	"use strict";
 	
-	const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-	const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-	const MessageContext = require('../../../../../core/src/main/javascript/msg/MessageContext.js');
-	const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-	const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-	const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-	const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-	const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-	const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-	const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-	const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+	var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+	var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+	var MessageContext = require('../../../../../core/src/main/javascript/msg/MessageContext.js');
+	var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+	var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+	var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+	var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+	var AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+	var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+	var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
 	
-	const MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
-	const MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
+	var MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
+	var MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');
 	
     var DH_PARAMETERS_ID = "1";
     var RSA_KEYPAIR_ID = "rsaKeypairId";

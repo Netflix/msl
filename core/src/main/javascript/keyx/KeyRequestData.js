@@ -38,12 +38,12 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
 	
     /**
      * Key key exchange scheme.

@@ -37,30 +37,33 @@
 (function(require, module) {
 	"use strict";
 
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Arrays = require('../util/Arrays.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
-	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
-	const MslException = require('../MslException.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslCrypto = require('../crypto/MslCrypto.js');
-	const SecretKey = require('../crypto/SecretKey.js');
-	const PublicKey = require('../crypto/PublicKey.js');
-	const PrivateKey = require('../crypto/PrivateKey.js');
-	const MslMasterTokenException = require('../tokens/MasterToken.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Arrays = require('../util/Arrays.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	var JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var MslException = require('../MslException.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslCrypto = require('../crypto/MslCrypto.js');
+	var SecretKey = require('../crypto/SecretKey.js');
+	var PublicKey = require('../crypto/PublicKey.js');
+	var PrivateKey = require('../crypto/PrivateKey.js');
+	var MslMasterTokenException = require('../tokens/MasterToken.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var ICryptoContext = require('../crypto/ICryptoContext.js');
+	var Base64 = require('../util/Base64.js');
 
     /**
      * Wrapping key wrap mechanism.
@@ -167,7 +170,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (that === this) return true;
-            if (!(that instanceof JsonWebKeyLadderExchange$RequestData)) return false;
+            if (!(that instanceof RequestData)) return false;
             return equals.base.call(this, that) &&
                 this.mechanism == that.mechanism &&
                 Arrays.equal(this.wrapdata, that.wrapdata);
@@ -177,7 +180,7 @@
         uniqueKey: function uniqueKey() {
             var key = uniqueKey.base.call(this) + ':' + this.mechanism;
             if (this.wrapdata)
-                key += ':' + Arrays$.ashCode(this.wrapdata);
+                key += ':' + Arrays.hashCode(this.wrapdata);
             return key;
         },
     });
@@ -208,7 +211,7 @@
         var wrapdata;
         try {
         	switch (mechanism) {
-	            case PSK:
+	            case Mechanism.PSK:
 	            {
 	                wrapdata = null;
 	                break;
@@ -290,7 +293,7 @@
         /** @inheritDoc */
         equals: function equals(that) {
             if (this === that) return true;
-            if (!(that instanceof JsonWebKeyLadderExchange$ResponseData)) return false;
+            if (!(that instanceof ResponseData)) return false;
             return equals.base.call(this, that) &&
                 Arrays.equal(this.wrapKey, that.wrapKey) &&
                 Arrays.equal(this.wrapdata, that.wrapdata) &&
@@ -318,7 +321,7 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
-    var ResponseData$parse = function JsonWebKeyLadderExchange$ResponseData$parse(masterToken, keyDataMo) {
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
         var wrapKey, wrapdata, encryptionKey, hmacKey;
         try {
             wrapKey = keyDataMo.getBytes(KEY_WRAP_KEY);
@@ -740,7 +743,7 @@
                                 {
                                     wrapKeyCryptoContext = this.repository.getCryptoContext(requestWrapdata);
                                     if (!wrapKeyCryptoContext)
-                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, base64$encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
+                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, Base64.encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                                     break;
                                 }
                                 default:

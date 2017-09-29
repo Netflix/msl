@@ -23,7 +23,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslException = require('./MslException.js');
+	var MslException = require('./MslException.js');
 		
 	var MslMasterTokenException = module.exports = MslException.extend({
 	    /**

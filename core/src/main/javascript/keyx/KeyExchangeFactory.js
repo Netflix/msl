@@ -23,13 +23,13 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const SecretKey = require('../crypto/SecretKey.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslError = require('../MslError.js');
+	var Class = require('../util/Class.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var SecretKey = require('../crypto/SecretKey.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslError = require('../MslError.js');
 	
     /**
      * The key exchange data struct contains key response data and a crypto

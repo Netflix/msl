@@ -20,19 +20,19 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SimpleMslStore", function() {
-    const SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
 
 	/**
 	 * @param {Array.<ServiceToken>} tokensA first set of service tokens.
@@ -1229,8 +1229,8 @@ describe("SimpleMslStore", function() {
                 unboundAndMasterBoundTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
             }, this);
             var unboundAndMasterBoundTokens = [];
-            for (let key in unboundAndMasterBoundTokensMap)
-                unboundAndMasterBoundTokens.push(unboundAndMasterBoundTokensMap[key]);
+            for (var umtKey in unboundAndMasterBoundTokensMap)
+                unboundAndMasterBoundTokens.push(unboundAndMasterBoundTokensMap[umtKey]);
             expect(serviceTokensEqual(unboundAndMasterBoundTokens, storedMasterBoundTokens)).toBeTruthy();
 
             // This should return all of the tokens.
@@ -1247,7 +1247,7 @@ describe("SimpleMslStore", function() {
                 allTokensMap[masterBoundToken.uniqueKey()] = masterBoundToken;
             }, this);
             var allTokens = [];
-            for (let key in allTokensMap)
+            for (var key in allTokensMap)
                 allTokens.push(allTokensMap[key]);
             expect(serviceTokensEqual(allTokens, storedUserBoundTokens)).toBeTruthy();
 
@@ -1560,8 +1560,8 @@ describe("SimpleMslStore", function() {
                 expectedServiceTokensAMap[serviceTokenA.uniqueKey()] = serviceTokenA;
             }, this);
             var expectedServiceTokensA = [];
-            for (let key in expectedServiceTokensAMap)
-                expectedServiceTokensA.push(expectedServiceTokensAMap[key]);
+            for (var aKey in expectedServiceTokensAMap)
+                expectedServiceTokensA.push(expectedServiceTokensAMap[aKey]);
             expect(storedServiceTokensA).toEqual(expectedServiceTokensA);
             var expectedServiceTokensBMap = {};
             masterBoundServiceTokens.forEach(function(masterBoundServiceToken) {
@@ -1571,8 +1571,8 @@ describe("SimpleMslStore", function() {
                 expectedServiceTokensBMap[serviceTokenB.uniqueKey()] = serviceTokenB;
             }, this);
             var expectedServiceTokensB = [];
-            for (let key in expectedServiceTokensBMap)
-                expectedServiceTokensB.push(expectedServiceTokensBMap[key]);
+            for (var bKey in expectedServiceTokensBMap)
+                expectedServiceTokensB.push(expectedServiceTokensBMap[bKey]);
             expect(storedServiceTokensB).toEqual(expectedServiceTokensB);
         });
     });

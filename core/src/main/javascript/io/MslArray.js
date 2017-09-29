@@ -34,9 +34,9 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodable = require('../io/MslEncodable.js');
+	var Class = require('../util/Class.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodable = require('../io/MslEncodable.js');
 
     /**
      * @interface
@@ -78,7 +78,7 @@
          *         type.
          */
         get: function get(index) {
-            const MslObject = require('../io/MslObject.js');
+            var MslObject = require('../io/MslObject.js');
             
             if (index < 0 || index >= this.list.length)
                 throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
@@ -198,7 +198,7 @@
          *         type.
          */
         getMslObject: function getMslObject(index, encoder) {
-            const MslObject = require('../io/MslObject.js');
+            var MslObject = require('../io/MslObject.js');
             
             var o = this.get(index);
             if (o instanceof MslObject)
@@ -294,7 +294,7 @@
          *         exceeds the number of elements in the array.
          */
         opt: function opt(index) {
-            const MslObject = require('../io/MslObject.js');
+            var MslObject = require('../io/MslObject.js');
             
             if (index < 0 || index >= this.list.length)
                 throw new RangeError("MslArray[" + index + "] is negative or exceeds array length.");
@@ -429,7 +429,7 @@
          *         exceeds the number of elements in the array.
          */
         optMslObject: function optMslObject(index, encoder) {
-            const MslObject = require('../io/MslObject.js');
+            var MslObject = require('../io/MslObject.js');
             
             var o = this.opt(index);
             if (o instanceof MslObject)
@@ -521,7 +521,7 @@
          * @throws TypeError if the value is of an unsupported type.
          */
         put: function put(index, value) {
-            const MslObject = require('../io/MslObject.js');
+            var MslObject = require('../io/MslObject.js');
             
             if (index < -1)
                 throw new RangeError("MslArray[" + index + "] is negative.");
@@ -755,7 +755,7 @@
          *         with the same elements in the same order.
          */
         equals: function equals(that) {
-            const MslEncoderUtils = require('../io/MslEncoderUtils.js');
+            var MslEncoderUtils = require('../io/MslEncoderUtils.js');
             
         	if (this == that) return true;
         	if (!(that instanceof MslArray)) return false;
@@ -769,7 +769,7 @@
         
         /** @inheritDoc */
         toString: function toString() {
-            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            var MslEncoderFactory = require('../io/MslEncoderFactory.js');
             
         	return MslEncoderFactory.stringify(this.list);
         },

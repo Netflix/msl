@@ -23,7 +23,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const AuthenticationUtils = require('../util/AuthenticationUtils.js');
+	var AuthenticationUtils = require('../util/AuthenticationUtils.js');
 		
 	var NullAuthenticationUtils = module.exports = AuthenticationUtils.extend({
 		/** @inheritDoc */

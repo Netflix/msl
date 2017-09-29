@@ -37,27 +37,29 @@
 (function(require, module) {
 	"use strict";
 	
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Arrays = require('../util/Arrays.js');
-	const Base64 = require('../util/Base64.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
-	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
-	const MslException = require('../MslException.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
-	const SecretKey = require('../crypto/SecretKey.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Arrays = require('../util/Arrays.js');
+	var Base64 = require('../util/Base64.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	var JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var MslException = require('../MslException.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var SecretKey = require('../crypto/SecretKey.js');
 
     /**
      * Wrapping key wrap mechanism.
@@ -502,7 +504,7 @@
 
                     // Wrap wrapping key using specified wrapping key.
                     var encoder = ctx.getMslEncoderFactory();
-                    createCryptoContext(ctx, store, mechanism, prevWrapdata, identity, {
+                    createCryptoContext(ctx, this.store, mechanism, prevWrapdata, identity, {
                         result: function (wrapKeyCryptoContext) {
                             wrapKeyCryptoContext.wrap(wrapKey, encoder, format, {
                                 result: function(wrappedWrapJwk) {
@@ -653,7 +655,7 @@
                                 {
                                     wrapKeyCryptoContext = this.repository.getCryptoContext(requestWrapdata);
                                     if (!wrapKeyCryptoContext)
-                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, base64$encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
+                                        throw new MslKeyExchangeException(MslError.KEYX_WRAPPING_KEY_MISSING, Base64.encode(requestWrapdata)).setEntityAuthenticationData(entityAuthData);
                                     break;
                                 }
                                 default:

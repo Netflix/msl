@@ -23,10 +23,10 @@
 (function(require, module) {
     "use strict";
     
-    const InputStream = require('../io/InputStream.js');
-    const ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
-    const MslIoException = require('../MslIoException.js');
-    const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+    var InputStream = require('../io/InputStream.js');
+    var ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
+    var MslIoException = require('../MslIoException.js');
+    var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 
 	var BufferedInputStream = module.exports = InputStream.extend({
 		/**

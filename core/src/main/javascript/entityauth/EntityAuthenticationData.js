@@ -37,12 +37,12 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEntityAuthException = require('../MslEntityAuthException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEntityAuthException = require('../MslEntityAuthException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
 	
     /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";

@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 describe("BlockingQueue", function() {
-    const BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     
     var TIMEOUT = 150;
     var DELAY = 1;
@@ -303,9 +303,9 @@ describe("BlockingQueue", function() {
                 }
                 case 1:
                 {
-                    let ticket = tickets.pop();
-                    if (ticket)
-                        queue.cancel(ticket);
+                    var ticket1 = tickets.pop();
+                    if (ticket1)
+                        queue.cancel(ticket1);
                     break;
                 }
                 case 2:
@@ -317,16 +317,16 @@ describe("BlockingQueue", function() {
                 case 3:
                 case 4:
                 {
-                    let item = items.shift();
+                    var item = items.shift();
                     expectedItems.push(item);
                     queue.add(item);
                     break;
                 }
                 default:
                 {
-                    let name = nextName();
-                    let ticket = queue.poll(TIMEOUT, consumer.getCallback(name));
-                    tickets.push(ticket);
+                    var name = nextName();
+                    var ticketDefault = queue.poll(TIMEOUT, consumer.getCallback(name));
+                    tickets.push(ticketDefault);
                     ++numConsumers;
                     break;
                 }

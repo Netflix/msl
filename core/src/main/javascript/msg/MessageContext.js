@@ -29,8 +29,8 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslConstants = require('../MslConstants.js');
-	const Class = require('../util/Class.js');
+	var MslConstants = require('../MslConstants.js');
+	var Class = require('../util/Class.js');
 
 	/**
 	 * Re-authentication reason codes.

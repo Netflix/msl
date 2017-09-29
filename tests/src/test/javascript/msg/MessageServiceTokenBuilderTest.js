@@ -20,21 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageServiceTokenBuilder", function() {
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-    const MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
-    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    var MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    var MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
+    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     
 	var random = new Random();
 	var trustedNetCtx;
@@ -382,7 +382,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
             expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
             var serviceTokens = tokenBuilder.getPrimaryServiceTokens();
@@ -407,7 +407,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
         });
@@ -437,7 +437,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
         });
@@ -458,7 +458,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
         });
@@ -479,7 +479,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
         });
@@ -501,7 +501,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         runs(function() {
             msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
             expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
             var serviceTokens = tokenBuilder.getPeerServiceTokens();
@@ -527,7 +527,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         runs(function() {
             msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
         });
@@ -558,7 +558,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         runs(function() {
             msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
         });
@@ -579,7 +579,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
         });
@@ -601,7 +601,7 @@ describe("MessageServiceTokenBuilder", function() {
         
         runs(function() {
             msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
-            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
             expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeFalsy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
         });
@@ -622,7 +622,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return msgBuilder && serviceToken; }, "msgBuilder and serviceToken not received", 100);
         
         runs(function() {
-            tokenBuilder = new MessageServiceTokenBuilder(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
+            var tokenBuilder = new MessageServiceTokenBuilder(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
             var f = function() {
                 tokenBuilder.addPeerServiceToken(serviceToken);
             };

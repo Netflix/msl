@@ -16,20 +16,20 @@
 (function(require, module) {
     "use strict";
     
-    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    const RsaAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationFactory.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
-    const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    var RsaAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationFactory.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
+    var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     
-    const MslTestUtils = require('../util/MslTestUtils.js');
+    var MslTestUtils = require('../util/MslTestUtils.js');
     
     /** 1024-bit RSA public key. */
    	var RSA_PUBKEY_B64 =

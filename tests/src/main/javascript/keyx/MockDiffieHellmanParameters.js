@@ -22,8 +22,8 @@
 (function(require, module) {
     "use strict";
     
-    const DiffieHellmanParameters = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanParameters.js');
-    const DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
+    var DiffieHellmanParameters = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanParameters.js');
+    var DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
 
     /** Default parameters. */
     var p = new Uint8Array([23]);

@@ -36,14 +36,14 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Arrays = require('../util/Arrays.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Arrays = require('../util/Arrays.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
 	
     /**
      * Key compression algorithms.
@@ -179,7 +179,7 @@
             // Extract compression algorithms.
             var compressionAlgos = [];
             var algos = capabilitiesMo.optMslArray(KEY_COMPRESSION_ALGOS);
-            for (let i = 0; algos && i < algos.size(); ++i) {
+            for (var i = 0; algos && i < algos.size(); ++i) {
                 var algo = algos.getString(i);
                 // Ignore unsupported algorithms.
                 if (MslConstants.CompressionAlgorithm[algo])
@@ -189,13 +189,13 @@
             // Extract languages.
             var languages = [];
             var langs = capabilitiesMo.optMslArray(KEY_LANGUAGES);
-            for (let i = 0; langs && i < langs.size(); ++i)
-                languages.push(langs.getString(i));
+            for (var j = 0; langs && j < langs.size(); ++j)
+                languages.push(langs.getString(j));
             
             // Extract encoder formats.
             var encoderFormats = [];
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
-            for (let i = 0; formats && i < formats.size(); ++i) {
+            for (var k = 0; formats && k < formats.size(); ++k) {
                 var format = formats.getString(i);
                 var encoderFormat = MslEncoderFormat.getFormat(format);
                 // Ignore unsupported formats.

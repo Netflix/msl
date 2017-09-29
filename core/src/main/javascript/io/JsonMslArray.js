@@ -22,16 +22,16 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslArray = require('../io/MslArray.js');
-	const MslObject = require('../io/MslObject.js');
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	const textEncoding = require('../lib/textEncoding.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslException = require('../MslException.js');
-	const Base64 = require('../util/Base64.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslArray = require('../io/MslArray.js');
+	var MslObject = require('../io/MslObject.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	var textEncoding = require('../lib/textEncoding.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslException = require('../MslException.js');
+	var Base64 = require('../util/Base64.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
 	
 	var JsonMslArray = module.exports = MslArray.extend({
         /**
@@ -61,7 +61,7 @@
             if (source instanceof Array) {
                 ja = source;
             } else if (source instanceof MslArray) {
-            	for (let i = 0; i < source.size(); ++i)
+            	for (var i = 0; i < source.size(); ++i)
             		ja.push(source.opt(i));
             } else if (source instanceof Uint8Array) {
                 try {
@@ -79,8 +79,8 @@
             
             // Shallow copy the source data into this MSL array.
             try {
-                for (let i = 0; i < ja.length; ++i)
-                    this.put(-1, ja[i]);
+                for (var j = 0; j < ja.length; ++j)
+                    this.put(-1, ja[j]);
             } catch (e) {
                 if (e instanceof TypeError)
                     throw new MslEncoderException("Invalid MSL array encoding.", e);
@@ -90,7 +90,7 @@
         
         /** @inheritDoc */
         put: function put(index, value) {
-            const JsonMslObject = require('../io/JsonMslObject.js');
+            var JsonMslObject = require('../io/JsonMslObject.js');
             
             var o;
             try {
@@ -173,7 +173,7 @@
         	
         	function next(ja, size, i) {
     			AsyncExecutor(callback, function() {
-    			    const JsonMslObject = require('../io/JsonMslObject.js');
+    			    var JsonMslObject = require('../io/JsonMslObject.js');
     			    
 	    			if (i >= size)
 	    				return ja;
@@ -203,8 +203,8 @@
 	    			        error: callback.error,
 	    			    });
 	    			} else if (value instanceof MslObject) {
-	    			    let jsonValue = new JsonMslObject(encoder, value);
-	    			    jsonValue.toJSONObject(encoder, {
+	    			    var moJsonValue = new JsonMslObject(encoder, value);
+	    			    moJsonValue.toJSONObject(encoder, {
 	    			        result: function(o) {
 	    			            AsyncExecutor(callback, function() {
 	    			                ja.push(o);
@@ -214,8 +214,8 @@
 	    			        error: callback.error,
 	    			    });
 	    			} else if (value instanceof MslArray) {
-	    			    let jsonValue = new JsonMslArray(encoder, value);
-	    			    jsonValue.toJSONArray(encoder, {
+	    			    var maJsonValue = new JsonMslArray(encoder, value);
+	    			    maJsonValue.toJSONArray(encoder, {
 	    			        result: function(a) {
 	    			            AsyncExecutor(callback, function() {
 	    			                ja.push(a);

@@ -20,21 +20,26 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 xdescribe("DiffieHellmanExchangeSuite", function() {
-    const MslEncoderFactory = require('../../../../../core/src/main/javascript/io/MslEncoderFactory.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
-    const DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
+    var DhParameterSpec = require('../../../../../core/src/main/javascript/keyx/DhParameterSpec.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    var KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
 
-    const MockDiffieHellmanParameters = require('../../../main/javascript/keyx/MockDiffieHellmanParameters.js');
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockDiffieHellmanParameters = require('../../../main/javascript/keyx/MockDiffieHellmanParameters.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -210,7 +215,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(ctx, mo, {
+                KeyRequestData.parse(ctx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -401,7 +406,6 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             var resp = new ResponseData(MASTER_TOKEN, PARAMETERS_ID, RESPONSE_PUBLIC_KEY);
             expect(resp.keyExchangeScheme).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN);
             expect(resp.masterToken).toEqual(MASTER_TOKEN);
-            expect(resp.identity).toEqual(IDENTITY);
             expect(resp.parametersId).toEqual(PARAMETERS_ID);
             expect(resp.publicKey).toEqual(RESPONSE_PUBLIC_KEY);
             
@@ -421,7 +425,6 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            var moResp = ResponseData.parse(MASTER_TOKEN, keydata);
 	            expect(moResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
 	            expect(moResp.masterToken).toEqual(resp.masterToken);
-	            expect(moResp.identity).toEqual(resp.identity);
 	            expect(moResp.parametersId).toEqual(resp.parametersId);
 	            expect(moResp.publicKey).toEqual(resp.publicKey);
 	            moResp.getKeydata(encoder, ENCODER_FORMAT, {
@@ -452,7 +455,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         	runs(function() {
         		expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
 
-        		MasterToken$parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
+        		MasterToken.parse(ctx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
         			result: function(token) { masterToken = token; },
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
@@ -474,7 +477,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
             	MslTestUtils.toMslObject(encoder, data, {
             		result: function(mo) {
-		                KeyResponseData$parse(ctx, mo, {
+		                KeyResponseData.parse(ctx, mo, {
 		                    result: function(data) { keyResponseData = data; },
 		                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                });
@@ -604,7 +607,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(MASTER_TOKEN, keydata);
 	            	},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
@@ -632,7 +635,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             runs(function() {
 	            dataA.getKeydata(encoder, ENCODER_FORMAT, {
 	            	result: function(keydata) {
-	            		dataA2 = ResponseData.parse(masterTokenA, keydata);
+	            		dataA2 = ResponseData.parse(MASTER_TOKEN, keydata);
 	            	},
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });

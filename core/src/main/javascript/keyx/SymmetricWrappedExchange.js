@@ -22,25 +22,25 @@
 (function(require, module) {
 	"use strict";
 	
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const KeyResponseData = require('../keyx/KeyResponseData.js');
-	const Arrays = require('../util/Arrays.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const MslMasterTokenException = require('../MslMasterTokenException.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
-	const PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
-	const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslException = require('../MslException.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	var KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var Arrays = require('../util/Arrays.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var PresharedAuthenticationData = require('../entityauth/PresharedAuthenticationData.js');
+	var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslException = require('../MslException.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
 	
     /**
      * Key ID.

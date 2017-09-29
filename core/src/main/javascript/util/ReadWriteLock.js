@@ -27,10 +27,10 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslConstants = require('../MslConstants.js');
-	const Class = require('../util/Class.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var MslConstants = require('../MslConstants.js');
+	var Class = require('../util/Class.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslInternalException = require('../MslInternalException.js');
 	
     /**
      * @param {number} the ticket number.
@@ -138,22 +138,22 @@
             // reader number in case deliver triggers a callback to the read-
             // write lock.
             if (this._waitingReaders[ticket]) {
-                let deliver = this._waitingReaders[ticket];
+                var deliverR = this._waitingReaders[ticket];
                 delete this._waitingReaders[ticket];
                 if (ticket == this._nextReader)
                     this._nextReader = nextReader(this);
-                deliver.call(this, true);
+                deliverR.call(this, true);
             }
 
             // Deliver undefined to a waiting writer after updating the next
             // writer number in case deliver triggers a callback to the read-
             // write lock.
             if (this._waitingWriters[ticket]) {
-                let deliver = this._waitingWriters[ticket];
+                var deliverW = this._waitingWriters[ticket];
                 delete this._waitingWriters[ticket];
                 if (ticket == this._nextWriter)
                     this._nextWriter = nextWriter(this);
-                deliver.call(this, true);
+                deliverW.call(this, true);
             }
         },
 
@@ -314,12 +314,12 @@
                 // Grab the activation function but do not execute it until
                 // after updating the next writer number in case activating
                 // triggers a callback to the read-write lock.
-                let activate = this._waitingWriters[this._nextWriter];
+                var activateW = this._waitingWriters[this._nextWriter];
                 delete this._waitingWriters[this._nextWriter];
                 this._nextWriter = nextWriter(this);
 
                 // Activate the waiting writer.
-                activate.call(this, false);
+                activateW.call(this, false);
                 return;
             }
 
@@ -330,9 +330,9 @@
 
                 // Activate the waiting reader after deleting it from the list
                 // of waiting readers.
-                let activate = this._waitingReaders[next];
+                var activateR = this._waitingReaders[next];
                 delete this._waitingReaders[next];
-                activate.call(this, false);
+                activateR.call(this, false);
             }
 
             // All readers were activated.

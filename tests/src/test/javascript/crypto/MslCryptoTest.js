@@ -20,18 +20,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MslCrypto", function() {
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
-    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
+    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
     
     describe("AES-KW", function() {
         /** RFC 3394 encryption key. */

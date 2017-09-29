@@ -24,7 +24,22 @@
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
   "jshintConfig": {
-    "esversion": 6
+    "sub": true,
+    "expr": true,
+    "undef": true,
+    "typed": true,
+    "jasmine": true,
+    "predef": [
+      "window",
+      "console",
+      "setTimeout",
+      "clearTimeout",
+      "require",
+      "module",
+      "mkmodule",
+      "Promise",
+      "parameterize"
+    ]
   },
   "dependencies": {
     "jsrsasign": "^7.2.2"

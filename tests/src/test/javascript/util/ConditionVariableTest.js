@@ -15,8 +15,8 @@
  */
 
 describe("ConditionVariable", function() {
-    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
     
     var TIMEOUT = 150;
     var DELAY = 1;
@@ -251,8 +251,8 @@ describe("ConditionVariable", function() {
                 }
                 case 1:
                 {
-                    let ticket = tickets.shift();
-                    if (ticket)
+                    var ticket1 = tickets.shift();
+                    if (ticket1)
                         ++expectedSignaled;
                     cv.signal();
                     break;
@@ -266,10 +266,10 @@ describe("ConditionVariable", function() {
                 }
                 case 3:
                 {
-                    let ticket = tickets.shift();
-                    if (ticket) {
+                    var ticket3 = tickets.shift();
+                    if (ticket3) {
                         ++expectedCancelled;
-                        cv.cancel(ticket);
+                        cv.cancel(ticket3);
                     }
                     break;
                 }
@@ -282,9 +282,9 @@ describe("ConditionVariable", function() {
                 }
                 default:
                 {
-                    let name = nextName();
-                    let ticket = cv.wait(TIMEOUT, counter.getCallback(name));
-                    tickets.push(ticket);
+                    var name = nextName();
+                    var ticketDefault = cv.wait(TIMEOUT, counter.getCallback(name));
+                    tickets.push(ticketDefault);
                     ++numWaiters;
                     break;
                 }

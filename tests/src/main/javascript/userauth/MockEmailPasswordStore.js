@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
     
-    const EmailPasswordStore = require('../../../../../core/src/main/javascript/userauth/EmailPasswordStore.js');
+    var EmailPasswordStore = require('../../../../../core/src/main/javascript/userauth/EmailPasswordStore.js');
     
     /**
      * Create a new user and password pair.

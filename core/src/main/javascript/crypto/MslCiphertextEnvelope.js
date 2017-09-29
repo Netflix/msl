@@ -23,14 +23,15 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslConstants = require('../MslConstants.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Base64 = require('../util/Base64.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslConstants = require('../MslConstants.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Base64 = require('../util/Base64.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var MslInternalException = require('../MslInternalException.js');
 	
     /**
      * Key version.
@@ -216,8 +217,8 @@
                 try {
                     version = mo.getInt(KEY_VERSION);
                     var identified = false;
-                    for (let v in Version) {
-                        if (Version[v] == version) {
+                    for (var ver in Version) {
+                        if (Version[ver] == version) {
                             identified = true;
                             break;
                         }
@@ -229,7 +230,7 @@
                         // If anything fails to parse, treat this as a version 1 envelope.
                         version = Version.V1;
                     } else {
-                    	throw e;
+                        throw e;
                     }
                 }
             }
@@ -253,7 +254,7 @@
                 case Version.V2:
                     try {
                         // Version 2 envelopes use the cipher specification.
-                        let v = mo.getInt(KEY_VERSION);
+                        var v = mo.getInt(KEY_VERSION);
                         if (v != Version.V2)
                             throw new MslCryptoException(MslError.UNIDENTIFIED_CIPHERTEXT_ENVELOPE, "ciphertext envelope " + mo);
                         keyIdOrSpec = MslConstants.CipherSpec.fromString(mo.getString(KEY_CIPHERSPEC));

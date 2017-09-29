@@ -35,18 +35,18 @@
 (function(require, module) {
     "use strict";
     
-    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
-    const MslMasterTokenException = require('../MslMasterTokenException.js');
-    const MslEntityAuthException = require('../MslEntityAuthException.js');
-    const MslError = require('../MslError.js');
-    const MslCryptoException = require('../MslCryptoException.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const MslEncodingException = require('../MslEncodingException.js');
-    const MasterToken = require('../tokens/MasterToken.js');
-    const MslException = require('../MslException.js');
+    var EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+    var MslMasterTokenException = require('../MslMasterTokenException.js');
+    var MslEntityAuthException = require('../MslEntityAuthException.js');
+    var MslError = require('../MslError.js');
+    var MslCryptoException = require('../MslCryptoException.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var MslEncodingException = require('../MslEncodingException.js');
+    var MasterToken = require('../tokens/MasterToken.js');
+    var MslException = require('../MslException.js');
 
     /**
      * Key master token.

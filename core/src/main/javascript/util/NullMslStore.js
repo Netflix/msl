@@ -23,9 +23,9 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslStore = require('../util/MslStore.js');
-	const MslException = require('../MslException.js');
-	const MslError = require('../MslError.js');
+	var MslStore = require('../util/MslStore.js');
+	var MslException = require('../MslException.js');
+	var MslError = require('../MslError.js');
 	
 	var NullMslStore = module.exports = MslStore.extend({
 	    /** @inheritDoc */

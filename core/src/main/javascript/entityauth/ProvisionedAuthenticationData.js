@@ -33,8 +33,8 @@
 (function(require, module) {
     "use strict";
     
-    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
     
     var ProvisionedAuthenticationData = module.exports = EntityAuthenticationData.extend({
         /**

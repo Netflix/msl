@@ -29,25 +29,25 @@
 (function(require, module) {
 	"use strict";
 	
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const InputStream = require('../io/InputStream.js');
-	const Header = require('../msg/Header.js');
-	const ErrorHeader = require('../msg/ErrorHeader.js');
-	const BlockingQueue = require('../util/BlockingQueue.js');
-	const MslException = require('../MslException.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MslMasterTokenException = require('../MslMasterTokenException.js');
-	const MslUserIdTokenException = require('../MslUserIdTokenException.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const PayloadChunk = require('../msg/PayloadChunk.js');
-	const MslIoException = require('../MslIoException.js');
-	const MessageHeader = require('../msg/MessageHeader.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var InputStream = require('../io/InputStream.js');
+	var Header = require('../msg/Header.js');
+	var ErrorHeader = require('../msg/ErrorHeader.js');
+	var BlockingQueue = require('../util/BlockingQueue.js');
+	var MslException = require('../MslException.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var MslUserIdTokenException = require('../MslUserIdTokenException.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var PayloadChunk = require('../msg/PayloadChunk.js');
+	var MslIoException = require('../MslIoException.js');
+	var MessageHeader = require('../msg/MessageHeader.js');
 
     /**
      * <p>Return the crypto context resulting from key response data contained

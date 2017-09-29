@@ -27,20 +27,20 @@
 (function(require, module) {
     "use strict";
     
-    const ICryptoContext = require('../crypto/ICryptoContext.js');
-    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const MslCryptoException = require('../MslCryptoException.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const MslException = require('../MslException.js');
-    const MslError = require('../MslError.js');
-    const MslCrypto = require('../crypto/MslCrypto.js');
-    const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
-    const SecretKey = require('../crypto/SecretKey.js');
-    const PublicKey = require('../crypto/PublicKey.js');
-    const PrivateKey = require('../crypto/PrivateKey.js');
-    const MslEncodingException = require('../MslEncodingException.js');
-    const MslCiphertextEnvelope = require('../crypto/MslCiphertextEnvelope.js');
+    var ICryptoContext = require('../crypto/ICryptoContext.js');
+    var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var MslCryptoException = require('../MslCryptoException.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var MslException = require('../MslException.js');
+    var MslError = require('../MslError.js');
+    var MslCrypto = require('../crypto/MslCrypto.js');
+    var MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+    var SecretKey = require('../crypto/SecretKey.js');
+    var PublicKey = require('../crypto/PublicKey.js');
+    var PrivateKey = require('../crypto/PrivateKey.js');
+    var MslEncodingException = require('../MslEncodingException.js');
+    var MslCiphertextEnvelope = require('../crypto/MslCiphertextEnvelope.js');
 
     /**
      * Null transform or algorithm.
@@ -187,7 +187,7 @@
                     throw new MslCryptoException(MslError.DECRYPT_ERROR, null, e);
                 }
 
-                MslCiphertextEnvelope.parse(encryptionEnvelopeMo, MslCiphertextEnvelope$Version.V1, {
+                MslCiphertextEnvelope.parse(encryptionEnvelopeMo, MslCiphertextEnvelope.Version.V1, {
                     result: function(envelope) {
                         try {
                             // Decrypt ciphertext.

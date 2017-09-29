@@ -22,12 +22,12 @@
 (function(require, module) {
     "use strict";
     
-    const UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
-    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
-    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
+    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var UserIdTokenAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserIdTokenAuthenticationData.js');
+    var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
     var MockUserIdTokenAuthenticationFactory = module.exports = UserAuthenticationFactory.extend({
         /**

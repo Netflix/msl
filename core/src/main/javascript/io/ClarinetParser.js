@@ -23,8 +23,8 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const clarinet = require('clarinet');
+	var Class = require('../util/Class.js');
+	var clarinet = require('clarinet');
 		
 	var ClarinetParser = module.exports = Class.create({
 	    /**
