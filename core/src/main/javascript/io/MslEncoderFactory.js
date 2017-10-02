@@ -27,18 +27,19 @@
  */
 (function(require, module) {
     "use strict";
-    
-    const Base64 = require('../util/Base64.js');
-    const MslObject = require('../io/MslObject.js');
-    const MslArray = require('../io/MslArray.js');
-    const Class = require('../util/Class.js');
-    const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
-    const JsonMslObject = require('../io/JsonMslObject.js');
-    const JsonMslArray = require('../io/JsonMslArray.js');
-    
+
+    var Base64 = require('../util/Base64.js');
+    var MslObject = require('../io/MslObject.js');
+    var MslArray = require('../io/MslArray.js');
+    var Class = require('../util/Class.js');
+    var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+    var JsonMslObject = require('../io/JsonMslObject.js');
+    var JsonMslArray = require('../io/JsonMslArray.js');
+    var BufferedInputStream = require('../io/BufferedInputStream.js');
+
     /**
      * Escape a string to be output as a single line of text.
      * 

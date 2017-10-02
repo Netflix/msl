@@ -70,20 +70,20 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslUtils = require('../util/MslUtils.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const UserIdToken = require('../tokens/UserIdToken.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslException = require('../MslException.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const ICryptoContext = require('../crypto/ICryptoContext.js');
-	const MslConstants = require('../MslConstants.js');
-	const Base64 = require('../util/Base64.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslUtils = require('../util/MslUtils.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var UserIdToken = require('../tokens/UserIdToken.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslException = require('../MslException.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var ICryptoContext = require('../crypto/ICryptoContext.js');
+	var MslConstants = require('../MslConstants.js');
+	var Base64 = require('../util/Base64.js');
 	
     /**
      * Key token data.
@@ -720,12 +720,13 @@
                 // If encrypted, and we were able to verify the data then we better
                 // be able to decrypt it. (An exception is thrown if decryption
                 // fails.)
+                var servicedata, compressedServicedata;
                 if (verified) {
                     var ciphertext = data;
                     if (encrypted && ciphertext.length > 0) {
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(compressedServicedata) {
-                                let servicedata = (compressionAlgo)
+                                servicedata = (compressionAlgo)
                                     ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                                     : compressedServicedata;
                                 reconstruct(encoder, tokendataBytes, signatureBytes, verified,
@@ -743,8 +744,8 @@
                             },
                         });
                     } else {
-                        let compressedServicedata = ciphertext;
-                        let servicedata = (compressionAlgo)
+                        compressedServicedata = ciphertext;
+                        servicedata = (compressionAlgo)
                             ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
@@ -752,8 +753,8 @@
                             compressedServicedata, servicedata);
                     }
                 } else {
-                    let compressedServicedata = data;
-                    let servicedata = (data.length == 0) ? new Uint8Array(0) : null;
+                    compressedServicedata = data;
+                    servicedata = (data.length == 0) ? new Uint8Array(0) : null;
                     reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                         name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
                         compressedServicedata, servicedata);

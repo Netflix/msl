@@ -23,7 +23,20 @@
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
   "jshintConfig": {
-    "esversion": 6
+    "sub": true,
+    "expr": true,
+    "undef": true,
+    "typed": true,
+    "predef": [
+      "window",
+      "console",
+      "setTimeout",
+      "clearTimeout",
+      "require",
+      "module",
+      "mkmodule",
+      "Promise"
+    ]
   },
   "dependencies": {
     "clarinet": "^0.11.0",

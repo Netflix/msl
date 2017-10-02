@@ -33,9 +33,9 @@
      * @type {Object.<string,number>}
      */
     var COMPRESS_DICTIONARY = {};
-    for (let i = 0; i < BYTE_RANGE; ++i) {
-        let key = createKey([i]);
-        COMPRESS_DICTIONARY[key] = i;
+    for (var ci = 0; ci < BYTE_RANGE; ++ci) {
+        var key = createKey([ci]);
+        COMPRESS_DICTIONARY[key] = ci;
     }
     /**
      * The initial compression dictionary length.
@@ -48,8 +48,8 @@
      * @type {Array.<Array.<number>>}
      */
     var UNCOMPRESS_DICTIONARY = [];
-    for (let i = 0; i < BYTE_RANGE; ++i) {
-        UNCOMPRESS_DICTIONARY[i] = [i];
+    for (var ui = 0; ui < BYTE_RANGE; ++ui) {
+        UNCOMPRESS_DICTIONARY[ui] = [ui];
     }
 
     /**
@@ -77,8 +77,8 @@
     var lzw$compress = function(data) {
         // Populate the initial dictionary.
         var dictionary = {};
-        for (let key in COMPRESS_DICTIONARY)
-            dictionary[key] = COMPRESS_DICTIONARY[key];
+        for (var c in COMPRESS_DICTIONARY)
+            dictionary[c] = COMPRESS_DICTIONARY[c];
         var dictlen = COMPRESS_DICTIONARY_LENGTH;
 
         // Working symbols.
@@ -91,6 +91,8 @@
         var index = 0;
         // Bits available in the current byte.
         var available = BYTE_SIZE;
+        // Temporary variables.
+        var key, value;
 
         // Compress all the data.
         for (var i = 0; i < data.length; ++i) {
@@ -99,8 +101,8 @@
             symbols.push(c);
 
             // Check if the input is in the dictionary.
-            let key = createKey(symbols);
-            let value = dictionary[key];
+            key = createKey(symbols);
+            value = dictionary[key];
 
             // If the value is not in the dictionary, then...
             if (!value) {
@@ -125,13 +127,15 @@
 
         // If there are any symbols left we have to emit those codes now.
         if (symbols.length > 0) {
-            let key = createKey(symbols);
-            let value = dictionary[key];
+            key = createKey(symbols);
+            value = dictionary[key];
             if (!emit(value, bits))
                 return null;
         }
 
         function emit(code, bits) {
+            var msbits;
+            
             // Write the current code bits MSB-first.
             while (bits > 0) {
                 // If we've run out of compressed storage return false.
@@ -142,7 +146,7 @@
                 // the most significant bits. This finishes off the current
                 // byte.
                 if (bits > available) {
-                    let msbits = code;
+                    msbits = code;
                     msbits >>>= bits - available;
                     compressed[index] |= (msbits & 0xff);
 
@@ -158,7 +162,7 @@
                 else if (bits <= available) {
                     // First shift left to erase the most significant bits then
                     // shift right to start at the correct offset.
-                    let msbits = code;
+                    msbits = code;
                     msbits <<= available - bits;
                     msbits &= 0xff;
                     msbits >>>= BYTE_SIZE - available;

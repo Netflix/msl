@@ -20,19 +20,19 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SessionCryptoContext", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    const MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    var MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** Key ciphertext. */
     var KEY_CIPHERTEXT = "ciphertext";

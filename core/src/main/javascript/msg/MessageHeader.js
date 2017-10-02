@@ -75,29 +75,30 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const MslMasterTokenException = require('../MslMasterTokenException.js');
-	const MslError = require('../MslError.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
-	const MslEntityAuthException = require('../MslEntityAuthException.js');
-	const MslEncodable = require('../io/MslEncodable.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const Header = require('../msg/Header.js');
-	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
-	const ServiceToken = require('../tokens/ServiceToken.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const UserIdToken = require('../tokens/UserIdToken.js');
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyResponseData = require('../keyx/KeyResponseData.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MslException = require('../MslException.js');
-	const Base64 = require('../util/Base64.js');
-	const MessageCapabilities = require('../msg/MessageCapabilities.js');
+	var Class = require('../util/Class.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var MslError = require('../MslError.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var MslEntityAuthException = require('../MslEntityAuthException.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var Header = require('../msg/Header.js');
+	var UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	var ServiceToken = require('../tokens/ServiceToken.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var UserIdToken = require('../tokens/UserIdToken.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MslException = require('../MslException.js');
+	var Base64 = require('../util/Base64.js');
+	var MessageCapabilities = require('../msg/MessageCapabilities.js');
+	var MslUserAuthException = require('../MslUserAuthException.js');
 	
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;
@@ -1375,7 +1376,7 @@
 
                     // Verify values.
                     if (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE)
-                        throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdataJson);
+                        throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdata.toString());
 
                     // Pull message capabilities.
                     capabilities = null;

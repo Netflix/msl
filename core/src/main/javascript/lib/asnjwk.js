@@ -16,7 +16,8 @@
 (function(require, module) {
 "use strict";
 
-const Base64 = require('../util/Base64.js');
+var Base64 = require('../util/Base64.js');
+var KeyFormat = require('../crypto/KeyFormat.js');
 
 /** @const */
 var DEBUG=false;

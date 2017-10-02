@@ -22,11 +22,11 @@
 (function(require, module) {
     "use strict";
     
-    const AuthenticationUtils = require('../../../../../core/src/main/javascript/util/AuthenticationUtils.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
+    var AuthenticationUtils = require('../../../../../core/src/main/javascript/util/AuthenticationUtils.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
     
     var MockAuthenticationUtils = module.exports = AuthenticationUtils.extend({
         /**

@@ -21,30 +21,36 @@
  */
 // Disabled because Web Crypto does not support wrapping JWK using AES-KW.
 xdescribe("JsonWebKeyLadderExchange", function() {
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    
 // Do nothing if executing in the legacy Web Crypto environment.
 if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const JsonWebKeyLadderExchange = require('../../../../../core/src/main/javascript/keyx/JsonWebKeyLadderExchange.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var JsonWebKeyLadderExchange = require('../../../../../core/src/main/javascript/keyx/JsonWebKeyLadderExchange.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    var KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
 
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockCryptoContextRepository = require('../../../main/javascript/keyx/MockCryptoContextRepository.js');
-    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockCryptoContextRepository = require('../../../main/javascript/keyx/MockCryptoContextRepository.js');
+    var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -92,7 +98,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             
             var wrapKey;
             runs(function() {
-            	encoder = pskCtx.getMslEncoderFactory();
+                encoder = pskCtx.getMslEncoderFactory();
             	
                 // Create PSK wrapping crypto context.
                 pskCtx.getEntityAuthenticationData(null, {
@@ -115,7 +121,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return PSK_CRYPTO_CONTEXT && MGK_CRYPTO_CONTEXT && wrapKey; }, "crypto contexts and wrap key", 100);
+            waitsFor(function() { return PSK_CRYPTO_CONTEXT && wrapKey; }, "crypto contexts and wrap key", 100);
 
             runs(function() {
                 WRAP_CRYPTO_CONTEXT = new AesKwJwkCryptoContext(wrapKey);
@@ -152,7 +158,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
                     result: function(x) { PSK_ENCRYPTION_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                var pskHmacKey = PSK_MASTER_Token.signatureKey;
+                var pskHmacKey = PSK_MASTER_TOKEN.signatureKey;
                 WRAP_CRYPTO_CONTEXT.wrap(pskHmacKey, encoder, ENCODER_FORMAT, {
                     result: function(x) { PSK_HMAC_JWK = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -177,122 +183,6 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
         var KEY_PUBLIC_KEY = "publickey";
         /** key wrap data. */
         var KEY_WRAPDATA = "wrapdata";
-        
-        xit("ctors with RSA keys", function() {
-            var req = new RequestData(Mechanism.RSA, KEYPAIR_ID, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY, null);
-            expect(req.keyExchangeScheme).toEqual(KeyExchangeScheme.JWK_LADDER);
-            expect(req.mechanism).toEqual(Mechanism.RSA);
-            expect(req.privateKey.getEncoded()).toEqual(RSA_PRIVATE_KEY.getEncoded());
-            expect(req.publicKey.getEncoded()).toEqual(RSA_PUBLIC_KEY.getEncoded());
-            expect(req.wrapdata).toBeNull();
-            expect(req.wrapKeyId).toEqual(KEYPAIR_ID);
-            
-            var keydata;
-            runs(function() {
-            	req.getKeydata(encoder, ENCODER_FORMAT, {
-            		result: function(x) { keydata = x; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            	});
-            });
-            waitsFor(function() { return keydata; }, "keydata", 100);
-            
-            
-            var moReq;
-            runs(function() {
-            	expect(keydata).not.toBeNull();
-                RequestData.parse(keydata, {
-                    result: function(data) { moReq = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
-            });
-            waitsFor(function() { return moReq; }, "moReq", 100);
-            
-            var moKeydata;
-            runs(function() {
-                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(moReq.mechanism).toEqual(req.mechanism);
-                expect(moReq.privateKey).toBeNull();
-                expect(moReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                expect(moReq.wrapdata).toEqual(req.wrapdata);
-                expect(moReq.wrapKeyId).toEqual(req.wrapKeyId);
-                req.getKeydata(encoder, ENCODER_FORMAT, {
-                	result: function(x) { moKeydata = x; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
-            });
-            
-            runs(function() {
-                expect(moKeydata).not.toBeNull();
-                expect(moKeydata).toEqual(keydata);
-            });
-        });
-        
-        xit("mslobject is correct with RSA keys", function() {
-            var req = new RequestData(Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY, null);
-            var mo;
-            runs(function() {
-            	MslTestUtils.toMslObject(encoder, req, {
-            		result: function(x) { mo = x; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            	});
-            });
-            waitsFor(function() { return mo; }, "mo", 100);
-            
-            runs(function() {
-	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
-	            var keydata = mo.getMslObject(KEY_KEYDATA, encoder);
-	            expect(keydata.getString(KEY_MECHANISM)).toEqual(Mechanism.RSA);
-	            expect(keydata.getBytes(KEY_PUBLIC_KEY)).toEqual(RSA_PUBLIC_KEY.getEncoded());
-	            expect(keydata.has(KEY_WRAPDATA)).toBeFalsy();
-            });
-        });
-        
-        xit("create with RSA keys", function() {
-            var req = new RequestData(Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY, null);
-            var mo;
-            runs(function() {
-            	MslTestUtils.toMslObject(encoder, req, {
-            		result: function(x) { mo = x; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            	});
-            });
-            waitsFor(function() { return mo; }, "mo", 100);
-            
-            var keyRequestData;
-            runs(function() {
-                KeyRequestData$parse(pskCtx, mo, {
-                    result: function(data) { keyRequestData = data; },
-                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                });
-            });
-            waitsFor(function() { return keyRequestData; }, "keyRequestData", 100);
-            
-            runs(function() {
-                expect(keyRequestData).not.toBeNull();
-                expect(keyRequestData instanceof RequestData).toBeTruthy();
-
-                var moReq = keyRequestData;
-                expect(moReq.keyExchangeScheme).toEqual(req.keyExchangeScheme);
-                expect(moReq.mechanism).toEqual(req.mechanism);
-                expect(moReq.privateKey).toBeNull();
-                expect(moReq.publicKey.getEncoded()).toEqual(req.publicKey.getEncoded());
-                expect(moReq.wrapdata).toEqual(req.wrapdata);
-            });
-        });
-        
-        xit("ctor with RSA keys and null public key", function() {
-            var f = function() {
-                new RequestData(Mechanism.RSA, null, RSA_PRIVATE_KEY, null);
-            };
-            expect(f).toThrow(new MslInternalException());
-        });
-        
-        xit("ctor with RSA keys and null private key", function() {
-            var f = function() {
-                new RequestData(Mechanism.RSA, RSA_PUBLIC_KEY, null, null);
-            };
-            expect(f).toThrow(new MslInternalException());
-        });
         
         it("ctors with wrapdata", function() {
             var req = new RequestData(Mechanism.WRAP, WRAPDATA);
@@ -363,7 +253,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, mo, {
+                KeyRequestData.parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -459,7 +349,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             
             var keyRequestData;
             runs(function() {
-                KeyRequestData$parse(pskCtx, mo, {
+                KeyRequestData.parse(pskCtx, mo, {
                     result: function(data) { keyRequestData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -653,7 +543,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
 	            expect(keydata).not.toBeNull();
 	            
-	            var joResp = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+	            var joResp = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
 	            expect(joResp.encryptionKey).toEqual(resp.encryptionKey);
 	            expect(joResp.hmacKey).toEqual(resp.hmacKey);
 	            expect(joResp.keyExchangeScheme).toEqual(resp.keyExchangeScheme);
@@ -688,7 +578,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
                 expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWK_LADDER.name);
                 
-                MasterToken$parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
+                MasterToken.parse(pskCtx, mo.getMslObject(KEY_MASTER_TOKEN, encoder), {
                     result: function(x) { masterToken = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -718,7 +608,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             
             var keyResponseData;
             runs(function() {
-                KeyResponseData$parse(pskCtx, mo, {
+                KeyResponseData.parse(pskCtx, mo, {
                     result: function(data) { keyResponseData = data; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -753,7 +643,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	keydata.remove(KEY_WRAP_KEY);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -773,7 +663,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	keydata.remove(KEY_WRAPDATA);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -793,7 +683,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	keydata.remove(KEY_ENCRYPTION_KEY);
             	var f = function() {
-            		ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            		ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             	};
             	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -813,7 +703,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
                 keydata.remove(KEY_HMAC_KEY);
                 var f = function() {
-                	ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+                	ResponseData.parse(PSK_MASTER_TOKEN, keydata);
                 };
                 expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
             });
@@ -829,7 +719,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            			dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -860,7 +750,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            			dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -891,7 +781,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            			dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -922,7 +812,7 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             runs(function() {
             	dataA.getKeydata(encoder, ENCODER_FORMAT, {
             		result: function(keydata) {
-            			dataA2 = ResponseData$parse(PSK_MASTER_TOKEN, keydata);
+            			dataA2 = ResponseData.parse(PSK_MASTER_TOKEN, keydata);
             		},
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
@@ -1607,10 +1497,10 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             });
             waitsFor(function() { return keyxData; }, "keyxData not received", 100);
             
-            var reqCryptoContext, respCryptoContext;
+            var reqCryptoContext, resp, respCryptoContext;
             runs(function() {
                 reqCryptoContext = keyxData.cryptoContext;
-                var resp = keyxData.keyResponseData;
+                resp = keyxData.keyResponseData;
             
                 expect(repository.getWrapdata()).toBeNull();
             
@@ -1758,9 +1648,9 @@ if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.LEGACY) {
             });
             waitsFor(function() { return ctx; }, "ctx", 100);
 
-            var keyxData;
+            var req, keyxData;
             runs(function() {
-                var req = new RequestData(Mechanism.PSK, null);
+                req = new RequestData(Mechanism.PSK, null);
                 factory.generateResponse(ctx, ENCODER_FORMAT, req, entityAuthData, {
                     result: function(x) { keyxData = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }

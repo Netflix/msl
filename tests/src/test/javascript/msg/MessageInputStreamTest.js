@@ -20,41 +20,41 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageInputStream", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-    const ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-    const MessageInputStream = require('../../../../../core/src/main/javascript/msg/MessageInputStream.js');
-    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
+    var ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
+    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
+    var MessageInputStream = require('../../../../../core/src/main/javascript/msg/MessageInputStream.js');
+    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockUnauthenticatedAuthenticationFactory = require('../../../main/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js');
-    const MockTokenFactory = require('../../../main/javascript/tokens/MockTokenFactory.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockUnauthenticatedAuthenticationFactory = require('../../../main/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js');
+    var MockTokenFactory = require('../../../main/javascript/tokens/MockTokenFactory.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -1387,7 +1387,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, messageid = MSG_ID));
+            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND), MSG_ID);
         });
     });
     
@@ -1456,7 +1456,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, messageid = MSG_ID));
+            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH), MSG_ID);
         });
     });
     
@@ -1540,7 +1540,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, messageid = MSG_ID));
+            expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH), MSG_ID);
         });
     });
     
@@ -1776,7 +1776,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
     
@@ -1836,7 +1836,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
     
@@ -1970,7 +1970,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
     
@@ -2028,7 +2028,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
     
@@ -2075,7 +2075,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING), MSG_ID);
         });
     });
     
@@ -2122,7 +2122,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING), MSG_ID);
         });
     });
     
@@ -2169,7 +2169,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE), MSG_ID);
         });
     });
     
@@ -2216,7 +2216,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE), MSG_ID);
         });
     });
     
@@ -2285,7 +2285,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
     
@@ -2354,7 +2354,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
     
@@ -2425,7 +2425,7 @@ describe("MessageInputStream", function() {
         }
         function check(exception) {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED_UNRECOVERABLE, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED_UNRECOVERABLE), MSG_ID);
             
             largestNonReplayableId = incrementNonReplayableId(largestNonReplayableId);
             nonReplayableId = incrementNonReplayableId(nonReplayableId);
@@ -2581,7 +2581,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
     
@@ -2650,7 +2650,7 @@ describe("MessageInputStream", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED, messageid = MSG_ID));
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
     

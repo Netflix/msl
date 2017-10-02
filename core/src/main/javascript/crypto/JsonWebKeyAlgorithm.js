@@ -17,7 +17,7 @@
 (function(require, module) {
     "use strict";
     
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     
     /** JSON Web Key algorithms. */
     var JsonWebKeyAlgorithm = module.exports = {
@@ -44,6 +44,8 @@
      *         none.
      */
     var JsonWebKeyAlgorithm$fromWebCryptoAlgorithm = function JsonWebKeyAlgorithm$fromWebCryptoAlgorithm(wcAlgo, nCryptoKey) {
+        var rawkey;
+        
         // We must compare by name because Web Crypto algorithm objects are not
         // strictly defined.
         switch (wcAlgo['name']) {
@@ -59,14 +61,14 @@
                 return JsonWebKeyAlgorithm.RSA_OAEP;
             case WebCryptoAlgorithm.A128KW['name']:
             {
-                let rawkey = nCryptoKey.rawkey;
+                rawkey = nCryptoKey.rawkey;
                 if (rawkey.length == 128/8)
                     return JsonWebKeyAlgorithm.A128KW;
                 return null;
             }
             case WebCryptoAlgorithm.AES_CBC['name']:
             {
-                let rawkey = nCryptoKey.rawkey;
+                rawkey = nCryptoKey.rawkey;
                 if (rawkey.length == 128/8)
                     return JsonWebKeyAlgorithm.A128CBC;
                 return null;

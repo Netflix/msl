@@ -20,9 +20,9 @@
 (function(require, module) {
 	"use strict";
     
-    const Class = require('../util/Class.js');
-    const MslConstants = require('../MslConstants.js');
-    const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+    var Class = require('../util/Class.js');
+    var MslConstants = require('../MslConstants.js');
+    var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 
     /**
      * @param {number} number the ticket number.

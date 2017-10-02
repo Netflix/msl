@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
+var lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
     
 /**
  * LZW output stream tests.

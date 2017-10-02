@@ -22,9 +22,9 @@
 (function(require, module) {
     "use strict";
 
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
 
-    const crypto = require('crypto');
+    var crypto = require('crypto');
     
     var NodeRandom = module.exports = {
         /**

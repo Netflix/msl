@@ -22,21 +22,21 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslConstants = require('../MslConstants.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const MslException = require('../MslException.js');
-	const MslUserAuthException = require('../MslUserAuthException.js');
-	const MessageCapabilities = require('../msg/MessageCapabilities.js');
-	const ErrorHeader = require('../msg/ErrorHeader.js');
-	const Class = require('../util/Class.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MessageHeader = require('../msg/MessageHeader.js');
-	const ServiceToken = require('../tokens/ServiceToken.js');
-	const NullCryptoContext = require('../crypto/NullCryptoContext.js');
-	const MslUtils = require('../util/MslUtils.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var MslException = require('../MslException.js');
+	var MslUserAuthException = require('../MslUserAuthException.js');
+	var MessageCapabilities = require('../msg/MessageCapabilities.js');
+	var ErrorHeader = require('../msg/ErrorHeader.js');
+	var Class = require('../util/Class.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MessageHeader = require('../msg/MessageHeader.js');
+	var ServiceToken = require('../tokens/ServiceToken.js');
+	var NullCryptoContext = require('../crypto/NullCryptoContext.js');
+	var MslUtils = require('../util/MslUtils.js');
 	
     /**
      * Empty service token data.
@@ -281,6 +281,7 @@
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
             var requestMessageId = requestHeader.messageId;
+            var tokenFactory = ctx.getTokenFactory();
 
             // If the message contains a user ID token issued by the local
             // entity...
@@ -292,7 +293,6 @@
                     userIdToken.isExpired(null) ||
                     !userIdToken.isBoundTo(masterToken))
                 {
-                    let tokenFactory = ctx.getTokenFactory();
                     tokenFactory.renewUserIdToken(ctx, userIdToken, masterToken, callback);
                     return;
                 }
@@ -318,7 +318,6 @@
                     }
                     user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
                 }
-                let tokenFactory = ctx.getTokenFactory();
                 tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 return;
             }

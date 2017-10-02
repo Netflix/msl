@@ -40,13 +40,13 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslError = require('../MslError.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslError = require('../MslError.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
 	
     /**
      * Key master token.
@@ -96,7 +96,7 @@
         getKeydata: function(encoder, format, callback) {},
 
         /** @inheritDoc */
-        toMslEncoding(encoder, format, callback) {
+        toMslEncoding: function toMslEncoding(encoder, format, callback) {
             var self = this;
             
             this.getKeydata(encoder, format, {

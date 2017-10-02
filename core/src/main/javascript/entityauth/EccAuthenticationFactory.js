@@ -22,14 +22,14 @@
 (function(require, module) {
 	"use strict";
 	
-	const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const EccAuthenticationData = require('../entityauth/EccAuthenticationData.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslEntityAuthException = require('../MslEntityAuthException.js');
-	const MslError = require('../MslError.js');
-	const EccCryptoContext = require('../crypto/EccCryptoContext.js');
+	var EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var EccAuthenticationData = require('../entityauth/EccAuthenticationData.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslEntityAuthException = require('../MslEntityAuthException.js');
+	var MslError = require('../MslError.js');
+	var EccCryptoContext = require('../crypto/EccCryptoContext.js');
 	
 	var EccAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
 	    /**

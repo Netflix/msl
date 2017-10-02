@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("Class", function() {
-    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    var Class = require('../../../../../core/src/main/javascript/util/Class.js');
     
 	var Animal = Class.create({
 		init: function(type, name) {

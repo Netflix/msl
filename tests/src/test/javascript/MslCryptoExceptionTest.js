@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 describe("MslCryptoException", function() {
-    const MslCryptoException = require('../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslException = require('../../../../core/src/main/javascript/MslException.js');
-    const MslError = require('../../../../core/src/main/javascript/MslError.js');
+    var MslCryptoException = require('../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslException = require('../../../../core/src/main/javascript/MslException.js');
+    var MslError = require('../../../../core/src/main/javascript/MslError.js');
     
 	it("error as expected", function() {
 		var e = new MslCryptoException(MslError.MSL_PARSE_ERROR);

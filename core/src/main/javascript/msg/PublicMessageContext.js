@@ -29,7 +29,7 @@
 (function(require, module) {
 	"use strict";
 
-	const MessageContext = require('../msg/MessageContext.js');
+	var MessageContext = require('../msg/MessageContext.js');
 	
 	var PublicMessageContext = module.exports = MessageContext.extend({
 	    /** @inheritDoc */

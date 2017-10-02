@@ -22,20 +22,20 @@
 (function(require, module) {
     "use strict";
     
-    const ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    const PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
+    var PresharedProfileAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationFactory.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     
-    const MockKeySetStore = require('../entityauth/MockKeySetStore.js');
-    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
-    const MslTestUtils = require('../util/MslTestUtils.js');
+    var MockKeySetStore = require('../entityauth/MockKeySetStore.js');
+    var MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+    var MslTestUtils = require('../util/MslTestUtils.js');
     
     /**
      * PSK ESN.

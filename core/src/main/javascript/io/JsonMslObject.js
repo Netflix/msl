@@ -22,16 +22,16 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslArray = require('../io/MslArray.js');
-	const MslObject = require('../io/MslObject.js');
-	const textEncoding = require('../lib/textEncoding.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslException = require('../MslException.js');
-	const Base64 = require('../util/Base64.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslArray = require('../io/MslArray.js');
+	var MslObject = require('../io/MslObject.js');
+	var textEncoding = require('../lib/textEncoding.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslException = require('../MslException.js');
+	var Base64 = require('../util/Base64.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
     
     /**
      * UTF-8 charset.
@@ -90,18 +90,20 @@
             Object.defineProperties(this, props);
             
             try {
+                var key;
+                
                 // MslObject
                 if (source instanceof MslObject) {
                     var keys = source.getKeys();
                     for (var i = 0; i < keys.length; ++i) {
-                        let key = keys[i];
+                        key = keys[i];
                         this.put(key, source.opt(key));
                     }
                 }
 
                 // Object
                 else if (source instanceof Object && source.constructor === Object) {
-                    for (let key in source) {
+                    for (key in source) {
                         if (!(key instanceof String) && typeof key !== 'string')
                             throw new MslEncoderException("Invalid JSON object encoding.");
                         this.put(key, source[key]);
@@ -114,7 +116,7 @@
                     var jo = JSON.parse(json);
                     if (!(jo instanceof Object) || jo.constructor !== Object)
                         throw new MslEncoderException("Invalid JSON object encoding.");
-                    for (let key in jo) {
+                    for (key in jo) {
                         if (!(key instanceof String) && typeof key !== 'string')
                             throw new MslEncoderException("Invalid JSON object encoding.");
                         this.put(key, jo[key]);
@@ -131,7 +133,7 @@
         
         /** @inheritDoc */
         put: function put(key, value) {
-            const JsonMslArray = require('../io/JsonMslArray.js');
+            var JsonMslArray = require('../io/JsonMslArray.js');
 
             var o;
             try {
@@ -154,7 +156,7 @@
 
         /** @inheritDoc */
         getBytes: function getBytes(key) {
-            const MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            var MslEncoderFactory = require('../io/MslEncoderFactory.js');
             
             // When a JsonMslObject is decoded, there's no way for us to know if a
             // value is supposed to be a String to byte[]. Therefore interpret
@@ -216,7 +218,7 @@
 
     		function next(jo, keys, i) {
     			AsyncExecutor(callback, function() {
-    			    const JsonMslArray = require('../io/JsonMslArray.js');
+    			    var JsonMslArray = require('../io/JsonMslArray.js');
     			    
 	    			if (i >= keys.length)
 	    				return jo;
@@ -247,8 +249,8 @@
 	    			        error: callback.error,
 	    			    });
 	    			} else if (value instanceof MslObject) {
-	    			    let jsonValue = new JsonMslObject(encoder, value);
-	    			    jsonValue.toJSONObject(encoder, {
+	    			    var moJsonValue = new JsonMslObject(encoder, value);
+	    			    moJsonValue.toJSONObject(encoder, {
 	    			        result: function(o) {
 	    			            AsyncExecutor(callback, function() {
 	    			                jo[key] = o;
@@ -258,8 +260,8 @@
 	    			        error: callback.error,
 	    			    });
 	    			} else if (value instanceof MslArray) {
-	    			    let jsonValue = new JsonMslArray(encoder, value);
-	    			    jsonValue.toJSONArray(encoder, {
+	    			    var maJsonValue = new JsonMslArray(encoder, value);
+	    			    maJsonValue.toJSONArray(encoder, {
 	    			        result: function(a) {
 	    			            AsyncExecutor(callback, function() {
 	    			                jo[key] = a;
@@ -272,8 +274,8 @@
 	    			    value.toMslEncoding(encoder, MslEncoderFormat.JSON, {
 	    			        result: function(json) {
 	    			            AsyncExecutor(callback, function() {
-	    			                let jsonValue = new JsonMslObject(encoder, json);
-	    			                jsonValue.toJSONObject(encoder, {
+	    			                var meJsonValue = new JsonMslObject(encoder, json);
+	    			                meJsonValue.toJSONObject(encoder, {
 	    			                    result: function(o) {
 	    			                        AsyncExecutor(callback, function() {
 	    			                            jo[key] = o;

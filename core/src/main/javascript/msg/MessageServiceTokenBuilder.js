@@ -48,11 +48,11 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const ServiceToken = require('../tokens/ServiceToken.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var Class = require('../util/Class.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var ServiceToken = require('../tokens/ServiceToken.js');
+	var MslInternalException = require('../MslInternalException.js');
 
     /**
      * <p>Select the appropriate crypto context for the named service token.</p>

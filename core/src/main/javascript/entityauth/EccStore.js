@@ -20,10 +20,10 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const PublicKey = require('../crypto/PublicKey.js');
-	const PrivateKey = require('../crypto/PrivateKey.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var Class = require('../util/Class.js');
+	var PublicKey = require('../crypto/PublicKey.js');
+	var PrivateKey = require('../crypto/PrivateKey.js');
+	var MslInternalException = require('../MslInternalException.js');
 		
 	var EccStore = module.exports = Class.create({
 	    /**

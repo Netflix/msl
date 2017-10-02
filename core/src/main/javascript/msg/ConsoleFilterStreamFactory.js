@@ -23,9 +23,9 @@
 (function(require, module) {
 	"use strict";
 	
-	const InputStream = require('../io/InputStream.js');
-	const OutputStream = require('../io/OutputStream.js');
-	const FilterStreamFactory = require('../io/FilterStreamFactory.js');
+	var InputStream = require('../io/InputStream.js');
+	var OutputStream = require('../io/OutputStream.js');
+	var FilterStreamFactory = require('../io/FilterStreamFactory.js');
 	
     /**
      * A filter input stream that outputs read data to stdout. A new line is

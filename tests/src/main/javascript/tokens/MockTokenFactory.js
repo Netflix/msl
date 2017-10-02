@@ -22,21 +22,21 @@
 (function(require, module) {
     "use strict";
     
-    const TokenFactory = require('../../../../../core/src/main/javascript/tokens/TokenFactory.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    const MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
-    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-    const MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
+    var TokenFactory = require('../../../../../core/src/main/javascript/tokens/TokenFactory.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    var MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
+    var UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    var MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
     
-    const MockMslUser = require('../tokens/MockMslUser.js');
+    var MockMslUser = require('../tokens/MockMslUser.js');
 
     /** Renewal window start offset in milliseconds. */
     var RENEWAL_OFFSET = 60000;

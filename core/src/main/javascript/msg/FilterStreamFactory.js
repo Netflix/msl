@@ -23,7 +23,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
+	var Class = require('../util/Class.js');
 	
 	var FilterStreamFactory = module.exports = Class.create({
 	    /**

@@ -20,36 +20,37 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageHeader", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    const MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    var Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
 
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -622,7 +623,7 @@ describe("MessageHeader", function() {
 		
 		var serviceTokensMa;
 		runs(function() {
-			serviceTokens = builder.getServiceTokens();
+			var serviceTokens = builder.getServiceTokens();
 			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -654,7 +655,7 @@ describe("MessageHeader", function() {
         // Service tokens may be created with the key response data tokens. The
         // key response data master token has the same serial number as the
         // original master token so we can use the same user ID token.
-        var peerServiceTokens;
+        var builder, peerServiceTokens;
         runs(function() {
             HeaderDataBuilder$create(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, true, {
                 result: function(x) { builder = x; },
@@ -867,7 +868,7 @@ describe("MessageHeader", function() {
     });
 
 	it("p2p mslobject with entity authentication data is correct", function() {
-		var peerServiceTokens;
+		var builder, peerServiceTokens;
 		runs(function() {
             HeaderDataBuilder$create(p2pCtx, null, null, true, {
                 result: function(x) { builder = x; },
@@ -5524,7 +5525,7 @@ describe("MessageHeader", function() {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
 		                                    Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
 		                                        result: function(x) { header = x; },
-		                                        error: function(err) { exception = err; },
+		                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		                                    });
 		                                },
 		                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -6525,7 +6526,7 @@ describe("MessageHeader", function() {
             var headerData = builder.build();
             var peerData = new HeaderPeerData(null, null, null);    
             var entityAuthDataA = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
-            var entityAuthDataB = new ModelGroupAuthenticationData(MockModelGroupAuthenticationFactory.MGK_ESN);
+            var entityAuthDataB = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN2);
 			MessageHeader.create(trustedNetCtx, entityAuthDataA, null, headerData, peerData, {
 				result: function(token) { messageHeaderA = token; },
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -6742,7 +6743,7 @@ describe("MessageHeader", function() {
     xit("equals timestamp", function() {
         var builder;
         runs(function() {
-            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+            HeaderDataBuilder.create(trustedNetCtx, null, null, false, {
                 result: function(x) { builder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -6758,7 +6759,7 @@ describe("MessageHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
             setTimeout(MILLISECONDS_PER_SECOND, function() {
-                MessageHeader.create(ctx, null, MASTER_TOKEN, headerData, peerData, {
+                MessageHeader.create(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData, {
                     result: function(token) { messageHeaderB = token; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -7127,9 +7128,9 @@ describe("MessageHeader", function() {
 		var messageHeaderA, messageHeaderB, messageHeaderC;
 		runs(function() {
             var keyRequestDataA = [];
-            keyRequestDataA.add(new SymmetricWrappedExchange.RequestData(KeyId.SESSION));
+            keyRequestDataA.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.SESSION));
             var keyRequestDataB = [];
-            keyRequestDataB.add(new SymmetricWrappedExchange.RequestData(KeyId.PSK));
+            keyRequestDataB.add(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK));
             var headerDataA = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataA).build();
             var headerDataB = builder.set(KEY_KEY_REQUEST_DATA, keyRequestDataB).build();
             var headerDataC = builder.set(KEY_KEY_REQUEST_DATA, null).build();

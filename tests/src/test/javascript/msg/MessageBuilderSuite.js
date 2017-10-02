@@ -20,43 +20,43 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageBuilder", function() {
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    const MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
+    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    var MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    var AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    var UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
     
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     
     var RECIPIENT = "recipient";
 	var SERVICE_TOKEN_NAME = "serviceTokenName";
@@ -1387,6 +1387,7 @@ describe("MessageBuilder", function() {
 			runs(function() {
 				var tokens = messageHeader.serviceTokens;
 				for (var i = 0; i < tokens.length; ++i) {
+				    var token = tokens[i];
 					if (token.name == SERVICE_TOKEN_NAME)
 						throw new Error("Deleted unknown service token.");
 				}
@@ -3992,7 +3993,7 @@ describe("MessageBuilder", function() {
 			
 			runs(function() {
 				var f = function() { throw exception; };
-				expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, messageid = REQUEST_MESSAGE_ID));
+				expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND), REQUEST_MESSAGE_ID);
 			});
 		});
 
@@ -4121,15 +4122,15 @@ describe("MessageBuilder", function() {
 	            random.nextBytes(mkw);
 			    SecretKey.import(mke, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, {
 			        result: function(key) { encryptionKey2 = key; },
-			        error: function() { expect(function() { throw e; }).not.toThrow(); }
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
                 SecretKey.import(mkh, WebCryptoAlgorithm.HMAC_SHA256, WebCryptoUsage.SIGN_VERIFY, {
                     result: function (key) { hmacKey2 = key; },
-                    error: function() { expect(function() { throw e; }).not.toThrow(); }
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
                 SecretKey.import(mkw, WebCryptoAlgorithm.A128KW, WebCryptoUsage.WRAP_UNWRAP, {
                     result: function(key) { wrappingKey2 = key; },
-                    error: function() { expect(function() { throw e; }).not.toThrow(); }
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
 			});
 			waitsFor(function() { return encryptionKey2 && hmacKey2 && wrappingKey2; }, "secondary keys", 100);
@@ -4138,7 +4139,7 @@ describe("MessageBuilder", function() {
 			runs(function() {
 			    MslTestUtils.toMslObject(encoder, request, {
 			        result: function(x) { mo = x; },
-                    error: function() { expect(function() { throw e; }).not.toThrow(); }
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
 			waitsFor(function() { return mo; }, "mo", 100);
@@ -4516,7 +4517,7 @@ describe("MessageBuilder", function() {
 			
 			runs(function() {
 				var f = function() { throw exception; };
-				expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, messageid = REQUEST_MESSAGE_ID));
+				expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND), REQUEST_MESSAGE_ID);
 			});
 		});
 
@@ -5812,8 +5813,8 @@ describe("MessageBuilder", function() {
 			waitsFor(function() { return exception; }, "exception not received", 100);
 			runs(function() {
 			    var f = function() { throw exception; };
-    			expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, messageid = REQUEST_MESSAGE_ID));
-    		});
+			    expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND), REQUEST_MESSAGE_ID);
+			});
 		});
 
 		it("set master token", function() {

@@ -22,12 +22,12 @@
 (function(require, module) {
     "use strict";
     
-    const UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
-    const UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
-    const MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
+    var UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
-    const MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
+    var MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
     
     var MockUnauthenticatedAuthenticationFactory = module.exports = UnauthenticatedAuthenticationFactory.extend({
         /**

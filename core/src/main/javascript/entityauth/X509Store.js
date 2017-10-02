@@ -21,8 +21,8 @@
 (function(require, module) {
     "use strict";
     
-    const Class = require('../util/Class.js');
-    const X509 = require('../crypto/X509.js');
+    var Class = require('../util/Class.js');
+    var X509 = require('../crypto/X509.js');
     
     var X509Store = module.exports = Class.create({
         init: function init() {

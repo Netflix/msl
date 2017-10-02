@@ -22,13 +22,13 @@
 (function (require, module) {
     "use strict";
     
-    const Class = require('../util/Class.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const MslCryptoException = require('../MslCryptoException.js');
-    const MslError = require('../MslError.js');
-    const MslCrypto = require('../crypto/MslCrypto.js');
-    const KeyFormat = require('../crypto/KeyFormat.js');
-    const Base64 = require('../util/Base64.js');
+    var Class = require('../util/Class.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var MslCryptoException = require('../MslCryptoException.js');
+    var MslError = require('../MslError.js');
+    var MslCrypto = require('../crypto/MslCrypto.js');
+    var KeyFormat = require('../crypto/KeyFormat.js');
+    var Base64 = require('../util/Base64.js');
 
     var SecretKey = module.exports = Class.create({
         /**

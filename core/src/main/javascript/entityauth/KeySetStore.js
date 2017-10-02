@@ -16,7 +16,7 @@
 (function(require, module) {
     "use strict";
     
-    const Class = require('../util/Class.js');
+    var Class = require('../util/Class.js');
     
     /**
      * A set of encryption, HMAC, and wrapping keys.

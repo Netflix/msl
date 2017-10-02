@@ -22,12 +22,12 @@
 (function(require, module) {
     "use strict";
 
-    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const UnauthenticatedSuffixedAuthenticationData = require('../entityauth/UnauthenticatedSuffixedAuthenticationData.js');
-    const MslInternalException = require('../MslInternalException.js');
-    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
+    var EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var UnauthenticatedSuffixedAuthenticationData = require('../entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var NullCryptoContext = require('../crypto/NullCryptoContext.js');
 	
 	var UnauthenticatedSuffixedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
 	    /**

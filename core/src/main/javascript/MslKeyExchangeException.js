@@ -23,7 +23,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslException = require('./MslException.js');
+	var MslException = require('./MslException.js');
 	
 	var MslKeyExchangeException = module.exports = MslException.extend({
 	    /**

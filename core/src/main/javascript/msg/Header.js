@@ -55,13 +55,13 @@
 (function(require, module) {
 	"use strict";
 	
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MslError = require('../MslError.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MslError = require('../MslError.js');
 	
 	/**
 	 * Common header keys.
@@ -182,8 +182,8 @@
         
         function processHeaders(entityAuthData, masterToken, signature) {
             AsyncExecutor(callback, function() {
-                const MessageHeader = require('../msg/MessageHeader.js');
-                const ErrorHeader = require('../msg/ErrorHeader.js');
+                var MessageHeader = require('../msg/MessageHeader.js');
+                var ErrorHeader = require('../msg/ErrorHeader.js');
                 
                 try {
                     // Process message headers.

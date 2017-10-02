@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("textEncoding", function () {
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
     describe("textEncoding.getString", function () {
 

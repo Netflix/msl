@@ -31,12 +31,12 @@
 (function(require, module) {
     "use strict";
     
-    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const MslEncodingException = require('../MslEncodingException.js');
-    const MslError = require('../MslError.js');
+    var EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var MslEncodingException = require('../MslEncodingException.js');
+    var MslError = require('../MslError.js');
     
     /**
      * Key entity identity.

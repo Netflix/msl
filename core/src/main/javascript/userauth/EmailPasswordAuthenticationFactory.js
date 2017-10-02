@@ -22,13 +22,13 @@
 (function(require, module) {
 	"use strict";
 	
-	const UserAuthenticationFactory = require('../userauth/UserAuthenticationFactory.js');
-	const UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const EmailPasswordAuthenticationData = require('../userauth/EmailPasswordAuthenticationData.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslUserAuthException = require('../MslUserAuthException.js');
-	const MslError = require('../MslError.js');
+	var UserAuthenticationFactory = require('../userauth/UserAuthenticationFactory.js');
+	var UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var EmailPasswordAuthenticationData = require('../userauth/EmailPasswordAuthenticationData.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslUserAuthException = require('../MslUserAuthException.js');
+	var MslError = require('../MslError.js');
 	
 	var EmailPasswordAuthenticationFactory = module.exports = UserAuthenticationFactory.extend({
 	    /**

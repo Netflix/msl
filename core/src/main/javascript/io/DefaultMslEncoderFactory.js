@@ -27,12 +27,12 @@
 (function(require, module) {
     "use strict";
     
-    const MslEncoderFactory = require('../io/MslEncoderFactory.js');
-    const MslEncoderFormat = require('../io/MslEncoderFormat.js');
-    const JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const JsonMslObject = require('../io/JsonMslObject.js');
+    var MslEncoderFactory = require('../io/MslEncoderFactory.js');
+    var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+    var JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var JsonMslObject = require('../io/JsonMslObject.js');
     
 	var DefaultMslEncoderFactory = module.exports = MslEncoderFactory.extend({
 	    /** @inheritDoc */

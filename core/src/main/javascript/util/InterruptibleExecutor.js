@@ -31,7 +31,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
 		
 	var InterruptibleExecutor = module.exports = function InterruptibleExecutor(callback, func, thisArg) {
 	    // Make sure the callback is correct.

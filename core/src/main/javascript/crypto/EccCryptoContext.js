@@ -24,14 +24,14 @@
 (function(require, module) {
     "use strict";
     
-    const ICryptoContext = require('../crypto/ICryptoContext.js');
-    const MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
-    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-    const MslCrypto = require('../crypto/MslCrypto.js');
-    const MslCryptoException = require('../MslCryptoException.js');
-    const MslError = require('../MslError.js');
-    const MslEncoderException = require('../io/MslEncoderException.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
+    var ICryptoContext = require('../crypto/ICryptoContext.js');
+    var MslSignatureEnvelope = require('../crypto/MslSignatureEnvelope.js');
+    var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    var MslCrypto = require('../crypto/MslCrypto.js');
+    var MslCryptoException = require('../MslCryptoException.js');
+    var MslError = require('../MslError.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
 
     var EccCryptoContext = module.exports = ICryptoContext.extend({
         /**
