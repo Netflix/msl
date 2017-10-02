@@ -79,18 +79,18 @@ public:
     virtual bool markSupported() = 0;
 
     /**
-     * Reads bytes from the input stream. This is equivalent to a call to
+     * <p>Reads some bytes from the input stream, which may be less than the
+     * number requested. This is equivalent to a call to
      * {@link #read(ByteArray&, size_t, size_t, int)} with an offset of 0 and
-     * length equal to the current size of the destination byte buffer.
+     * length equal to the current size of the destination byte buffer.</p>
      *
-     * If fewer bytes than requested are available then all available
-     * bytes are returned. If zero bytes are available the method
-     * blocks until at least one bytes is available or the timeout is hit. If
-     * the timeout is hit then whatever bytes that have been read will be
-     * returned.
+     * <p>Unless the byte buffer length is zero, this method will block until
+     * at least one byte is available or the timeout is hit. If the timeout is
+     * hit then whatever bytes that have been read will be returned.</p>
      *
-     * If there are no more bytes available (i.e. end of stream is hit)
-     * then -1 is returned.
+     * <p>If there are no more bytes available (i.e. end of stream is hit)
+     * then -1 is returned. This is the only reliable indicator that no more
+     * data is available.</p>
      *
      * @param out destination byte buffer.
      * @param timeout read timeout in milliseconds or -1 for no timeout.
@@ -101,17 +101,17 @@ public:
     virtual int read(ByteArray& out, int timeout = -1) = 0;
 
     /**
-     * Reads the requested number of bytes from the input stream. If 0 is
-     * specified for the length then zero bytes are returned.
+     * <p>Reads some bytes from the input stream, which may be less than the
+     * number requested. If 0 is specified for the length then zero bytes are
+     * returned.</p>
      *
-     * If fewer bytes than requested are available then all available
-     * bytes are returned. If zero bytes are available the method
-     * blocks until at least one bytes is available or the timeout is hit. If
-     * the timeout is hit then whatever bytes that have been read will be
-     * returned.
+     * <p>Unless zero bytes are requested, this method will block until at
+     * least one byte is available or the timeout is hit. If the timeout is
+     * hit then whatever bytes that have been read will be returned.</p>
      *
-     * If there are no more bytes available (i.e. end of stream is hit)
-     * then -1 is returned.
+     * <p>If there are no more bytes available (i.e. end of stream is hit)
+     * then -1 is returned. This is the only reliable indicator that no
+     * more data is available.</p>
      *
      * @param out destination byte buffer.
      * @param len the number of bytes to read.
