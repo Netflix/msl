@@ -70,21 +70,21 @@
 	    markSupported: function() {},
 	
 	    /**
-	     * Returns the requested number of bytes from the input stream. If -1
-	     * is specified for the length then this function returns any bytes
-	     * that are available but at least one unless the timeout is hit. If 0 is
-	     * specified for the length then zero bytes are returned.
+	     * <p>Returns some bytes from the input stream, which may be less than
+	     * the number requested. If -1 is specified for the length then this
+	     * function returns at least one byte unless the timeout is hit. If 0
+	     * is specified for the length then zero bytes are returned.</p>
+	     * 
+	     * <p>Unless zero bytes are requested, this method will block until at
+	     * least one byte is available or the timeout is hit. If the timeout is
+	     * hit then whatever bytes that have been read will be returned.</p>
 	     *
-	     * If fewer bytes than requested are available then all available
-	     * bytes are returned. If zero bytes are available the method
-	     * blocks until at least one bytes is available or the timeout is hit. If
-	     * the timeout is hit then whatever bytes that have been read will be
-	     * returned.
+	     * <p>If there are no more bytes available (i.e. end of stream is hit)
+	     * then null is returned. This is the only reliable indicator that no
+	     * more data is available.</p>
 	     *
-	     * If there are no more bytes available (i.e. end of stream is hit)
-	     * then null is returned.
-	     *
-	     * If aborted whatever bytes that have been read will be returned.
+	     * <p>If aborted whatever bytes that have been read will be
+	     * returned.</p>
 	     *
 	     * @param {number} len the number of characters to read.
 	     * @param {number} timeout read timeout in milliseconds or -1 for no
