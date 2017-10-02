@@ -496,7 +496,7 @@ public class DefaultMslEncoderFactorySuite {
         }
         
         @Test
-        public void detectTokenizer() throws MslEncoderException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
+        public void detectTokenizer() throws IOException, MslEncoderException, MslEncodingException, MslEntityAuthException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
             if (exceptionClass != null)
                 thrown.expect(exceptionClass);
             

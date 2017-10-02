@@ -1668,6 +1668,7 @@
          * @param {{result: function(MessageInputStream), timeout: function(), error: function(Error)}}
          *        callback the callback returned the received message, timeouts,
          *        or any thrown exceptions.
+         * @throws IOException if there is a problem reading from the input stream.
          * @throws MslEncodingException if there is an error parsing the message.
          * @throws MslCryptoException if there is an error decrypting or verifying
          *         the header or creating the message payload crypto context.
@@ -2893,6 +2894,12 @@
                                 requestMessageId = e.messageId;
                                 mslError = e.error;
                                 userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, null);
+                                toThrow = e;
+                            } else if (e instanceof MslIoException) {
+                                recipient = null;
+                                requestMessageId = null;
+                                mslError = MslError.MSL_COMMS_FAILURE;
+                                userMessage = null;
                                 toThrow = e;
                             } else {
                                 recipient = null;

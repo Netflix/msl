@@ -26,20 +26,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
-	"use strict";
-	
-	var Base64 = require('../util/Base64.js');
-	var MslObject = require('../io/MslObject.js');
-	var MslArray = require('../io/MslArray.js');
-	var Class = require('../util/Class.js');
-	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	var AsyncExecutor = require('../util/AsyncExecutor.js');
-	var MslEncoderException = require('../io/MslEncoderException.js');
-	var JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
-	var JsonMslObject = require('../io/JsonMslObject.js');
-	var JsonMslArray = require('../io/JsonMslArray.js');
-	var BufferedInputStream = require('../io/BufferedInputStream.js');
-    
+    "use strict";
+
+    var Base64 = require('../util/Base64.js');
+    var MslObject = require('../io/MslObject.js');
+    var MslArray = require('../io/MslArray.js');
+    var Class = require('../util/Class.js');
+    var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var JsonMslTokenizer = require('../io/JsonMslTokenizer.js');
+    var JsonMslObject = require('../io/JsonMslObject.js');
+    var JsonMslArray = require('../io/JsonMslArray.js');
+    var BufferedInputStream = require('../io/BufferedInputStream.js');
+
     /**
      * Escape a string to be output as a single line of text.
      * 
@@ -66,22 +66,22 @@
      * @return {string} the string.
      */
     var MslEncoderFactory$stringify = function MslEncoderFactory$stringify(v) {
-    	if (v instanceof MslObject || v instanceof MslArray) {
-    		return v.toString();
-    	} else if (v instanceof Uint8Array) {
-    	    return Base64.encode(v);
-    	} else {
-    		var json = JSON.stringify(v);
-    		return json
-    			.replace(/[\"]/g, '\\"')
-    			.replace(/[\\]/g, '\\\\')
-    			.replace(/[\/]/g, '\\/')
-    			.replace(/[\b]/g, '\\b')
-    			.replace(/[\f]/g, '\\f')
-    			.replace(/[\n]/g, '\\n')
-    			.replace(/[\r]/g, '\\r')
-    			.replace(/[\t]/g, '\\t');
-    	}
+        if (v instanceof MslObject || v instanceof MslArray) {
+            return v.toString();
+        } else if (v instanceof Uint8Array) {
+            return Base64.encode(v);
+        } else {
+            var json = JSON.stringify(v);
+            return json
+                .replace(/[\"]/g, '\\"')
+                .replace(/[\\]/g, '\\\\')
+                .replace(/[\/]/g, '\\/')
+                .replace(/[\b]/g, '\\b')
+                .replace(/[\f]/g, '\\f')
+                .replace(/[\n]/g, '\\n')
+                .replace(/[\r]/g, '\\r')
+                .replace(/[\t]/g, '\\t');
+        }
     };
     
     var MslEncoderFactory = module.exports = Class.create({
@@ -111,37 +111,47 @@
          *        callback the callback that will receive the
          *        {@link MslTokenizer}, be notified of timeouts, or any thrown
          *        exceptions.
-         * @throws MslEncoderException if there is a problem reading the byte
-         *         stream identifier or if the encoding format is not supported.
+         * @throws IOException if there is a problem reading the byte stream
+         *         identifier.
+         * @throws MslEncoderException if the encoder format is not recognized or
+         *         is not supported.
          */
         createTokenizer: function createTokenizer(source, format, timeout, callback) {
-        	var self = this;
-        	
+            var self = this;
+            
             AsyncExecutor(callback, function() {
-                // Identify the encoding format.
-                if (!format) {
-                	var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
-                    bufferedSource.mark();
-                    bufferedSource.read(1, timeout, {
-                        result: function(bytes) {
-                            AsyncExecutor(callback, function() {
-                                if (bytes == null || bytes.length < 1)
-                                    throw new new MslEncoderException("Failure reading the byte stream identifier.");
-                                var id = bytes[0];
-                                format = MslEncoderFormat.getFormat(id);
-                                bufferedSource.reset();
-                                return this.generateTokenizer(bufferedSource, format);
-                            }, self);
-                        },
-                        timeout: callback.timeout,
-                        error: function(e) {
-                            callback.error(new MslEncoderException("Failure reading the byte stream identifier.", e));
-                        }
-                    });
-                } else {
+                // If the format was provided, return the tokenizer directly.
+                if (format)
                     return this.generateTokenizer(source, format);
-                }
+                
+                // Read the byte stream identifier.
+                var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
+                bufferedSource.mark();
+                bufferedSource.read(1, timeout, {
+                    result: function(bytes) {
+                        AsyncExecutor(callback, function() {
+                            if (bytes == null || bytes.length < 1)
+                                throw new MslEncoderException("End of stream reached when attempting to read the byte stream identifier.");
+                            var id = bytes[0];
+                            identify(bufferedSource, id);
+                        }, self);
+                    },
+                    timeout: callback.timeout,
+                    error: callback.error,
+                });
             }, self);
+            
+            function identify(bufferedSource, id) {
+                AsyncExecutor(callback, function() {
+                    format = MslEncoderFormat.getFormat(id);
+                    if (!format)
+                        throw new MslEncoderException("Unidentified encoder format ID: (byte)" + id + ".");
+                    
+                    // Reset the input stream and return the tokenizer.
+                    bufferedSource.reset();
+                    return this.generateTokenizer(bufferedSource, format);
+                }, self);
+            }
         },
 
         /**
