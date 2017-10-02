@@ -26,15 +26,16 @@
 (function(require, module) {
     "use strict";
     
-    const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-    const Class = require('../util/Class.js');
-    const MslInternalException = require('../MslInternalException.js');
-    const MslCryptoException = require('../MslCryptoException.js');
-    const MslError = require('../MslError.js');
-    const MslCrypto = require('../crypto/MslCrypto.js');
-    const PrivateKey = require('../crypto/PrivateKey.js');
-    const PublicKey = require('../crypto/PublicKey.js');
-    const SecretKey = require('../crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+    var Class = require('../util/Class.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var MslCryptoException = require('../MslCryptoException.js');
+    var MslError = require('../MslError.js');
+    var MslCrypto = require('../crypto/MslCrypto.js');
+    var PrivateKey = require('../crypto/PrivateKey.js');
+    var PublicKey = require('../crypto/PublicKey.js');
+    var SecretKey = require('../crypto/SecretKey.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
 
     /**
      * Supported content encryption key encryption algorithms. These are the

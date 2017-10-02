@@ -16,8 +16,8 @@
 (function(require, module) {
     "use strict";
     
-    const Class = require('../../../../../core/src/main/javascript/util/Class.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var Class = require('../../../../../core/src/main/javascript/util/Class.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
     
     /** Web Crypto key type. */
     var KeyType = {

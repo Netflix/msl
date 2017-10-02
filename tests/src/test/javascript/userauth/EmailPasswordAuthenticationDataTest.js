@@ -20,17 +20,17 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EmailPasswordAuthenticationData", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    const UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    const UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+    var UserAuthenticationData = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationData.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

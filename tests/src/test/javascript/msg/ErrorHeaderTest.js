@@ -20,20 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("ErrorHeader", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-    const Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
+    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -1918,12 +1918,12 @@ describe("ErrorHeader", function() {
     xit("equals timestamp", function() {
         var errorHeaderA, errorHeaderB;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
             setTimeout(MILLISECONDS_PER_SECOND, function() {
-                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                     result: function(hdr) { errorHeaderB = hdr; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1959,10 +1959,10 @@ describe("ErrorHeader", function() {
     });
 
     xit("equals message ID", function() {
-    	var messageIdA = 1;
-    	var messageIdB = 2;
-    	var errorHeaderA, errorHeaderB;
-    	runs(function() {
+        var messageIdA = 1;
+        var messageIdB = 2;
+        var errorHeaderA, errorHeaderB;
+        runs(function() {
             ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -2002,8 +2002,8 @@ describe("ErrorHeader", function() {
     });
     
     xit("equals error code", function() {
-        var errorCodeA = ResponseCode.FAIL;
-        var errorCodeB = ResponseCode.TRANSIENT_FAILURE;
+        var errorCodeA = MslConstants.ResponseCode.FAIL;
+        var errorCodeB = MslConstants.ResponseCode.TRANSIENT_FAILURE;
         var errorHeaderA, errorHeaderB;
         runs(function() {
             ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG, {

@@ -23,9 +23,9 @@
 (function (require, module) {
     "use strict";
     
-    const SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
-    const MslMasterTokenException = require('../MslMasterTokenException.js');
-    const MslError = require('../MslError.js');
+    var SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
+    var MslMasterTokenException = require('../MslMasterTokenException.js');
+    var MslError = require('../MslError.js');
     
 	var SessionCryptoContext = module.exports = SymmetricCryptoContext.extend({
 	    /**

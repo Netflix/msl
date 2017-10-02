@@ -23,14 +23,14 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslTokenizer = require('../io/MslTokenizer.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const ClarinetParser = require('../io/ClarinetParser.js');
-	const JsonMslObject = require('../io/JsonMslObject.js');
-	const MslConstants = require('../MslConstants.js');
-	const textEncoding = require('../lib/textEncoding.js');
+	var MslTokenizer = require('../io/MslTokenizer.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var ClarinetParser = require('../io/ClarinetParser.js');
+	var JsonMslObject = require('../io/JsonMslObject.js');
+	var MslConstants = require('../MslConstants.js');
+	var textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Delay time between read attempts in milliseconds.

@@ -107,18 +107,18 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslError = require('../MslError.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslException = require('../MslException.js');
-	const Base64 = require('../util/Base64.js');
-	const SecretKey = require('../crypto/SecretKey.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslError = require('../MslError.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslException = require('../MslException.js');
+	var Base64 = require('../util/Base64.js');
+	var SecretKey = require('../crypto/SecretKey.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
 	
     /**
      * Milliseconds per second.
@@ -469,6 +469,8 @@
          * @return {boolean} true if this master token is newer than the provided one.
          */
         isNewerThan: function isNewerThan(that) {
+            var cutoff;
+            
             // If the sequence numbers are equal then compare the expiration dates.
             if (this.sequenceNumber == that.sequenceNumber)
                 return this.expiration > that.expiration;
@@ -476,13 +478,13 @@
             // If this sequence number is bigger than that sequence number, make
             // sure that sequence number is not less than the cutoff.
             if (this.sequenceNumber > that.sequenceNumber) {
-                let cutoff = this.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
+                cutoff = this.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
                 return that.sequenceNumber >= cutoff;
             }
 
             // If this sequence number is smaller than that sequence number, make
             // sure this sequence number is less than the cutoff.
-            let cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
+            cutoff = that.sequenceNumber - MslConstants.MAX_LONG_VALUE + 127;
             return this.sequenceNumber < cutoff;
         },
         

@@ -20,7 +20,7 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 parameterize("ServiceToken", function data() {
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
     
     return [
         [ null ],
@@ -28,27 +28,27 @@ parameterize("ServiceToken", function data() {
     ];
 },
 function(encoding, compressionAlgo) {
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    const MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;

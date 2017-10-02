@@ -24,7 +24,7 @@
 (function(require, module) {
 	"use strict";
 	
-	const ICryptoContext = require('../crypto/ICryptoContext.js');
+	var ICryptoContext = require('../crypto/ICryptoContext.js');
 	
 	var NullCryptoContext = module.exports = ICryptoContext.extend({
 	    /** @inheritDoc */

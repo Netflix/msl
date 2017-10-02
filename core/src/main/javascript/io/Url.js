@@ -26,15 +26,17 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const OuptutStream = require('../io/OutputStream.js');
-	const InputStream = require('../io/InputStream.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslIoException = require('../MslIoException.js');
-	const ByteArrayInputStream = require('../io/ByteArrayInputStream.js');
-	const textEncoding = require('../lib/textEncoding.js');
+	var Class = require('../util/Class.js');
+	var OutputStream = require('../io/OutputStream.js');
+	var InputStream = require('../io/InputStream.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslIoException = require('../MslIoException.js');
+	var ByteArrayInputStream = require('../io/ByteArrayInputStream.js');
+	var ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
+	var BlockingQueue = require('../util/BlockingQueue.js');
+	var textEncoding = require('../lib/textEncoding.js');
 	
     /**
      * UTF-8 charset.

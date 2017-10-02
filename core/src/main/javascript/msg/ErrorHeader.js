@@ -42,19 +42,19 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MslError = require('../MslError.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEntityAuthException = require('../MslEntityAuthException.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const Header = require('../msg/Header.js');
-	const MslException = require('../MslException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const Base64 = require('../util/Base64.js');
+	var Class = require('../util/Class.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MslError = require('../MslError.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEntityAuthException = require('../MslEntityAuthException.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var Header = require('../msg/Header.js');
+	var MslException = require('../MslException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var Base64 = require('../util/Base64.js');
     
     /** Milliseconds per second. */
     var MILLISECONDS_PER_SECOND = 1000;

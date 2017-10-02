@@ -23,8 +23,8 @@
 (function(require, module) {
     "use strict";
     
-    const WrapCryptoContextRepository = require('../../../../../core/src/main/javascript/keyx/WrapCryptoContextRepository.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var WrapCryptoContextRepository = require('../../../../../core/src/main/javascript/keyx/WrapCryptoContextRepository.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     
     var MockCryptoContextRepository = module.exports = WrapCryptoContextRepository.extend({
         init: function init() {

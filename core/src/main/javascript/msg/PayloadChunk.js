@@ -60,18 +60,18 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslConstants = require('../MslConstants.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslUtils = require('../util/MslUtils.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
-	const MslMessageException = require('../MslMessageException.js');
-	const MslException = require('../MslException.js');
-	const Base64 = require('../util/Base64.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslConstants = require('../MslConstants.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslUtils = require('../util/MslUtils.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var MslMessageException = require('../MslMessageException.js');
+	var MslException = require('../MslException.js');
+	var Base64 = require('../util/Base64.js');
 	
     /**
      * Key payload.

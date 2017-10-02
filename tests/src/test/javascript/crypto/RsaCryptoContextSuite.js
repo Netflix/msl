@@ -20,20 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("RsaCryptoContext", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    const RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
 	
     /** Key pair ID. */
     var KEYPAIR_ID = "keypairid";
@@ -248,7 +248,7 @@ describe("RsaCryptoContext", function() {
     			expect(ciphertext).not.toEqual(message);
     			
     			cryptoContextB.decrypt(ciphertext, encoder, {
-    				result: function() { plaintext = p; },
+    				result: function(p) { plaintext = p; },
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});

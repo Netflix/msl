@@ -22,9 +22,9 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('../util/Class.js');
-	const MessageInputStream = require('../msg/MessageInputStream.js');
-	const MessageOutputStream = require('../msg/MessageOutputStream.js');
+	var Class = require('../util/Class.js');
+	var MessageInputStream = require('../msg/MessageInputStream.js');
+	var MessageOutputStream = require('../msg/MessageOutputStream.js');
 	
 	var MessageStreamFactory = module.exports = Class.create({
 	    /**

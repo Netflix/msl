@@ -25,8 +25,8 @@
 (function(require, module) {
 	"use strict";
 	
-	const TokenFactory = require('../tokens/TokenFactory.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var TokenFactory = require('../tokens/TokenFactory.js');
+	var MslInternalException = require('../MslInternalException.js');
 	
 	var ClientTokenFactory = module.exports = TokenFactory.extend({
 	    /** @inheritDoc */

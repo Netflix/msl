@@ -22,14 +22,14 @@
 (function(require, module) {
     "use strict";
     
-    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const AsyncExecutor = require("../util/AsyncExecutor.js");
-    const PresharedProfileAuthenticationData = require('../entityauth/PresharedProfileAuthenticationData.js');
-    const MslInternalException = require('../MslInternalException.js');
-    const MslError = require('../MslError.js');
-    const MslEntityAuthException = require('../MslEntityAuthException.js');
-    const SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
+    var EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var AsyncExecutor = require("../util/AsyncExecutor.js");
+    var PresharedProfileAuthenticationData = require('../entityauth/PresharedProfileAuthenticationData.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var MslError = require('../MslError.js');
+    var MslEntityAuthException = require('../MslEntityAuthException.js');
+    var SymmetricCryptoContext = require('../crypto/SymmetricCryptoContext.js');
     
 	var PresharedProfileAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
 	    /**

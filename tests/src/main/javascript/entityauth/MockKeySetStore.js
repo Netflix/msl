@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
     
-    const KeySetStore = require('../../../../../core/src/main/javascript/entityauth/KeySetStore.js');
+    var KeySetStore = require('../../../../../core/src/main/javascript/entityauth/KeySetStore.js');
     
     var MockKeySetStore = module.exports = KeySetStore.extend({
         /**

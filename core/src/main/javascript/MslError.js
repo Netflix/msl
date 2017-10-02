@@ -27,8 +27,8 @@
 (function(require, module) {
 	"use strict";
 	
-	const Class = require('./util/Class.js');
-	const MslConstants = require('./MslConstants.js');
+	var Class = require('./util/Class.js');
+	var MslConstants = require('./MslConstants.js');
 	
 	/**
 	 * Construct a MSL error with the specified internal and response error

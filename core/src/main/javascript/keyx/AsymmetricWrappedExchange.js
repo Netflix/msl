@@ -22,28 +22,28 @@
 (function(require, module) {
 	"use strict";
 	
-	const KeyRequestData = require('../keyx/KeyRequestData.js');
-	const KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const Arrays = require('../util/Arrays.js');
-	const MslKeyExchangeException = require('../MslKeyExchangeException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
-	const PublicKey = require('../crypto/PublicKey.js');
-	const WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
-	const WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
-	const KeyFormat = require('../crypto/KeyFormat.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const KeyResponseData = require('../keyx/KeyResponseData.js');
-	const JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
-	const RsaCryptoContext = require('../crypto/RsaCryptoContext.js');
-	const KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MasterToken = require('../tokens/MasterToken.js');
-	const MslMasterTokenException = require('../MslMasterTokenException.js');
-	const MslException = require('../MslException.js');
-	const SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
+	var KeyRequestData = require('../keyx/KeyRequestData.js');
+	var KeyExchangeScheme = require('../keyx/KeyExchangeScheme.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var Arrays = require('../util/Arrays.js');
+	var MslKeyExchangeException = require('../MslKeyExchangeException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var PublicKey = require('../crypto/PublicKey.js');
+	var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('../crypto/WebCryptoUsage.js');
+	var KeyFormat = require('../crypto/KeyFormat.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var KeyResponseData = require('../keyx/KeyResponseData.js');
+	var JsonWebEncryptionCryptoContext = require('../crypto/JsonWebEncryptionCryptoContext.js');
+	var RsaCryptoContext = require('../crypto/RsaCryptoContext.js');
+	var KeyExchangeFactory = require('../keyx/KeyExchangeFactory.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MasterToken = require('../tokens/MasterToken.js');
+	var MslMasterTokenException = require('../MslMasterTokenException.js');
+	var MslException = require('../MslException.js');
+	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 
     /**
      * Asymmetric key wrapped mechanism.

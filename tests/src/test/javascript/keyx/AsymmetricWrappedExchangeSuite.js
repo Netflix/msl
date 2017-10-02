@@ -20,32 +20,32 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("AsymmetricWrappedExchangeSuite", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    const AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    const KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    const MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    const MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
-    const KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    const PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    var AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
+    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
+    var KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
     
-    const BigInteger = require('jsrsasign').BigInteger;
+    var BigInteger = require('jsrsasign').BigInteger;
 
-    const MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    const MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
+    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -1211,7 +1211,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                 });
 
                 // Verification should always succeed.
-                var requestVerified; responseVerified = undefined;
+                var requestVerified, responseVerified;
                 runs(function() {
                     requestCryptoContext.verify(data, responseSignature, encoder, {
                         result: function(data) { requestVerified = data; },

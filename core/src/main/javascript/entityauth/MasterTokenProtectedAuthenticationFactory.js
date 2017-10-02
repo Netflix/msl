@@ -22,13 +22,13 @@
 (function(require, module) {
     "use strict";
 
-    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
-    const MasterTokenProtectedAuthenticationData = require('../entityauth/MasterTokenProtectedAuthenticationData.js');
-    const MslInternalException = require('../MslInternalException.js');
-    const MslEntityAuthException = require('../MslEntityAuthException.js');
-    const MslError = require('../MslError.js');
+    var EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var EntityAuthenticationData = require('../entityauth/EntityAuthenticationData.js');
+    var MasterTokenProtectedAuthenticationData = require('../entityauth/MasterTokenProtectedAuthenticationData.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var MslEntityAuthException = require('../MslEntityAuthException.js');
+    var MslError = require('../MslError.js');
 	    
 	var MasterTokenProtectedAuthenticationFactory = module.exports = EntityAuthenticationFactory.extend({
 	    /**

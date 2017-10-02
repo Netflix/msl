@@ -35,26 +35,26 @@
         "approached very carefully. We strongly advise against running MSL in a Node.js\n" +
         "environment.\n");
 
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const JsonWebKeyAlgorithm = require('../../../../../core/src/main/javascript/crypto/JsonWebKeyAlgorithm.js');
-    const WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
-    const KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js')
-    const MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
-    const textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var JsonWebKeyAlgorithm = require('../../../../../core/src/main/javascript/crypto/JsonWebKeyAlgorithm.js');
+    var WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
+    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js')
+    var MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
+    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
     
-    const NodeCryptoKey = require('../crypto/NodeCryptoKey.js');
+    var NodeCryptoKey = require('../crypto/NodeCryptoKey.js');
     
     // Reference these but do not add them to the package.json since we should
     // avoid pulling in modules by default.
-    const crypto = require('crypto');
-    const rs = require('jsrsasign');
-    const ECKey = require('ec-key');
-    const ursa = require('ursa');
-    const EC = require('elliptic').ec;
+    var crypto = require('crypto');
+    var rs = require('jsrsasign');
+    var ECKey = require('ec-key');
+    var ursa = require('ursa');
+    var EC = require('elliptic').ec;
     
     /** AES-KW alternative IV. */
     var AESKW_AIV = new Uint8Array([0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6]);

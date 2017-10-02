@@ -33,12 +33,12 @@
 (function(require, module) {
 	"use strict";
 	
-	const UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
-	const UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
+	var UserAuthenticationData = require('../userauth/UserAuthenticationData.js');
+	var UserAuthenticationScheme = require('../userauth/UserAuthenticationScheme.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
     
     /**
      * Key email key.

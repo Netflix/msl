@@ -22,13 +22,13 @@
 (function(require, module) {
     "use strict";
     
-    const Class = require('../util/Class.js');
-    const EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
-    const EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
-    const AsyncExecutor = require('../util/AsyncExecutor.js');
-    const ProvisionedAuthenticationData = require('../entityauth/ProvisionedAuthenticationData.js');
-    const MslInternalException = require('../MslInternalException.js');
-    const NullCryptoContext = require('../crypto/NullCryptoContext.js');
+    var Class = require('../util/Class.js');
+    var EntityAuthenticationFactory = require('../entityauth/EntityAuthenticationFactory.js');
+    var EntityAuthenticationScheme = require('../entityauth/EntityAuthenticationScheme.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
+    var ProvisionedAuthenticationData = require('../entityauth/ProvisionedAuthenticationData.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var NullCryptoContext = require('../crypto/NullCryptoContext.js');
 
     /**
      * An identity provisioning service returns unique entity identities.
@@ -72,7 +72,7 @@
             var pad = authdata;
             
             // Provision an entity identity.
-            var identity = service.nextIdentity();
+            var identity = this.service.nextIdentity();
             pad.setIdentity(identity);
             
             // Return the crypto context.

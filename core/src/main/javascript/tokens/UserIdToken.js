@@ -74,16 +74,16 @@
 (function(require, module) {
 	"use strict";
 	
-	const MslEncodable = require('../io/MslEncodable.js');
-	const MslInternalException = require('../MslInternalException.js');
-	const MslConstants = require('../MslConstants.js');
-	const AsyncExecutor = require('../util/AsyncExecutor.js');
-	const MslCryptoException = require('../MslCryptoException.js');
-	const MslEncoderException = require('../io/MslEncoderException.js');
-	const MslException = require('../MslException.js');
-	const MslEncodingException = require('../MslEncodingException.js');
-	const MslError = require('../MslError.js');
-	const Base64 = require('../util/Base64.js');
+	var MslEncodable = require('../io/MslEncodable.js');
+	var MslInternalException = require('../MslInternalException.js');
+	var MslConstants = require('../MslConstants.js');
+	var AsyncExecutor = require('../util/AsyncExecutor.js');
+	var MslCryptoException = require('../MslCryptoException.js');
+	var MslEncoderException = require('../io/MslEncoderException.js');
+	var MslException = require('../MslException.js');
+	var MslEncodingException = require('../MslEncodingException.js');
+	var MslError = require('../MslError.js');
+	var Base64 = require('../util/Base64.js');
 	
     /** Milliseconds per second.
      * @const

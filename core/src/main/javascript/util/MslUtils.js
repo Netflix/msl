@@ -22,13 +22,13 @@
 (function(require, module) {
 	"use strict";
     
-    const MslConstants = require('../MslConstants.js');
-    const MslException = require('../MslException.js');
-    const MslError = require('../MslError.js');
-    const Base64 = require('../util/Base64.js');
+    var MslConstants = require('../MslConstants.js');
+    var MslException = require('../MslException.js');
+    var MslError = require('../MslError.js');
+    var Base64 = require('../util/Base64.js');
     
-    const lzw = require('../lib/lzw.js');
-    const zlib = require('zlib');
+    var lzw = require('../lib/lzw.js');
+    var zlib = require('zlib');
 
     // Shortcuts
     var CompressionAlgorithm = MslConstants.CompressionAlgorithm;

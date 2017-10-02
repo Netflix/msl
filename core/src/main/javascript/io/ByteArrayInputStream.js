@@ -22,9 +22,9 @@
 (function(require, module) {
 	"use strict";
 	
-	const InputStream = require('../io/InputStream.js');
-	const InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	const MslIoException = require("../MslIoException.js");
+	var InputStream = require('../io/InputStream.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+	var MslIoException = require("../MslIoException.js");
 		
 	var ByteArrayInputStream = module.exports = InputStream.extend({
 	    /**

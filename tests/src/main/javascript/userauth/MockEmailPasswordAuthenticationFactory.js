@@ -22,14 +22,14 @@
 (function(require, module) {
     "use strict";
     
-    const UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    const MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    const MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
+    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
+    var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
-    const MockMslUser = require('../tokens/MockMslUser.js');
+    var MockMslUser = require('../tokens/MockMslUser.js');
     
 	/** Email. */
     var EMAIL = "email1@domain.com";

@@ -22,21 +22,21 @@
 (function(require, module) {
     "use strict";
     
-    const Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    const AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    const PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    const PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    const WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    const WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    const MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    const UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-    const NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    const ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    const SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    const MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    const MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    const MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    const Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
+    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
+    var UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
+    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
+    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
+    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
+    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
+    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
     
 	/** Base service token name. */
     var SERVICE_TOKEN_NAME = "serviceTokenName";
@@ -156,7 +156,7 @@
 	     */
 	    getMasterToken: function getMasterToken(ctx, sequenceNumber, serialNumber, callback) {
 	    	AsyncExecutor(callback, function() {
-	    	    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+	    	    var MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
 	    	    
 		        var renewalWindow = new Date(Date.now() + 10000);
 		        var expiration = new Date(Date.now() + 20000);
@@ -189,7 +189,7 @@
 	     */
 	    getUntrustedMasterToken: function getUntrustedMasterToken(ctx, callback) {
 	    	AsyncExecutor(callback, function() {
-	    	    const MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
+	    	    var MockPresharedAuthenticationFactory = require('../entityauth/MockPresharedAuthenticationFactory.js');
 	    	    
 		        var renewalWindow = new Date(Date.now() + 10000);
 		        var expiration = new Date(Date.now() + 20000);

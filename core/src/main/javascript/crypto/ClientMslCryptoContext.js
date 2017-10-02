@@ -16,8 +16,8 @@
 (function(require, module) {
 	"use strict";
 	
-	const ICryptoContext = require('../crypto/ICryptoContext.js');
-	const MslInternalException = require('../MslInternalException.js');
+	var ICryptoContext = require('../crypto/ICryptoContext.js');
+	var MslInternalException = require('../MslInternalException.js');
 	
 	/**
 	 * This class should be used by trusted network clients for the primary crypto

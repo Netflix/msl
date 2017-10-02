@@ -20,14 +20,14 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageCapabilities", function() {
-    const MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    const MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    const EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    const MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-    const Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
-    const MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    const MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -374,8 +374,8 @@ describe("MessageCapabilities", function() {
         
         expect(intersectionBC).toEqual(intersectionCB);
         expect(gzipOnly).toEqual(intersectionBC.compressionAlgorithms);
-        expect(Arrays.containEachOther(LANGUAGES, intersectionB.languages)).toBeTruthy();
-        expect(noFormats).toEqual(intersectionBc.encoderFormats);
+        expect(Arrays.containEachOther(LANGUAGES, intersectionBC.languages)).toBeTruthy();
+        expect(noFormats).toEqual(intersectionBC.encoderFormats);
     });
     
     it("intersection with null capabilities", function() {
