@@ -196,7 +196,7 @@
             var encoderFormats = [];
             var formats = capabilitiesMo.optMslArray(KEY_ENCODER_FORMATS);
             for (var k = 0; formats && k < formats.size(); ++k) {
-                var format = formats.getString(i);
+                var format = formats.getString(k);
                 var encoderFormat = MslEncoderFormat.getFormat(format);
                 // Ignore unsupported formats.
                 if (encoderFormat)
