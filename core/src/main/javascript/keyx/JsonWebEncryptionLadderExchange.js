@@ -312,7 +312,7 @@
      * with the provided master token from the provided MSL object.
      *
      * @param {MasterToken} masterToken the master token.
-     * @param {object} keyDataJO the JSON object.
+     * @param {object} keyDataMo the MSL object.
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the mechanism is not recognized.
      */
@@ -401,15 +401,17 @@
         },
 
         /** @inheritDoc */
-        createRequestData: function createRequestData(ctx, keyRequestJO, callback) {
+        createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
             AsyncExecutor(callback, function() {
-                return RequestData$parse(keyRequestJO);
+                return RequestData$parse(keyRequestMo);
             });
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataJO) {
-            return ResponseData$parse(masterToken, keyDataJO);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataMo, callback) {
+            AsyncExecutor(callback, function() {
+                return ResponseData$parse(masterToken, keyDataMo);
+            });
         },
 
         /** @inheritDoc */
