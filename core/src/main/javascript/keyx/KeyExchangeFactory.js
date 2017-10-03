@@ -87,12 +87,14 @@
          * @param {MslContext} ctx MSL context.
          * @param {MasterToken} masterToken the master token for the new key response data.
          * @param {MslObject} keyDataMo the MSL object.
-         * @return {KeyResponseData} the key response data.
+         * @param {{result: function(KeyResponseData), error: function(Error)}}
+         *        callback the callback will receive the key response data or
+         *        any thrown exceptions.
          * @throws MslEncodingException if there is an error parsing the data.
          * @throws MslKeyExchangeException if there is an error creating the key
          *         response data.
          */
-        createResponseData: function(ctx, masterToken, keyDataMo) {},
+        createResponseData: function(ctx, masterToken, keyDataMo, callback) {},
 
         /**
          * <p>Generate a new key response data instance and crypto context in

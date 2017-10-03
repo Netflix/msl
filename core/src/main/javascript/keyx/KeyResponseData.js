@@ -173,10 +173,10 @@
                             var factory = ctx.getKeyExchangeFactory(scheme);
                             if (!factory)
                                 throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, scheme.name);
-                            return factory.createResponseData(ctx, masterToken, keyData);
+                            factory.createResponseData(ctx, masterToken, keyData, callback);
                         });
                     },
-                    error: function(err) { callback.error(err); }
+                    error: callback.error,
                 });
             } catch (e) {
                 if (e instanceof MslEncoderException)

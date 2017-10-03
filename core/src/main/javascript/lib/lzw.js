@@ -77,8 +77,8 @@
     var lzw$compress = function(data) {
         // Populate the initial dictionary.
         var dictionary = {};
-        for (var c in COMPRESS_DICTIONARY)
-            dictionary[c] = COMPRESS_DICTIONARY[c];
+        for (var cd in COMPRESS_DICTIONARY)
+            dictionary[cd] = COMPRESS_DICTIONARY[cd];
         var dictlen = COMPRESS_DICTIONARY_LENGTH;
 
         // Working symbols.
