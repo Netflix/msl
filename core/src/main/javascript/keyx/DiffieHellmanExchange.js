@@ -233,25 +233,31 @@
      * @throws MslEncodingException if there is an error parsing the data.
      * @throws MslKeyExchangeException if the public key is invalid.
      */
-    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo) {
-        try {
-            var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
-            var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
-            if (publicKeyY.length == 0)
-                throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
-            PublicKey.import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
-                result: function(publicKey) {
-                    callback.result(new ResponseData(masterToken, parametersId, publicKey));
-                },
-                error: function(e) {
-                    callback.error(new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo, e));
-                }
-            });
-        } catch (e) {
-            if (e instanceof MslEncoderException)
-                throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
-            throw e;
-        }
+    var ResponseData$parse = function ResponseData$parse(masterToken, keyDataMo, callback) {
+        AsyncExecutor(callback, function() {
+            try {
+                var parametersId = keyDataMo.getString(KEY_PARAMETERS_ID);
+                var publicKeyY = keyDataMo.getBytes(KEY_PUBLIC_KEY);
+                if (publicKeyY.length == 0)
+                    throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo);
+                PublicKey.import(publicKeyY, WebCryptoAlgorithm.DIFFIE_HELLMAN, WebCryptoUsage.DERIVE_KEY, {
+                    result: function(publicKey) {
+                        AsyncExecutor(callback, function() {
+                            return new ResponseData(masterToken, parametersId, publicKey);
+                        });
+                    },
+                    error: function(e) {
+                        AsyncExecutor(callback, function() {
+                            throw new MslKeyExchangeException(MslError.KEYX_INVALID_PUBLIC_KEY, "keydata " + keyDataMo, e);
+                        });
+                    }
+                });
+            } catch (e) {
+                if (e instanceof MslEncoderException)
+                    throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "keydata " + keyDataMo, e);
+                throw e;
+            }
+        });
     };
     
     /**
@@ -309,8 +315,8 @@
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataMo) {
-            return ResponseData$parse(masterToken, keyDataMo);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataMo, callback) {
+            ResponseData$parse(masterToken, keyDataMo, callback);
         },
 
         /**

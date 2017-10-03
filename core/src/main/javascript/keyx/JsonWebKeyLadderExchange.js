@@ -503,8 +503,10 @@
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyResponseMo) {
-            return ResponseData$parse(masterToken, keyResponseMo);
+        createResponseData: function createResponseData(ctx, masterToken, keyResponseMo, callback) {
+            AsyncExecutor(callback, function() {
+                return ResponseData$parse(masterToken, keyResponseMo);
+            });
         },
 
         /** @inheritDoc */

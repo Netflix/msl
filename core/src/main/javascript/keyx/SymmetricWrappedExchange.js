@@ -309,12 +309,14 @@
         createRequestData: function createRequestData(ctx, keyRequestMo, callback) {
             AsyncExecutor(callback, function() {
                 return RequestData$parse(keyRequestMo);
-            }, this);
+            });
         },
 
         /** @inheritDoc */
-        createResponseData: function createResponseData(ctx, masterToken, keyDataMo) {
-            return ResponseData$parse(masterToken, keyDataMo);
+        createResponseData: function createResponseData(ctx, masterToken, keyDataMo, callback) {
+            AsyncExecutor(callback, function() {
+                return ResponseData$parse(masterToken, keyDataMo);
+            });
         },
 
         /** @inheritDoc */
