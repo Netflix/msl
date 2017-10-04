@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ var SimpleClient$create;
     /**
      * <p>An HTTP location that is implemented using XMLHttpRequest.</p>
      */
-    var Xhr = IHttpLocation.extend({
+    var Xhr = Url.IHttpLocation.extend({
         /**
          * <p>Create a new XHR pointing at the specified endpoint.
          * 
@@ -58,7 +58,7 @@ var SimpleClient$create;
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleClient = util.Class.create({
+    SimpleClient = Class.create({
         /**
          * <p>Create a new client.</p>
          *
@@ -73,13 +73,13 @@ var SimpleClient$create;
             var self = this;
             
             // Import the server RSA public key.
-            PublicKey$import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
+            PublicKey.import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
                 result: function(publicKey) {
                 	AsyncExecutor(callback, function() {
 	                    // Create the key manager.
-	                	var mechanism = (MslCrypto$getWebCryptoVersion() == MslCrypto$WebCryptoVersion.LEGACY)
-	                		? AsymmetricWrappedExchange$Mechanism.JWE_RSA
-	                		: AsymmetricWrappedExchange$Mechanism.JWK_RSA;
+	                	var mechanism = (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY)
+	                		? AsymmetricWrappedExchange.Mechanism.JWE_RSA
+	                		: AsymmetricWrappedExchange.Mechanism.JWK_RSA;
 	                    SimpleKeyxManager$create(mechanism, {
 	                        result: function(keyxMgr) {
 	                            AsyncExecutor(callback, function() {

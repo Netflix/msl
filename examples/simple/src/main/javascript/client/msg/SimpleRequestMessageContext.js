@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ var SimpleRequestMessageContext;
     
     // Shortcuts.
     var Type = SimpleRequest$Type;
-    var Mechanism = AsymmetricWrappedExchange$Mechanism;
-    var RequestData = AsymmetricWrappedExchange$RequestData;
+    var Mechanism = AsymmetricWrappedExchange.Mechanism;
+    var RequestData = AsymmetricWrappedExchange.RequestData;
 
     /**
      * <p>Example client message context for sending request messages.</p>
@@ -145,7 +145,7 @@ var SimpleRequestMessageContext;
         write: function(output, timeout, callback) {
             AsyncExecutor(callback, function() {
                 var json = JSON.stringify(this._request);
-                var jsonBytes = textEncoding$getBytes(json, MslConstants$DEFAULT_CHARSET);
+                var jsonBytes = textEncoding.getBytes(json, MslConstants.DEFAULT_CHARSET);
                 output.write(jsonBytes, 0, jsonBytes.length, timeout, {
                     result: function(numWritten) {
                         // Technically we should check that numWritten is equal
