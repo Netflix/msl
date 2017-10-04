@@ -103,7 +103,7 @@ public:
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, JSONObject)
+     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, MslObject)
      * @see MslError.MESSAGE_REPLAYED
      * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
@@ -152,7 +152,7 @@ public:
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error checking the master token
      *         renewability.
-     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, JSONObject)
+     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, MslObject)
      */
     virtual MslError isMasterTokenRenewable(std::shared_ptr<util::MslContext> ctx,
             std::shared_ptr<MasterToken> masterToken) = 0;
