@@ -17,8 +17,6 @@ package com.netflix.msl.tokens;
 
 import javax.crypto.SecretKey;
 
-import org.json.JSONObject;
-
 import com.netflix.msl.MslConstants.ResponseCode;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -98,7 +96,7 @@ public interface TokenFactory {
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
-     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, JSONObject)
+     * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, MslObject)
      * @see MslError.MESSAGE_REPLAYED
      * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
      */
@@ -142,7 +140,7 @@ public interface TokenFactory {
      * @throws MslMasterTokenException if the master token is not trusted.
      * @throws MslException if there is an error checking the master token
      *         renewability.
-     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, JSONObject)
+     * @see #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, MslObject)
      */
     public MslError isMasterTokenRenewable(final MslContext ctx, final MasterToken masterToken) throws MslMasterTokenException, MslException;
     
