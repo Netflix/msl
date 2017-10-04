@@ -69,7 +69,7 @@ var SimpleFilterStreamFactory;
                 	AsyncExecutor(callback, function() {
                 		try {
 		                    if (data)
-		                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+		                        self._target.innerHTML += textEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
 		                    return data;
                 		} catch (e) {
                 			throw new MslIoException("Error encoding data into string.", e);
@@ -80,7 +80,7 @@ var SimpleFilterStreamFactory;
                 	AsyncExecutor(callback, function() {
                 		try {
 		                    if (data)
-		                        self._target.innerHTML += textEncoding$getString(data, MslConstants$DEFAULT_CHARSET);
+		                        self._target.innerHTML += textEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
 		                    return data;
                 		} catch (e) {
                 			throw new MslIoException("Error encoding data into string.", e);
@@ -124,7 +124,7 @@ var SimpleFilterStreamFactory;
         	var self = this;
         	AsyncExecutor(callback, function() {
         		try {
-        			this._target.innerHTML += textEncoding$getString(data.subarray(off, off + len), MslConstants$DEFAULT_CHARSET);
+        			this._target.innerHTML += textEncoding.getString(data.subarray(off, off + len), MslConstants.DEFAULT_CHARSET);
         		} catch (e) {
         			throw new MslIoException("Error encoding data into string.", e);
         		}

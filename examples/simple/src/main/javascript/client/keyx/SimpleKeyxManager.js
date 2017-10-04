@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ var SimpleKeyxManager$KeyPair;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var KeyPair = SimpleKeyxManager$KeyPair = util.Class.create({
+    var KeyPair = SimpleKeyxManager$KeyPair = Class.create({
         /**
          * <p>Create a new key pair.</p>
          * 
@@ -50,12 +50,12 @@ var SimpleKeyxManager$KeyPair;
      * 
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleKeyxManager = util.Class.create({
+    SimpleKeyxManager = Class.create({
         /**
          * <p>Create a new asymmetric wrapped key exchange manager. A pair of
          * initial keys will be generated.</p>
          * 
-         * @param {AsymmetricWrappedExchange$Mechanism} mechanism the key
+         * @param {AsymmetricWrappedExchange.Mechanism} mechanism the key
          *        mechanism to use.
          * @param {{result: function(SimpleKeyxManager), error: function(Error)}}
          *        callback the callback that will receive the key manager or
@@ -87,7 +87,7 @@ var SimpleKeyxManager$KeyPair;
         /**
          * <p>Return the key exchange mechanism.</p>
          * 
-         * @return {AsymmetricWrappedExchange$Mechanism} the key exchange
+         * @return {AsymmetricWrappedExchange.Mechanism} the key exchange
          *         mechanism.
          */
         getMechanism: function getMechanism() {
@@ -115,9 +115,9 @@ var SimpleKeyxManager$KeyPair;
             
             AsyncExecutor(callback, function() {
                 var oncomplete = function(result) {
-                    PrivateKey$create(result.privateKey, {
+                    PrivateKey.create(result.privateKey, {
                         result: function(privateKey) {
-                            PublicKey$create(result.publicKey, {
+                            PublicKey.create(result.publicKey, {
                                 result: function(publicKey) {
                                     AsyncExecutor(callback, function() {
                                         this._pubkey = publicKey;
@@ -151,7 +151,7 @@ var SimpleKeyxManager$KeyPair;
      * <p>Create a new asymmetric wrapped key exchange manager. A pair of
      * initial keys will be generated.</p>
      * 
-     * @param {AsymmetricWrappedExchange$Mechanism} mechanism the key
+     * @param {AsymmetricWrappedExchange.Mechanism} mechanism the key
      *        mechanism to use.
      * @param {{result: function(SimpleKeyxManager), error: function(Error)}}
      *        callback the callback that will receive the key manager or
