@@ -45,6 +45,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
     var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     var MockCryptoContextRepository = require('../../../main/javascript/keyx/MockCryptoContextRepository.js');
@@ -94,7 +95,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return pskCtx; }, "pskCtx", 100);
+            waitsFor(function() { return pskCtx; }, "pskCtx", MslTestConstants.TIMEOUT_CTX);
             
             var wrapKey;
             runs(function() {
@@ -115,7 +116,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapKey; }, "wrap key", 100);
+            waitsFor(function() { return wrapKey; }, "wrap key", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 WRAP_CRYPTO_CONTEXT = new JsonWebEncryptionCryptoContext(pskCtx, Algorithm.A128KW, Encryption.A128GCM, wrapKey);
@@ -144,7 +145,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return WRAP_JWK && WRAPDATA && PSK_MASTER_TOKEN; }, "wrapped JWK, wrap data, and PSK master token", 100);
+            waitsFor(function() { return WRAP_JWK && WRAPDATA && PSK_MASTER_TOKEN; }, "wrapped JWK, wrap data, and PSK master token", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var pskEncryptionKey = PSK_MASTER_TOKEN.encryptionKey;
@@ -158,7 +159,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return PSK_ENCRYPTION_JWK && PSK_HMAC_JWK; }, "wrapped PSK encryption key and HMAC key", 100);
+            waitsFor(function() { return PSK_ENCRYPTION_JWK && PSK_HMAC_JWK; }, "wrapped PSK encryption key and HMAC key", MslTestConstants.TIMEOUT);
             
             runs(function() { initialized = true; });
         }
@@ -191,7 +192,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -206,7 +207,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(moKeydata).not.toBeNull();
@@ -223,7 +224,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWE_LADDER.name);
@@ -243,7 +244,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
             var keyRequestData;
             runs(function() {
@@ -252,7 +253,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyRequestData; }, "keyRequestData", 100);
+            waitsFor(function() { return keyRequestData; }, "keyRequestData", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(keyRequestData).not.toBeNull();
@@ -285,7 +286,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -316,7 +317,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.JWE_LADDER.name);
@@ -344,7 +345,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyRequestData; }, "keyRequestData", 100);
+            waitsFor(function() { return keyRequestData; }, "keyRequestData", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(keyRequestData).not.toBeNull();
@@ -366,7 +367,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.remove(KEY_MECHANISM);
@@ -386,7 +387,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.put(KEY_MECHANISM, "x");
@@ -406,7 +407,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                 	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.remove(KEY_WRAPDATA);
@@ -426,7 +427,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                 	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 keydata.put(KEY_WRAPDATA, "x");
@@ -449,7 +450,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                 	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -480,7 +481,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                 	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -527,7 +528,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             var moKeydata;
             runs(function() {
@@ -545,7 +546,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
 	                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(moKeydata).not.toBeNull();
@@ -562,7 +563,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             var masterToken;
             runs(function() {
@@ -572,7 +573,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken; }, "master token", 100);
+            waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(masterToken).toEqual(PSK_MASTER_TOKEN);
@@ -593,7 +594,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             var keyResponseData;
             runs(function() {
@@ -602,7 +603,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyResponseData; }, "keyResponseData", 100);
+            waitsFor(function() { return keyResponseData; }, "keyResponseData", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(keyResponseData).not.toBeNull();
@@ -627,7 +628,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.remove(KEY_WRAP_KEY);
@@ -647,7 +648,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.remove(KEY_WRAPDATA);
@@ -667,7 +668,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	keydata.remove(KEY_ENCRYPTION_KEY);
@@ -687,7 +688,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 keydata.remove(KEY_HMAC_KEY);
@@ -713,7 +714,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -744,7 +745,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -775,7 +776,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -806,7 +807,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -910,7 +911,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return req && keyxData; }, "req and keyxData not received", 100);
+            waitsFor(function() { return req && keyxData; }, "req and keyxData not received", MslTestConstants.TIMEOUT);
            
             // Unwrap the new wrapping key and create a crypto context from it.
             var masterToken, respdata, wrappingKey;
@@ -933,7 +934,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and repdata and wrappingKey", 100);
+            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and repdata and wrappingKey", MslTestConstants.TIMEOUT);
 
             var encryptionKey, hmacKey;
             runs(function() {
@@ -949,7 +950,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", 100);
+            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", MslTestConstants.TIMEOUT);
             
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -974,7 +975,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
                 refCryptoContext.decrypt(wrapCiphertext, encoder, {
@@ -994,7 +995,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
                 expect(refVerified).toBeTruthy();
@@ -1012,7 +1013,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
            
             var masterToken, respdata, wrappingKey;
             runs(function() {
@@ -1034,7 +1035,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", 100);
+            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", MslTestConstants.TIMEOUT);
 
             var encryptionKey, hmacKey;
             runs(function() {
@@ -1050,7 +1051,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", 100);
+            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", MslTestConstants.TIMEOUT);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -1075,7 +1076,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
                 refCryptoContext.decrypt(wrapCiphertext, encoder, {
@@ -1095,7 +1096,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
                 expect(refVerified).toBeTruthy();
@@ -1112,7 +1113,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1128,7 +1129,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var masterToken, respdata, wrappingKey;
             runs(function() {
@@ -1152,7 +1153,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", 100);
+            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", MslTestConstants.TIMEOUT);
 
             var encryptionKey, hmacKey;
             runs(function() {
@@ -1168,7 +1169,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", 100);
+            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", MslTestConstants.TIMEOUT);
             
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -1193,7 +1194,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
                 refCryptoContext.decrypt(wrapCiphertext, encoder, {
@@ -1213,7 +1214,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
                 expect(refVerified).toBeTruthy();
@@ -1231,7 +1232,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var masterToken, respdata, wrappingKey;
             runs(function() {
@@ -1255,7 +1256,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", 100);
+            waitsFor(function() { return masterToken && respdata && wrappingKey; }, "masterToken and respdata and wrappingKey", MslTestConstants.TIMEOUT);
 
             var encryptionKey, hmacKey;
             runs(function() {
@@ -1271,7 +1272,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", 100);
+            waitsFor(function() { return encryptionKey && hmacKey; }, "encryptionKey and hmacKey", MslTestConstants.TIMEOUT);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -1296,7 +1297,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext && refHmac && wrapHmac; }, "ciphertexts and HMACs", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext, refVerified, wrapVerified;
             runs(function() {
                 refCryptoContext.decrypt(wrapCiphertext, encoder, {
@@ -1316,7 +1317,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts and verifieds", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
                 expect(refVerified).toBeTruthy();
@@ -1333,7 +1334,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1348,7 +1349,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken; }, "masterToken", 100);
+            waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1358,7 +1359,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslMasterTokenException(MslError.NONE));
@@ -1374,7 +1375,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var reqCryptoContext, resp, respCryptoContext;
             runs(function() {
@@ -1390,7 +1391,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return reqCryptoContext && respCryptoContext; }, "crypto contexts", 100);
+            waitsFor(function() { return reqCryptoContext && respCryptoContext; }, "crypto contexts", MslTestConstants.TIMEOUT);
             
             var data = new Uint8Array(32);
             random.nextBytes(data);
@@ -1413,7 +1414,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts", 100);
+            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT);
             
             // Signatures should always be equal.
             var requestSignature, responseSignature;
@@ -1430,7 +1431,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestSignature && responseSignature; }, "signatures", 100);
+            waitsFor(function() { return requestSignature && responseSignature; }, "signatures", MslTestConstants.TIMEOUT);
             
             // Plaintext should always be equal to the original message.
             var requestPlaintext, responsePlaintext;
@@ -1448,7 +1449,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts", 100);
+            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts", MslTestConstants.TIMEOUT);
             
             // Verification should always succeed.
             var reqVerified, respVerified;
@@ -1466,7 +1467,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return reqVerified && respVerified; }, "verifieds", 100);
+            waitsFor(function() { return reqVerified && respVerified; }, "verifieds", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(reqVerified).toBeTruthy();
@@ -1484,7 +1485,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var reqCryptoContext, resp, respCryptoContext;
             runs(function() {
@@ -1498,7 +1499,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return reqCryptoContext && respCryptoContext; }, "crypto contexts", 100);
+            waitsFor(function() { return reqCryptoContext && respCryptoContext; }, "crypto contexts", MslTestConstants.TIMEOUT);
             
             var data = new Uint8Array(32);
             random.nextBytes(data);
@@ -1518,7 +1519,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts", 100);
+            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT);
             
             // Signatures should always be equal.
             var requestSignature, responseSignature;
@@ -1535,7 +1536,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestSignature && responseSignature; }, "signatures", 100);
+            waitsFor(function() { return requestSignature && responseSignature; }, "signatures", MslTestConstants.TIMEOUT);
             
             // Plaintext should always be equal to the original message.
             var requestPlaintext, responsePlaintext;
@@ -1553,7 +1554,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts", 100);
+            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts", MslTestConstants.TIMEOUT);
             
             // Verification should always succeed.
             var requestVerified, responseVerified;
@@ -1571,7 +1572,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestVerified && responseVerified; }, "verifieds", 100);
+            waitsFor(function() { return requestVerified && responseVerified; }, "verifieds", MslTestConstants.TIMEOUT);
         
             runs(function() {
                 expect(requestVerified).toBeTruthy();
@@ -1588,7 +1589,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1600,7 +1601,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -1618,7 +1619,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -1635,7 +1636,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
             var req, keyxData;
             runs(function() {
@@ -1645,7 +1646,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1657,7 +1658,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -1674,7 +1675,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -1685,7 +1686,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -1708,7 +1709,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -1725,7 +1726,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var resp, installed;
             runs(function() {
@@ -1740,7 +1741,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return resp && installed; }, "response installed", 100);
+            waitsFor(function() { return resp && installed; }, "response installed", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1765,7 +1766,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -1782,7 +1783,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
 
             var resp, installed;
             runs(function() {
@@ -1797,7 +1798,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return resp && installed; }, "response installed", 100);
+            waitsFor(function() { return resp && installed; }, "response installed", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1822,7 +1823,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };

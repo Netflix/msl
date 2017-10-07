@@ -27,6 +27,7 @@ describe("PresharedAuthenticationData", function() {
     var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -55,7 +56,7 @@ describe("PresharedAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 1200);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -76,7 +77,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var encode;
         runs(function() {
@@ -86,7 +87,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moData, moAuthdata;
         runs(function() {
@@ -100,7 +101,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -111,7 +112,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -129,7 +130,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.PSK.name);
@@ -148,7 +149,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -157,7 +158,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         var entitydata;
         runs(function() {
@@ -166,7 +167,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return entitydata; }, "entitydata", 100);
+        waitsFor(function() { return entitydata; }, "entitydata", MslTestConstants.TIMEOUT);
         
         var moData, moAuthdata;
         runs(function() {
@@ -181,7 +182,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -190,7 +191,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var moEncode;
         runs(function() {
@@ -201,7 +202,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -218,7 +219,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             authdata.remove(KEY_IDENTITY);
@@ -237,7 +238,7 @@ describe("PresharedAuthenticationData", function() {
             dataA = new PresharedAuthenticationData(identityA);
             dataB = new PresharedAuthenticationData(identityB);
         });
-        waitsFor(function() { return dataA && dataB; }, "dataA && dataB", 100);
+        waitsFor(function() { return dataA && dataB; }, "dataA && dataB", MslTestConstants.TIMEOUT);
         var dataA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, dataA, {
@@ -250,7 +251,7 @@ describe("PresharedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA2; }, "dataA2", 100);
+        waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();

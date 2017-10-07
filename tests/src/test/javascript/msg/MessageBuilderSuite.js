@@ -52,6 +52,7 @@ describe("MessageBuilder", function() {
     
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -122,7 +123,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return trustedNetCtx && p2pCtx && encryptionKey && hmacKey && wrappingKey; }, "MSL contexts and keys", 1000);
+            waitsFor(function() { return trustedNetCtx && p2pCtx && encryptionKey && hmacKey && wrappingKey; }, "MSL contexts and keys", MslTestConstants.TIMEOUT_CTX);
 
 			runs(function() {
 			    encoder = trustedNetCtx.getMslEncoderFactory();
@@ -169,7 +170,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
 			});
-			waitsFor(function() { return MASTER_TOKEN && PEER_MASTER_TOKEN && ENTITY_AUTH_DATA && PEER_ENTITY_AUTH_DATA; }, "master tokens and entity authentication data", 100);
+			waitsFor(function() { return MASTER_TOKEN && PEER_MASTER_TOKEN && ENTITY_AUTH_DATA && PEER_ENTITY_AUTH_DATA; }, "master tokens and entity authentication data", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 			    MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER, {
@@ -181,7 +182,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return USER_ID_TOKEN && PEER_USER_ID_TOKEN; }, "user ID tokens", 100);
+			waitsFor(function() { return USER_ID_TOKEN && PEER_USER_ID_TOKEN; }, "user ID tokens", MslTestConstants.TIMEOUT);
 			runs(function() { initialized = true; });
 		}
 	});
@@ -270,7 +271,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -283,7 +284,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(header).not.toBeNull();
@@ -316,7 +317,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(builder.willEncryptHeader()).toBeTruthy();
@@ -332,7 +333,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 				expect(header).not.toBeNull();
 
@@ -364,7 +365,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -373,7 +374,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var header;
 			runs(function() {
@@ -397,7 +398,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 				expect(header).not.toBeNull();
 	
@@ -430,7 +431,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var serviceTokens;
 			runs(function() {
@@ -439,7 +440,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var header;
 			runs(function() {
@@ -463,7 +464,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 				expect(header).not.toBeNull();
 	
@@ -498,7 +499,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -507,7 +508,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var header;
 			runs(function() {
@@ -535,7 +536,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(header).not.toBeNull();
@@ -567,7 +568,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
             var header;
             runs(function() {
@@ -582,7 +583,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return header; }, "header not received", 100);
+            waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
             runs(function() {
     		    expect(header).not.toBeNull();
@@ -615,7 +616,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
             var header;
             runs(function() {
@@ -631,7 +632,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return header; }, "header not received", 100);
+            waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(header).not.toBeNull();
 
@@ -663,7 +664,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return rsaCtx; }, "rsaCtx", 100);
+			waitsFor(function() { return rsaCtx; }, "rsaCtx", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -672,7 +673,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(builder.willEncryptHeader()).toBeFalsy();
@@ -690,7 +691,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return noneCtx; }, "noneCtx", 100);
+            waitsFor(function() { return noneCtx; }, "noneCtx", MslTestConstants.TIMEOUT);
             
             var builder;
             runs(function() {
@@ -699,7 +700,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(builder.willEncryptHeader()).toBeFalsy();
@@ -721,7 +722,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 			
 			var updatedServiceTokens;
 			runs(function() {
@@ -738,7 +739,7 @@ describe("MessageBuilder", function() {
 				updatedServiceTokens = Arrays.combineTokens(serviceTokens, peerServiceTokens,
 					function(peerServiceToken) { return peerServiceToken.isUnbound(); });
 			});
-			waitsFor(function() { return updatedServiceTokens; }, "updated service tokens not received", 100);
+			waitsFor(function() { return updatedServiceTokens; }, "updated service tokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -747,7 +748,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -758,7 +759,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 				expect(Arrays.containEachOther(header.serviceTokens, updatedServiceTokens)).toBeTruthy();
 				expect(header.peerServiceTokens.length).toEqual(0);
@@ -777,7 +778,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var updatedServiceTokens, updatedPeerServiceTokens;
 			runs(function() {
@@ -798,7 +799,7 @@ describe("MessageBuilder", function() {
 			    updatedPeerServiceTokens = Arrays.combineTokens(peerServiceTokens, serviceTokens,
 			    		function(serviceToken) { return serviceToken.isUnbound(); });
 			});
-			waitsFor(function() { return updatedServiceTokens && updatedPeerServiceTokens; }, "updated service tokens not received", 100);
+			waitsFor(function() { return updatedServiceTokens && updatedPeerServiceTokens; }, "updated service tokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -807,7 +808,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var header;
 			runs(function() {
@@ -820,7 +821,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(header.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -836,7 +837,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -845,7 +846,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -868,7 +869,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(header.nonReplayableId).not.toBeNull();
@@ -897,7 +898,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -906,7 +907,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -926,7 +927,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(header.nonReplayableId).not.toBeNull();
@@ -955,7 +956,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -964,7 +965,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -985,7 +986,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(header.nonReplayableId).not.toBeNull();
@@ -1014,7 +1015,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -1029,7 +1030,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(header.nonReplayableId).toBeFalsy();
@@ -1061,7 +1062,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -1076,7 +1077,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(header.nonReplayableId).toBeFalsy();
@@ -1106,7 +1107,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1116,7 +1117,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -1134,7 +1135,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return serviceToken; }, "service token not received", 100);
+			waitsFor(function() { return serviceToken; }, "service token not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1143,7 +1144,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1163,7 +1164,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+			waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1172,7 +1173,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1194,7 +1195,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return userIdTokenB; }, "userIdTokenB not received", 100);
+			waitsFor(function() { return userIdTokenB; }, "userIdTokenB not received", MslTestConstants.TIMEOUT);
 			
 			var serviceToken;
 			runs(function() {
@@ -1205,7 +1206,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+			waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1214,7 +1215,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1234,7 +1235,7 @@ describe("MessageBuilder", function() {
 				    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+			waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 			
             var builder;
             runs(function() {
@@ -1243,7 +1244,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() {
@@ -1261,7 +1262,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1270,7 +1271,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			// This may take a while to finish.
 			var count = 0, expected = -1;
@@ -1311,7 +1312,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+			waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1320,7 +1321,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var deleted = false;
 			runs(function() {
@@ -1332,7 +1333,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return deleted; }, "service token to be deleted", 100);
+			waitsFor(function() { return deleted; }, "service token to be deleted", MslTestConstants.TIMEOUT);
 
 			var messageHeader;
 			runs(function() {
@@ -1341,7 +1342,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+			waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var tokens = messageHeader.serviceTokens;
@@ -1364,7 +1365,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var deleted = false;
 			runs(function() {
@@ -1373,7 +1374,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return deleted; }, "service token to be deleted", 100);
+			waitsFor(function() { return deleted; }, "service token to be deleted", MslTestConstants.TIMEOUT);
 			
 			var messageHeader;
 			runs(function() {
@@ -1382,7 +1383,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+			waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var tokens = messageHeader.serviceTokens;
@@ -1402,7 +1403,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1420,7 +1421,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1438,7 +1439,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1456,7 +1457,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", 100);
+			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1465,7 +1466,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1483,7 +1484,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", 100);
+			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1492,7 +1493,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1510,7 +1511,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", 100);
+			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1519,7 +1520,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1538,7 +1539,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", 100);
+			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1547,7 +1548,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1570,7 +1571,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", 100);
+			waitsFor(function() { return userIdTokenA && userIdTokenB; }, "user ID tokens not received", MslTestConstants.TIMEOUT);
 			
 			var peerServiceToken;
 			runs(function() {
@@ -1579,7 +1580,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", 100);
+			waitsFor(function() { return peerServiceToken; }, "peerServiceToken not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1588,7 +1589,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -1607,7 +1608,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -1616,7 +1617,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			// This may take a while to finish.
 			var count = 0, expected = -1;
@@ -1659,7 +1660,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceToken; }, "serviceToken not received", 100);
+			waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -1668,7 +1669,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var deleted = false;
 			runs(function() {
@@ -1681,7 +1682,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return deleted; }, "deleted service token", 100);
+			waitsFor(function() { return deleted; }, "deleted service token", MslTestConstants.TIMEOUT);
 			
 			var messageHeader;
 			runs(function() {
@@ -1690,7 +1691,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+			waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var tokens = messageHeader.peerServiceTokens;
@@ -1713,7 +1714,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var deleted = false;
 			runs(function() {
@@ -1725,7 +1726,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return deleted; }, "deleted service token", 100);
+			waitsFor(function() { return deleted; }, "deleted service token", MslTestConstants.TIMEOUT);
 			
 			var messageHeader;
 			runs(function() {
@@ -1734,7 +1735,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+			waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var tokens = messageHeader.peerServiceTokens;
@@ -1757,7 +1758,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1773,7 +1774,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			var messageHeader, updatedServiceTokens;
 			runs(function() {
 				builder.setAuthTokens(MASTER_TOKEN, null);
@@ -1791,7 +1792,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -1811,7 +1812,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 		    var builder;
 		    runs(function() {
@@ -1828,7 +1829,7 @@ describe("MessageBuilder", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    	});
 		    });
-		    waitsFor(function() { return builder; }, "builder not received", 100);
+		    waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 		    
 		    var messageHeader, updatedServiceTokens;
 		    runs(function() {
@@ -1847,7 +1848,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -1867,7 +1868,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var builder;
 			runs(function() {
@@ -1884,7 +1885,7 @@ describe("MessageBuilder", function() {
 			    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var messageHeader, updatedServiceTokens;
 			runs(function() {
@@ -1903,7 +1904,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -1923,7 +1924,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 			
 			var builder;
 			runs(function() {
@@ -1940,7 +1941,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var messageHeader, updatedServiceTokens;
 			runs(function() {
@@ -1958,7 +1959,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+			waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -1974,7 +1975,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			var header;
 			runs(function() {
@@ -1985,7 +1986,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return header; }, "header not received", 100);
+			waitsFor(function() { return header; }, "header not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(header).not.toBeNull();
@@ -2003,7 +2004,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() {
@@ -2021,7 +2022,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return builder; }, "builder not received", 100);
+			waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
 			var complete = false;
 			runs(function() {
@@ -2030,7 +2031,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return complete; }, "set user", 100);
+			waitsFor(function() { return complete; }, "set user", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var userIdToken = builder.getUserIdToken();
@@ -2047,7 +2048,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
             
         	var exception;
         	runs(function() {
@@ -2056,7 +2057,7 @@ describe("MessageBuilder", function() {
 	            	error: function(e) { exception = e; }
 	            });
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         	
 	        runs(function() {
             	var f = function() { throw exception; };
@@ -2072,7 +2073,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return builder; }, "builder not received", 100);
+    		waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
     		
         	var exception;
         	runs(function() {
@@ -2081,7 +2082,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -2097,7 +2098,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return builder; }, "builder not received", 100);
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
 
 			var complete = false;
 			runs(function() {
@@ -2107,7 +2108,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return complete; }, "set user", 100);
+			waitsFor(function() { return complete; }, "set user", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				var userIdToken = builder.getPeerUserIdToken();
@@ -2124,7 +2125,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return builder; }, "builder not received", 100);
+    		waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
     		
         	var exception;
         	runs(function() {
@@ -2133,7 +2134,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         	
             runs(function() {
             	var f = function() { throw exception; };
@@ -2149,7 +2150,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return builder; }, "builder not received", 100);
+    		waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
     		
         	var exception;
         	runs(function() {
@@ -2159,7 +2160,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -2175,7 +2176,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { exception = e; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception", 100);
+			waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -2191,7 +2192,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { exception = e; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception", 100);
+			waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -2214,7 +2215,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+			waitsFor(function() { return errorHeader; }, "errorHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(errorHeader).not.toBeNull();
@@ -2234,7 +2235,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+            waitsFor(function() { return errorHeader; }, "errorHeader not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(errorHeader).not.toBeNull();
@@ -2255,7 +2256,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+			waitsFor(function() { return errorHeader; }, "errorHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(errorHeader).not.toBeNull();
@@ -2275,7 +2276,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+			waitsFor(function() { return errorHeader; }, "errorHeader not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(errorHeader).not.toBeNull();
@@ -2296,7 +2297,7 @@ describe("MessageBuilder", function() {
 					error: function(err) { exception = err; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception not received", 100);
+			waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				var f = function() { throw exception; };
@@ -2312,7 +2313,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return errorHeader; }, "errorHeader not received", 100);
+            waitsFor(function() { return errorHeader; }, "errorHeader not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(errorHeader).not.toBeNull();
@@ -2380,7 +2381,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -2389,7 +2390,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -2402,7 +2403,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -2427,7 +2428,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response).not.toBeNull();
@@ -2465,7 +2466,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -2474,7 +2475,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -2490,7 +2491,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			// The tokens should be swapped.
 			var responseBuilder;
@@ -2516,7 +2517,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 				expect(response).not.toBeNull();
                 expect(response.nonReplayableId).toBeFalsy();
@@ -2547,7 +2548,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -2556,7 +2557,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -2569,7 +2570,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -2598,7 +2599,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response && entityAuthData; }, "response and entity authentication data not received", 100);
+            waitsFor(function() { return response && entityAuthData; }, "response and entity authentication data not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(response).not.toBeNull();
@@ -2634,7 +2635,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+            waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -2643,7 +2644,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -2659,7 +2660,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             // The tokens should be swapped.
             var responseBuilder;
@@ -2689,7 +2690,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response and entity authentication data not received", 100);
+            waitsFor(function() { return response; }, "response and entity authentication data not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(response).not.toBeNull();
@@ -2722,7 +2723,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -2731,7 +2732,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -2749,7 +2750,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
 			var response;
 			runs(function() {
@@ -2773,7 +2774,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response).not.toBeNull();
@@ -2805,7 +2806,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -2814,7 +2815,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -2837,7 +2838,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var response;
 			runs(function() {
@@ -2858,7 +2859,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response).not.toBeNull();
@@ -2891,7 +2892,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens not received", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -2900,7 +2901,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -2913,7 +2914,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -2941,7 +2942,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response not received", 100);
+            waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(response).not.toBeNull();
@@ -2979,7 +2980,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+            waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -2988,7 +2989,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3004,7 +3005,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             // The tokens should be swapped.
             var responseBuilder;
@@ -3033,7 +3034,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response not received", 100);
+            waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(response).not.toBeNull();
                 expect(response.nonReplayableId).toBeFalsy();
@@ -3064,7 +3065,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return rsaCtx; }, "rsaCtx", 100);
+			waitsFor(function() { return rsaCtx; }, "rsaCtx", MslTestConstants.TIMEOUT);
 			
 			var requestBuilder;
 			runs(function() {
@@ -3073,7 +3074,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3082,7 +3083,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3108,7 +3109,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return rsaCtx; }, "rsaCtx", 100);
+			waitsFor(function() { return rsaCtx; }, "rsaCtx", MslTestConstants.TIMEOUT);
 			
 			var requestBuilder;
 			runs(function() {
@@ -3117,7 +3118,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3131,7 +3132,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3156,7 +3157,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3165,7 +3166,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var serviceTokens, peerServiceTokens;
 			runs(function() {
@@ -3178,7 +3179,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3213,7 +3214,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response && updatedServiceTokens; }, "response and updated service tokens not received", 100);
+			waitsFor(function() { return response && updatedServiceTokens; }, "response and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(Arrays.containEachOther(response.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -3229,7 +3230,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3238,7 +3239,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var serviceTokens, peerServiceTokens;
 			runs(function() {
@@ -3251,7 +3252,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 			
 			var responseBuilder;
 			runs(function() {
@@ -3292,7 +3293,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response && updatedServiceTokens; }, "response and updated service tokens not received", 100);
+			waitsFor(function() { return response && updatedServiceTokens; }, "response and updated service tokens not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				// The service tokens will all be unbound.
@@ -3312,7 +3313,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3327,7 +3328,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
             
             var responseBuilder;
             runs(function() {
@@ -3350,7 +3351,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens", MslTestConstants.TIMEOUT);
             
             var response;
             runs(function() {
@@ -3362,7 +3363,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response not received", 100);
+            waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(Arrays.containEachOther(serviceTokens, response.serviceTokens)).toBeTruthy();
@@ -3377,7 +3378,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3386,7 +3387,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -3406,7 +3407,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() {
@@ -3427,7 +3428,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3441,7 +3442,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -3461,7 +3462,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() {
@@ -3482,7 +3483,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3497,7 +3498,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -3519,7 +3520,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return serviceTokens; }, "serviceTokens", 100);
+            waitsFor(function() { return serviceTokens; }, "serviceTokens", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() {
@@ -3542,7 +3543,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3560,7 +3561,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.messageId).toEqual(0);
@@ -3577,7 +3578,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -3586,7 +3587,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3600,7 +3601,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3618,7 +3619,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(requestMasterToken);
@@ -3641,7 +3642,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -3650,7 +3651,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3664,7 +3665,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3682,7 +3683,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -3706,7 +3707,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -3715,7 +3716,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3729,7 +3730,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3747,7 +3748,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var responseMasterToken = response.masterToken;
@@ -3773,7 +3774,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+            waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -3782,7 +3783,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -3796,7 +3797,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
             var responseBuilder;
             runs(function() {
@@ -3814,7 +3815,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response not received", 100);
+            waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var responseMasterToken = response.masterToken;
@@ -3836,7 +3837,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -3845,7 +3846,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3859,7 +3860,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3877,7 +3878,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(requestMasterToken);
@@ -3900,7 +3901,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -3909,7 +3910,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -3919,7 +3920,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -3937,7 +3938,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(requestMasterToken);
@@ -3953,7 +3954,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var requestMasterToken;
 			runs(function() {
@@ -3964,7 +3965,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var request;
 			runs(function() {
@@ -3975,7 +3976,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var exception;
 			runs(function() {
@@ -3989,7 +3990,7 @@ describe("MessageBuilder", function() {
 					error: function(err) { exception = err; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception not received", 100);
+			waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -4005,7 +4006,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var requestMasterToken;
 			runs(function() {
@@ -4016,7 +4017,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4025,7 +4026,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4042,7 +4043,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4067,7 +4068,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(requestMasterToken);
@@ -4088,7 +4089,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 			
 			var requestMasterToken;
 			runs(function() {
@@ -4099,7 +4100,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 
 			var request;
 			runs(function() {
@@ -4110,7 +4111,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function () { return request; }, "request not received", 100);
+			waitsFor(function () { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var encryptionKey2, hmacKey2, wrappingKey2;
 			runs(function () {
@@ -4133,7 +4134,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
 			});
-			waitsFor(function() { return encryptionKey2 && hmacKey2 && wrappingKey2; }, "secondary keys", 100);
+			waitsFor(function() { return encryptionKey2 && hmacKey2 && wrappingKey2; }, "secondary keys", MslTestConstants.TIMEOUT);
 			
 			var mo;
 			runs(function() {
@@ -4142,7 +4143,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return mo; }, "mo", 100);
+			waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
 			var untrustedRequest;
 			runs(function() {
@@ -4170,7 +4171,7 @@ describe("MessageBuilder", function() {
 					error: function(err) { exception = err; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception not received", 100);
+			waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -4186,7 +4187,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return localRequestBuilder; }, "localRequestBuilder not received", 100);
+			waitsFor(function() { return localRequestBuilder; }, "localRequestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var localRequest;
 			runs(function() {
@@ -4199,7 +4200,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return localRequest; }, "localRequest not receeived", 100);
+			waitsFor(function() { return localRequest; }, "localRequest not receeived", MslTestConstants.TIMEOUT);
             
 			var remoteResponse;
 			runs(function() {
@@ -4230,7 +4231,7 @@ describe("MessageBuilder", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
 			});
-			waitsFor(function() { return keyResponseData && localResponse; }, "keyResponseData and localResponse not received", 100);
+			waitsFor(function() { return keyResponseData && localResponse; }, "keyResponseData and localResponse not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 	            var localMasterToken = localResponse.masterToken;
@@ -4247,7 +4248,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return localRequestBuilder; }, "localRequestBuilder not received", 100);
+			waitsFor(function() { return localRequestBuilder; }, "localRequestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var localRequest;
 			runs(function() {
@@ -4260,7 +4261,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return localRequest; }, "localRequest not receeived", 100);
+			waitsFor(function() { return localRequest; }, "localRequest not receeived", MslTestConstants.TIMEOUT);
             
 			var remoteResponse;
 			runs(function() {
@@ -4293,7 +4294,7 @@ describe("MessageBuilder", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
 			});
-			waitsFor(function() { return keyResponseData && localResponse; }, "keyResponseData and localResponse not received", 100);
+			waitsFor(function() { return keyResponseData && localResponse; }, "keyResponseData and localResponse not received", MslTestConstants.TIMEOUT);
 			
 			var localMasterToken, remoteSecondResponse;
 			runs(function() {
@@ -4312,7 +4313,7 @@ describe("MessageBuilder", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
 			});
-			waitsFor(function() { return localMasterToken && remoteSecondResponse; }, "localMasterToken and remoteSecondResponse not received", 100);
+			waitsFor(function() { return localMasterToken && remoteSecondResponse; }, "localMasterToken and remoteSecondResponse not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(remoteResponse.masterToken).toBeNull();
@@ -4330,7 +4331,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4342,7 +4343,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4360,7 +4361,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -4377,7 +4378,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4390,7 +4391,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4408,7 +4409,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -4427,7 +4428,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4440,7 +4441,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4458,7 +4459,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -4479,7 +4480,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 			
 			var entityAuthData;
 			runs(function() {
@@ -4488,7 +4489,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return entityAuthData; }, "entity authentication data not received", 100);
+			waitsFor(function() { return entityAuthData; }, "entity authentication data not received", MslTestConstants.TIMEOUT);
 
 			var request;
 			runs(function() {
@@ -4499,7 +4500,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var exception;
 			runs(function() {
@@ -4513,7 +4514,7 @@ describe("MessageBuilder", function() {
 					error: function(err) { exception = err; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception not received", 100);
+			waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -4529,7 +4530,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 			
 			var requestBuilder;
 			runs(function() {
@@ -4538,7 +4539,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4554,7 +4555,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4579,7 +4580,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.keyResponseData).not.toBeNull();
@@ -4596,7 +4597,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 			
 			var requestBuilder;
 			runs(function() {
@@ -4605,7 +4606,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4615,7 +4616,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4633,7 +4634,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(MASTER_TOKEN);
@@ -4656,7 +4657,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4665,7 +4666,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4674,7 +4675,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4692,7 +4693,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(MASTER_TOKEN);
@@ -4716,7 +4717,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4725,7 +4726,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4735,7 +4736,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4753,7 +4754,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.peerMasterToken).toEqual(MASTER_TOKEN);
@@ -4777,7 +4778,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4786,7 +4787,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4796,7 +4797,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4814,7 +4815,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(MASTER_TOKEN);
@@ -4837,7 +4838,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4846,7 +4847,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4855,7 +4856,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4873,7 +4874,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(MASTER_TOKEN);
@@ -4894,7 +4895,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 			
 			var requestUserIdToken;
 			runs(function() {
@@ -4905,7 +4906,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 			
 			var userIdTokenMo;
 			runs(function() {
@@ -4919,7 +4920,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return userIdTokenMo; }, "userIdTokenMo", 100);
+			waitsFor(function() { return userIdTokenMo; }, "userIdTokenMo", MslTestConstants.TIMEOUT);
 			
             var unverifiedUserIdToken;
             runs(function() {
@@ -4928,7 +4929,7 @@ describe("MessageBuilder", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return unverifiedUserIdToken; }, "unverifiedUserIdToken", 100);
+            waitsFor(function() { return unverifiedUserIdToken; }, "unverifiedUserIdToken", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -4937,7 +4938,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -4946,7 +4947,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -4964,7 +4965,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(MASTER_TOKEN);
@@ -4989,7 +4990,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 			
 			var requestUserIdToken;
 			runs(function() {
@@ -4998,7 +4999,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5007,7 +5008,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5020,7 +5021,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5038,7 +5039,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toEqual(requestMasterToken);
@@ -5067,7 +5068,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 			
 			var requestUserIdToken;
 			runs(function() {
@@ -5076,7 +5077,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5085,7 +5086,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5095,7 +5096,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5113,7 +5114,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken.equals(requestMasterToken)).toBeTruthy();
@@ -5137,7 +5138,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", 100);
+			waitsFor(function() { return requestMasterToken; }, "requestMasterToken not received", MslTestConstants.TIMEOUT);
 			
 			var requestUserIdToken;
 			runs(function() {
@@ -5146,7 +5147,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", 100);
+			waitsFor(function() { return requestUserIdToken; }, "requestUserIdToken not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5155,7 +5156,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5168,7 +5169,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5186,7 +5187,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -5214,7 +5215,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5225,7 +5226,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5243,7 +5244,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var userIdToken = response.userIdToken;
@@ -5260,7 +5261,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5269,7 +5270,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5280,7 +5281,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 			
 			var requestMo;
 			runs(function() {
@@ -5289,7 +5290,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestMo; }, "requestMo", 100);
+			waitsFor(function() { return requestMo; }, "requestMo", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5318,7 +5319,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var userIdToken = response.userIdToken;
@@ -5335,7 +5336,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5346,7 +5347,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5364,7 +5365,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.userIdToken).toBeNull();
@@ -5382,7 +5383,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5391,7 +5392,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5402,7 +5403,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
             
             var requestMo;
             runs(function() {
@@ -5411,7 +5412,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestMo; }, "requestMo", 100);
+            waitsFor(function() { return requestMo; }, "requestMo", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5440,7 +5441,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				var userIdToken = response.peerUserIdToken;
@@ -5457,7 +5458,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5472,7 +5473,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5490,7 +5491,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -5513,7 +5514,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5522,7 +5523,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5537,7 +5538,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
             
             var requestMo;
             runs(function() {
@@ -5546,7 +5547,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestMo; }, "requestMo", 100);
+            waitsFor(function() { return requestMo; }, "requestMo", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5575,7 +5576,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -5598,7 +5599,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5609,7 +5610,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5627,7 +5628,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -5645,7 +5646,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -5659,7 +5660,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5677,7 +5678,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
                 expect(response.masterToken).toBeNull();
@@ -5700,7 +5701,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -5709,7 +5710,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -5723,7 +5724,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
             
             var requestMo;
             runs(function() {
@@ -5732,7 +5733,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestMo; }, "requestMo", 100);
+            waitsFor(function() { return requestMo; }, "requestMo", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5761,7 +5762,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response not received", 100);
+            waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 			
 			runs(function() {
                 expect(response.masterToken).toBeNull();
@@ -5784,7 +5785,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return ctx; }, "ctx", 100);
+			waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
 			var request;
 			runs(function() {
@@ -5795,7 +5796,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var exception;
 			runs(function() {
@@ -5810,7 +5811,7 @@ describe("MessageBuilder", function() {
 				    error: function(e) { exception = e; }
 				});
 			});
-			waitsFor(function() { return exception; }, "exception not received", 100);
+			waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 			runs(function() {
 			    var f = function() { throw exception; };
 			    expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND), REQUEST_MESSAGE_ID);
@@ -5829,7 +5830,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
             var requestBuilder;
             runs(function() {
@@ -5838,7 +5839,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+            waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -5847,7 +5848,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 			
 			var responseBuilder;
 			runs(function() {
@@ -5878,7 +5879,7 @@ describe("MessageBuilder", function() {
                 	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message and updated service tokens not received", 100);
+            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message and updated service tokens not received", MslTestConstants.TIMEOUT);
     
             runs(function() {
                 expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -5897,7 +5898,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
 			var requestBuilder;
 			runs(function() {
@@ -5906,7 +5907,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 			
 			var request;
 			runs(function() {
@@ -5915,7 +5916,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -5946,7 +5947,7 @@ describe("MessageBuilder", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
     
             runs(function() {
                 expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -5965,7 +5966,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
         	var requestBuilder;
         	runs(function() {
@@ -5974,7 +5975,7 @@ describe("MessageBuilder", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
         	
 			var request;
             runs(function() {
@@ -5983,7 +5984,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -6014,7 +6015,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -6033,7 +6034,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
         	var requestBuilder;
         	runs(function() {
@@ -6042,7 +6043,7 @@ describe("MessageBuilder", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
         	
 			var request;
             runs(function() {
@@ -6051,7 +6052,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 
 			var responseBuilder;
 			runs(function() {
@@ -6082,7 +6083,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", 100);
+            waitsFor(function() { return messageHeader && updatedServiceTokens; }, "message header and updated service tokens not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(Arrays.containEachOther(messageHeader.serviceTokens, updatedServiceTokens)).toBeTruthy();
@@ -6097,7 +6098,7 @@ describe("MessageBuilder", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
         	
 			var request;
             runs(function() {
@@ -6106,7 +6107,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 		    
 			var responseBuilder;
 			runs(function() {
@@ -6125,7 +6126,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				expect(response.masterToken).toBeNull();
@@ -6141,7 +6142,7 @@ describe("MessageBuilder", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
         	
 			var request;
             runs(function() {
@@ -6150,7 +6151,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
             
             var responseBuilder;
             runs(function() {
@@ -6184,7 +6185,7 @@ describe("MessageBuilder", function() {
 				    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 		    });
-		    waitsFor(function() { return masterToken; }, "master token not received", 100);
+		    waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
 
         	var requestBuilder;
         	runs(function() {
@@ -6193,7 +6194,7 @@ describe("MessageBuilder", function() {
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
         	});
-        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+        	waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
         	
             var request;
             runs(function() {
@@ -6206,7 +6207,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request not received", 100);
+            waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 		
             var responseBuilder;
             runs(function() {
@@ -6233,7 +6234,7 @@ describe("MessageBuilder", function() {
 		            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		        });
 		    });
-		    waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+		    waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
 		    
 			var request;
 			runs(function() {
@@ -6245,7 +6246,7 @@ describe("MessageBuilder", function() {
 			    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return request; }, "request not received", 100);
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
 			
 			var serviceTokens, peerServiceTokens;
 			runs(function() {
@@ -6258,7 +6259,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", 100);
+			waitsFor(function() { return serviceTokens && peerServiceTokens; }, "service tokens not received", MslTestConstants.TIMEOUT);
 			
 			var responseBuilder;
 			runs(function() {
@@ -6285,7 +6286,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return response; }, "response not received", 100);
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 				// Build the set of expected service tokens.
@@ -6310,7 +6311,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6319,7 +6320,7 @@ describe("MessageBuilder", function() {
 			    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
         	
         	var responseBuilder;
 			runs(function() {
@@ -6328,7 +6329,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
         	
             var complete = false;
             runs(function() {
@@ -6337,7 +6338,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return complete; }, "set user", 100);
+			waitsFor(function() { return complete; }, "set user", MslTestConstants.TIMEOUT);
 
 			runs(function() {
 	            var userIdToken = responseBuilder.getUserIdToken();
@@ -6354,7 +6355,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6363,7 +6364,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
         	
         	var responseBuilder;
 			runs(function() {
@@ -6372,7 +6373,7 @@ describe("MessageBuilder", function() {
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -6381,7 +6382,7 @@ describe("MessageBuilder", function() {
             		error: function(e) { exception = e; }
             	});
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	var f = function() { throw exception; };
@@ -6397,7 +6398,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6406,7 +6407,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
 
         	var responseBuilder;
 			runs(function() {
@@ -6415,7 +6416,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
         	
         	var exception;
         	runs(function() {
@@ -6424,7 +6425,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -6440,7 +6441,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6449,7 +6450,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
 
         	var responseBuilder;
 			runs(function() {
@@ -6458,7 +6459,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
             
             var complete = false;
             runs(function() {
@@ -6467,7 +6468,7 @@ describe("MessageBuilder", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return complete; }, "set user", 100);
+            waitsFor(function() { return complete; }, "set user", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	var userIdToken = responseBuilder.getPeerUserIdToken();
@@ -6484,7 +6485,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6493,7 +6494,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
         	
         	var responseBuilder;
 			runs(function() {
@@ -6502,7 +6503,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
     		
         	var exception;
         	runs(function() {
@@ -6511,7 +6512,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -6527,7 +6528,7 @@ describe("MessageBuilder", function() {
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
     		});
-    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", 100);
+    		waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
     		
         	var request;
         	runs(function() {
@@ -6536,7 +6537,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return request; }, "request", 100);
+        	waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
 
         	var responseBuilder;
 			runs(function() {
@@ -6545,7 +6546,7 @@ describe("MessageBuilder", function() {
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
 			});
-			waitsFor(function() { return responseBuilder; }, "responseBuilder", 100);
+			waitsFor(function() { return responseBuilder; }, "responseBuilder", MslTestConstants.TIMEOUT);
     		
         	var exception;
         	runs(function() {
@@ -6554,7 +6555,7 @@ describe("MessageBuilder", function() {
         			error: function(e) { exception = e; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception", 100);
+        	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -6574,7 +6575,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -6589,7 +6590,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request", 100);
+            waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
             
             var response;
             runs(function() {
@@ -6606,7 +6607,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response", 100);
+            waitsFor(function() { return response; }, "response", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(response.messageCapabilities).toEqual(caps);
@@ -6623,7 +6624,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
             
             var request;
             runs(function() {
@@ -6638,7 +6639,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return request; }, "request", 100);
+            waitsFor(function() { return request; }, "request", MslTestConstants.TIMEOUT);
             
             var response;
             runs(function() {
@@ -6655,7 +6656,7 @@ describe("MessageBuilder", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return response; }, "response", 100);
+            waitsFor(function() { return response; }, "response", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(response.messageCapabilities).toBeNull();

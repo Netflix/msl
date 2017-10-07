@@ -27,6 +27,7 @@ describe("UnauthenticatedAuthenticationData", function() {
     var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -56,7 +57,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -77,7 +78,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var encode;
         runs(function() {
@@ -87,7 +88,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moData, moAuthdata;
         runs(function() {
@@ -101,7 +102,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -112,7 +113,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -130,7 +131,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(EntityAuthenticationScheme.NONE.name);
@@ -149,7 +150,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -158,7 +159,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         var entitydata;
         runs(function() {
@@ -167,7 +168,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return entitydata; }, "entitydata", 100);
+        waitsFor(function() { return entitydata; }, "entitydata", MslTestConstants.TIMEOUT);
 
         var moData, moAuthdata;
         runs(function() {
@@ -182,7 +183,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -191,7 +192,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var moEncode;
         runs(function() {
@@ -202,7 +203,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -219,7 +220,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             authdata.remove(KEY_IDENTITY);
@@ -247,7 +248,7 @@ describe("UnauthenticatedAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+        waitsFor(function() { return dataA && dataB && dataA2; }, "data", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();

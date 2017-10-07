@@ -32,6 +32,7 @@ describe("RsaCryptoContext", function() {
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
 	
@@ -81,7 +82,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY; }, "static initialization", 900);
+            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY; }, "static initialization", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, HMAC_256_KEY, null);
@@ -119,7 +120,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return publicKeyA && privateKeyA; }, "did not create publicKeyA && privateKeyA", 900);
+            waitsFor(function() { return publicKeyA && privateKeyA; }, "did not create publicKeyA && privateKeyA", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 MslTestUtils.generateRsaKeys(algorithm, WebCryptoUsage.ENCRYPT_DECRYPT, 2048, {
@@ -130,7 +131,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return publicKeyB && privateKeyB; }, "did not create publicKeyB && privateKeyB", 900);
+            waitsFor(function () { return publicKeyB && privateKeyB; }, "did not create publicKeyB && privateKeyB", MslTestConstants.TIMEOUT_CRYPTO);
         });
         
     	it("encrypt/decrypt", function() {
@@ -152,7 +153,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertextA && ciphertextB; }, "did not receive ciphertext", 300);
+    		waitsFor(function() { return ciphertextA && ciphertextB; }, "did not receive ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
 	    		expect(ciphertextA).not.toBeNull();
@@ -174,7 +175,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return plaintextA && plaintextB; }, "did not receive plaintext", 300);
+    		waitsFor(function() { return plaintextA && plaintextB; }, "did not receive plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
 	            expect(plaintextA).not.toBeNull();
@@ -195,7 +196,7 @@ describe("RsaCryptoContext", function() {
     				error: function(err) { exception = err; }
     			});
     		});
-    		waitsFor(function() { return exception; }, "exception", 300);
+    		waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
     			var f = function() { throw exception; };
@@ -212,7 +213,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		var exception;
     		runs(function() {
@@ -221,7 +222,7 @@ describe("RsaCryptoContext", function() {
 	    			error: function(err) { exception = err; }
 	    		});
     		});
-			waitsFor(function() { return exception; }, "exception", 300);
+			waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 			
 			runs(function() {
 				var f = function() { throw exception; };
@@ -240,7 +241,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		var plaintext;
     		runs(function() {
@@ -252,7 +253,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
     			expect(plaintext).not.toBeNull();
@@ -271,7 +272,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		var exception;
     		runs(function() {
@@ -280,7 +281,7 @@ describe("RsaCryptoContext", function() {
     				error: function(err) { exception = err; }
     			});
     		});
-    		waitsFor(function() { return exception; }, "exception", 300);
+    		waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
     			var f = function() { throw exception; };
@@ -300,7 +301,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyA; }, "keyA", 300);
+            waitsFor(function() { return keyA; }, "keyA", MslTestConstants.TIMEOUT_CRYPTO);
             
             var exception;
             runs(function() {
@@ -309,7 +310,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 300);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.WRAP_NOT_SUPPORTED));
@@ -326,7 +327,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 300);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED));
@@ -342,7 +343,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
 	    		expect(signature).not.toBeNull();
@@ -356,7 +357,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return verified !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() {
 	    		expect(verified).toBeTruthy();
@@ -373,7 +374,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		var verified;
     		runs(function() {
     			cryptoContextB.verify(message, signature, encoder, {
@@ -381,7 +382,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return verified !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
     			expect(verified).toBeTruthy();
     		});
@@ -396,7 +397,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(signature).not.toBeNull();
 	    		expect(signature.length).toEqual(0);
@@ -408,7 +409,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return verified !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
     			expect(verified).toBeTruthy();
     		});
@@ -423,7 +424,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(signature).not.toBeNull();
 	    		expect(signature.length).toEqual(0);
@@ -435,7 +436,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return verified !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
     			expect(verified).toBeTruthy();
     		});
@@ -503,7 +504,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(ciphertext).not.toBeNull();
                 expect(ciphertext).toEqual(message);
@@ -516,7 +517,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 300);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(plaintext).not.toBeNull();
                 expect(plaintext).toEqual(message);
@@ -532,7 +533,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(ciphertext).not.toBeNull();
                 expect(ciphertext).toEqual(message);
@@ -545,7 +546,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 300);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(plaintext).not.toBeNull();
                 expect(plaintext).toEqual(message);
@@ -561,7 +562,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(ciphertext).not.toBeNull();
                 expect(ciphertext).toEqual(message);
@@ -574,7 +575,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 300);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(plaintext).not.toBeNull();
                 expect(plaintext).toEqual(message);
@@ -592,7 +593,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(ciphertext).not.toBeNull();
                 expect(ciphertext).toEqual(message);
@@ -605,7 +606,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 300);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(plaintext).not.toBeNull();
                 expect(plaintext).toEqual(message);
@@ -623,7 +624,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(ciphertext).not.toBeNull();
                 expect(ciphertext).toEqual(message);
@@ -636,7 +637,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 300);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(plaintext).not.toBeNull();
                 expect(plaintext).toEqual(message);
@@ -653,7 +654,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped", 300);
+            waitsFor(function() { return wrapped; }, "wrapped", MslTestConstants.TIMEOUT_CRYPTO);
 
             var unwrapped;
             runs(function() {
@@ -664,7 +665,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped", 300);
+            waitsFor(function() { return unwrapped; }, "unwrapped", MslTestConstants.TIMEOUT_CRYPTO);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -680,7 +681,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", 300);
+            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT_CRYPTO);
             var refPlaintext, wrapPlaintext;
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, encoder, {
@@ -692,7 +693,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", 300);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
             });
@@ -708,7 +709,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped", 300);
+            waitsFor(function() { return wrapped; }, "wrapped", MslTestConstants.TIMEOUT_CRYPTO);
             var unwrapped;
             runs(function() {
                 expect(wrapped).not.toBeNull();
@@ -718,7 +719,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped", 300);
+            waitsFor(function() { return unwrapped; }, "unwrapped", MslTestConstants.TIMEOUT_CRYPTO);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -734,7 +735,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", 300);
+            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(wrapHmac).toEqual(refHmac);
             });
@@ -749,7 +750,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(signature).not.toBeNull();
@@ -763,7 +764,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(verified).toBeTruthy();
@@ -780,7 +781,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
             var verified;
             runs(function() {
                 cryptoContextB.verify(message, signature, encoder, {
@@ -788,7 +789,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(verified).toBeTruthy();
             });
@@ -803,7 +804,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(signature).not.toBeNull();
                 expect(signature.length).toEqual(0);
@@ -815,7 +816,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(verified).toBeTruthy();
             });
@@ -830,7 +831,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(signature).not.toBeNull();
                 expect(signature.length).toEqual(0);
@@ -842,7 +843,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(verified).toBeTruthy();
             });
@@ -898,7 +899,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(ciphertext).not.toBeNull();
 	    		expect(ciphertext).toEqual(message);
@@ -911,7 +912,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	            expect(plaintext).not.toBeNull();
 	            expect(plaintext).toEqual(message);
@@ -927,7 +928,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(ciphertext).not.toBeNull();
 	    		expect(ciphertext).toEqual(message);
@@ -940,7 +941,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	            expect(plaintext).not.toBeNull();
 	            expect(plaintext).toEqual(message);
@@ -956,7 +957,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(ciphertext).not.toBeNull();
 	    		expect(ciphertext).toEqual(message);
@@ -969,7 +970,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	            expect(plaintext).not.toBeNull();
 	            expect(plaintext).toEqual(message);
@@ -987,7 +988,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(ciphertext).not.toBeNull();
 	    		expect(ciphertext).toEqual(message);
@@ -1000,7 +1001,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	            expect(plaintext).not.toBeNull();
 	            expect(plaintext).toEqual(message);
@@ -1018,7 +1019,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return ciphertext; }, "ciphertext", 300);
+    		waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(ciphertext).not.toBeNull();
 	    		expect(ciphertext).toEqual(message);
@@ -1031,7 +1032,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return plaintext; }, "plaintext", 300);
+    		waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	            expect(plaintext).not.toBeNull();
 	            expect(plaintext).toEqual(message);
@@ -1050,7 +1051,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyA; }, "keyA", 300);
+            waitsFor(function() { return keyA; }, "keyA", MslTestConstants.TIMEOUT_CRYPTO);
             
             var exception;
             runs(function() {
@@ -1059,7 +1060,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 300);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.WRAP_NOT_SUPPORTED));
@@ -1076,7 +1077,7 @@ describe("RsaCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 300);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED));
@@ -1102,7 +1103,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return signatureA && signatureB; }, "signatures", 300);
+    		waitsFor(function() { return signatureA && signatureB; }, "signatures", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(signatureA).not.toBeNull();
 	    		expect(signatureA.length).toBeGreaterThan(0);
@@ -1127,7 +1128,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		expect(verifiedAA).toBeTruthy();
 	    		expect(verifiedBB).toBeTruthy();
@@ -1145,7 +1146,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		var verified;
     		runs(function() {
     			cryptoContextB.verify(message, signature, encoder, {
@@ -1153,7 +1154,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return verified !== undefined; }, "verified", 300);
+    		waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
     			expect(verified).toBeFalsy();
     		});
@@ -1168,7 +1169,7 @@ describe("RsaCryptoContext", function() {
 	    			error: function(err) { exception = err; }
 	    		});
     		});
-	    	waitsFor(function() { return exception; }, "exception", 300);
+	    	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
     		runs(function() {
 	    		var f = function() { throw exception; };
 	    		expect(f).toThrow(new MslCryptoException(MslError.SIGN_NOT_SUPPORTED));
@@ -1185,7 +1186,7 @@ describe("RsaCryptoContext", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     			});
     		});
-    		waitsFor(function() { return signature; }, "signature", 300);
+    		waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		var exception;
     		runs(function() {

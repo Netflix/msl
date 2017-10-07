@@ -28,6 +28,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
     var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -56,7 +57,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 ctx.addEntityAuthenticationFactory(factory);
@@ -75,7 +76,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", MslTestConstants.TIMEOUT);
 
         var authdata;
         runs(function() {
@@ -84,7 +85,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
 
         var dataMo, authdataMo;
         runs(function() {
@@ -100,7 +101,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
+        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
@@ -116,7 +117,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -126,7 +127,7 @@ describe("UnauthenticatedSuffixedAuthenticationFactory", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };

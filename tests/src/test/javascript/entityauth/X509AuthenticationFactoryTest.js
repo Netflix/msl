@@ -31,6 +31,7 @@ describe("X509AuthenticationFactory", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -120,7 +121,7 @@ describe("X509AuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 caStore.addCert(MockX509AuthenticationFactory.X509_CERT);
                 encoder = ctx.getMslEncoderFactory();
@@ -140,7 +141,7 @@ describe("X509AuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", MslTestConstants.TIMEOUT);
 
         var authdata;
         runs(function() {
@@ -149,7 +150,7 @@ describe("X509AuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
 
         var dataMo, authdataMo;
         runs(function() {
@@ -165,7 +166,7 @@ describe("X509AuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", 100);
+        waitsFor(function() { return dataMo && authdataMo; }, "dataMo && authdataMo", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(MslEncoderUtils.equalObjects(dataMo, authdataMo)).toBeTruthy();
@@ -181,7 +182,7 @@ describe("X509AuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", 100);
+        waitsFor(function() { return entityAuthMo; }, "entityAuthMo", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -191,7 +192,7 @@ describe("X509AuthenticationFactory", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };

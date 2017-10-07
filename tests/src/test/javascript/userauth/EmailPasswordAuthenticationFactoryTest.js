@@ -28,6 +28,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockEmailPasswordStore = require('../../../main/javascript/userauth/MockEmailPasswordStore.js');
     var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
@@ -61,7 +62,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
                 var store = new MockEmailPasswordStore();
@@ -86,7 +87,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -95,7 +96,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var dataMo, authdataMo;
         runs(function() {
@@ -111,7 +112,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataMo && authdataMo; }, "msl objects", 100);
+        waitsFor(function() { return dataMo && authdataMo; }, "msl objects", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(authdataMo).toEqual(dataMo);
@@ -127,7 +128,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -137,7 +138,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
 	            error: function(e) { exception = e; },
 	        });
     	});
-    	waitsFor(function() { return exception; }, "exception", 100);
+    	waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
     	
     	runs(function() {
     	    var f = function() { throw exception; };
@@ -159,7 +160,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "master token", 100);
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         
         var userIdToken;
         runs(function() {
@@ -169,7 +170,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "user ID token", 100);
+        waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var data = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
@@ -186,7 +187,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "master token", 100);
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         
         var userIdToken;
         runs(function() {
@@ -196,7 +197,7 @@ describe("EmailPasswordAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "user ID token", 100);
+        waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {

@@ -18,6 +18,7 @@ describe("ReadWriteLock", function() {
     var ReadWriteLock = require('../../../../../core/src/main/javascript/util/ReadWriteLock.js');
     
     var TIMEOUT = 75;
+    var WAIT = 100;
     var DELAY = 1;
     var NAME = "name";
     
@@ -106,7 +107,7 @@ describe("ReadWriteLock", function() {
         runs(function() {
             rwlock.readLock(TIMEOUT, locker.getReadCallback(NAME));
         });
-        waitsFor(function() { return locker.readAcquired == 1; }, "read lock", 100);
+        waitsFor(function() { return locker.readAcquired == 1; }, "read lock", WAIT);
 
         runs(function() {
             expect(locker.lastName).toEqual(NAME);
@@ -117,7 +118,7 @@ describe("ReadWriteLock", function() {
         runs(function() {
             rwlock.readLock(TIMEOUT, locker.getWriteCallback(NAME));
         });
-        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", WAIT);
 
         runs(function() {
             expect(locker.lastName).toEqual(NAME);
@@ -132,7 +133,7 @@ describe("ReadWriteLock", function() {
                 rwlock.readLock(TIMEOUT, locker.getReadCallback(expectedName));
             }
         });
-        waitsFor(function() { return locker.readAcquired == 3; }, "read locks", 100);
+        waitsFor(function() { return locker.readAcquired == 3; }, "read locks", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(expectedName);
@@ -148,19 +149,19 @@ describe("ReadWriteLock", function() {
                 rwlock.writeLock(TIMEOUT, locker.getWriteCallback(name));
             }
         });
-        waitsFor(function() { return locker.writeAcquired == 1; }, "first lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 1; }, "first lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(names.shift());
             rwlock.unlock(locker.lockTickets.shift());
         });
-        waitsFor(function() { return locker.writeAcquired == 2; }, "second lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 2; }, "second lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(names.shift());
             rwlock.unlock(locker.lockTickets.shift());
         });
-        waitsFor(function() { return locker.writeAcquired == 3; }, "third lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 3; }, "third lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(names.shift());
@@ -177,7 +178,7 @@ describe("ReadWriteLock", function() {
             writeName = nextName();
             rwlock.writeLock(TIMEOUT, locker.getWriteCallback(writeName));
         });
-        waitsFor(function() { return locker.readAcquired == 3; }, "read locks", 100);
+        waitsFor(function() { return locker.readAcquired == 3; }, "read locks", WAIT);
         
         runs(function() {
             expect(locker.lastName).not.toEqual(writeName);
@@ -187,7 +188,7 @@ describe("ReadWriteLock", function() {
                     rwlock.unlock(locker.lockTickets.shift());
             }, DELAY);
         });
-        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(writeName);
@@ -205,7 +206,7 @@ describe("ReadWriteLock", function() {
                 rwlock.readLock(TIMEOUT, locker.getReadCallback(name));
             }
         });
-        waitsFor(function() { return locker.writeAcquired == 1 && names.length == 3; }, "write lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 1 && names.length == 3; }, "write lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(writeName);
@@ -213,7 +214,7 @@ describe("ReadWriteLock", function() {
             expect(locker.lockTickets.length).toEqual(1);
             rwlock.unlock(locker.lockTickets.shift());
         });
-        waitsFor(function() { return locker.readAcquired == names.length; }, "read locks", 100);
+        waitsFor(function() { return locker.readAcquired == names.length; }, "read locks", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(names[names.length - 1]);
@@ -230,13 +231,13 @@ describe("ReadWriteLock", function() {
             ticket = rwlock.readLock(TIMEOUT, locker.getReadCallback(readName));
             expect(ticket).toBeDefined();
         });
-        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", 100);
+        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(writeName);
             rwlock.cancel(ticket);
         });
-        waitsFor(function() { return locker.readCancelled == 1; }, "cancelled", 100);
+        waitsFor(function() { return locker.readCancelled == 1; }, "cancelled", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(readName);
@@ -254,13 +255,13 @@ describe("ReadWriteLock", function() {
             ticket = rwlock.writeLock(TIMEOUT, locker.getWriteCallback(writeName));
             expect(ticket).toBeDefined();
         });
-        waitsFor(function() { return locker.readAcquired == 1; }, "read lock", 100);
+        waitsFor(function() { return locker.readAcquired == 1; }, "read lock", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(readName);
             rwlock.cancel(ticket);
         });
-        waitsFor(function() { return locker.writeCancelled == 1; }, "cancelled", 100);
+        waitsFor(function() { return locker.writeCancelled == 1; }, "cancelled", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(writeName);
@@ -292,7 +293,7 @@ describe("ReadWriteLock", function() {
                 tickets.push(ticket);
             }
         });
-        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock and all waiters", 100);
+        waitsFor(function() { return locker.writeAcquired == 1; }, "write lock and all waiters", WAIT);
         
         var expectedName, numCancelling;
         runs(function() {
@@ -310,7 +311,7 @@ describe("ReadWriteLock", function() {
                 }
             }, DELAY);
         });
-        waitsFor(function() { return locker.readCancelled + locker.writeCancelled == numCancelling; }, "individual cancellations", 100);
+        waitsFor(function() { return locker.readCancelled + locker.writeCancelled == numCancelling; }, "individual cancellations", WAIT);
         
         runs(function() {
             expect(locker.lastName).toEqual(expectedName);
@@ -322,7 +323,7 @@ describe("ReadWriteLock", function() {
                 rwlock.cancelAll();
             }, DELAY);
         });
-        waitsFor(function() { return locker.readCancelled + locker.writeCancelled == MAX_WAITERS; }, "remaining cancellations", 100);
+        waitsFor(function() { return locker.readCancelled + locker.writeCancelled == MAX_WAITERS; }, "remaining cancellations", WAIT);
         
         runs(function() {
             // Cancelling all is not done in order of acquisition attempt so we
@@ -345,7 +346,7 @@ describe("ReadWriteLock", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return timedout; }, "timedout", 100);
+        waitsFor(function() { return timedout; }, "timedout", WAIT);
         
         runs(function() {
             expect(locker.readAcquired).toEqual(3);
@@ -373,7 +374,7 @@ describe("ReadWriteLock", function() {
                 }
             }
         });
-        waitsFor(function() { return locker.writeAcquired == 1 && numTimedout == MAX_WAITERS; }, "timeouts", 100);
+        waitsFor(function() { return locker.writeAcquired == 1 && numTimedout == MAX_WAITERS; }, "timeouts", WAIT);
         
         runs(function() {
             expect(locker.readAcquired).toEqual(0);
@@ -460,7 +461,7 @@ describe("ReadWriteLock", function() {
         runs(function() {
             addOperation();
         });
-        waitsFor(function() { return (locker.readAcquired + locker.writeAcquired + locker.readCancelled + locker.writeCancelled) == MAX_LOCKERS; }, "complete", 3000);
+        waitsFor(function() { return (locker.readAcquired + locker.writeAcquired + locker.readCancelled + locker.writeCancelled) == MAX_LOCKERS; }, "complete", 30 * WAIT);
         
         runs(function() {
             expect(locker.readAcquired).toBeGreaterThan(0);

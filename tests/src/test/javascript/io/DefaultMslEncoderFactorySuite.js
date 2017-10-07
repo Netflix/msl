@@ -38,6 +38,7 @@ describe("DefaultMslEncoderFactory", function() {
 
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** Maximum number of object fields or array elements. */
@@ -61,7 +62,7 @@ describe("DefaultMslEncoderFactory", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
         	});
-        	waitsFor(function() { return ctx; }, "ctx", 1200);
+        	waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
         	
         	runs(function() {
         		encoder = new DefaultMslEncoderFactory();
@@ -416,7 +417,7 @@ describe("DefaultMslEncoderFactory", function() {
 		            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        		});
 	        	});
-	        	waitsFor(function() { return entityAuthData; }, "entityAuthData", 100);
+	        	waitsFor(function() { return entityAuthData; }, "entityAuthData", MslTestConstants.TIMEOUT);
 	        	
 	        	var jsonMessageHeader;
 	        	runs(function() {
@@ -427,7 +428,7 @@ describe("DefaultMslEncoderFactory", function() {
 	                	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	                });
 	        	});
-	        	waitsFor(function() { return jsonMessageHeader; }, "jsonMessageHeader", 100);
+	        	waitsFor(function() { return jsonMessageHeader; }, "jsonMessageHeader", MslTestConstants.TIMEOUT);
 	        	
 	        	var jsonMos;
 	        	runs(function() {
@@ -438,7 +439,7 @@ describe("DefaultMslEncoderFactory", function() {
 		            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 		            });
 	        	});
-	        	waitsFor(function() { return jsonMos; }, "jsonMos", 100);
+	        	waitsFor(function() { return jsonMos; }, "jsonMos", MslTestConstants.TIMEOUT);
 	        	
 	        	runs(function() {
 	        		function writePayload(index) {
@@ -481,7 +482,7 @@ describe("DefaultMslEncoderFactory", function() {
 	        			});
 	        		}
 	        	});
-	        	waitsFor(function() { return initialized; }, "initialized", 100);
+	        	waitsFor(function() { return initialized; }, "initialized", MslTestConstants.TIMEOUT);
     		}
     	});
     	
@@ -524,7 +525,7 @@ describe("DefaultMslEncoderFactory", function() {
 		            	error: function(e) { exception = e; },
 		            });
 	            });
-	            waitsFor(function() { return tokenizer || exception; }, "tokenizer or exception", 100);
+	            waitsFor(function() { return tokenizer || exception; }, "tokenizer or exception", MslTestConstants.TIMEOUT);
 	
 	            runs(function() {
 	            	if (expectedException) {
@@ -564,7 +565,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            }
 			            f();
 		            });
-		            waitsFor(function() { return objects; }, "objects", 100);
+		            waitsFor(function() { return objects; }, "objects", MslTestConstants.TIMEOUT);
 			        
 		            var nextObject;
 			        runs(function() {
@@ -576,7 +577,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            });
 			        });
-			        waitsFor(function() { return nextObject !== undefined; }, "nextObject", 100);
+			        waitsFor(function() { return nextObject !== undefined; }, "nextObject", MslTestConstants.TIMEOUT);
 			        
 			        var header;
 			        runs(function() {
@@ -590,7 +591,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			            });
 			        });
-			        waitsFor(function() { return header; }, "header", 100);
+			        waitsFor(function() { return header; }, "header", MslTestConstants.TIMEOUT);
 			        
 			        var verified = false;
 			        runs(function() {
@@ -617,7 +618,7 @@ describe("DefaultMslEncoderFactory", function() {
 			            }
 			            f(0);
 			        });
-			        waitsFor(function() { return verified; }, "verified", 100);
+			        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
 	            });
 	        });
     	});
@@ -1121,7 +1122,7 @@ describe("DefaultMslEncoderFactory", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(encode).not.toBeNull();
@@ -1154,7 +1155,7 @@ describe("DefaultMslEncoderFactory", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(encode).not.toBeNull();

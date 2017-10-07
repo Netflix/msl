@@ -26,6 +26,7 @@ describe("MslSignatureEnvelope", function() {
     var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** MSL encoder format. */
@@ -58,7 +59,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -76,7 +77,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var envelopeBytes;
             runs(function() {
@@ -87,7 +88,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -98,7 +99,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
 
             var moEnvelopeBytes;
             runs(function() {
@@ -109,7 +110,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelopeBytes).toEqual(envelopeBytes);
@@ -124,7 +125,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var envelopeBytes;
             runs(function() {
@@ -133,7 +134,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(envelopeBytes).not.toBeNull();
@@ -158,7 +159,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var envelopeBytes;
             runs(function() {
@@ -169,7 +170,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -180,7 +181,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
 
             var moEnvelopeBytes;
             runs(function() {
@@ -191,7 +192,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", 100);
+            waitsFor(function() { return moEnvelopeBytes; }, "moEnvelopeBytes", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelopeBytes).toEqual(envelopeBytes);
@@ -206,7 +207,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var envelopeBytes;
             runs(function() {
@@ -215,7 +216,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var mo = encoder.parseObject(envelopeBytes);
@@ -234,7 +235,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var envelopeBytes;
             runs(function() {
@@ -243,7 +244,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
             
             var moEncode;
             runs(function() {
@@ -255,7 +256,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -264,7 +265,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();
@@ -280,7 +281,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var envelopeBytes;
             runs(function() {
@@ -289,7 +290,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
 
             var moEncode;
             runs(function() {
@@ -301,7 +302,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -310,7 +311,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();
@@ -326,7 +327,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var envelopeBytes;
             runs(function() {
@@ -335,7 +336,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
 
             var moEncode;
             runs(function() {
@@ -347,7 +348,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -356,7 +357,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();
@@ -372,7 +373,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var envelopeBytes;
             runs(function() {
@@ -381,7 +382,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
 
             var moEncode;
             runs(function() {
@@ -393,7 +394,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -402,7 +403,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();
@@ -418,7 +419,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var envelopeBytes;
             runs(function() {
@@ -427,7 +428,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
 
             var moEncode;
             runs(function() {
@@ -439,7 +440,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -448,7 +449,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();
@@ -464,7 +465,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var envelopeBytes;
             runs(function() {
@@ -473,7 +474,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", 100);
+            waitsFor(function() { return envelopeBytes; }, "envelopeBytes", MslTestConstants.TIMEOUT);
 
             var moEncode;
             runs(function() {
@@ -485,7 +486,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -494,7 +495,7 @@ describe("MslSignatureEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.algorithm).toBeNull();

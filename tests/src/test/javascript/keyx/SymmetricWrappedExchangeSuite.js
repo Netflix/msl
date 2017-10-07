@@ -39,6 +39,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
     var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
@@ -74,10 +75,10 @@ describe("SymmetricWrappedExchangeSuite", function() {
     random.nextBytes(HMAC_KEY);
     
     var PSK_MASTER_TOKEN;
-    
+
     var initialized = false;
     beforeEach(function() {
-    	if (!initialized) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { pskCtx = c; },
@@ -88,22 +89,22 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return pskCtx && unauthCtx; }, "MSL contexts", 900);
-            
-		    runs(function() {
-		    	encoder = pskCtx.getMslEncoderFactory();
-		    	MslTestUtils.getMasterToken(pskCtx, 1, 1, {
-		    		result: function(masterToken) {
-		    			PSK_MASTER_TOKEN = masterToken;
-		    		},
-		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-		    	});
-		    });
-		    waitsFor(function() { return PSK_MASTER_TOKEN; }, "static initialization", 100);
-		    runs(function() { initialized = true; });
-    	}
+            waitsFor(function() { return pskCtx && unauthCtx; }, "MSL contexts", MslTestConstants.TIMEOUT_CTX);
+
+            runs(function() {
+                encoder = pskCtx.getMslEncoderFactory();
+                MslTestUtils.getMasterToken(pskCtx, 1, 1, {
+                    result: function(masterToken) {
+                        PSK_MASTER_TOKEN = masterToken;
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return PSK_MASTER_TOKEN; }, "static initialization", MslTestConstants.TIMEOUT);
+            runs(function() { initialized = true; });
+        }
     });
-    
+
     // Shortcuts
     var KeyId = SymmetricWrappedExchange.KeyId;
 	var RequestData = SymmetricWrappedExchange.RequestData;
@@ -123,7 +124,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -137,7 +138,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(moKeydata).not.toBeNull();
@@ -157,7 +158,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             var moKeydata;
             runs(function() {
@@ -171,7 +172,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
             	expect(moKeydata).not.toBeNull();
@@ -188,7 +189,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.SYMMETRIC_WRAPPED.name);
@@ -206,7 +207,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             var keyRequestData;
             runs(function() {
@@ -215,7 +216,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyRequestData; }, "keyRequestData not received", 100);
+            waitsFor(function() { return keyRequestData; }, "keyRequestData not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(keyRequestData).not.toBeNull();
@@ -236,7 +237,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	
             runs(function() {
             	keydata.remove(KEY_KEY_ID);
@@ -256,7 +257,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	
             runs(function() {
 	            keydata.put(KEY_KEY_ID, "x");
@@ -279,7 +280,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -321,7 +322,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -338,7 +339,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(moKeydata).not.toBeNull();
@@ -355,7 +356,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return mo; }, "mo", 100);
+        	waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         	
         	var masterToken;
         	runs(function() {
@@ -365,7 +366,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return masterToken; }, "master token", 100);
+        	waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
 	            expect(PSK_MASTER_TOKEN.equals(masterToken)).toBeTruthy();
@@ -386,7 +387,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
             var keyResponseData;
             runs(function() {
@@ -395,7 +396,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 100);
+            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
             	expect(keyResponseData).not.toBeNull();
@@ -419,7 +420,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	
             runs(function() {
             	keydata.remove(KEY_KEY_ID);
@@ -439,7 +440,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	
             runs(function() {
             	keydata.remove(KEY_ENCRYPTION_KEY);
@@ -459,7 +460,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	
             runs(function() {
             	keydata.remove(KEY_HMAC_KEY);
@@ -482,7 +483,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
             });
-            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", MslTestConstants.TIMEOUT);
             
             var dataA, dataB, dataA2;
             runs(function() {
@@ -495,7 +496,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 	            
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -523,7 +524,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -554,7 +555,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -585,7 +586,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -706,7 +707,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(keyxData).not.toBeNull();
 	            expect(keyxData.cryptoContext).not.toBeNull();
@@ -731,7 +732,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(keyxData).not.toBeNull();
 	            expect(keyxData.cryptoContext).not.toBeNull();
@@ -755,7 +756,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslEntityAuthException(MslError.NONE));
@@ -771,7 +772,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -787,7 +788,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(keyxData).not.toBeNull();
 	            expect(keyxData.cryptoContext).not.toBeNull();
@@ -814,7 +815,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(keyxData).not.toBeNull();
 	            expect(keyxData.cryptoContext).not.toBeNull();
@@ -841,7 +842,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
         	});
-        	waitsFor(function() { return masterToken; }, "master token not received", 100);
+        	waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
             
         	var exception;
             runs(function() {
@@ -851,7 +852,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED));
@@ -867,7 +868,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -885,7 +886,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         		});
         	});
-        	waitsFor(function() { return masterToken; }, "master token not received", 100);
+        	waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
 
         	var exception;
             runs(function() {
@@ -895,7 +896,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslMasterTokenException(MslError.NONE));
@@ -911,7 +912,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var data = new Uint8Array(32);
             random.nextBytes(data);
@@ -925,7 +926,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", 100);
+            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", MslTestConstants.TIMEOUT);
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
@@ -940,7 +941,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", 100);
+            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	expect(requestCiphertext).not.toEqual(data);
             	expect(responseCiphertext).not.toEqual(data);
@@ -958,7 +959,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", 100);
+            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestSignature).not.toEqual(data);
 	            expect(responseSignature).not.toEqual(data);
@@ -977,7 +978,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", 100);
+            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestPlaintext).not.toBeNull();
 	            expect(requestPlaintext).toEqual(data);
@@ -1014,7 +1015,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var data = new Uint8Array(32);
             random.nextBytes(data);
@@ -1028,7 +1029,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", 100);
+            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", MslTestConstants.TIMEOUT);
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
@@ -1043,7 +1044,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", 100);
+            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	expect(requestCiphertext).not.toEqual(data);
             	expect(responseCiphertext).not.toEqual(data);
@@ -1061,7 +1062,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", 100);
+            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestSignature).not.toEqual(data);
 	            expect(responseSignature).not.toEqual(data);
@@ -1080,7 +1081,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", 100);
+            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestPlaintext).not.toBeNull();
 	            expect(requestPlaintext).toEqual(data);
@@ -1117,7 +1118,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+        	waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
 
         	var exception;
         	runs(function() {
@@ -1127,7 +1128,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	var f = function() { throw exception; };
@@ -1144,7 +1145,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+        	waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
 
         	var exception;
         	runs(function() {
@@ -1156,7 +1157,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
 
         	runs(function() {
         		var f = function() { throw exception; };
@@ -1174,7 +1175,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	runs(function() {
         		var f = function() { throw exception; };
         		expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1190,7 +1191,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+        	waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
         	
         	var exception;
         	runs(function() {
@@ -1204,7 +1205,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	runs(function() {
         		var f = function() { throw exception; };
         		expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH));
@@ -1220,7 +1221,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+        	waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
         	
         	var keyResponseData, keydata;
         	runs(function() {
@@ -1230,7 +1231,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
         	
         	var exception;
         	runs(function() {
@@ -1246,7 +1247,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	runs(function() {
         		var f = function() { throw exception; };
         		expect(f).toThrow(new MslCryptoException(MslError.NONE));
@@ -1262,7 +1263,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
         	
         	var keyResponseData, keydata;
         	runs(function() {
@@ -1272,7 +1273,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
         	var exception;
         	runs(function() {
@@ -1288,7 +1289,7 @@ describe("SymmetricWrappedExchangeSuite", function() {
         			error: function(err) { exception = err; }
         		});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	runs(function() {
         		var f = function() { throw exception; };
         		expect(f).toThrow(new MslCryptoException(MslError.NONE));

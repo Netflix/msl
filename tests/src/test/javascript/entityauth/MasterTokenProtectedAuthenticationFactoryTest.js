@@ -29,6 +29,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
     var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -69,7 +70,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 100);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -83,7 +84,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 });
                 eAuthdata = new UnauthenticatedAuthenticationData(IDENTITY);
             });
-            waitsFor(function() { return masterToken; }, "master token", 100);
+            waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         }
     });
     
@@ -99,7 +100,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -108,7 +109,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var moAuthdata;
         runs(function() {
@@ -117,7 +118,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moAuthdata).not.toBeNull();
@@ -137,7 +138,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -146,7 +147,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -156,7 +157,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -172,7 +173,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         var cryptoContext, eCryptoContext;
         var plaintext, ciphertext, eCiphertext;
@@ -196,7 +197,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ciphertext && eCiphertext; }, "ciphertext", 100);
+        waitsFor(function() { return ciphertext && eCiphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
         
         var decrypted, eDecrypted;
         runs(function() {
@@ -209,7 +210,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return decrypted && eDecrypted; }, "decrypted", 100);
+        waitsFor(function() { return decrypted && eDecrypted; }, "decrypted", MslTestConstants.TIMEOUT);
         
         var signature, eSignature;
         runs(function() {
@@ -225,7 +226,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature && eSignature; }, "decrypted", 100);
+        waitsFor(function() { return signature && eSignature; }, "decrypted", MslTestConstants.TIMEOUT);
         
         var verified, eVerified;
         runs(function() {
@@ -238,7 +239,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return verified && eVerified; }, "decrypted", 100);
+        waitsFor(function() { return verified && eVerified; }, "decrypted", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(verified).toBeTruthy();
@@ -254,7 +255,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
         
         var data;
         runs(function() {
@@ -265,7 +266,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {
@@ -284,7 +285,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {
@@ -303,7 +304,7 @@ describe("MasterTokenProtectedAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return data; }, "data", 100);
+        waitsFor(function() { return data; }, "data", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {

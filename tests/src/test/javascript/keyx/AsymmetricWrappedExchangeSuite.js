@@ -42,6 +42,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     
     var BigInteger = require('jsrsasign').BigInteger;
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -128,7 +129,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
@@ -139,7 +140,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return RSA_OAEP_PUBLIC_KEY && RSA_OAEP_PRIVATE_KEY; }, "RSA-OAEP keys", 2500);
+            waitsFor(function() { return RSA_OAEP_PUBLIC_KEY && RSA_OAEP_PRIVATE_KEY; }, "RSA-OAEP keys", MslTestConstants.TIMEOUT_CRYPTO);
             
             runs(function() {
                 if (MslCrypto.getWebCryptoVersion() != MslCrypto.WebCryptoVersion.V2014_01) {
@@ -156,7 +157,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     });
                 }
             });
-            waitsFor(function() { return RSAES_PUBLIC_KEY && RSAES_PRIVATE_KEY; }, "RSAES keys", 2500);
+            waitsFor(function() { return RSAES_PUBLIC_KEY && RSAES_PRIVATE_KEY; }, "RSAES keys", MslTestConstants.TIMEOUT_CRYPTO);
             
     		runs(function() {
     			encoder = ctx.getMslEncoderFactory();
@@ -169,7 +170,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
     				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     			});
     		});
-    		waitsFor(function() { return MASTER_TOKEN && ENCRYPTION_KEY && HMAC_KEY; }, "static intialization", 300);
+    		waitsFor(function() { return MASTER_TOKEN && ENCRYPTION_KEY && HMAC_KEY; }, "static intialization", MslTestConstants.TIMEOUT_CRYPTO);
     		
     		runs(function() { initialized = true; });
     	}
@@ -241,7 +242,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var moReq;
                 runs(function() {
@@ -251,7 +252,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return moReq; }, "moReq not received", 100);
+                waitsFor(function() { return moReq; }, "moReq not received", MslTestConstants.TIMEOUT);
 
                 var moKeydata;
                 runs(function() {
@@ -265,7 +266,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+                waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
                 
                 runs(function() {
                     expect(moKeydata).not.toBeNull();
@@ -283,7 +284,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return mo; }, "mo", 100);
+                waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     expect(mo.getString(KEY_SCHEME)).toEqual(KeyExchangeScheme.ASYMMETRIC_WRAPPED.name);
@@ -303,7 +304,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return mo; }, "mo", 100);
+                waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
                 
                 var keyRequestData;
                 runs(function() {
@@ -312,7 +313,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyRequestData; }, "keyRequestData not received", 100);
+                waitsFor(function() { return keyRequestData; }, "keyRequestData not received", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     expect(keyRequestData).not.toBeNull();
@@ -336,7 +337,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -347,7 +348,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception", 100);
+                waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -364,7 +365,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -375,7 +376,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception", 100);
+                waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -392,7 +393,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -403,7 +404,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception", 100);
+                waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -420,7 +421,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -431,7 +432,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception", 100);
+                waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -448,7 +449,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -461,7 +462,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception", 100);
+                waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -485,7 +486,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 300);
+            waitsFor(function() { return dataA2; }, "dataA2 not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -516,7 +517,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 300);
+            waitsFor(function() { return dataA2; }, "dataA2 not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -541,7 +542,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return rsaPublicKey; }, "RSA public key", 1200);
+            waitsFor(function() { return rsaPublicKey; }, "RSA public key", MslTestConstants.TIMEOUT_CTX);
 
             var dataA, dataB, dataA2;
             runs(function() {
@@ -557,7 +558,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", 300);
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -582,7 +583,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", 1200);
+            waitsFor(function() { return rsaPrivateKey; }, "RSA private key", MslTestConstants.TIMEOUT_CTX);
 
             var dataA, dataB, dataA2;
             runs(function() {
@@ -598,7 +599,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", 300);
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {    
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -642,7 +643,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             var moKeydata;
             runs(function() {
@@ -659,7 +660,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(moKeydata).not.toBeNull();
@@ -676,7 +677,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
             var masterToken;
             runs(function() {
@@ -687,7 +688,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken; }, "master token not received", 600);
+            waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(masterToken).toEqual(MASTER_TOKEN);
@@ -713,7 +714,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 300);
+            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(keyResponseData).not.toBeNull();
@@ -738,7 +739,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() {
@@ -758,7 +759,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() {
@@ -778,7 +779,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() {
@@ -801,7 +802,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 300);
+            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             var dataA, dataB, dataA2;
             runs(function() {
@@ -814,7 +815,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -842,7 +843,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -873,7 +874,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -904,7 +905,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -989,7 +990,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 300);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1005,7 +1006,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 300);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -1060,7 +1061,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(keyxData).not.toBeNull();
                     expect(keyxData.cryptoContext).not.toBeNull();
@@ -1083,7 +1084,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(keyxData).not.toBeNull();
                     expect(keyxData.cryptoContext).not.toBeNull();
@@ -1109,7 +1110,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                     });
                 });
-                waitsFor(function() { return masterToken; }, "master token not received", 300);
+                waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var exception;
                 runs(function() {
@@ -1118,7 +1119,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(err) { exception = err; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not received", 300);
+                waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -1135,7 +1136,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var data = new Uint8Array(32);
                 random.nextBytes(data);
@@ -1149,7 +1150,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", 300);
+                waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 // Ciphertext won't always be equal depending on how it was
                 // enveloped. So we cannot check for equality or inequality.
@@ -1166,7 +1167,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", 300);
+                waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(requestCiphertext).not.toEqual(data);
                     expect(responseCiphertext).not.toEqual(data);
@@ -1184,7 +1185,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", 300);
+                waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(requestSignature).not.toEqual(data);
                     expect(responseSignature).not.toEqual(data);
@@ -1203,7 +1204,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", 300);
+                waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(requestPlaintext).not.toBeNull();
                     expect(requestPlaintext).toEqual(data);
@@ -1222,7 +1223,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return requestVerified && responseVerified; }, "verifieds not received", 300);
+                waitsFor(function() { return requestVerified && responseVerified; }, "verifieds not received", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     expect(requestVerified).toBeTruthy();
                     expect(responseVerified).toBeTruthy();
@@ -1239,7 +1240,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var exception;
                 runs(function() {
@@ -1251,7 +1252,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(err) { exception = err; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -1269,7 +1270,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(err) { exception = err; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -1287,7 +1288,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var exception;
                 runs(function() {
@@ -1301,7 +1302,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(err) { exception = err; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH));
@@ -1318,7 +1319,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var exception;
                 runs(function() {
@@ -1329,7 +1330,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(err) { exception = err; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
                 runs(function() {
                     var f = function() { throw exception; };
                     expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_PRIVATE_KEY_MISSING));
@@ -1346,7 +1347,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var masterToken, keydata;
                 runs(function() {
@@ -1358,7 +1359,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -1374,7 +1375,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
 
                 runs(function() {
                     var f = function() { throw exception; };
@@ -1392,7 +1393,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keyxData; }, "keyxData not received", 300);
+                waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT_CRYPTO);
 
                 var masterToken, keydata;
                 runs(function() {
@@ -1404,7 +1405,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return keydata; }, "keydata", 100);
+                waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 
                 var exception;
                 runs(function() {
@@ -1420,7 +1421,7 @@ describe("AsymmetricWrappedExchangeSuite", function() {
                         error: function(e) { exception = e; }
                     });
                 });
-                waitsFor(function() { return exception; }, "exception not recevied", 300);
+                waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT_CRYPTO);
 
                 runs(function() {
                     var f = function() { throw exception; };

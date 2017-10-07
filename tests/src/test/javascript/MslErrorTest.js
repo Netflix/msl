@@ -17,9 +17,9 @@
 describe("MslError", function() {
     var MslError = require('../../../../core/src/main/javascript/MslError.js');
     var MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
-    
+
     var BASE = 100000;
-    
+
     it("JSON parse error is correct", function() {
         expect(MslError.MSL_PARSE_ERROR).not.toBeUndefined();
         expect(MslError.MSL_PARSE_ERROR).not.toBeNull();
@@ -27,26 +27,26 @@ describe("MslError", function() {
         expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
-    
+
     it("is immutable", function() {
-    	MslError.MSL_PARSE_ERROR.internalCode = "x";
-    	MslError.MSL_PARSE_ERROR.responseCode = "x";
-    	MslError.MSL_PARSE_ERROR.message = "x";
+        MslError.MSL_PARSE_ERROR.internalCode = "x";
+        MslError.MSL_PARSE_ERROR.responseCode = "x";
+        MslError.MSL_PARSE_ERROR.message = "x";
         expect(MslError.MSL_PARSE_ERROR.internalCode).toEqual(BASE);
         expect(MslError.MSL_PARSE_ERROR.responseCode).toEqual(MslConstants.ResponseCode.FAIL);
         expect(MslError.MSL_PARSE_ERROR.message).toEqual("Error parsing MSL encodable.");
     });
-    
+
     it("no repeated internal codes", function() {
-    	var internalCodes = [];
-    	for (var element in MslError) {
-    		if (MslError.hasOwnProperty(element)) {
-    			var err = MslError[element];
-    			if (internalCodes.indexOf(err.internalCode) != -1)
-    			    console.log(element, err, err.internalCode);
-    			expect(internalCodes.indexOf(err.internalCode)).toEqual(-1);
-    			internalCodes.push(err.internalCode);
-    		} 
-    	}
+        var internalCodes = [];
+        for (var element in MslError) {
+            if (MslError.hasOwnProperty(element)) {
+                var err = MslError[element];
+                if (internalCodes.indexOf(err.internalCode) != -1)
+                    console.log(element, err, err.internalCode);
+                expect(internalCodes.indexOf(err.internalCode)).toEqual(-1);
+                internalCodes.push(err.internalCode);
+            } 
+        }
     });
 });

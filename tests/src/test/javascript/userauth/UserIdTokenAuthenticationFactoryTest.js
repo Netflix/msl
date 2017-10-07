@@ -29,6 +29,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -62,7 +63,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
                 authutils = new MockAuthenticationUtils();
@@ -74,7 +75,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
+            waitsFor(function() { return MASTER_TOKEN; }, "master token", MslTestConstants.TIMEOUT);
             runs(function() {
                 var user = new MockMslUser("user1");
                 MslTestUtils.getUserIdToken(ctx, MASTER_TOKEN, 1, user, {
@@ -82,7 +83,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return USER_ID_TOKEN; }, "user ID token", 100);
+            waitsFor(function() { return USER_ID_TOKEN; }, "user ID token", MslTestConstants.TIMEOUT);
         }
     });
     
@@ -99,7 +100,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
     	});
-    	waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+    	waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -108,7 +109,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(authdata).not.toBeNull();
@@ -126,7 +127,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { exception = e; },
             });
     	});
-    	waitsFor(function() { return userAuthMo; }, "userAuthMo", 100);
+    	waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
     	
         var exception;
         runs(function() {
@@ -136,7 +137,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -159,7 +160,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return masterToken; }, "master token", 100);
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         
         var userIdToken;
         runs(function() {
@@ -168,7 +169,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return userIdToken; }, "user ID token", 100);
+        waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
@@ -185,7 +186,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return masterToken; }, "master token", 100);
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT);
         
         var userIdToken;
         runs(function() {
@@ -195,7 +196,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return userIdToken; }, "user ID token", 100);
+        waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {
@@ -214,7 +215,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return untrustedMasterToken; }, "untrusted master token", 100);
+        waitsFor(function() { return untrustedMasterToken; }, "untrusted master token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {
@@ -233,7 +234,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return mismatchedCtx; }, "mismatched ctx", 100);
+        waitsFor(function() { return mismatchedCtx; }, "mismatched ctx", MslTestConstants.TIMEOUT);
         
         var mismatchedMasterToken;
         runs(function() {
@@ -242,7 +243,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return mismatchedMasterToken; }, "mismatched master token", 100);
+        waitsFor(function() { return mismatchedMasterToken; }, "mismatched master token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {
@@ -261,7 +262,7 @@ describe("UserIdTokenAuthenticationFactory", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return untrustedUserIdToken; }, "untrusted user ID token", 100);
+        waitsFor(function() { return untrustedUserIdToken; }, "untrusted user ID token", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() {

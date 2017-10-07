@@ -24,6 +24,8 @@ describe("SecretKey", function() {
     var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
     var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     
     /** 128-bit key. */
     var keydata128B64 = "rXIN3PgEoTjJzeqSD1SwDw==";
@@ -46,7 +48,7 @@ describe("SecretKey", function() {
 	                error: function (e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
 	        });
-	        waitsFor(function() { return key128 && key256; }, "keys", 100);
+	        waitsFor(function() { return key128 && key256; }, "keys", MslTestConstants.TIMEOUT);
 	        runs(function() { initialized = true; });
 	    }
 	});

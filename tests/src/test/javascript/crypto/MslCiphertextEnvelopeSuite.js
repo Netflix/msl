@@ -23,6 +23,7 @@ describe("MslCiphertextEnvelope", function() {
     var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** Key version. */
@@ -56,21 +57,21 @@ describe("MslCiphertextEnvelope", function() {
 	var initialized = false;
 	beforeEach(function() {
 	    if (!initialized) {
-    	    var random = new Random();
-    	    random.nextBytes(IV);
-    	    random.nextBytes(CIPHERTEXT);
-    	    
-    	    var ctx;
-    	    MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
-    	        result: function(c) { ctx = c; },
-    	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    	    });
-    	    waitsFor(function() { return ctx; }, "ctx", 900);
-    	    
-    	    runs(function() {
-    	        encoder = ctx.getMslEncoderFactory();
-    	        initialized = true;
-    	    });
+	        var random = new Random();
+	        random.nextBytes(IV);
+	        random.nextBytes(CIPHERTEXT);
+
+	        var ctx;
+	        MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
+	            result: function(c) { ctx = c; },
+	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+	        });
+	        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
+
+	        runs(function() {
+	            encoder = ctx.getMslEncoderFactory();
+	            initialized = true;
+	        });
 	    }
 	});
 	
@@ -83,7 +84,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var encode;
             runs(function() {
@@ -96,7 +97,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -107,7 +108,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             var moEncode;
             runs(function() {
@@ -120,7 +121,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(moEncode).toEqual(encode);
@@ -135,7 +136,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var encode;
             runs(function() {
@@ -148,7 +149,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -159,7 +160,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             var moEncode;
             runs(function() {
@@ -172,7 +173,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(moEncode).toEqual(encode);
@@ -187,7 +188,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -196,7 +197,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var mo = encoder.parseObject(encode);
@@ -216,7 +217,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -225,7 +226,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var mo = encoder.parseObject(encode);
@@ -245,7 +246,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -254,7 +255,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -266,7 +267,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -282,7 +283,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -291,7 +292,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -303,7 +304,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var f = function() { throw exception; };
@@ -319,7 +320,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -328,7 +329,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -340,7 +341,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -356,7 +357,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -365,7 +366,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var moEnvelope;
             runs(function() {
@@ -380,7 +381,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moEnvelope.keyId).toEqual(KEY_ID);
@@ -407,7 +408,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -420,7 +421,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             var moEnvelope;
             runs(function() {
@@ -432,7 +433,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             var moEncode;
             runs(function() {
@@ -445,7 +446,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(moEncode).toEqual(encode);
@@ -460,7 +461,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var encode;
             runs(function() {
@@ -473,7 +474,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
                 
             var moEnvelope;
             runs(function() {
@@ -485,7 +486,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEnvelope; }, "moEnvelope", 100);
+            waitsFor(function() { return moEnvelope; }, "moEnvelope", MslTestConstants.TIMEOUT);
             
             var moEncode;
             runs(function() {
@@ -498,7 +499,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moEncode; }, "moEncode", 100);
+            waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(moEncode).toEqual(encode);
@@ -513,7 +514,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -522,7 +523,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var mo = encoder.parseObject(encode);
@@ -543,7 +544,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -552,7 +553,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 var mo = encoder.parseObject(encode);
@@ -573,7 +574,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -582,7 +583,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -594,7 +595,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -610,7 +611,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -619,7 +620,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -631,7 +632,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -647,7 +648,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -656,7 +657,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -668,7 +669,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -684,7 +685,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -693,7 +694,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -705,7 +706,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -721,7 +722,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -730,7 +731,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -742,7 +743,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -758,7 +759,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -767,7 +768,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -779,7 +780,7 @@ describe("MslCiphertextEnvelope", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; },"exception", 100);
+            waitsFor(function() { return exception; },"exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
