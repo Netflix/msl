@@ -25,6 +25,7 @@ describe("NullCryptoContext", function() {
     var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
     var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** MSL encoder format. */
@@ -43,7 +44,7 @@ describe("NullCryptoContext", function() {
                 result: function(c) { ctx = c; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -64,7 +65,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
 		});
-		waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+		waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
 			expect(ciphertext).not.toBeNull();
@@ -78,7 +79,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
 		});
-		waitsFor(function() { return plaintext; }, "plaintext not received", 100);
+		waitsFor(function() { return plaintext; }, "plaintext not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
 			expect(plaintext).not.toBeNull();
@@ -98,7 +99,7 @@ describe("NullCryptoContext", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+        waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(ciphertext).not.toBeNull();
@@ -112,7 +113,7 @@ describe("NullCryptoContext", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext not received", 100);
+        waitsFor(function() { return plaintext; }, "plaintext not received", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(plaintext).not.toBeNull();
@@ -132,7 +133,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
 		});
-		waitsFor(function() { return signatureA; }, "signature not received", 100);
+		waitsFor(function() { return signatureA; }, "signature not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
 			expect(signatureA).not.toBeNull();
@@ -146,7 +147,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 			});
 		});
-		waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+		waitsFor(function() { return verified !== undefined; }, "verified not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
 			expect(verified).toBeTruthy();
@@ -162,7 +163,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
 		});
-		waitsFor(function() { return signatureB; }, "signature not received", 100);
+		waitsFor(function() { return signatureB; }, "signature not received", MslTestConstants.TIMEOUT);
 	
 		runs(function() {
 			expect(signatureB).toEqual(signatureA);
@@ -179,7 +180,7 @@ describe("NullCryptoContext", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
 		});
-		waitsFor(function() { return verifiedB !== undefined && verifiedB !== undefined; }, "verified values not received", 100);
+		waitsFor(function() { return verifiedB !== undefined && verifiedB !== undefined; }, "verified values not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
 			expect(verifiedB).toBeTruthy();

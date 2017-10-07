@@ -49,17 +49,18 @@ describe("MessageInputStream", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     var MockUnauthenticatedAuthenticationFactory = require('../../../main/javascript/entityauth/MockUnauthenticatedAuthenticationFactory.js');
     var MockTokenFactory = require('../../../main/javascript/tokens/MockTokenFactory.js');
     var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
-    
+
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
-    
-	/** Maximum number of payload chunks to generate. */
+
+    /** Maximum number of payload chunks to generate. */
     var MAX_PAYLOAD_CHUNKS = 12;
     /** Maximum payload chunk data size in bytes. */
     var MAX_DATA_SIZE = 100; //10 * 1024;
@@ -69,7 +70,7 @@ describe("MessageInputStream", function() {
     var TIMEOUT = 1000;
     /** Maximum read length. */
     var MAX_READ_LEN = MAX_PAYLOAD_CHUNKS * MAX_DATA_SIZE;
-    
+
     /** Random. */
     var random = new Random();
     /** Trusted network MSL context. */
@@ -82,24 +83,24 @@ describe("MessageInputStream", function() {
     var cryptoContexts = [];
     /** Message payloads (initially empty). */
     var payloads = [];
-    
+
     var MESSAGE_HEADER;
     var ERROR_HEADER;
     var ENTITY_AUTH_DATA;
     var KEY_REQUEST_DATA = [];
     var KEY_RESPONSE_DATA;
     var KEYX_CRYPTO_CONTEXT, ALT_MSL_CRYPTO_CONTEXT;
-    
+
     var SEQ_NO = 1;
     var MSG_ID = 42;
     var END_OF_MSG = true;
     var DATA = new Uint8Array(32);
     random.nextBytes(DATA);
-    
+
     // Shortcuts.
     var HeaderData = MessageHeader.HeaderData;
     var HeaderPeerData = MessageHeader.HeaderPeerData;
-    
+
     /**
      * A crypto context that always returns false for verify. The other crypto
      * operations are no-ops.
@@ -110,7 +111,7 @@ describe("MessageInputStream", function() {
             callback.result(false);
         },
     });
-    
+
     /**
      * Increments the provided non-replayable ID by 1, wrapping around to zero
      * if the provided value is equal to {@link MslConstants#MAX_LONG_VALUE}.
@@ -125,7 +126,7 @@ describe("MessageInputStream", function() {
             throw new MslInternalException("Non-replayable ID " + id + " is outside the valid range.");
         return (id == MslConstants.MAX_LONG_VALUE) ? 0 : id + 1;
     }
-    
+
     /**
      * Create a new input stream containing a MSL message constructed from the
      * provided header and payloads.
@@ -154,76 +155,76 @@ describe("MessageInputStream", function() {
         });
         function writePayload(baos, index, callback) {
             AsyncExecutor(callback, function() {
-            	if (index == payloads.length)
-            		return new ByteArrayInputStream(baos.toByteArray());
-            	
-            	var payload = payloads[index];
-            	payload.toMslEncoding(encoder, ENCODER_FORMAT, {
-            	    result: function(payloadBytes) {
-            	        baos.write(payloadBytes, 0, payloadBytes.length, TIMEOUT, {
+                if (index == payloads.length)
+                    return new ByteArrayInputStream(baos.toByteArray());
+
+                var payload = payloads[index];
+                payload.toMslEncoding(encoder, ENCODER_FORMAT, {
+                    result: function(payloadBytes) {
+                        baos.write(payloadBytes, 0, payloadBytes.length, TIMEOUT, {
                             result: function(numWritten) {
                                 writePayload(baos, ++index, callback);
                             },
                             timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                             error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                         });
-            	    },
+                    },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            	});
+                });
             });
         }
     }
-    
+
     var initialized = false;
     beforeEach(function() {
-    	payloads = [];
-    	
-    	if (!initialized) {
-    	    runs(function() {
-    	        MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
-    	            result: function(c) { trustedNetCtx = c; },
-    	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    	        });
-    	        MockMslContext.create(EntityAuthenticationScheme.PSK, true, {
-    	            result: function(c) { p2pCtx = c; },
-    	            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    	        });
-    	    });
-    	    waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", 1200);
-    	    
-    		runs(function() {
-    		    encoder = trustedNetCtx.getMslEncoderFactory();
-    			trustedNetCtx.getEntityAuthenticationData(null, {
-    				result: function(x) { ENTITY_AUTH_DATA = x; },
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    		});
-    		waitsFor(function() { return ENTITY_AUTH_DATA; }, "entityAuthData", 100);
-    		
-    		runs(function() {
-    			var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null, null);
-    			var peerData = new HeaderPeerData(null, null, null);
-    			MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
-    				result: function(x) { MESSAGE_HEADER = x; },
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    			ErrorHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
-    				result: function(x) { ERROR_HEADER = x; },
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    		});
-    		waitsFor(function() { return MESSAGE_HEADER && ERROR_HEADER; }, "headers", 100);
+        payloads = [];
 
-    		var keyxData, encryptionKey, hmacKey, wrappingKey;
-    		runs(function() {
-    			var keyRequest = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
-    			KEY_REQUEST_DATA.push(keyRequest);
-    			var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
-    			factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, ENTITY_AUTH_DATA, {
-    				result: function(x) { keyxData = x; },
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    			
+        if (!initialized) {
+            runs(function() {
+                MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
+                    result: function(c) { trustedNetCtx = c; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                MockMslContext.create(EntityAuthenticationScheme.PSK, true, {
+                    result: function(c) { p2pCtx = c; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return trustedNetCtx && p2pCtx; }, "trustedNetCtx and p2pCtx", MslTestConstants.TIMEOUT_CTX);
+
+            runs(function() {
+                encoder = trustedNetCtx.getMslEncoderFactory();
+                trustedNetCtx.getEntityAuthenticationData(null, {
+                    result: function(x) { ENTITY_AUTH_DATA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return ENTITY_AUTH_DATA; }, "entityAuthData", MslTestConstants.TIMEOUT);
+
+            runs(function() {
+                var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null, null);
+                var peerData = new HeaderPeerData(null, null, null);
+                MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
+                    result: function(x) { MESSAGE_HEADER = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+                ErrorHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+                    result: function(x) { ERROR_HEADER = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return MESSAGE_HEADER && ERROR_HEADER; }, "headers", MslTestConstants.TIMEOUT);
+
+            var keyxData, encryptionKey, hmacKey, wrappingKey;
+            runs(function() {
+                var keyRequest = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
+                KEY_REQUEST_DATA.push(keyRequest);
+                var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
+                factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, ENTITY_AUTH_DATA, {
+                    result: function(x) { keyxData = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+
                 var mke = new Uint8Array(16);
                 var mkh = new Uint8Array(32);
                 var mkw = new Uint8Array(16);
@@ -242,101 +243,42 @@ describe("MessageInputStream", function() {
                     result: function(x) { wrappingKey = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-    		});
-    		waitsFor(function() { return encryptionKey && hmacKey && wrappingKey && keyxData; }, "keys and keyxData", 100);
+            });
+            waitsFor(function() { return encryptionKey && hmacKey && wrappingKey && keyxData; }, "keys and keyxData", MslTestConstants.TIMEOUT);
 
-    		runs(function() {
-    			KEY_RESPONSE_DATA = keyxData.keyResponseData;
-    			KEYX_CRYPTO_CONTEXT = keyxData.cryptoContext;
+            runs(function() {
+                KEY_RESPONSE_DATA = keyxData.keyResponseData;
+                KEYX_CRYPTO_CONTEXT = keyxData.cryptoContext;
 
-    			ALT_MSL_CRYPTO_CONTEXT = new SymmetricCryptoContext(trustedNetCtx, "clientMslCryptoContext", encryptionKey, hmacKey, wrappingKey);
+                ALT_MSL_CRYPTO_CONTEXT = new SymmetricCryptoContext(trustedNetCtx, "clientMslCryptoContext", encryptionKey, hmacKey, wrappingKey);
 
-    			initialized = true;
-    		});
-    	}
+                initialized = true;
+            });
+        }
     });
-    
+
     it("empty message", function() {
         // An end-of-message payload is expected.
-    	var chunk;
-    	runs(function() {
+        var chunk;
+        runs(function() {
             var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
-    			result: function(x) { chunk = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return chunk; }, "chunk", 100);
-    	
-    	var is;
-    	runs(function() {
+            PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, new Uint8Array(0), cryptoContext, {
+                result: function(x) { chunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
             payloads.push(chunk);
-            generateInputStream(MESSAGE_HEADER, payloads, {
-            	result: function(x) { is = x; },
-            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-        
-        var mis;
-        runs(function() {
-            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-                result: function(x) { mis = x; },
-                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
-        var buffer;
-        runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = x; },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
-        });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
-        
-        var closed;
-        runs(function() {
-        	expect(mis.getErrorHeader()).toBeNull();
-        	expect(mis.getMessageHeader()).toEqual(MESSAGE_HEADER);
-        	expect(mis.markSupported()).toBeTruthy();
-        	expect(buffer).toBeNull();
-        	mis.mark();
-        	mis.reset();
-        	mis.close(TIMEOUT, {
-        	    result: function(x) { closed = x; },
-                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
-        });
-        waitsFor(function() { return closed; }, "closed", 100);
-    });
-    
-    it("message with data", function() {
-    	// An end-of-message payload is expected.
-    	var chunk;
-    	runs(function() {
-    		var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
-    			result: function(x) { chunk = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return chunk; }, "chunk", 100);
-    	
-    	var is;
-    	runs(function() {
-    		payloads.push(chunk);
             generateInputStream(MESSAGE_HEADER, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -345,22 +287,81 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = new Uint8Array(x); },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
-        
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(buffer.length).toEqual(DATA.length);
-        	expect(buffer).toEqual(DATA);
+            expect(mis.getErrorHeader()).toBeNull();
+            expect(mis.getMessageHeader()).toEqual(MESSAGE_HEADER);
+            expect(mis.markSupported()).toBeTruthy();
+            expect(buffer).toBeNull();
+            mis.mark();
+            mis.reset();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+
+    it("message with data", function() {
+        // An end-of-message payload is expected.
+        var chunk;
+        runs(function() {
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
+                result: function(x) { chunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
+            payloads.push(chunk);
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var buffer;
+        runs(function() {
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = new Uint8Array(x); },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
+
+        var closed;
+        runs(function() {
+            expect(buffer.length).toEqual(DATA.length);
+            expect(buffer).toEqual(DATA);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -368,19 +369,19 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("identity with entity authentication data", function() {
-    	var entityAuthData;
+        var entityAuthData;
         runs(function() {
             trustedNetCtx.getEntityAuthenticationData(null, {
                 result: function(x) { entityAuthData = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
@@ -390,17 +391,17 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
-    	var is;
-    	runs(function() {
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -409,8 +410,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
             mis.isReady({
@@ -419,11 +420,11 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(mis.getIdentity()).toEqual(entityAuthData.identity);
+            expect(mis.getIdentity()).toEqual(entityAuthData.identity);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -431,9 +432,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("identity with master token", function() {
         var masterToken;
         runs(function() {
@@ -442,8 +443,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
@@ -453,17 +454,17 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
-    	var is;
-    	runs(function() {
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -472,8 +473,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
             mis.isReady({
@@ -482,11 +483,11 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(mis.getIdentity()).toEqual(masterToken.identity);
+            expect(mis.getIdentity()).toEqual(masterToken.identity);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -494,37 +495,37 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("identity for error header", function() {
-		var entityAuthData;
-		runs(function() {
-			trustedNetCtx.getEntityAuthenticationData(null, {
-				result: function(x) { entityAuthData = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return entityAuthData; }, "entityAuthData", 100);
-		
-    	var errorHeader;
-		runs(function() {
-			ErrorHeader.create(trustedNetCtx, entityAuthData, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
-				result: function(x) { errorHeader = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return errorHeader; }, "errorHeader", 100);
-		
-		var is;
-    	runs(function() {
+        var entityAuthData;
+        runs(function() {
+            trustedNetCtx.getEntityAuthenticationData(null, {
+                result: function(x) { entityAuthData = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthData; }, "entityAuthData", MslTestConstants.TIMEOUT);
+
+        var errorHeader;
+        runs(function() {
+            ErrorHeader.create(trustedNetCtx, entityAuthData, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+                result: function(x) { errorHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
             generateInputStream(errorHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -533,8 +534,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
             mis.isReady({
@@ -543,11 +544,11 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(mis.getIdentity()).toEqual(entityAuthData.identity);
+            expect(mis.getIdentity()).toEqual(entityAuthData.identity);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -555,9 +556,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("revoked entity", function() {
         var ctx;
         runs(function() {
@@ -566,8 +567,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var entityAuthData;
         runs(function() {
             ctx.getEntityAuthenticationData(null, {
@@ -575,8 +576,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData", MslTestConstants.TIMEOUT);
+
         var factory, messageHeader;
         runs(function() {
             factory = new MockUnauthenticatedAuthenticationFactory();
@@ -589,8 +590,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             factory.setRevokedIdentity(entityAuthData.getIdentity());
@@ -599,8 +600,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -609,8 +610,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -619,14 +620,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEntityAuthException(MslError.ENTITY_REVOKED));
         });
     });
-    
+
     it("revoked master token", function() {
         var ctx;
         runs(function() {
@@ -635,20 +636,20 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var factory, masterToken;
         runs(function() {
             factory = new MockTokenFactory();
             ctx.setTokenFactory(factory);
-            
+
             MslTestUtils.getMasterToken(ctx, 1, 1, {
                 result: function(t) { masterToken = t; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return factory && masterToken; }, "factory and master token", 100);
-        
+        waitsFor(function() { return factory && masterToken; }, "factory and master token", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
@@ -658,8 +659,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             factory.setRevokedMasterToken(masterToken);
@@ -668,8 +669,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -678,8 +679,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -688,24 +689,24 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_IDENTITY_REVOKED));
         });
     });
-    
+
     it("user with no user ID token", function() {
-    	var is;
-    	runs(function() {
+        var is;
+        runs(function() {
             generateInputStream(MESSAGE_HEADER, payloads, {
-            	result: function(x) { is = x; },
-            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-        
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -714,8 +715,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
             mis.isReady({
@@ -724,11 +725,11 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(mis.getUser()).toBeNull();
+            expect(mis.getUser()).toBeNull();
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -736,28 +737,28 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("user with user ID token", function() {
-    	var masterToken;
+        var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
                 result: function(t) { masterToken = t; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var userIdToken;
         runs(function() {
-        	MslTestUtils.getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
-        		result: function(t) { userIdToken = t; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            MslTestUtils.getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(t) { userIdToken = t; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
-        
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
@@ -767,17 +768,17 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
-    	var is;
-    	runs(function() {
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
+        var is;
+        runs(function() {
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -786,8 +787,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
             mis.isReady({
@@ -796,11 +797,11 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(mis.getUser()).toEqual(userIdToken.user);
+            expect(mis.getUser()).toEqual(userIdToken.user);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -808,9 +809,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("revoked user ID token", function() {
         var ctx;
         runs(function() {
@@ -819,8 +820,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var factory, masterToken;
         runs(function() {
             factory = new MockTokenFactory();
@@ -831,8 +832,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var userIdToken;
         runs(function() {
             MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
@@ -840,8 +841,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
-        
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
@@ -851,8 +852,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             factory.setRevokedUserIdToken(userIdToken);
@@ -861,8 +862,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -871,8 +872,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -881,14 +882,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslUserIdTokenException(MslError.USERIDTOKEN_REVOKED));
         });
     });
-    
+
     it("untrusted user ID token", function() {
         var ctx;
         runs(function() {
@@ -897,8 +898,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var factory, masterToken;
         runs(function() {
             factory = new MockTokenFactory();
@@ -909,8 +910,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var userIdToken;
         runs(function() {
             MslTestUtils.getUntrustedUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
@@ -918,8 +919,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userIdToken; }, "userIdToken not received", 100);
-        
+        waitsFor(function() { return userIdToken; }, "userIdToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
@@ -929,8 +930,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             factory.setRevokedUserIdToken(userIdToken);
@@ -939,8 +940,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -949,8 +950,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -959,14 +960,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslUserIdTokenException(MslError.NONE), MSG_ID);
         });
     });
-    
+
     // FIXME This can be removed once the old handshake logic is removed.
     it("explicit handshake message", function() {
         var messageHeader;
@@ -978,8 +979,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -987,8 +988,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -997,8 +998,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var handshake;
         runs(function() {
             mis.isReady({
@@ -1013,8 +1014,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return handshake; }, "handshake", 100);
-        
+        waitsFor(function() { return handshake; }, "handshake", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             expect(handshake).toBeTruthy();
@@ -1025,9 +1026,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     // FIXME This can be removed once the old handshake logic is removed.
     it("inferred handshake message", function() {
         var messageHeader;
@@ -1039,7 +1040,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 
         var chunk;
         runs(function() {
@@ -1049,8 +1050,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
-        
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             payloads.push(chunk);
@@ -1059,8 +1060,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1069,8 +1070,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var handshake;
         runs(function() {
             mis.isReady({
@@ -1085,8 +1086,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return handshake; }, "handshake", 100);
-        
+        waitsFor(function() { return handshake; }, "handshake", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             expect(handshake).toBeTruthy();
@@ -1097,9 +1098,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     // FIXME This can be removed once the old handshake logic is removed.
     it("not a handshake message", function() {
         var messageHeader;
@@ -1111,7 +1112,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 
         var chunk;
         runs(function() {
@@ -1121,8 +1122,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
-        
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             payloads.push(chunk);
@@ -1131,8 +1132,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1141,8 +1142,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var handshake;
         runs(function() {
             mis.isReady({
@@ -1157,8 +1158,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return handshake !== undefined; }, "handshake", 100);
-        
+        waitsFor(function() { return handshake !== undefined; }, "handshake", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             expect(handshake).toBeFalsy();
@@ -1169,9 +1170,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("message with key response data", function() {
         var entityAuthData;
         runs(function() {
@@ -1180,8 +1181,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
@@ -1191,28 +1192,28 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         // Encrypt the payload with the key exchange crypto context.
         var chunk;
         runs(function() {
-        	PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT, {
-        		result: function(x) { chunk = x; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, KEYX_CRYPTO_CONTEXT, {
+                result: function(x) { chunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
-        
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
-        	payloads.push(chunk);
+            payloads.push(chunk);
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1221,23 +1222,23 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = new Uint8Array(x); },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = new Uint8Array(x); },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
-        
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(buffer.length).toEqual(DATA.length);
-        	expect(buffer).toEqual(DATA);
-        	expect(mis.getKeyExchangeCryptoContext()).toEqual(mis.getPayloadCryptoContext());
+            expect(buffer.length).toEqual(DATA.length);
+            expect(buffer).toEqual(DATA);
+            expect(mis.getKeyExchangeCryptoContext()).toEqual(mis.getPayloadCryptoContext());
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -1245,9 +1246,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("p2p message with key response data", function() {
         var entityAuthData;
         runs(function() {
@@ -1256,8 +1257,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
@@ -1267,28 +1268,28 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         // Encrypt the payload with the key exchange crypto context.
         var chunk;
         runs(function() {
-        	var cryptoContext = messageHeader.cryptoContext;
-        	PayloadChunk.create(p2pCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
-        		result: function(x) { chunk = x; },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            var cryptoContext = messageHeader.cryptoContext;
+            PayloadChunk.create(p2pCtx, SEQ_NO, MSG_ID, END_OF_MSG, null, DATA, cryptoContext, {
+                result: function(x) { chunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
         var is;
         runs(function() {
-        	payloads.push(chunk);
+            payloads.push(chunk);
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1297,23 +1298,23 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = new Uint8Array(x); },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = new Uint8Array(x); },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
-        
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
+
         var closed;
         runs(function() {
-	        expect(buffer.length).toEqual(DATA.length);
-	        expect(buffer).toEqual(DATA);
-	        expect(mis.getPayloadCryptoContext()).not.toEqual(mis.getKeyExchangeCryptoContext());
+            expect(buffer.length).toEqual(DATA.length);
+            expect(buffer).toEqual(DATA);
+            expect(mis.getPayloadCryptoContext()).not.toEqual(mis.getKeyExchangeCryptoContext());
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -1321,9 +1322,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("message with unsupported key exchange scheme", function() {
         var ctx;
         runs(function() {
@@ -1332,8 +1333,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var entityAuthData;
         runs(function() {
             ctx.removeKeyExchangeFactories(KeyExchangeScheme.SYMMETRIC_WRAPPED);
@@ -1342,8 +1343,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
@@ -1353,8 +1354,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1362,9 +1363,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1373,24 +1374,24 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND), MSG_ID);
         });
     });
-    
+
     it("missing key request data for message with key response data", function() {
         // We need to replace the MSL crypto context before parsing the message
         // so create a local MSL context.
@@ -1401,8 +1402,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx not received", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx not received", MslTestConstants.TIMEOUT);
+
         var entityAuthData;
         runs(function() {
             ctx.getEntityAuthenticationData(null, {
@@ -1410,8 +1411,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
@@ -1421,8 +1422,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             ctx.setMslCryptoContext(new RejectingCryptoContext());
@@ -1431,8 +1432,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             var keyRequestData = [];
@@ -1442,7 +1443,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1452,19 +1453,19 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH), MSG_ID);
         });
     });
-    
+
     it("incompatible key request data for message with key response data", function() {
         var keyRequestData = [];
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.SESSION));
-        
+
         // We need to replace the MSL crypto context before parsing the message
         // so create a local MSL context.
         var ctx;
@@ -1474,8 +1475,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx not received", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx not received", MslTestConstants.TIMEOUT);
+
         var entityAuthData;
         runs(function() {
             ctx.getEntityAuthenticationData(null, {
@@ -1483,8 +1484,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var keyExchangeData;
         runs(function() {
             var keyRequest = new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.PSK);
@@ -1494,8 +1495,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return keyExchangeData; }, "keyExchangeData not received", 100);
-        
+        waitsFor(function() { return keyExchangeData; }, "keyExchangeData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var keyResponseData = keyExchangeData.keyResponseData;
@@ -1506,8 +1507,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             ctx.setMslCryptoContext(new RejectingCryptoContext());
@@ -1516,8 +1517,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, keyRequestData, cryptoContexts, TIMEOUT, {
@@ -1526,7 +1527,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1536,14 +1537,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH), MSG_ID);
         });
     });
-    
+
     it("one compatible key request data for message with key response data", function() {
         // Populate the key request data such that the compatible data requires
         // iterating through one of the incompatible ones.
@@ -1552,7 +1553,7 @@ describe("MessageInputStream", function() {
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
         keyRequestData.push(keyRequest);
         keyRequestData.push(new SymmetricWrappedExchange.RequestData(SymmetricWrappedExchange.KeyId.MGK));
-        
+
         var entityAuthData;
         runs(function() {
             trustedNetCtx.getEntityAuthenticationData(null, {
@@ -1560,8 +1561,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", 100);
-        
+        waitsFor(function() { return entityAuthData; }, "entityAuthData not received", MslTestConstants.TIMEOUT);
+
         var keyExchangeData;
         runs(function() {
             var factory = trustedNetCtx.getKeyExchangeFactory(keyRequest.keyExchangeScheme);
@@ -1570,8 +1571,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return keyExchangeData; }, "keyExchangeData not received", 100);
-        
+        waitsFor(function() { return keyExchangeData; }, "keyExchangeData not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var keyResponseData = keyExchangeData.keyResponseData;
@@ -1582,8 +1583,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1591,8 +1592,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, keyRequestData, cryptoContexts, TIMEOUT, {
@@ -1601,8 +1602,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1611,9 +1612,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("expired renewable client message with key request data", function() {
         var masterToken;
         runs(function() {
@@ -1624,8 +1625,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
@@ -1635,8 +1636,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1644,8 +1645,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1654,8 +1655,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1664,9 +1665,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("expired renewable peer message with key request data", function() {
         var masterToken;
         runs(function() {
@@ -1677,8 +1678,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
@@ -1688,8 +1689,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1697,8 +1698,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -1707,8 +1708,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1717,9 +1718,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("expired non-renewable client message", function() {
         // Expired messages received by a trusted network server should be
         // rejected.
@@ -1732,8 +1733,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
@@ -1743,8 +1744,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1752,34 +1753,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
-    
+
     it("expired renewable client message without key request data", function() {
         // Expired renewable messages received by a trusted network server
         // with no key request data should be rejected.
@@ -1792,8 +1793,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
@@ -1803,8 +1804,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1812,34 +1813,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
-    
+
     it("expired non-renewable server message", function() {
         var ctx;
         runs(function() {
@@ -1848,8 +1849,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var masterToken;
         runs(function() {
             var renewalWindow = new Date(Date.now() - 20000);
@@ -1859,8 +1860,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         // Expired messages received by a trusted network client should not be
         // rejected.
         var messageHeader;
@@ -1872,7 +1873,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
 
         var is;
         runs(function() {
@@ -1880,15 +1881,15 @@ describe("MessageInputStream", function() {
             // constructed it after a previous message exchange.
             var cryptoContext = new SessionCryptoContext(ctx, masterToken);
             ctx.getMslStore().setCryptoContext(masterToken, cryptoContext);
-            
+
             // Generate the input stream. This will encode the message.
             generateInputStream(messageHeader, payloads, {
                 result: function(x) { is = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             // Change the MSL crypto context so the master token can no longer be
@@ -1903,8 +1904,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1913,9 +1914,9 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("expired renewable peer message without key request data", function() {
         var masterToken;
         runs(function() {
@@ -1926,8 +1927,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
@@ -1937,8 +1938,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -1946,34 +1947,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
-    
+
     it("expired non-renewable peer message", function() {
         var masterToken;
         runs(function() {
@@ -1984,8 +1985,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
@@ -1995,8 +1996,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2004,34 +2005,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
         });
     });
-    
+
     it("non-renewable handshake message", function() {
         var messageHeader;
         runs(function() {
@@ -2042,8 +2043,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2051,8 +2052,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2061,7 +2062,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -2071,14 +2072,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING), MSG_ID);
         });
     });
-    
+
     it("handshake message without key request data", function() {
         var messageHeader;
         runs(function() {
@@ -2089,8 +2090,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2098,8 +2099,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2108,7 +2109,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -2118,14 +2119,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.HANDSHAKE_DATA_MISSING), MSG_ID);
         });
     });
-    
+
     it("non-replayable client message without master token", function() {
         var messageHeader;
         runs(function() {
@@ -2136,8 +2137,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2145,34 +2146,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE), MSG_ID);
         });
     });
-    
+
     it("non-replayable peer message without master token", function() {
         var messageHeader;
         runs(function() {
@@ -2183,8 +2184,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2192,34 +2193,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE), MSG_ID);
         });
     });
-    
+
     it("non-replayable with equal non-replayable ID", function() {
         var nonReplayableId = 1;
         var ctx;
@@ -2229,8 +2230,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -2241,8 +2242,8 @@ describe("MessageInputStream", function() {
             factory.setLargestNonReplayableId(nonReplayableId);
             ctx.setTokenFactory(factory);
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
@@ -2252,8 +2253,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2261,8 +2262,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2271,8 +2272,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -2281,14 +2282,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
-    
+
     it("non-replayable with smaller non-replayable ID", function() {
         var nonReplayableId = 2;
         var ctx;
@@ -2298,8 +2299,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -2310,8 +2311,8 @@ describe("MessageInputStream", function() {
             factory.setLargestNonReplayableId(nonReplayableId);
             ctx.setTokenFactory(factory);
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var headerData = new HeaderData(null, MSG_ID, nonReplayableId - 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
@@ -2321,8 +2322,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2330,8 +2331,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2340,8 +2341,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             mis.isReady({
@@ -2350,14 +2351,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
-    
+
     it("non-replayable with non-replayable ID outside acceptance window", function() {
         var ctx;
         runs(function() {
@@ -2366,7 +2367,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
         var factory = new MockTokenFactory();
         var masterToken;
@@ -2377,14 +2378,14 @@ describe("MessageInputStream", function() {
             });
             ctx.setTokenFactory(factory);
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT);
+
         var complete = false;
         runs(function() {
             iterate();
         });
         waitsFor(function() { return complete; }, "complete", 300);
-        
+
         var largestNonReplayableId = MslConstants.MAX_LONG_VALUE - NON_REPLAYABLE_ID_WINDOW - 1;
         var nonReplayableId = MslConstants.MAX_LONG_VALUE;
         var i = 0, max = 2;
@@ -2393,9 +2394,9 @@ describe("MessageInputStream", function() {
                 complete = true;
                 return;
             }
-            
+
             factory.setLargestNonReplayableId(largestNonReplayableId);
-            
+
             var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
@@ -2426,14 +2427,14 @@ describe("MessageInputStream", function() {
         function check(exception) {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED_UNRECOVERABLE), MSG_ID);
-            
+
             largestNonReplayableId = incrementNonReplayableId(largestNonReplayableId);
             nonReplayableId = incrementNonReplayableId(nonReplayableId);
             ++i;
             iterate();
         }
     });
-    
+
     it("non-replayable with non-replayable ID inside acceptance window", function() {
         var ctx;
         runs(function() {
@@ -2442,7 +2443,7 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
         var factory = new MockTokenFactory();
         var masterToken;
@@ -2453,8 +2454,8 @@ describe("MessageInputStream", function() {
             });
             ctx.setTokenFactory(factory);
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT);
+
         var complete = false;
         runs(function() {
             var largestNonReplayableIdA = MslConstants.MAX_LONG_VALUE - NON_REPLAYABLE_ID_WINDOW;
@@ -2462,7 +2463,7 @@ describe("MessageInputStream", function() {
             iterate(0, nonReplayableIdA, largestNonReplayableIdA);
         });
         waitsFor(function() { return complete; }, "complete (wraparound)", 10000);
-            
+
         runs(function() {
             complete = false;
             var largestNonReplayableIdB = MslConstants.MAX_LONG_VALUE;
@@ -2470,16 +2471,16 @@ describe("MessageInputStream", function() {
             iterate(0, nonReplayableIdB, largestNonReplayableIdB);
         });
         waitsFor(function() { return complete; }, "complete (sequential)", 10000);
-        
+
         var max = 2;
         function iterate(i, nonReplayableId, largestNonReplayableId) {
             if (i == max) {
                 complete = true;
                 return;
             }
-            
+
             factory.setLargestNonReplayableId(largestNonReplayableId);
-            
+
             var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
@@ -2515,7 +2516,7 @@ describe("MessageInputStream", function() {
             iterate(i + 1, nonReplayableId, largestNonReplayableId);
         }
     });
-    
+
     it("replayed client message", function() {
         var ctx;
         runs(function() {
@@ -2524,8 +2525,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -2533,14 +2534,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var factory = new MockTokenFactory();
             factory.setLargestNonReplayableId(1);
             ctx.setTokenFactory(factory);
-            
+
             var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
@@ -2548,8 +2549,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2557,34 +2558,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
-    
+
     it("replayed peer message", function() {
         var ctx;
         runs(function() {
@@ -2593,8 +2594,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -2602,14 +2603,14 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken not received", 100);
-        
+        waitsFor(function() { return masterToken; }, "masterToken not received", MslTestConstants.TIMEOUT);
+
         var messageHeader;
         runs(function() {
             var factory = new MockTokenFactory();
             factory.setLargestNonReplayableId(1);
             ctx.setTokenFactory(factory);
-            
+
             var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
@@ -2617,8 +2618,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2626,34 +2627,34 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(ctx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-            	result: function(x) { mis = x; },
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
-        	mis.isReady({
-        		result: function() {},
+            mis.isReady({
+                result: function() {},
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslMessageException(MslError.MESSAGE_REPLAYED), MSG_ID);
         });
     });
-    
+
     it("error header", function() {
         var is;
         runs(function() {
@@ -2662,8 +2663,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2672,35 +2673,35 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready = false;
         runs(function() {
-        	mis.isReady({
-        		result: function(r) { ready = r; },
+            mis.isReady({
+                result: function(r) { ready = r; },
                 timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return ready; }, "mis ready", 100);
-        
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
-	        expect(mis.getErrorHeader()).toEqual(ERROR_HEADER);
-	        expect(mis.getMessageHeader()).toBeNull();
-	        expect(mis.markSupported()).toBeTruthy();
-	        
-	        mis.mark(0);
-	        mis.reset();
+            expect(mis.getErrorHeader()).toEqual(ERROR_HEADER);
+            expect(mis.getMessageHeader()).toBeNull();
+            expect(mis.markSupported()).toBeTruthy();
+
+            mis.mark(0);
+            mis.reset();
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("read from error header", function() {
         var is;
         runs(function() {
@@ -2709,8 +2710,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2719,8 +2720,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready;
         runs(function() {
             mis.isReady({
@@ -2729,24 +2730,24 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "ready", 100);
-        
+        waitsFor(function() { return ready; }, "ready", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function() {},
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { exception = e; }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function() {},
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { exception = e; }
+            });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
-        	var f = function() { throw exception; };
-        	expect(f).toThrow(new MslInternalException(MslError.NONE));
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslInternalException(MslError.NONE));
         });
     });
-    
+
     it("read from handshake message", function() {
         var messageHeader;
         runs(function() {
@@ -2757,8 +2758,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return messageHeader; }, "messageHeader not received", 100);
-        
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(messageHeader, payloads, {
@@ -2766,8 +2767,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2776,8 +2777,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var ready;
         runs(function() {
             mis.isReady({
@@ -2786,8 +2787,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ready; }, "ready", 100);
-        
+        waitsFor(function() { return ready; }, "ready", MslTestConstants.TIMEOUT);
+
         var read;
         runs(function() {
             mis.read(MAX_READ_LEN, TIMEOUT, {
@@ -2796,13 +2797,13 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return read !== undefined; }, "read", 100);
+        waitsFor(function() { return read !== undefined; }, "read", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(read).toBeNull();
         });
     });
-    
+
     it("missing end of message", function() {
         var is;
         runs(function() {
@@ -2811,8 +2812,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -2821,22 +2822,22 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
-        
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = x; },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
 
         var closed;
         runs(function() {
-        	// If there's nothing left we'll receive end of message anyway.
-        	expect(buffer).toBeNull();
+            // If there's nothing left we'll receive end of message anyway.
+            expect(buffer).toBeNull();
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -2844,87 +2845,87 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("premature end of message", function() {
-    	var baos = new ByteArrayOutputStream();
-    	var i = 0;
-    	runs(function() {
+        var baos = new ByteArrayOutputStream();
+        var i = 0;
+        runs(function() {
             // Payloads after an end of message are ignored.
-        	var extraPayloads = MAX_PAYLOAD_CHUNKS / 2;
-        	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		function writePayload() {
-    			if (i == MAX_PAYLOAD_CHUNKS)
-    				return;
-    			
-    			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-    			random.nextBytes(data);
-    			if (i < extraPayloads) {
-    				PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						baos.write(data, 0, data.length, TIMEOUT, {
-    							result: function(success) {
-    	    						++i;
-    	    						writePayload();
-    	    					},
-    							timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    						});
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			} else {
-    				PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, null, null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						++i;
-    						writePayload();
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			}
-    		}
-    		writePayload();
-    	});
-    	waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
+            var extraPayloads = MAX_PAYLOAD_CHUNKS / 2;
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
 
-    	var is;
-    	runs(function() {
-    		generateInputStream(MESSAGE_HEADER, payloads, {
-    			result: function(x) { is = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-    	
-    	var mis;
-    	runs(function() {
-    		MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-    			result: function(x) { mis = x; },
-    			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return mis; }, "mis", 100);
-        
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                if (i < extraPayloads) {
+                    PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == extraPayloads - 1), null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            baos.write(data, 0, data.length, TIMEOUT, {
+                                result: function(success) {
+                                    ++i;
+                                    writePayload();
+                                },
+                                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                } else {
+                    PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, null, null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            ++i;
+                            writePayload();
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                }
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
-        	mis.read(MAX_READ_LEN, TIMEOUT, {
-        		result: function(x) { buffer = new Uint8Array(x); },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            mis.read(MAX_READ_LEN, TIMEOUT, {
+                result: function(x) { buffer = new Uint8Array(x); },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
 
         var closed;
-    	runs(function() {
-	    	// Read everything. We shouldn't get any of the extra payloads.
-        	var appdata = baos.toByteArray();
-	    	expect(buffer.length).toEqual(appdata.length);
-	    	expect(buffer).toEqual(appdata);
+        runs(function() {
+            // Read everything. We shouldn't get any of the extra payloads.
+            var appdata = baos.toByteArray();
+            expect(buffer.length).toEqual(appdata.length);
+            expect(buffer).toEqual(appdata);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -2932,109 +2933,109 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("payload with mismatched message ID", function() {
-    	var badPayloads = 0;
-    	var baos = new ByteArrayOutputStream();
-    	var i = 0;
-    	runs(function() {
-        	// Payloads with an incorrect message ID should be skipped.
-        	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-        	var sequenceNumber = SEQ_NO;
-    		function writePayload() {
-    			if (i == MAX_PAYLOAD_CHUNKS)
-    				return;
-    			
-    			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-    			random.nextBytes(data);
-    			if (random.nextBoolean()) {
-    				PayloadChunk.create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						baos.write(data, 0, data.length, TIMEOUT, {
-    							result: function(success) {
-    	    						++i;
-    	    						writePayload();
-    	    					},
-    							timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    						});
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			} else {
-    				PayloadChunk.create(trustedNetCtx, sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						++badPayloads;
-    						++i;
-    						writePayload();
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			}
-    		}
-    		writePayload();
-    	});
-    	waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
-    	
-    	var is;
-    	runs(function() {
-    		generateInputStream(MESSAGE_HEADER, payloads, {
-    			result: function(x) { is = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-    	
-    	var mis;
-    	runs(function() {
-    		MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-    			result: function(x) { mis = x; },
-    			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return mis; }, "mis", 100);
+        var badPayloads = 0;
+        var baos = new ByteArrayOutputStream();
+        var i = 0;
+        runs(function() {
+            // Payloads with an incorrect message ID should be skipped.
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            var sequenceNumber = SEQ_NO;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
 
-    	// Read everything. Each bad payload should throw an exception.
-    	var buffer = new ByteArrayOutputStream();
-    	var caughtExceptions = 0;
-    	var eom = false;
-    	runs(function() {
-    		function nextRead() {
-    			mis.read(MAX_READ_LEN, TIMEOUT, {
-        			result: function(x) {
-        				if (!x) {
-        					eom = true;
-        					return;
-        				}
-        				
-        				buffer.write(x, 0, x.length, TIMEOUT, {
-        					result: function(numWritten) { nextRead(); },
-        					timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        				});
-        			},
-            		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-            		error: function(e) {
-            			++caughtExceptions;
-            			nextRead();
-            		}
-        		});
-    		}
-    		nextRead();
-    	});
-    	waitsFor(function() { return eom; }, "eom", 1000);
-    	
-    	var closed;
-    	runs(function() {
-	    	expect(caughtExceptions).toEqual(badPayloads);
-	    	var readdata = buffer.toByteArray();
-	    	var appdata = baos.toByteArray();
-	    	expect(readdata).toEqual(appdata);
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                if (random.nextBoolean()) {
+                    PayloadChunk.create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            baos.write(data, 0, data.length, TIMEOUT, {
+                                result: function(success) {
+                                    ++i;
+                                    writePayload();
+                                },
+                                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                } else {
+                    PayloadChunk.create(trustedNetCtx, sequenceNumber, 2 * MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            ++badPayloads;
+                            ++i;
+                            writePayload();
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                }
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        // Read everything. Each bad payload should throw an exception.
+        var buffer = new ByteArrayOutputStream();
+        var caughtExceptions = 0;
+        var eom = false;
+        runs(function() {
+            function nextRead() {
+                mis.read(MAX_READ_LEN, TIMEOUT, {
+                    result: function(x) {
+                        if (!x) {
+                            eom = true;
+                            return;
+                        }
+
+                        buffer.write(x, 0, x.length, TIMEOUT, {
+                            result: function(numWritten) { nextRead(); },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                    error: function(e) {
+                        ++caughtExceptions;
+                        nextRead();
+                    }
+                });
+            }
+            nextRead();
+        });
+        waitsFor(function() { return eom; }, "eom", TIMEOUT);
+
+        var closed;
+        runs(function() {
+            expect(caughtExceptions).toEqual(badPayloads);
+            var readdata = buffer.toByteArray();
+            var appdata = baos.toByteArray();
+            expect(readdata).toEqual(appdata);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -3042,54 +3043,54 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("payload with incorrect sequence number", function() {
         var badPayloads = 0;
         var baos = new ByteArrayOutputStream();
         var i = 0;
         runs(function() {
             // Payloads with an incorrect sequence number should be skipped.
-        	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-        	var sequenceNumber = SEQ_NO;
-    		function writePayload() {
-    			if (i == MAX_PAYLOAD_CHUNKS)
-    				return;
-    			
-    			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-    			random.nextBytes(data);
-    			if (random.nextBoolean()) {
-    				PayloadChunk.create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						baos.write(data, 0, data.length, TIMEOUT, {
-    							result: function(success) {
-    	    						++i;
-    	    						writePayload();
-    	    					},
-    							timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    						});
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			} else {
-    				PayloadChunk.create(trustedNetCtx, 2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-    					result: function(chunk) {
-    						payloads.push(chunk);
-    						++badPayloads;
-    						++i;
-    						writePayload();
-    					},
-    					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    				});
-    			}
-    		}
-    		writePayload();
-    	});
-    	waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
-    	
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            var sequenceNumber = SEQ_NO;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                if (random.nextBoolean()) {
+                    PayloadChunk.create(trustedNetCtx, sequenceNumber++, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            baos.write(data, 0, data.length, TIMEOUT, {
+                                result: function(success) {
+                                    ++i;
+                                    writePayload();
+                                },
+                                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                } else {
+                    PayloadChunk.create(trustedNetCtx, 2 * sequenceNumber + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                        result: function(chunk) {
+                            payloads.push(chunk);
+                            ++badPayloads;
+                            ++i;
+                            writePayload();
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                }
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
         var is;
         runs(function() {
             generateInputStream(MESSAGE_HEADER, payloads, {
@@ -3097,8 +3098,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -3107,44 +3108,44 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         // Read everything. Each bad payload should throw an exception.
-    	var buffer = new ByteArrayOutputStream();
+        var buffer = new ByteArrayOutputStream();
         var caughtExceptions = 0;
         var eom = false;
-    	runs(function() {
-    		function nextRead() {
-    			mis.read(MAX_READ_LEN, TIMEOUT, {
-        			result: function(x) {
-        				if (!x) {
-        					eom = true;
-        					return;
-        				}
-        				
-        				buffer.write(x, 0, x.length, TIMEOUT, {
-        					result: function(numWritten) { nextRead(); },
-        					timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        				});
-        			},
-            		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-            		error: function(e) {
-            			++caughtExceptions;
-            			nextRead();
-            		}
-        		});
-    		}
-    		nextRead();
-    	});
-    	waitsFor(function() { return eom; }, "eom", 1000);
+        runs(function() {
+            function nextRead() {
+                mis.read(MAX_READ_LEN, TIMEOUT, {
+                    result: function(x) {
+                        if (!x) {
+                            eom = true;
+                            return;
+                        }
 
-    	var closed;
-    	runs(function() {
-	    	expect(caughtExceptions).toEqual(badPayloads);
-	    	var readdata = buffer.toByteArray();
-	    	var appdata = baos.toByteArray();
-	    	expect(readdata).toEqual(appdata);
+                        buffer.write(x, 0, x.length, TIMEOUT, {
+                            result: function(numWritten) { nextRead(); },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                    error: function(e) {
+                        ++caughtExceptions;
+                        nextRead();
+                    }
+                });
+            }
+            nextRead();
+        });
+        waitsFor(function() { return eom; }, "eom", TIMEOUT);
+
+        var closed;
+        runs(function() {
+            expect(caughtExceptions).toEqual(badPayloads);
+            var readdata = buffer.toByteArray();
+            var appdata = baos.toByteArray();
+            expect(readdata).toEqual(appdata);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -3152,326 +3153,39 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
+
     it("read all available", function() {
-       var baos;
-       var i = 0;
-       runs(function() {
-           baos = new ByteArrayOutputStream();
-           var cryptoContext = MESSAGE_HEADER.cryptoContext;
-           function writePayload() {
-               if (i == MAX_PAYLOAD_CHUNKS)
-                   return;
-
-               var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-               random.nextBytes(data);
-               PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-                   result: function(chunk) {
-                       payloads.push(chunk);
-                       baos.write(data, 0, data.length, TIMEOUT, {
-                           result: function(success) {
-                               ++i;
-                               writePayload();
-                           },
-                           timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-                           error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                       });
-                   },
-                   error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-               });
-           }
-           writePayload();
-       });
-       waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
-       
-       var is;
-       runs(function() {
-           generateInputStream(MESSAGE_HEADER, payloads, {
-               result: function(x) { is = x; },
-               error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-           });
-       });
-       waitsFor(function() { return is; }, "is", 100);
-
-       var mis;
-       runs(function() {
-           MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-               result: function(x) { mis = x; },
-               timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-               error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-           });
-       });
-       waitsFor(function() { return mis; }, "mis", 100);
-       
-       var firstdata;
-       runs(function() {
-           mis.read(-1, TIMEOUT, {
-               result: function(x) {
-                   firstdata = new Uint8Array(x.length);
-                   firstdata.set(x, 0);
-               },
-               timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-               error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-           });
-       });
-       waitsFor(function() { return firstdata; }, "read all", 1000);
-       
-       var closed;
-       runs(function() {
-           // We should have read the first payload's data.
-           expect(firstdata).toEqual(payloads[0].data);
-
-           mis.close(TIMEOUT, {
-               result: function(x) { closed = x; },
-               timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-               error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-           });
-       });
-       waitsFor(function() { return closed; }, "closed", 300);
-    });
-
-    it("mark/reset with read all", function() {
-    	var baos;
-    	var i = 0;
-    	runs(function() {
-    		baos = new ByteArrayOutputStream();
-    		var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		function writePayload() {
-    			if (i == MAX_PAYLOAD_CHUNKS)
-    				return;
-
-    			var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-    			random.nextBytes(data);
-    			PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-    				result: function(chunk) {
-    					payloads.push(chunk);
-    					baos.write(data, 0, data.length, TIMEOUT, {
-    						result: function(success) {
-    							++i;
-    							writePayload();
-    						},
-    						timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    					});
-    				},
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    		}
-    		writePayload();
-    	});
-    	waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
-
-    	var is;
-    	runs(function() {
-    		generateInputStream(MESSAGE_HEADER, payloads, {
-    			result: function(x) { is = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-
-    	var mis;
-    	runs(function() {
-    		MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-    			result: function(x) { mis = x; },
-    			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return mis; }, "mis", 100);
-
-    	var appdata, buffer;
-    	var firstRead = 0;
-    	var beginningOffset, beginningLength;
-    	runs(function() {
-    		buffer = new Uint8Array(MAX_READ_LEN);
-    		appdata = baos.toByteArray();
-
-    		// Mark and reset to the beginning.
-    		beginningOffset = 0;
-    		beginningLength = Math.floor(appdata.length / 4);
-    		mis.mark();
-    		mis.read(beginningLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, beginningOffset);
-    				firstRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return firstRead > 0; }, "first read", 1000);
-
-    	var secondRead = 0;
-    	var expectedBeginning;
-    	runs(function() {
-			expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
-			expect(firstRead).toEqual(expectedBeginning.length);
-			var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
-			expect(actualBeginning).toEqual(expectedBeginning);
-			
-    		mis.reset();
-    		mis.read(beginningLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, beginningOffset);
-    				secondRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return secondRead > 0; }, "second read", 1000);
-
-    	var thirdRead = 0;
-    	var middleOffset, middleLength;
-    	runs(function() {
-			expect(secondRead).toEqual(expectedBeginning.length);
-			var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
-			expect(actualBeginning).toEqual(expectedBeginning);
-			
-    		// Mark and reset from where we are.
-    		middleOffset = beginningOffset + beginningLength;
-    		middleLength = Math.floor(appdata.length / 4);
-    		mis.mark();
-    		mis.read(middleLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, middleOffset);
-    				thirdRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return thirdRead > 0; }, "third read", 1000);
-
-    	var fourthRead = 0;
-    	var expectedMiddle;
-    	runs(function() {
-			expectedMiddle = Arrays.copyOf(appdata, middleOffset, middleLength);
-    		expect(thirdRead).toEqual(expectedMiddle.length);
-    		var actualMiddle = Arrays.copyOf(buffer, middleOffset, middleLength);
-    		expect(actualMiddle).toEqual(expectedMiddle);
-
-    		mis.reset();
-    		mis.read(middleLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, middleOffset);
-    				fourthRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return fourthRead > 0; }, "fourth read", 1000);
-
-    	var fifthRead = 0;
-    	var endingOffset, endingLength;
-    	runs(function() {
-    		expect(fourthRead).toEqual(expectedMiddle.length);
-    		var actualMiddle = Arrays.copyOf(buffer, middleOffset, middleLength);
-    		expect(actualMiddle).toEqual(expectedMiddle);
-
-    		// Mark and reset the remainder.
-    		endingOffset = middleOffset + middleLength;
-    		endingLength = appdata.length - middleLength - beginningLength;
-    		mis.mark();
-    		mis.read(endingLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, endingOffset);
-    				fifthRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return fifthRead > 0; }, "fifth read", 1000);
-
-    	var sixthRead = 0;
-    	var expectedEnding;
-    	runs(function() {
-    		expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
-    		expect(fifthRead).toEqual(expectedEnding.length);
-    		var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
-    		expect(actualEnding).toEqual(expectedEnding);
-
-    		mis.reset();
-    		mis.read(endingLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, endingOffset);
-    				sixthRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return sixthRead > 0; }, "sixth read", 1000);
-    	
-    	var seventhRead = 0;
-    	runs(function() {
-    	    mis.reset();
-    	    mis.read(-1, TIMEOUT, {
-    	        result: function(x) {
-    	            buffer.set(x, endingOffset);
-    	            seventhRead = x.length;
-    	        },
-    	        timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    	    });
-    	});
-    	waitsFor(function() { return seventhRead > 0; }, "seventh read", 1000);
-    	
-    	var closed;
-    	runs(function() {
-	    	expect(sixthRead).toEqual(expectedEnding.length);
-	    	expect(seventhRead).toEqual(sixthRead);
-	    	var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
-	    	expect(actualEnding).toEqual(expectedEnding);
-	
-	    	// Confirm equality.
-	    	var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
-	    	expect(actualdata).toEqual(appdata);
-
-            mis.close(TIMEOUT, {
-                result: function(x) { closed = x; },
-                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return closed; }, "closed", 100);
-    });
-
-    it("mark/reset with short mark", function() {
         var baos;
         var i = 0;
         runs(function() {
-        	baos = new ByteArrayOutputStream();
-        	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-        	function writePayload() {
-        		if (i == MAX_PAYLOAD_CHUNKS)
-        			return;
-        		
-        		var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
-        		random.nextBytes(data);
-        		PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
-        			result: function(chunk) {
-        				payloads.push(chunk);
-    					baos.write(data, 0, data.length, TIMEOUT, {
-    						result: function(success) {
-    							++i;
-    							writePayload();
-    						},
-    						timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    						error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    					});
-        			},
-        			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        		});
-        	}
-        	writePayload();
+            baos = new ByteArrayOutputStream();
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                    result: function(chunk) {
+                        payloads.push(chunk);
+                        baos.write(data, 0, data.length, TIMEOUT, {
+                            result: function(success) {
+                                ++i;
+                                writePayload();
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+            writePayload();
         });
-        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", 1000);
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
 
         var is;
         runs(function() {
@@ -3480,8 +3194,8 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return is; }, "is", 100);
-        
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
         var mis;
         runs(function() {
             MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
@@ -3490,99 +3204,234 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mis; }, "mis", 100);
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var firstdata;
+        runs(function() {
+            mis.read(-1, TIMEOUT, {
+                result: function(x) {
+                    firstdata = new Uint8Array(x.length);
+                    firstdata.set(x, 0);
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return firstdata; }, "read all", TIMEOUT);
+
+        var closed;
+        runs(function() {
+            // We should have read the first payload's data.
+            expect(firstdata).toEqual(payloads[0].data);
+
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", 300);
+    });
+
+    it("mark/reset with read all", function() {
+        var baos;
+        var i = 0;
+        runs(function() {
+            baos = new ByteArrayOutputStream();
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                    result: function(chunk) {
+                        payloads.push(chunk);
+                        baos.write(data, 0, data.length, TIMEOUT, {
+                            result: function(success) {
+                                ++i;
+                                writePayload();
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
         var appdata, buffer;
         var firstRead = 0;
         var beginningOffset, beginningLength;
         runs(function() {
-        	buffer = new Uint8Array(MAX_READ_LEN);
-        	appdata = baos.toByteArray();
+            buffer = new Uint8Array(MAX_READ_LEN);
+            appdata = baos.toByteArray();
 
-        	// Mark and reset to the beginning.
-        	beginningOffset = 0;
-        	beginningLength = Math.floor(appdata.length / 2);
-        	mis.mark();
-        	mis.read(beginningLength, TIMEOUT, {
-        		result: function(x) {
-    				buffer.set(x, beginningOffset);
-    				firstRead = x.length;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
-    	});
-    	waitsFor(function() { return firstRead > 0; }, "first read", 1000);
+            // Mark and reset to the beginning.
+            beginningOffset = 0;
+            beginningLength = Math.floor(appdata.length / 4);
+            mis.mark();
+            mis.read(beginningLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, beginningOffset);
+                    firstRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return firstRead > 0; }, "first read", TIMEOUT);
 
-    	var reread, rereadLength;
+        var secondRead = 0;
         var expectedBeginning;
         runs(function() {
-        	expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
-			expect(firstRead).toEqual(expectedBeginning.length);
-			var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
-			expect(actualBeginning).toEqual(expectedBeginning);
-			
-    		mis.reset();
-        
-    		// Read a little bit, and mark again so we drop one or more payloads
-    		// but are likely to have more than one payload remaining.
-    		rereadLength = Math.floor(appdata.length / 4);
-    		mis.read(rereadLength, TIMEOUT, {
-    			result: function(x) {
-    				reread = x;
-    			},
-    			timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
+            expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
+            expect(firstRead).toEqual(expectedBeginning.length);
+            var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
+            expect(actualBeginning).toEqual(expectedBeginning);
+
+            mis.reset();
+            mis.read(beginningLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, beginningOffset);
+                    secondRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return reread; }, "reread", 1000);
-        
-        var secondRead;
+        waitsFor(function() { return secondRead > 0; }, "second read", TIMEOUT);
+
+        var thirdRead = 0;
+        var middleOffset, middleLength;
+        runs(function() {
+            expect(secondRead).toEqual(expectedBeginning.length);
+            var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
+            expect(actualBeginning).toEqual(expectedBeginning);
+
+            // Mark and reset from where we are.
+            middleOffset = beginningOffset + beginningLength;
+            middleLength = Math.floor(appdata.length / 4);
+            mis.mark();
+            mis.read(middleLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, middleOffset);
+                    thirdRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return thirdRead > 0; }, "third read", TIMEOUT);
+
+        var fourthRead = 0;
+        var expectedMiddle;
+        runs(function() {
+            expectedMiddle = Arrays.copyOf(appdata, middleOffset, middleLength);
+            expect(thirdRead).toEqual(expectedMiddle.length);
+            var actualMiddle = Arrays.copyOf(buffer, middleOffset, middleLength);
+            expect(actualMiddle).toEqual(expectedMiddle);
+
+            mis.reset();
+            mis.read(middleLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, middleOffset);
+                    fourthRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return fourthRead > 0; }, "fourth read", TIMEOUT);
+
+        var fifthRead = 0;
         var endingOffset, endingLength;
         runs(function() {
-    		expect(reread.length).toEqual(rereadLength);
-        
-    		// Read the remainder, reset, and re-read to confirm.
-    		mis.mark();
-    		endingOffset = reread.length;
-    		endingLength = appdata.length - endingOffset;
-    		mis.read(endingLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, endingOffset);
-    				secondRead = x.length;
-    			},timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-        });
-        waitsFor(function() { return secondRead; }, "second read", 1000);
+            expect(fourthRead).toEqual(expectedMiddle.length);
+            var actualMiddle = Arrays.copyOf(buffer, middleOffset, middleLength);
+            expect(actualMiddle).toEqual(expectedMiddle);
 
-        var finalRead;
+            // Mark and reset the remainder.
+            endingOffset = middleOffset + middleLength;
+            endingLength = appdata.length - middleLength - beginningLength;
+            mis.mark();
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    fifthRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return fifthRead > 0; }, "fifth read", TIMEOUT);
+
+        var sixthRead = 0;
         var expectedEnding;
         runs(function() {
-	        expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
-	        expect(secondRead).toEqual(expectedEnding.length);
-	        var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
-	        expect(actualEnding).toEqual(expectedEnding);
-	        
-	        mis.reset();
-	        mis.read(endingLength, TIMEOUT, {
-    			result: function(x) {
-    				buffer.set(x, endingOffset);
-    				finalRead = x.length;
-    			},timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
+            expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
+            expect(fifthRead).toEqual(expectedEnding.length);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+
+            mis.reset();
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    sixthRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
         });
-        waitsFor(function() { return finalRead; }, "final read", 1000);
-        
+        waitsFor(function() { return sixthRead > 0; }, "sixth read", TIMEOUT);
+
+        var seventhRead = 0;
+        runs(function() {
+            mis.reset();
+            mis.read(-1, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    seventhRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return seventhRead > 0; }, "seventh read", TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(finalRead).toEqual(expectedEnding.length);
-        	var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
-        	expect(actualEnding).toEqual(expectedEnding);
-        	
-        	// Confirm equality.
-        	var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
+            expect(sixthRead).toEqual(expectedEnding.length);
+            expect(seventhRead).toEqual(sixthRead);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+
+            // Confirm equality.
+            var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
             expect(actualdata).toEqual(appdata);
 
             mis.close(TIMEOUT, {
@@ -3591,68 +3440,151 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
-    
-    it("large payload", function() {
-    	var data = new Uint8Array(250 * 1024);
-    	random.nextBytes(data);
-    	
-    	var chunk;
-    	runs(function() {
-        	var cryptoContext = MESSAGE_HEADER.cryptoContext;
-    		PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, true, null, data, cryptoContext, {
-    			result: function(x) { chunk = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return chunk; }, "chunk", 1000);
-    	
-    	var is;
-    	runs(function() {
-    		payloads.push(chunk);
-    		generateInputStream(MESSAGE_HEADER, payloads, {
-    			result: function(x) { is = x; },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return is; }, "is", 100);
-    	
-    	var mis;
-    	runs(function() {
-    		MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
-    			result: function(x) { mis = x; },
-    			timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
-    			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		});
-    	});
-    	waitsFor(function() { return mis; }, "mis", 100);
 
-    	var buffer;
-    	runs(function() {
-    		mis.read(data.length, TIMEOUT, {
-        		result: function(x) { buffer = x; },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
-        });
-        waitsFor(function() { return buffer !== undefined; }, "buffer", 1000);
-        
-        var extra;
+    it("mark/reset with short mark", function() {
+        var baos;
+        var i = 0;
         runs(function() {
-    		mis.read(1, TIMEOUT, {
-        		result: function(x) { extra = x; },
-        		timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
-        		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-        	});
+            baos = new ByteArrayOutputStream();
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                    result: function(chunk) {
+                        payloads.push(chunk);
+                        baos.write(data, 0, data.length, TIMEOUT, {
+                            result: function(success) {
+                                ++i;
+                                writePayload();
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+            writePayload();
         });
-        waitsFor(function() { return extra !== undefined; }, "extra", 100);
-    	
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var appdata, buffer;
+        var firstRead = 0;
+        var beginningOffset, beginningLength;
+        runs(function() {
+            buffer = new Uint8Array(MAX_READ_LEN);
+            appdata = baos.toByteArray();
+
+            // Mark and reset to the beginning.
+            beginningOffset = 0;
+            beginningLength = Math.floor(appdata.length / 2);
+            mis.mark();
+            mis.read(beginningLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, beginningOffset);
+                    firstRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return firstRead > 0; }, "first read", TIMEOUT);
+
+        var reread, rereadLength;
+        var expectedBeginning;
+        runs(function() {
+            expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
+            expect(firstRead).toEqual(expectedBeginning.length);
+            var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
+            expect(actualBeginning).toEqual(expectedBeginning);
+
+            mis.reset();
+
+            // Read a little bit, and mark again so we drop one or more payloads
+            // but are likely to have more than one payload remaining.
+            rereadLength = Math.floor(appdata.length / 4);
+            mis.read(rereadLength, TIMEOUT, {
+                result: function(x) {
+                    reread = x;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return reread; }, "reread", TIMEOUT);
+
+        var secondRead;
+        var endingOffset, endingLength;
+        runs(function() {
+            expect(reread.length).toEqual(rereadLength);
+
+            // Read the remainder, reset, and re-read to confirm.
+            mis.mark();
+            endingOffset = reread.length;
+            endingLength = appdata.length - endingOffset;
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    secondRead = x.length;
+                },timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return secondRead; }, "second read", TIMEOUT);
+
+        var finalRead;
+        var expectedEnding;
+        runs(function() {
+            expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
+            expect(secondRead).toEqual(expectedEnding.length);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+
+            mis.reset();
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    finalRead = x.length;
+                },timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return finalRead; }, "final read", TIMEOUT);
+
         var closed;
         runs(function() {
-        	expect(buffer.length).toEqual(data.length);
-        	expect(extra).toBeNull();
-        	expect(buffer).toEqual(data);
+            expect(finalRead).toEqual(expectedEnding.length);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+
+            // Confirm equality.
+            var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
+            expect(actualdata).toEqual(appdata);
 
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -3660,6 +3592,75 @@ describe("MessageInputStream", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return closed; }, "closed", 100);
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+
+    it("large payload", function() {
+        var data = new Uint8Array(250 * 1024);
+        random.nextBytes(data);
+
+        var chunk;
+        runs(function() {
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            PayloadChunk.create(trustedNetCtx, SEQ_NO, MSG_ID, true, null, data, cryptoContext, {
+                result: function(x) { chunk = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return chunk; }, "chunk", TIMEOUT);
+
+        var is;
+        runs(function() {
+            payloads.push(chunk);
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var buffer;
+        runs(function() {
+            mis.read(data.length, TIMEOUT, {
+                result: function(x) { buffer = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return buffer !== undefined; }, "buffer", TIMEOUT);
+
+        var extra;
+        runs(function() {
+            mis.read(1, TIMEOUT, {
+                result: function(x) { extra = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return extra !== undefined; }, "extra", MslTestConstants.TIMEOUT);
+
+        var closed;
+        runs(function() {
+            expect(buffer.length).toEqual(data.length);
+            expect(extra).toBeNull();
+            expect(buffer).toEqual(data);
+
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
 });

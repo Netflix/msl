@@ -31,6 +31,7 @@ describe("SymmetricCryptoContext", function() {
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     
@@ -86,7 +87,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return AES_128_KEY && AES_CMAC_KEY && ctx; }, "static initialization", 900);
+            waitsFor(function() { return AES_128_KEY && AES_CMAC_KEY && ctx; }, "static initialization", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, null, null);
@@ -146,7 +147,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(ciphertextA).not.toBeNull();
                 expect(ciphertextA).not.toEqual(messageA);
@@ -166,7 +167,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", 100);
+            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(plaintextA).not.toBeNull();
                 expect(plaintextA).toEqual(messageA);
@@ -186,7 +187,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var envelope;
             runs(function() {
@@ -196,7 +197,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var shortEnvelope;
             runs(function() {
@@ -208,7 +209,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return shortEnvelope; }, "short envelope", 100);
+            waitsFor(function() { return shortEnvelope; }, "short envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -217,7 +218,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -226,7 +227,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -245,7 +246,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var envelope;
             runs(function() {
@@ -255,7 +256,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return envelope; }, "envelope", 100);
+            waitsFor(function() { return envelope; }, "envelope", MslTestConstants.TIMEOUT);
 
             var shortEnvelope;
             runs(function() {
@@ -266,7 +267,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return shortEnvelope; }, "short envelope", 100);
+            waitsFor(function() { return shortEnvelope; }, "short envelope", MslTestConstants.TIMEOUT);
             
             var encode;
             runs(function() {
@@ -275,7 +276,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -284,7 +285,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };
@@ -303,7 +304,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var encode;
             runs(function() {
@@ -314,7 +315,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return encode; }, "encode", 100);
+            waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -341,7 +342,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -398,7 +399,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(ciphertextA).not.toBeNull();
                 expect(ciphertextA).not.toEqual(messageA);
@@ -418,7 +419,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", 100);
+            waitsFor(function() { return plaintextA && plaintextB; }, "plaintext", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(plaintextA).not.toBeNull();
                 expect(plaintextA).toEqual(messageA);
@@ -441,7 +442,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var plaintext;
             runs(function() {
@@ -453,7 +454,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return plaintext; }, "plaintext", 100);
+            waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	expect(plaintext).not.toBeNull();
@@ -475,7 +476,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ciphertext; }, "ciphertext", 100);
+            waitsFor(function() { return ciphertext; }, "ciphertext", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -500,7 +501,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped", 100);
+            waitsFor(function() { return wrapped; }, "wrapped", MslTestConstants.TIMEOUT);
 
             var unwrapped;
             runs(function() {
@@ -511,7 +512,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped", MslTestConstants.TIMEOUT);
 
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -527,7 +528,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext;
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, encoder, {
@@ -539,7 +540,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
             });
@@ -556,7 +557,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped", 100);
+            waitsFor(function() { return wrapped; }, "wrapped", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -567,7 +568,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -584,7 +585,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.WRAP_NOT_SUPPORTED));
@@ -601,7 +602,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_NOT_SUPPORTED));
@@ -628,7 +629,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signatureA && signatureB; }, "signature", 100);
+            waitsFor(function() { return signatureA && signatureB; }, "signature", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(signatureA).not.toBeNull();
                 expect(signatureA.length).toBeGreaterThan(0);
@@ -652,7 +653,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 100);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -674,7 +675,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 100);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
             var verified;
             runs(function() {
@@ -683,7 +684,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 100);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(verified).toBeFalsy();
             });
@@ -709,7 +710,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signatureA && signatureB; }, "signature", 100);
+            waitsFor(function() { return signatureA && signatureB; }, "signature", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(signatureA).not.toBeNull();
                 expect(signatureA.length).toBeGreaterThan(0);
@@ -733,7 +734,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 100);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -754,7 +755,7 @@ describe("SymmetricCryptoContext", function() {
                     error: function(e) { exception = e; },
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 var f = function() { throw exception; };

@@ -39,6 +39,7 @@ describe("PayloadChunk", function() {
     var lzw = require('../../../../../core/src/main/javascript/lib/lzw.js');
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
 
@@ -118,7 +119,7 @@ describe("PayloadChunk", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
 
             runs(function () {
                 encoder = ctx.getMslEncoderFactory();
@@ -137,7 +138,7 @@ describe("PayloadChunk", function() {
                     error: function (e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function () { return ENCRYPTION_KEY && HMAC_KEY; }, "ENCRYPTION_KEY and HMAC_KEY", 100);
+            waitsFor(function () { return ENCRYPTION_KEY && HMAC_KEY; }, "ENCRYPTION_KEY and HMAC_KEY", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, HMAC_KEY, null);
@@ -155,7 +156,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var encode;
         runs(function() {
@@ -170,7 +171,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -180,7 +181,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -193,7 +194,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -211,7 +212,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -227,7 +228,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -243,7 +244,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -259,7 +260,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -274,7 +275,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var encode;
         runs(function() {
@@ -283,7 +284,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var ciphertext, verified;
         runs(function() {
@@ -296,7 +297,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -307,7 +308,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
@@ -327,7 +328,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
         runs(function() {
             expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
             expect(chunk.data).toEqual(DATA);
@@ -343,7 +344,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -353,7 +354,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -366,7 +367,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -382,7 +383,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var encode;
         runs(function() {
@@ -391,7 +392,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var verified, ciphertext;
         runs(function() {
@@ -404,7 +405,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -415,7 +416,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -433,7 +434,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(plaintext).toEqual(DATA);
@@ -448,7 +449,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
         runs(function() {
             expect(chunk.isEndOfMessage()).toEqual(END_OF_MSG);
             expect(chunk.data).toEqual(DATA);
@@ -464,7 +465,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -474,7 +475,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -487,7 +488,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -504,7 +505,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var encode;
         runs(function() {
@@ -513,7 +514,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var verified, ciphertext;
         runs(function() {
@@ -526,7 +527,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", 100);
+        waitsFor(function() { return ciphertext && verified !== undefined; }, "ciphertext and verified", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -537,7 +538,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var payloadMo = encoder.parseObject(payload);
@@ -562,7 +563,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -571,7 +572,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -580,7 +581,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         var moEncode;
         runs(function() {
@@ -593,7 +594,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -618,7 +619,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encryptionKeyA && encryptionKeyB; }, "encryption keys", 100);
+        waitsFor(function() { return encryptionKeyA && encryptionKeyB; }, "encryption keys", MslTestConstants.TIMEOUT);
 
         // Mismatched encryption keys will just result in the wrong data.
         var cryptoContextA, cryptoContextB;
@@ -632,7 +633,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", 100);
+        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -641,7 +642,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -650,7 +651,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             // Sometimes decryption will succeed so check for a crypto exception
@@ -675,7 +676,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return hmacKeyA && hmacKeyB; }, "HMAC keys", 100);
+        waitsFor(function() { return hmacKeyA && hmacKeyB; }, "HMAC keys", MslTestConstants.TIMEOUT);
 
         var cryptoContextA, cryptoContextB;
         var chunk;
@@ -688,7 +689,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", 100);
+        waitsFor(function() { return cryptoContextA && cryptoContextB && chunk; }, "crypto contexts and chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -697,7 +698,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -706,7 +707,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -722,7 +723,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -731,7 +732,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -744,7 +745,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -760,7 +761,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -769,7 +770,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -780,7 +781,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -796,7 +797,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -805,7 +806,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -816,7 +817,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -832,7 +833,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -841,7 +842,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -853,7 +854,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -864,7 +865,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -881,7 +882,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -890,7 +891,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -899,7 +900,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moChunk.data.length).toEqual(0);
@@ -914,7 +915,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -923,7 +924,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -933,7 +934,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -946,7 +947,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -955,7 +956,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -964,7 +965,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -976,7 +977,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -992,7 +993,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1001,7 +1002,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1011,7 +1012,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1022,7 +1023,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1031,7 +1032,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1040,7 +1041,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1052,7 +1053,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1068,7 +1069,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1077,7 +1078,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1087,7 +1088,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1098,7 +1099,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1107,7 +1108,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1116,7 +1117,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1128,7 +1129,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1144,7 +1145,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1153,7 +1154,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1163,7 +1164,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1174,7 +1175,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1183,7 +1184,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1192,7 +1193,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1204,7 +1205,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1220,7 +1221,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1229,7 +1230,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1239,7 +1240,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1250,7 +1251,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1259,7 +1260,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1268,7 +1269,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1280,7 +1281,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1296,7 +1297,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1305,7 +1306,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1315,7 +1316,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1326,7 +1327,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1335,7 +1336,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1344,7 +1345,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1356,7 +1357,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1372,7 +1373,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1381,7 +1382,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1391,7 +1392,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1402,7 +1403,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1411,7 +1412,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1420,7 +1421,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1432,7 +1433,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1448,7 +1449,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1457,7 +1458,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1467,7 +1468,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1478,7 +1479,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1487,7 +1488,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1496,7 +1497,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1508,7 +1509,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1524,7 +1525,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1533,7 +1534,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1543,7 +1544,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1554,7 +1555,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1563,7 +1564,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1572,7 +1573,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1584,7 +1585,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1600,7 +1601,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1609,7 +1610,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1619,7 +1620,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1630,7 +1631,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1639,7 +1640,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1648,7 +1649,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1660,7 +1661,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1676,7 +1677,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1685,7 +1686,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var payload;
         runs(function() {
@@ -1695,7 +1696,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return payload; }, "payload", 100);
+        waitsFor(function() { return payload; }, "payload", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1706,7 +1707,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var newPayload;
         runs(function() {
@@ -1715,7 +1716,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return newPayload; }, "newPayload", 100);
+        waitsFor(function() { return newPayload; }, "newPayload", MslTestConstants.TIMEOUT);
 
         var signature;
         runs(function() {
@@ -1724,7 +1725,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return signature; }, "signature", 100);
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1736,7 +1737,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1763,7 +1764,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -1802,7 +1803,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -1827,7 +1828,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1841,7 +1842,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -1850,7 +1851,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moChunk.data).toEqual(chunk.data);
@@ -1881,7 +1882,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -1905,7 +1906,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         var mo;
         runs(function() {
@@ -1919,7 +1920,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moChunk;
         runs(function() {
@@ -1928,7 +1929,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moChunk; }, "moChunk", 100);
+        waitsFor(function() { return moChunk; }, "moChunk", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moChunk.data).toEqual(chunk.data);
@@ -1950,7 +1951,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", MslTestConstants.TIMEOUT);
         var chunkA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, chunkA, {
@@ -1963,7 +1964,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -1993,7 +1994,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", MslTestConstants.TIMEOUT);
         var chunkA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, chunkA, {
@@ -2006,7 +2007,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -2034,7 +2035,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", MslTestConstants.TIMEOUT);
         var chunkA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, chunkA, {
@@ -2047,7 +2048,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -2075,7 +2076,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB; }, "chunks", 100);
+        waitsFor(function() { return chunkA && chunkB; }, "chunks", MslTestConstants.TIMEOUT);
         var chunkA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, chunkA, {
@@ -2088,7 +2089,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -2125,7 +2126,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA && chunkB && chunkC; }, "chunks", 100);
+        waitsFor(function() { return chunkA && chunkB && chunkC; }, "chunks", MslTestConstants.TIMEOUT);
         var chunkA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, chunkA, {
@@ -2138,7 +2139,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunkA2; }, "chunkA2", 100);
+        waitsFor(function() { return chunkA2; }, "chunkA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunkA.equals(chunkA)).toBeTruthy();
@@ -2166,7 +2167,7 @@ describe("PayloadChunk", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return chunk; }, "chunk", 100);
+        waitsFor(function() { return chunk; }, "chunk", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(chunk.equals(null)).toBeFalsy();

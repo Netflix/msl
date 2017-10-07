@@ -33,6 +33,7 @@ describe("MasterToken", function() {
 
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -99,7 +100,7 @@ describe("MasterToken", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
@@ -133,7 +134,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var encode;
         runs(function() {
@@ -155,7 +156,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -167,7 +168,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var moEncode;
         runs(function() {
@@ -191,7 +192,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -208,7 +209,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -224,7 +225,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -240,7 +241,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -256,7 +257,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -274,7 +275,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslInternalException());
@@ -289,7 +290,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -298,7 +299,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -311,7 +312,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -322,7 +323,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -338,7 +339,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -349,7 +350,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -358,7 +359,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             expect(moMasterToken.issuerData).toBeNull();
@@ -373,7 +374,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -382,7 +383,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -393,7 +394,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -409,7 +410,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -418,7 +419,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -431,7 +432,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -447,7 +448,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -456,7 +457,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -467,7 +468,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -483,7 +484,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -492,7 +493,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -504,7 +505,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -515,7 +516,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -531,7 +532,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -540,7 +541,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -552,7 +553,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -563,7 +564,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -579,7 +580,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -588,7 +589,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -600,7 +601,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -611,7 +612,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -627,7 +628,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -636,7 +637,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -648,7 +649,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -659,7 +660,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -675,7 +676,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -684,7 +685,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -696,7 +697,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -707,7 +708,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -723,7 +724,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -732,7 +733,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -744,7 +745,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -755,7 +756,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -771,7 +772,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -780,7 +781,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -792,7 +793,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -803,7 +804,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -819,7 +820,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -828,7 +829,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -840,7 +841,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -851,7 +852,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -867,7 +868,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -876,7 +877,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -888,7 +889,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -899,7 +900,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -916,7 +917,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -925,7 +926,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -937,7 +938,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -948,7 +949,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -964,7 +965,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -973,7 +974,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -985,7 +986,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -996,7 +997,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1012,7 +1013,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1021,7 +1022,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -1033,7 +1034,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1044,7 +1045,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1060,7 +1061,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1069,7 +1070,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var tokendataEncode;
         runs(function() {
@@ -1081,7 +1082,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", 100);
+        waitsFor(function() { return tokendataEncode; }, "tokendataEncode", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1092,7 +1093,7 @@ describe("MasterToken", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1108,7 +1109,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1117,7 +1118,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1129,7 +1130,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1147,7 +1148,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1163,7 +1164,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1172,7 +1173,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1186,7 +1187,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1204,7 +1205,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1220,7 +1221,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1229,7 +1230,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1245,7 +1246,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1263,7 +1264,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1279,7 +1280,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var encode;
         runs(function() {
@@ -1288,7 +1289,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
 
         var mo, moMasterToken;
         runs(function() {
@@ -1303,7 +1304,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var moEncode;
         runs(function() {
@@ -1326,7 +1327,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -1342,7 +1343,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1351,7 +1352,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1366,7 +1367,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1379,7 +1380,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1388,7 +1389,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1401,7 +1402,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1418,7 +1419,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1434,7 +1435,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1443,7 +1444,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1458,7 +1459,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1471,7 +1472,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1480,7 +1481,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1493,7 +1494,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1510,7 +1511,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1526,7 +1527,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1535,7 +1536,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1550,7 +1551,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1563,7 +1564,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1572,7 +1573,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1585,7 +1586,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1602,7 +1603,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1618,7 +1619,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1627,7 +1628,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1642,7 +1643,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1655,7 +1656,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1664,7 +1665,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1677,7 +1678,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1694,7 +1695,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1710,7 +1711,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1719,7 +1720,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1734,7 +1735,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1747,7 +1748,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1756,7 +1757,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1769,7 +1770,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -1786,7 +1787,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             // Confirm default algorithm.
@@ -1803,7 +1804,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1812,7 +1813,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1827,7 +1828,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1840,7 +1841,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1849,7 +1850,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1862,7 +1863,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1879,7 +1880,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -1895,7 +1896,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1904,7 +1905,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -1919,7 +1920,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1932,7 +1933,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -1941,7 +1942,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -1954,7 +1955,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -1971,7 +1972,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             // Confirm signature key.
@@ -1988,7 +1989,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -1997,7 +1998,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -2012,7 +2013,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -2025,7 +2026,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -2034,7 +2035,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -2047,7 +2048,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -2064,7 +2065,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             // Confirm signature key.
@@ -2081,7 +2082,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -2090,7 +2091,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -2105,7 +2106,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -2118,7 +2119,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -2127,7 +2128,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -2140,7 +2141,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var moMasterToken;
         runs(function() {
@@ -2157,7 +2158,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moMasterToken; }, "moMasterToken", 500);
+        waitsFor(function() { return moMasterToken; }, "moMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             // Confirm default algorithm.
@@ -2174,7 +2175,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -2183,7 +2184,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -2198,7 +2199,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -2211,7 +2212,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -2220,7 +2221,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -2233,7 +2234,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -2250,7 +2251,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -2266,7 +2267,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -2275,7 +2276,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -2290,7 +2291,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -2304,7 +2305,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -2313,7 +2314,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -2326,7 +2327,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -2343,7 +2344,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -2359,7 +2360,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -2368,7 +2369,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var cryptoContext, tokendataMo, plaintext;
         runs(function() {
@@ -2383,7 +2384,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -2397,7 +2398,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modifiedPlaintext", MslTestConstants.TIMEOUT);
 
         var sessiondata;
         runs(function() {
@@ -2406,7 +2407,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return sessiondata; }, "sessiondata", 100);
+        waitsFor(function() { return sessiondata; }, "sessiondata", MslTestConstants.TIMEOUT);
 
         var modifiedTokendata;
         runs(function() {
@@ -2419,7 +2420,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", 100);
+        waitsFor(function() { return modifiedTokendata; }, "modifiedTokendata", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -2436,7 +2437,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });	
         });
-        waitsFor(function() { return exception; }, "exception", 500);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
 
         runs(function() {
             var f = function() { throw exception; };
@@ -2454,7 +2455,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var now = new Date();
             expect(masterToken.isRenewable(null)).toBeTruthy();
@@ -2482,7 +2483,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var now = new Date();
             expect(masterToken.isRenewable(null)).toBeTruthy();
@@ -2510,7 +2511,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             var now = new Date();
             expect(masterToken.isRenewable(null)).toBeFalsy();
@@ -2542,7 +2543,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterTokenB.isNewerThan(masterTokenA)).toBeTruthy();
             expect(masterTokenA.isNewerThan(masterTokenB)).toBeFalsy();
@@ -2586,7 +2587,7 @@ describe("MasterToken", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return masterToken && minus1MasterToken && plus1MasterToken && plus127MasterToken && plus128MasterToken; }, "master tokens", 500);
+            waitsFor(function() { return masterToken && minus1MasterToken && plus1MasterToken && plus127MasterToken && plus128MasterToken; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
 
             runs(function() {
                 expect(minus1MasterToken.isNewerThan(masterToken)).toBeFalsy();
@@ -2639,7 +2640,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterTokenB.isNewerThan(masterTokenA)).toBeTruthy();
             expect(masterTokenA.isNewerThan(masterTokenB)).toBeFalsy();
@@ -2659,7 +2660,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
 
         var mo;
         runs(function() {
@@ -2668,7 +2669,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var untrustedMasterToken;
         runs(function() {
@@ -2680,7 +2681,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return untrustedMasterToken; }, "untrustedMasterToken", 500);
+        waitsFor(function() { return untrustedMasterToken; }, "untrustedMasterToken", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterToken.equals(untrustedMasterToken)).toBeTruthy();
         });
@@ -2700,7 +2701,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
         var masterTokenA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, masterTokenA, {
@@ -2713,7 +2714,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
+        waitsFor(function() { return masterTokenA2; }, "master token parsed", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterTokenA.equals(masterTokenA)).toBeTruthy();
             expect(masterTokenA.uniqueKey()).toEqual(masterTokenA.uniqueKey());
@@ -2742,7 +2743,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
         var masterTokenA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, masterTokenA, {
@@ -2755,7 +2756,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
+        waitsFor(function() { return masterTokenA2; }, "master token parsed", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterTokenA.equals(masterTokenA)).toBeTruthy();
             expect(masterTokenA.uniqueKey()).toEqual(masterTokenA.uniqueKey());
@@ -2784,7 +2785,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", 500);
+        waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens", MslTestConstants.TIMEOUT_CRYPTO);
         var masterTokenA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, masterTokenA, {
@@ -2797,7 +2798,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterTokenA2; }, "master token parsed", 500);
+        waitsFor(function() { return masterTokenA2; }, "master token parsed", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterTokenA.equals(masterTokenA)).toBeTruthy();
             expect(masterTokenA.uniqueKey()).toEqual(masterTokenA.uniqueKey());
@@ -2820,7 +2821,7 @@ describe("MasterToken", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return masterToken; }, "masterToken", 500);
+        waitsFor(function() { return masterToken; }, "masterToken", MslTestConstants.TIMEOUT_CRYPTO);
         runs(function() {
             expect(masterToken.equals(null)).toBeFalsy();
             expect(masterToken.equals(IDENTITY)).toBeFalsy();

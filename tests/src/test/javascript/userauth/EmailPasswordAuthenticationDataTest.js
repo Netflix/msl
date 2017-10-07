@@ -28,6 +28,7 @@ describe("EmailPasswordAuthenticationData", function() {
     var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -58,7 +59,7 @@ describe("EmailPasswordAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 initialized = true;
@@ -79,7 +80,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var encode;
         runs(function() {
@@ -89,7 +90,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moData, moAuthdata;
         runs(function() {
@@ -102,7 +103,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
         
         var moEncode;
         runs(function() {
@@ -113,7 +114,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -131,7 +132,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(mo.getString(KEY_SCHEME)).toEqual(UserAuthenticationScheme.EMAIL_PASSWORD.name);
@@ -151,7 +152,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var userdata;
         runs(function() {
@@ -161,7 +162,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return userdata; }, "userdata", 100);
+        waitsFor(function() { return userdata; }, "userdata", MslTestConstants.TIMEOUT);
 
         var moData, moAuthdata;
         runs(function() {
@@ -177,7 +178,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moAuthdata; }, "moAuthdata", 100);
+        waitsFor(function() { return moAuthdata; }, "moAuthdata", MslTestConstants.TIMEOUT);
         
         var authdata;
         runs(function() {
@@ -186,7 +187,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         var moEncode;
         runs(function() {
@@ -197,7 +198,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -215,7 +216,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             authdata.remove(KEY_EMAIL);
@@ -236,7 +237,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return authdata; }, "authdata", 100);
+        waitsFor(function() { return authdata; }, "authdata", MslTestConstants.TIMEOUT);
         
         runs(function() {
             authdata.remove(KEY_PASSWORD);
@@ -259,7 +260,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA2; }, "dataA2", 100);
+        waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();
@@ -284,7 +285,7 @@ describe("EmailPasswordAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return dataA2; }, "dataA2", 100);
+        waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(dataA.equals(dataA)).toBeTruthy();

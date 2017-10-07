@@ -36,6 +36,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
     var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
     var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockDiffieHellmanParameters = require('../../../main/javascript/keyx/MockDiffieHellmanParameters.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
@@ -114,7 +115,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && REQUEST_PUBLIC_KEY && REQUEST_PRIVATE_KEY && RESPONSE_PUBLIC_KEY && RESPONSE_PRIVATE_KEY; }, "ctx and DH keys", 100);
+            waitsFor(function() { return ctx && REQUEST_PUBLIC_KEY && REQUEST_PRIVATE_KEY && RESPONSE_PUBLIC_KEY && RESPONSE_PRIVATE_KEY; }, "ctx and DH keys", MslTestConstants.TIMEOUT_CTX);
             
 		    runs(function() {
 		    	encoder = ctx.getMslEncoderFactory();
@@ -125,7 +126,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    	});
 		    });
-		    waitsFor(function() { return MASTER_TOKEN; }, "static intialization", 100);
+		    waitsFor(function() { return MASTER_TOKEN; }, "static intialization", MslTestConstants.TIMEOUT);
 		    
 		    runs(function() { initialized = true; });
     	}
@@ -151,7 +152,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moReq;
             runs(function() {
@@ -161,7 +162,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moReq; }, "moReq not received", 100);
+            waitsFor(function() { return moReq; }, "moReq not received", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -174,7 +175,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(moKeydata).not.toBeNull();
@@ -191,7 +192,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             runs(function() {
             	expect(mo[KEY_SCHEME]).toEqual(KeyExchangeScheme.DIFFIE_HELLMAN.name);
@@ -211,7 +212,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return mo; }, "mo", 100);
+            waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
             
             var keyRequestData;
             runs(function() {
@@ -220,7 +221,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyRequestData; }, "keyRequestData not received", 100);
+            waitsFor(function() { return keyRequestData; }, "keyRequestData not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(keyRequestData).not.toBeNull();
@@ -243,7 +244,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
         	
 	        runs(function() {
 	        	keydata.remove(KEY_PARAMETERS_ID);
@@ -263,7 +264,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
         	
 	        runs(function() {
 	        	keydata.remove(KEY_PUBLIC_KEY);
@@ -283,7 +284,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
         	});
-        	waitsFor(function() { return keydata; }, "keydata", 100);
+        	waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
         	
 	        runs(function() {
 	        	keydata.put(KEY_PUBLIC_KEY, "x");
@@ -309,7 +310,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
+            waitsFor(function() { return dataA2; }, "dataA2 not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -341,7 +342,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
+            waitsFor(function() { return dataA2; }, "dataA2 not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -373,7 +374,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2 not received", 100);
+            waitsFor(function() { return dataA2; }, "dataA2 not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(dataA.equals(dataA)).toBeTruthy();
@@ -416,7 +417,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
             
             var moKeydata;
             runs(function() {
@@ -432,7 +433,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return moKeydata; }, "moKeydata", 100);
+            waitsFor(function() { return moKeydata; }, "moKeydata", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(moKeydata).not.toBeNull();
@@ -449,7 +450,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return mo; }, "mo", 100);
+        	waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         	
         	var masterToken;
         	runs(function() {
@@ -460,7 +461,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { masterToken; }, "master token not received", 100);
+        	waitsFor(function() { masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
         		expect(masterToken).toEqual(MASTER_TOKEN);
@@ -485,7 +486,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", 100);
+            waitsFor(function() { return keyResponseData; }, "keyResponseData not received", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(keyResponseData).not.toBeNull();
@@ -508,7 +509,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	            
             runs(function() {
 	            keydata.remove(KEY_PARAMETERS_ID);
@@ -528,7 +529,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	            
             runs(function() {
 	            keydata.remove(KEY_PUBLIC_KEY);
@@ -548,7 +549,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return keydata; }, "keydata", 100);
+            waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
 	            
             runs(function() {
 	            keydata.put(KEY_PUBLIC_KEY, "x");
@@ -571,7 +572,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             	});
             });
-            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", 100);
+            waitsFor(function() { return masterTokenA && masterTokenB; }, "master tokens not received", MslTestConstants.TIMEOUT);
             
             var dataA, dataB, dataA2;
             runs(function() {
@@ -584,7 +585,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA && dataB && dataA2; }, "data", 100);
+            waitsFor(function() { return dataA && dataB && dataA2; }, "data", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -612,7 +613,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -640,7 +641,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
             });
-            waitsFor(function() { return dataA2; }, "dataA2", 100);
+            waitsFor(function() { return dataA2; }, "dataA2", MslTestConstants.TIMEOUT);
             
             runs(function() {
 	            expect(dataA.equals(dataA)).toBeTruthy();
@@ -725,7 +726,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(keyxData).not.toBeNull();
 	            expect(keyxData.cryptoContext).not.toBeNull();
@@ -748,7 +749,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -764,7 +765,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID));
@@ -780,7 +781,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID));
@@ -796,7 +797,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	expect(keyxData).not.toBeNull();
             	expect(keyxData.cryptoContext).not.toBeNull();
@@ -822,7 +823,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	            });
         	});
-        	waitsFor(function() { return masterToken; }, "master token not received", 100);
+        	waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
         	
             var exception;
             runs(function() {
@@ -831,7 +832,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED));
@@ -847,7 +848,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -863,7 +864,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(err) { exception = err; }
             	});
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID));
@@ -879,7 +880,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(err) { exception = err; }
             	});
             });
-            waitsFor(function() { return exception; }, "exception not received", 100);
+            waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	var f = function() { throw exception; };
             	expect(f).toThrow(new MslKeyExchangeException(MslError.UNKNOWN_KEYX_PARAMETERS_ID));
@@ -895,7 +896,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
             var data = new Uint8Array(32);
             random.nextBytes(data);
@@ -909,7 +910,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	            	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	            });
             });
-            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", 100);
+            waitsFor(function() { return requestCryptoContext && responseCryptoContext; }, "crypto contexts not received", MslTestConstants.TIMEOUT);
             
             // Ciphertext won't always be equal depending on how it was
             // enveloped. So we cannot check for equality or inequality.
@@ -924,7 +925,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", 100);
+            waitsFor(function() { return requestCiphertext && responseCiphertext; }, "ciphertexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
             	expect(requestCiphertext).not.toEqual(data);
             	expect(responseCiphertext).not.toEqual(data);
@@ -942,7 +943,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", 100);
+            waitsFor(function() { return requestSignature && responseSignature; }, "signatures not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestSignature).not.toEqual(data);
 	            expect(responseSignature).not.toEqual(data);
@@ -961,7 +962,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", 100);
+            waitsFor(function() { return requestPlaintext && responsePlaintext; }, "plaintexts not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestPlaintext).not.toBeNull();
 	            expect(requestPlaintext).toEqual(data);
@@ -980,7 +981,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return requestVerified && responseVerified; }, "verifieds not received", 100);
+            waitsFor(function() { return requestVerified && responseVerified; }, "verifieds not received", MslTestConstants.TIMEOUT);
             runs(function() {
 	            expect(requestVerified).toBeTruthy();
 	            expect(responseVerified).toBeTruthy();
@@ -996,7 +997,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+        	waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
         	
         	var exception;
         	runs(function() {
@@ -1008,7 +1009,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(err) { exception = err; }
 	        	});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
 
             runs(function() {
             	var f = function() { throw exception; };
@@ -1026,7 +1027,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(err) { exception = err; }
 	        	});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
         		var f = function() { throw exception; };
@@ -1043,7 +1044,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
             
         	var exception;
         	runs(function() {
@@ -1057,7 +1058,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(err) { exception = err; }
 	        	});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
         		var f = function() { throw exception; };
@@ -1074,7 +1075,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return keyxData; }, "keyxData not received", 100);
+            waitsFor(function() { return keyxData; }, "keyxData not received", MslTestConstants.TIMEOUT);
 
         	var exception;
         	runs(function() {
@@ -1085,7 +1086,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
 	        		error: function(err) { exception = err; }
 	        	});
         	});
-        	waitsFor(function() { return exception; }, "exception not recevied", 100);
+        	waitsFor(function() { return exception; }, "exception not recevied", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
         		var f = function() { throw exception; };
