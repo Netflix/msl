@@ -81,8 +81,8 @@
                 _buffer: { value: new ByteArrayOutputStream(), writable: false, enumerable: false, configurable: false },
                 _response: { value: undefined, writable: true, enumerable: false, configurable: false },
                 _abortToken: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _aborted: { value: false, writable: true, enumerable: false, configurable: false },
                 _responseQueue: { value: new BlockingQueue(), writable: true, enumerable: false, configurable: false },
-
             };
             Object.defineProperties(this, props);
         },
@@ -142,13 +142,17 @@
         abort: function abort() {
             if (this._abortToken)
                 this._abortToken.abort();
+            this._aborted = true;
         },
 
         /** @inheritDoc */
         close: function close(timeout, callback) {
             var self = this;
             InterruptibleExecutor(callback, function() {
-                if (this._response)
+                // Do nothing if we already got the response, if we
+                // already initiated the request, or if the call was
+                // aborted.
+                if (this._response || this._abortToken || this._aborted)
                     return true;
 
                 var data = this._buffer.toByteArray();
@@ -317,12 +321,13 @@
                                     throw this._exception;
                                 }
 
-                                // this allows the stream to return already-parsed JSON
+                                // This allows the stream to return
+                                // already-parsed JSON.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
                                     this.getJSON = function () { return self._json; };
                                 }
-
+                                
                                 content = result.response.content || textEncoding.getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json), UTF_8);
                                 this._buffer = new ByteArrayInputStream(content);
                                 this._buffer.read(len, timeout, callback);
