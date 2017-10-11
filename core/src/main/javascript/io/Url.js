@@ -276,7 +276,7 @@
          */
         getJSON: function getJSON() {
             return this._json;
-        }
+        },
 
         /** @inheritDoc */
         read: function read(len, timeout, callback) {
