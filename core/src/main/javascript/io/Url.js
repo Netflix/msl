@@ -341,12 +341,14 @@
                                 // This is a platform hack that allows the
                                 // stream to return already-parsed JSON.
                                 //
-                                // Return zero bytes immediately. If the caller
-                                // knows about this, it will ignore the zero
-                                // byte return value.
+                                // Return null immediately to indicate no data
+                                // is available (end-of-stream). If the caller
+                                // knows about this hack, it will ignore the
+                                // null return value and check for the JSON
+                                // first.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
-                                    return new Uint8Array(0);
+                                    return null;
                                 }
                                 
                                 // Retrieve the raw bytes if available,
