@@ -45,23 +45,27 @@
      */
     var UTF_8 = 'utf-8';
 	
+    /**
+     * Interface for getting an HTTP response given a request.
+     */
 	var IHttpLocation = Class.create({
 	    /**
 	     * Given a request, gets the response.
 	     *
-	     * @param {{body:string}} request
+	     * @param {{body: string}} request
 	     * @param {number} timeout request response timeout in milliseconds or -1 for no timeout.
-	     * @param {{result: function({body:string}), timeout: function(), error: function(Error)}}
-	     *        callback the callback will receive the response
+	     * @param {{result: function({=body: string, =content: Uint8Array}), timeout: function(), error: function(Error)}}
+	     *        callback the callback that will receive the response data as
+	     *        a string or bytes, be notified of timeout or any thrown
+	     *        exceptions.
 	     * @returns {{abort:Function})
 	     */
-	    getResponse: function getResponse(request, timeout, callback) { }
-	
+	    getResponse: function(request, timeout, callback) {}
 	});
 
     /**
      * An HTTP output stream buffers data and then sends it upon close. The
-     * response is made available
+     * response is made available after being closed.
      */
     var HttpOutputStream = OutputStream.extend({
         /**
@@ -100,7 +104,7 @@
         /**
          * Return the response. This blocks until a response is available.
          *
-         * @param {{result: function({success: boolean, content: Uint8Array, errorHttpCode: number, errorSubCode: number}), error: function(Error)}}
+         * @param {{result: function({=response: {=body: string, =content: Uint8Array}, =isTimeout: boolean, =isError: boolean}), error: function(Error)}}
          *        callback the callback will receive the HTTP response or
          *        undefined if the HTTP transaction was aborted and notified of
          *        any thrown exceptions.
@@ -302,8 +306,6 @@
                     this._out.getResponse({
                         result: function(result) {
                             InterruptibleExecutor(callback, function() {
-                                var content;
-
                                 if (result.isTimeout) {
                                     this._timedout = true;
                                     callback.timeout();
@@ -321,14 +323,29 @@
                                     throw this._exception;
                                 }
 
-                                // This allows the stream to return
-                                // already-parsed JSON.
+                                // This is a platform hack that allows the
+                                // stream to return already-parsed JSON.
+                                //
+                                // Return zero bytes immediately. If the caller
+                                // knows about this function, it will ignore
+                                // the zero byte return value.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
                                     this.getJSON = function () { return self._json; };
+                                    return new Uint8Array(0);
                                 }
                                 
-                                content = result.response.content || textEncoding.getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json), UTF_8);
+                                // Retrieve the raw bytes if available,
+                                // otherwise convert the string value to bytes.
+                                var content;
+                                if (result.response.content instanceof Uint8Array)
+                                    content = result.response.content;
+                                else if (typeof result.response.body === 'string')
+                                    content = textEncoding.getBytes(result.response.body, UTF_8);
+                                else
+                                    throw new MslIoException("Missing HTTP response content.");
+                                
+                                // Read from the response.
                                 this._buffer = new ByteArrayInputStream(content);
                                 this._buffer.read(len, timeout, callback);
                             }, self);
