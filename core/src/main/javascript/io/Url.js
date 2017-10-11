@@ -263,6 +263,21 @@
                 return this._buffer.markSupported();
         },
 
+        /**
+         * <p>Returns the already-parsed JSON if it exists. This function will
+         * return undefined until read() is first called, and may still return
+         * undefined afterwards if the JSON cannot be accessed in this
+         * manner.</p>
+         * 
+         * <p>If read() does result in JSON becoming available via this method,
+         * then read() will return zero bytes of data.</p>
+         * 
+         * @return {?Array{*}} an array of JSON values or undefined.
+         */
+        getJSON: function getJSON() {
+            return this._json;
+        }
+
         /** @inheritDoc */
         read: function read(len, timeout, callback) {
             var self = this;
@@ -327,11 +342,10 @@
                                 // stream to return already-parsed JSON.
                                 //
                                 // Return zero bytes immediately. If the caller
-                                // knows about this function, it will ignore
-                                // the zero byte return value.
+                                // knows about this, it will ignore the zero
+                                // byte return value.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
-                                    this.getJSON = function () { return self._json; };
                                     return new Uint8Array(0);
                                 }
                                 
