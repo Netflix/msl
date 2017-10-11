@@ -45,23 +45,27 @@
      */
     var UTF_8 = 'utf-8';
 	
+    /**
+     * Interface for getting an HTTP response given a request.
+     */
 	var IHttpLocation = Class.create({
 	    /**
 	     * Given a request, gets the response.
 	     *
-	     * @param {{body:string}} request
+	     * @param {{body: string}} request
 	     * @param {number} timeout request response timeout in milliseconds or -1 for no timeout.
-	     * @param {{result: function({body:string}), timeout: function(), error: function(Error)}}
-	     *        callback the callback will receive the response
+	     * @param {{result: function({=body: string, =content: Uint8Array}), timeout: function(), error: function(Error)}}
+	     *        callback the callback that will receive the response data as
+	     *        a string or bytes, be notified of timeout or any thrown
+	     *        exceptions.
 	     * @returns {{abort:Function})
 	     */
-	    getResponse: function getResponse(request, timeout, callback) { }
-	
+	    getResponse: function(request, timeout, callback) {}
 	});
 
     /**
      * An HTTP output stream buffers data and then sends it upon close. The
-     * response is made available
+     * response is made available after being closed.
      */
     var HttpOutputStream = OutputStream.extend({
         /**
@@ -81,8 +85,8 @@
                 _buffer: { value: new ByteArrayOutputStream(), writable: false, enumerable: false, configurable: false },
                 _response: { value: undefined, writable: true, enumerable: false, configurable: false },
                 _abortToken: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _aborted: { value: false, writable: true, enumerable: false, configurable: false },
                 _responseQueue: { value: new BlockingQueue(), writable: true, enumerable: false, configurable: false },
-
             };
             Object.defineProperties(this, props);
         },
@@ -100,7 +104,7 @@
         /**
          * Return the response. This blocks until a response is available.
          *
-         * @param {{result: function({success: boolean, content: Uint8Array, errorHttpCode: number, errorSubCode: number}), error: function(Error)}}
+         * @param {{result: function({=response: {=body: string, =content: Uint8Array}, =isTimeout: boolean, =isError: boolean}), error: function(Error)}}
          *        callback the callback will receive the HTTP response or
          *        undefined if the HTTP transaction was aborted and notified of
          *        any thrown exceptions.
@@ -142,13 +146,17 @@
         abort: function abort() {
             if (this._abortToken)
                 this._abortToken.abort();
+            this._aborted = true;
         },
 
         /** @inheritDoc */
         close: function close(timeout, callback) {
             var self = this;
             InterruptibleExecutor(callback, function() {
-                if (this._response)
+                // Do nothing if we already got the response, if we
+                // already initiated the request, or if the call was
+                // aborted.
+                if (this._response || this._abortToken || this._aborted)
                     return true;
 
                 var data = this._buffer.toByteArray();
@@ -255,6 +263,21 @@
                 return this._buffer.markSupported();
         },
 
+        /**
+         * <p>Returns the already-parsed JSON if it exists. This function will
+         * return undefined until read() is first called, and may still return
+         * undefined afterwards if the JSON cannot be accessed in this
+         * manner.</p>
+         * 
+         * <p>If read() does result in JSON becoming available via this method,
+         * then read() will return zero bytes of data.</p>
+         * 
+         * @return {?Array{*}} an array of JSON values or undefined.
+         */
+        getJSON: function getJSON() {
+            return this._json;
+        },
+
         /** @inheritDoc */
         read: function read(len, timeout, callback) {
             var self = this;
@@ -298,8 +321,6 @@
                     this._out.getResponse({
                         result: function(result) {
                             InterruptibleExecutor(callback, function() {
-                                var content;
-
                                 if (result.isTimeout) {
                                     this._timedout = true;
                                     callback.timeout();
@@ -317,13 +338,30 @@
                                     throw this._exception;
                                 }
 
-                                // this allows the stream to return already-parsed JSON
+                                // This is a platform hack that allows the
+                                // stream to return already-parsed JSON.
+                                //
+                                // Return null immediately to indicate no data
+                                // is available (end-of-stream). If the caller
+                                // knows about this hack, it will ignore the
+                                // null return value and check for the JSON
+                                // first.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
-                                    this.getJSON = function () { return self._json; };
+                                    return null;
                                 }
-
-                                content = result.response.content || textEncoding.getBytes(typeof result.response.body === 'string' ? result.response.body : JSON.stringify(this._json), UTF_8);
+                                
+                                // Retrieve the raw bytes if available,
+                                // otherwise convert the string value to bytes.
+                                var content;
+                                if (result.response.content instanceof Uint8Array)
+                                    content = result.response.content;
+                                else if (typeof result.response.body === 'string')
+                                    content = textEncoding.getBytes(result.response.body, UTF_8);
+                                else
+                                    throw new MslIoException("Missing HTTP response content.");
+                                
+                                // Read from the response.
                                 this._buffer = new ByteArrayInputStream(content);
                                 this._buffer.read(len, timeout, callback);
                             }, self);
