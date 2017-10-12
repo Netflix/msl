@@ -313,7 +313,12 @@ public class MslError {
     public String getMessage() {
         return msg;
     }
-    
+
+    @Override
+    public String toString() {
+        return "MslError{" + internalCode + "," + msg + "}";
+    }
+
     /**
      * @param o the reference object with which to compare.
      * @return true if the internal code and response code are equal.
