@@ -313,7 +313,7 @@
 	        
 	        function addToken() {
 	        	if (count <= 0) {
-	        		var tokens = new Array();
+	        		var tokens = [];
 	    	        for (var key in serviceTokens)
 	    	        	tokens.push(serviceTokens[key]);
 	    	        callback.result(tokens);
@@ -331,8 +331,10 @@
 	            switch (type) {
 	            	case 2:
 	            		uit = userIdToken;
+	            		/* falls through */
 	            	case 1:
 	            		mt = masterToken;
+	            		/* falls through */
 	            	case 0:
 	            		break;
 	            }
@@ -364,7 +366,7 @@
 	    getMasterBoundServiceTokens: function getMasterBoundServiceTokens(ctx, masterToken, callback) {
 	        var random = new Random();
 	        var cryptoContext = new NullCryptoContext();
-	        var tokens = new Array();
+	        var tokens = [];
 	        var count = 1 + random.nextInt(NUM_SERVICE_TOKENS);
 	        
 	    	function addToken() {
@@ -404,7 +406,7 @@
 	    getUserBoundServiceTokens: function getUserBoundServiceTokens(ctx, masterToken, userIdToken, callback) {
 	        var random = new Random();
 	        var cryptoContext = new NullCryptoContext();
-	        var tokens = new Array();
+	        var tokens = [];
 	        var count = 1 + random.nextInt(NUM_SERVICE_TOKENS);
 	        
 	    	function addToken() {

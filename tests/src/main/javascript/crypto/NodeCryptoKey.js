@@ -46,7 +46,7 @@
             } else if (typeof xv === 'function' || yv === 'function') {
                 return false;
             } else if (typeof xv === 'object') {
-                if (!(typeof yv === 'object')) return false;
+                if (typeof yv !== 'object') return false;
                 if (!objectsEqual(xv, yv)) return false;
             } else {
                 if (xv != yv) return false;
@@ -89,7 +89,6 @@
             if (!(that instanceof NodeCryptoKey)) return false;
             
             // Compare raw keys.
-            debugger;
             var rawkeysEqual = false;
             if (this.rawkey instanceof Array)
                 rawkeysEqual = (that.rawkey instanceof Array) && Arrays.equal(this.rawkey, that.rawkey);

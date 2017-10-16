@@ -47,8 +47,8 @@
         
         /** @inheritDoc */
         nextIdentity: function nextIdentity() {
-            var now = ctx.getTime();
-            var r = ctx.getRandom();
+            var now = this.ctx.getTime();
+            var r = this.ctx.getRandom();
             var suffix = r.nextLong();
             return "" + now + ":" + suffix;
         },

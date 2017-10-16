@@ -86,8 +86,8 @@
                 throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
             
             // Verify the user.
-            if (!uitadMasterToken.equals(masterToken) ||
-                !uitadUserIdToken.equals(userIdToken))
+            if (!uitadMasterToken.equals(this.masterToken) ||
+                !uitadUserIdToken.equals(this.userIdToken))
             {
                 throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme.name + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
             }
