@@ -18,8 +18,8 @@
   "license": "Apache-2.0",
   "scripts": {
     "build": "npm run all",
-    "test": "find src/test -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions src/main/javascript/lib/jasmine/msl-helpers.js",
-    "lint": "find src/test -type f -name '*.js' | xargs jshint --verbose",
+    "test": "find ../../test/javascript -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions lib/jasmine/msl-helpers.js",
+    "lint": "find -E ../.. -type f -name '*.js' ! -regex '.*/(jasmine|jasmine\\-html)\\.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose",
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
@@ -38,7 +38,9 @@
       "module",
       "mkmodule",
       "Promise",
-      "parameterize"
+      "parameterize",
+      "process",
+      "Buffer"
     ]
   },
   "dependencies": {
