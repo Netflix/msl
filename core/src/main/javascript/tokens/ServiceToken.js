@@ -75,7 +75,6 @@
 	var MslEncoderException = require('../io/MslEncoderException.js');
 	var MslEncodable = require('../io/MslEncodable.js');
 	var MslInternalException = require('../MslInternalException.js');
-	var MslUtils = require('../util/MslUtils.js');
 	var MasterToken = require('../tokens/MasterToken.js');
 	var UserIdToken = require('../tokens/UserIdToken.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
@@ -84,6 +83,7 @@
 	var ICryptoContext = require('../crypto/ICryptoContext.js');
 	var MslConstants = require('../MslConstants.js');
 	var Base64 = require('../util/Base64.js');
+	var MslCompression = require('../util/MslCompression.js');
 	
     /**
      * Key token data.
@@ -231,7 +231,7 @@
                 // Optionally compress the service data.
                 var plaintext;
                 if (compressionAlgo) {
-                    var compressed = MslUtils.compress(compressionAlgo, data);
+                    var compressed = MslCompression.compress(compressionAlgo, data);
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
@@ -727,7 +727,7 @@
                         cryptoContext.decrypt(ciphertext, encoder, {
                             result: function(compressedServicedata) {
                                 servicedata = (compressionAlgo)
-                                    ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
+                                    ? MslCompression.uncompress(compressionAlgo, compressedServicedata)
                                     : compressedServicedata;
                                 reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                                     name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,
@@ -746,7 +746,7 @@
                     } else {
                         compressedServicedata = ciphertext;
                         servicedata = (compressionAlgo)
-                            ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
+                            ? MslCompression.uncompress(compressionAlgo, compressedServicedata)
                             : compressedServicedata;
                         reconstruct(encoder, tokendataBytes, signatureBytes, verified,
                             name, mtSerialNumber, uitSerialNumber, encrypted, compressionAlgo,

@@ -15,19 +15,9 @@
  */
 package com.netflix.msl.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Random;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import com.netflix.msl.MslConstants;
-import com.netflix.msl.MslConstants.CompressionAlgorithm;
-import com.netflix.msl.MslError;
-import com.netflix.msl.MslException;
-import com.netflix.msl.io.LZWInputStream;
-import com.netflix.msl.io.LZWOutputStream;
 
 /**
  * Utility methods.
@@ -35,105 +25,6 @@ import com.netflix.msl.io.LZWOutputStream;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MslUtils {
-    /**
-     * Compress the provided data using the specified compression algorithm.
-     * 
-     * @param compressionAlgo the compression algorithm.
-     * @param data the data to compress.
-     * @return the compressed data or null if the compressed data would be larger than the
-     *         uncompressed data.
-     * @throws MslException if there is an error compressing the data.
-     */
-    public static byte[] compress(final CompressionAlgorithm compressionAlgo, final byte[] data) throws MslException {
-        try {
-            switch (compressionAlgo) {
-                case GZIP:
-                {
-                    final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                    final GZIPOutputStream gzos = new GZIPOutputStream(baos);
-                    try {
-                        gzos.write(data);
-                    } finally {
-                        gzos.close();
-                    }
-                    final byte[] compressed = baos.toByteArray();
-                    return (compressed.length < data.length) ? compressed : null;
-                }
-                case LZW:
-                {
-                    final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                    final LZWOutputStream lzwos = new LZWOutputStream(baos);
-                    try {
-                        lzwos.write(data);
-                    } finally {
-                        lzwos.close();
-                    }
-                    final byte[] compressed = baos.toByteArray();
-                    return (compressed.length < data.length)? compressed : null; 
-                }
-                default:
-                    throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
-            }
-        } catch (final IOException e) {
-            final String dataB64 = Base64.encode(data);
-            throw new MslException(MslError.COMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + dataB64, e);
-        }
-    }
-    
-    /**
-     * Uncompress the provided data using the specified compression algorithm.
-     * 
-     * @param compressionAlgo the compression algorithm.
-     * @param data the data to uncompress.
-     * @return the uncompressed data.
-     * @throws MslException if there is an error uncompressing the data.
-     */
-    public static byte[] uncompress(final CompressionAlgorithm compressionAlgo, final byte[] data) throws MslException {
-        try {
-            switch (compressionAlgo) {
-                case GZIP:
-                {
-                    final ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                    final GZIPInputStream gzis = new GZIPInputStream(bais);
-                    try {
-                        final byte[] buffer = new byte[data.length];
-                        final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                        while (buffer.length > 0) {
-                            final int bytesRead = gzis.read(buffer);
-                            if (bytesRead == -1) break;
-                            baos.write(buffer, 0, bytesRead);
-                        }
-                        return baos.toByteArray();
-                    } finally {
-                        gzis.close();
-                    }
-                }
-                case LZW:
-                {
-                    final ByteArrayInputStream bais = new ByteArrayInputStream(data);
-                    final LZWInputStream lzwis = new LZWInputStream(bais);
-                    try {
-                        final byte[] buffer = new byte[data.length];
-                        final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                        while (buffer.length > 0) {
-                            final int bytesRead = lzwis.read(buffer);
-                            if (bytesRead == -1) break;
-                            baos.write(buffer, 0, bytesRead);
-                        }
-                        return baos.toByteArray();
-                    } finally {
-                        lzwis.close();
-                    }
-                }
-                default:
-                    throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
-            }
-        } catch (final IOException e) {
-            final String dataB64 = Base64.encode(data);
-            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name() + " data " + dataB64, e);
-        }
-    }
-
     /**
      * Safely compares two byte arrays to prevent timing attacks.
      * 

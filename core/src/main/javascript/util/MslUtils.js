@@ -25,84 +25,22 @@
     var MslConstants = require('../MslConstants.js');
     var MslException = require('../MslException.js');
     var MslError = require('../MslError.js');
-    var Base64 = require('../util/Base64.js');
     
-    var lzw = require('../lib/lzw.js');
-    var zlib = require('zlib');
-
-    // Shortcuts
-    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
-
     /**
-     * Compress the provided data using the specified compression algorithm.
-     *
-     * @param {CompressionAlgorithm} compressionAlgo the compression algorithm.
-     * @param {Uint8Array} data the data to compress.
-     * @return {Uint8Array} the compressed data or null if the compressed data would be larger than the
-     *         uncompressed data.
-     * @throws MslException if there is an error compressing the data.
+     * <p>Returns true if the provided number is a safe integer.</p>
+     * 
+     * <p>A safe integer is an integer that:
+     * <ul>
+     * <li>can be exactly represented as an IEEE-754 double precision number</li>
+     * <li>whose IEEE-754 representation cannot be the result of rounding any other integer to fit the IEEE-754 representation</li>
+     * </ul></p>
+     * 
+     * @param {number} n the number to check.
      */
-    var MslUtils$compress = function MslUtils$compress(compressionAlgo, data) {
-        try {
-            switch (compressionAlgo) {
-                case CompressionAlgorithm.LZW:
-                {
-                    if (lzw && typeof lzw.compress === 'function') {
-                        var compressed = lzw.compress(data);
-                        return (compressed && compressed.length < data.length) ? compressed : null;
-                    }
-                    break;
-                }
-                case CompressionAlgorithm.GZIP:
-                {
-                    if (zlib && typeof zlib.deflateSync === 'function') {
-                        var deflated = zlib.deflateSync(data);
-                        return (deflated && deflated.length < data.length) ? deflated : null;
-                    }
-                    break;
-                }
-            }
-            throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo);
-        } catch (e) {
-            if (e instanceof MslException)
-                throw e;
-            var dataB64 = Base64.encode(data);
-            throw new MslException(MslError.COMPRESSION_ERROR, "algo " + compressionAlgo + " data " + dataB64, e);
-        }
-    };
-
-    /**
-     * Uncompress the provided data using the specified compression algorithm.
-     *
-     * @param {CompressionAlgorithm} compressionAlgo the compression algorithm.
-     * @param {Uint8Array} data the data to uncompress.
-     * @return {Uint8Array} the uncompressed data.
-     * @throws MslException if there is an error uncompressing the data.
-     */
-    var MslUtils$uncompress = function MslUtils$uncompress(compressionAlgo, data, callback) {
-        try {
-            switch (compressionAlgo) {
-                case CompressionAlgorithm.LZW:
-                {
-                    if (lzw && typeof lzw.extend === 'function')
-                        return lzw.extend(data);
-                    break;
-                }
-                case CompressionAlgorithm.GZIP:
-                {
-                    if (zlib && typeof zlib.inflateSync === "function")
-                        return zlib.inflateSync(data);
-                    break;
-                }
-            }
-            throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
-        } catch (e) {
-            if (e instanceof MslException)
-                throw e;
-            var dataB64 = Base64.encode(data);
-            throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo + " data " + dataB64, e);
-        }
-    };
+    function isSafeInteger(n) {
+        var isInteger = (typeof n === 'number' && isFinite(n) && Math.floor(n) == n);
+        return isInteger && Math.abs(n) <= Number.MAX_SAFE_INTEGER;
+    }
     
     /**
      * Safely compares two byte arrays to prevent timing attacks.
@@ -131,7 +69,7 @@
     function MslUtils$isPowerOf2(n) {
         // If the number is a power of two, a binary AND operation between
         // the number and itself minus one will equal zero.
-        if (!Number.isSafeInteger(n) || n < 0) return false;
+        if (!isSafeInteger(n) || n < 0) return false;
         if (n == 0) return true;
         return (n & (n - 1)) == 0;
     }
@@ -167,8 +105,6 @@
     }
 
     // Exports.
-    module.exports.compress = MslUtils$compress;
-    module.exports.uncompress = MslUtils$uncompress;
     module.exports.safeEquals = MslUtils$safeEquals;
     module.exports.getRandomLong = MslUtils$getRandomLong;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslUtils'));
