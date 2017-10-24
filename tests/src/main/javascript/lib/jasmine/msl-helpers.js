@@ -3,6 +3,7 @@ var isNodeJS = typeof window == "undefined" && typeof exports == "object";
 if (isNodeJS) {
     require('../../crypto/NodeRandom.js');
     require('../../crypto/NodeCrypto.js');
+    require('../../util/NodeGzipCompression.js');
     process.on('unhandledRejection', function(r) {
         console.log(r);
         if (r.stack) console.log(r.stack);

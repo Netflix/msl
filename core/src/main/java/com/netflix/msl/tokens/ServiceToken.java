@@ -32,8 +32,8 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
+import com.netflix.msl.util.MslCompression;
 import com.netflix.msl.util.MslContext;
-import com.netflix.msl.util.MslUtils;
 
 /**
  * <p>Service tokens are service-defined tokens carried as part of any MSL
@@ -182,7 +182,7 @@ public class ServiceToken implements MslEncodable {
         
         // Optionally compress the service data.
         if (compressionAlgo != null) {
-            final byte[] compressed = MslUtils.compress(compressionAlgo, data);
+            final byte[] compressed = MslCompression.compress(compressionAlgo, data);
             
             // Only use compression if the compressed data is smaller than the
             // uncompressed data.
@@ -333,7 +333,7 @@ public class ServiceToken implements MslEncodable {
                     ? cryptoContext.decrypt(ciphertext, encoder)
                     : ciphertext;
                 servicedata = (compressionAlgo != null)
-                    ? MslUtils.uncompress(compressionAlgo, compressedServicedata)
+                    ? MslCompression.uncompress(compressionAlgo, compressedServicedata)
                     : compressedServicedata;
             } else {
                 compressedServicedata = data;

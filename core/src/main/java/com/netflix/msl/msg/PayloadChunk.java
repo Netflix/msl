@@ -34,8 +34,8 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.util.Base64;
+import com.netflix.msl.util.MslCompression;
 import com.netflix.msl.util.MslContext;
-import com.netflix.msl.util.MslUtils;
 
 /**
  * <p>A payload chunk is a self-contained block of application data that is
@@ -126,7 +126,7 @@ public class PayloadChunk implements MslEncodable {
         // Optionally compress the application data.
         final byte[] payloadData;
         if (compressionAlgo != null) {
-            final byte[] compressed = MslUtils.compress(compressionAlgo, data);
+            final byte[] compressed = MslCompression.compress(compressionAlgo, data);
             
             // Only use compression if the compressed data is smaller than the
             // uncompressed data.
@@ -223,7 +223,7 @@ public class PayloadChunk implements MslEncodable {
             } else if (compressionAlgo == null) {
                 data = compressedData;
             } else {
-                data = MslUtils.uncompress(compressionAlgo, compressedData);
+                data = MslCompression.uncompress(compressionAlgo, compressedData);
             }
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "payload chunk payload " + Base64.encode(plaintext), e);
