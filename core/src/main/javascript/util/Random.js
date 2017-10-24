@@ -40,7 +40,7 @@
      * @param {object} the new crypto interface.
      */
     var Random$setCrypto = function Random$setCrypto(crypto) {
-    	nfCrypto = crypto;
+        nfCrypto = crypto;
     };
 
     /**
