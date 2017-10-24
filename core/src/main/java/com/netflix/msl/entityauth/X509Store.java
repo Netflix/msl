@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
@@ -311,6 +312,44 @@ public class X509Store {
         if (!certs.contains(cert))
             certs.add(cert);
     }
+
+    /**
+     * <p>Add a trusted certificate (in DER format, binary or Base64-encoded)
+     * and its corresponding private key to this X509Store.</p>
+     * 
+     * <p>This method verifies the certificate. That has the effect of
+     * requiring the CA root certificate to be added before any subordinate
+     * CA certificates.</p>
+     * 
+     * <p>To add a certificate chain, use {@link #addTrusted(List)} instead.</p>
+     * 
+     * @param cert the X.509 certificate to add.
+     * @param privkey matching private key to add.
+     * @throws CertificateExpiredException if the certificate is expired.
+     * @throws CertificateNotYetValidException if the certificate is not yet
+     *         valid.
+     * @throws CertificateException if the certificate is not a CA certificate,
+     *         the certificate is not self-signed and not trusted by an
+     *         existing trusted certificate, or the certificate is not
+     *         permitted as a subordinate certificate, or the certificate is
+     *         malformed.
+     * @throws SignatureException if the certificate signature cannot be or
+     *         fails to verify for any reason including a malformed certificate.
+     * @throws NoSuchAlgorithmException if the signature algorithm is
+     *         unsupported.
+     * @throws InvalidKeyException if a certificate public key is invalid.
+     * @throws NoSuchProviderException if there is no X.509 certificate
+     *         provider.
+     * @see #getPrivateKey(X509Certificate)
+     */
+    public void addTrusted(final X509Certificate cert, final PrivateKey privkey) throws CertificateExpiredException, CertificateNotYetValidException, CertificateException, SignatureException, InvalidKeyException, NoSuchAlgorithmException, NoSuchProviderException {
+        // Add the certificate.
+        addTrusted(cert);
+        
+        // Add the private key.
+        final X500Principal subjectName = cert.getSubjectX500Principal();
+        privateKeys.put(subjectName, privkey);
+    }
     
     /**
      * <p>Return true if the provided certificate is valid and accepted by a
@@ -326,7 +365,21 @@ public class X509Store {
         cert.checkValidity();
         return isVerified(cert);
     }
+    
+    /**
+     * <p>Return the private key associated with the provided certificate.</p>
+     *  
+     * @param cert the certificate.
+     * @return the private key or null if not found.
+     * @see #addTrusted(X509Certificate, PrivateKey)
+     */
+    public PrivateKey getPrivateKey(final X509Certificate cert) {
+        final X500Principal subjectName = cert.getSubjectX500Principal();
+        return privateKeys.get(subjectName);
+    }
 
     /** Map of certificate subject names onto X.509 certificates. */
     private final Map</*SubjectName*/X500Principal, List<X509Certificate>> store = new HashMap<X500Principal, List<X509Certificate>>();
+    /** Map of certificate subject names onto private keys. */
+    private final Map</*SubjectName*/X500Principal, PrivateKey> privateKeys = new HashMap<X500Principal, PrivateKey>();
 }
