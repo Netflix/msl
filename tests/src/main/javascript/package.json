@@ -17,8 +17,6 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run all",
-    "test": "find ../../test/javascript -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions lib/jasmine/msl-helpers.js",
     "lint": "find -E ../.. -type f -name '*.js' ! -regex '.*/(jasmine|jasmine\\-html)\\.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose",
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
@@ -43,10 +41,8 @@
       "Buffer"
     ]
   },
-  "dependencies": {
-    "jsrsasign": "^7.2.2"
-  },
   "devDependencies": {
+    "jsrsasign": "^7.2.2",
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
     "jshint": "^2.9.5",
