@@ -26,7 +26,7 @@
 #include <crypto/Key.h>
 #include <crypto/Random.h>
 #include <crypto/SymmetricCryptoContext.h>
-#include <util/MslUtils.h>
+#include <util/MslCompression.h>
 #include <fstream>
 #include <memory>
 #include <sstream>
@@ -252,7 +252,7 @@ TEST_F(PayloadChunkTest, gzipMslObject)
 	EXPECT_EQ(END_OF_MSG, payloadMo->optBoolean(KEY_END_OF_MESSAGE));
 	EXPECT_EQ(CompressionAlgorithm::GZIP.toString(), payloadMo->getString(KEY_COMPRESSION_ALGORITHM));
 	shared_ptr<ByteArray> gzipped = payloadMo->getBytes(KEY_DATA);
-	shared_ptr<ByteArray> plaintext = MslUtils::uncompress(CompressionAlgorithm::GZIP, *gzipped);
+	shared_ptr<ByteArray> plaintext = MslCompression::uncompress(CompressionAlgorithm::GZIP, *gzipped);
 	EXPECT_EQ(*DATA, *plaintext);
 }
 /* LZW not supported
@@ -296,7 +296,7 @@ TEST_F(PayloadChunkTest, lzwMslObject)
 	EXPECT_EQ(END_OF_MSG, payloadMo->optBoolean(KEY_END_OF_MESSAGE));
 	EXPECT_EQ(CompressionAlgorithm::LZW.toString(), payloadMo->getString(KEY_COMPRESSION_ALGORITHM));
 	shared_ptr<ByteArray> gzipped = payloadMo->getBytes(KEY_DATA);
-	shared_ptr<ByteArray> plaintext = MslUtils::uncompress(CompressionAlgorithm::LZW, *gzipped);
+	shared_ptr<ByteArray> plaintext = MslCompression::uncompress(CompressionAlgorithm::LZW, *gzipped);
 	EXPECT_EQ(*DATA, *plaintext);
 }
 */
