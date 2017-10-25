@@ -36,6 +36,8 @@
 	var ByteArrayInputStream = require('../io/ByteArrayInputStream.js');
 	var ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
 	var BlockingQueue = require('../util/BlockingQueue.js');
+	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
+	
 	var textEncoding = require('../lib/textEncoding.js');
 	
     /**
@@ -249,6 +251,8 @@
         mark: function mark() {
             if (this._buffer)
                 this._buffer.mark();
+            // If the buffer doesn't exist yet, it is implicitly marked as that
+            // is the behavior of ByteArrayInputStream.
         },
 
         /** @inheritDoc */
@@ -259,8 +263,9 @@
 
         /** @inheritDoc */
         markSupported: function markSupported() {
-            if (this._buffer)
-                return this._buffer.markSupported();
+            // ByteArrayInputStream supports mark, and we must support mark for
+            // the JSON hack to work.
+            return true;
         },
 
         /**
@@ -321,6 +326,8 @@
                     this._out.getResponse({
                         result: function(result) {
                             InterruptibleExecutor(callback, function() {
+                                var content;
+                                
                                 if (result.isTimeout) {
                                     this._timedout = true;
                                     callback.timeout();
@@ -341,20 +348,19 @@
                                 // This is a platform hack that allows the
                                 // stream to return already-parsed JSON.
                                 //
-                                // Return null immediately to indicate no data
-                                // is available (end-of-stream). If the caller
-                                // knows about this hack, it will ignore the
-                                // null return value and check for the JSON
-                                // first.
+                                // Use the JSON byte stream identifier as the
+                                // content to imply JSON is available. If the
+                                // caller knows about this hack, it will not
+                                // try to read additional bytes and check for
+                                // the JSON instead.
                                 if (result.response.json !== undefined) {
                                     this._json = result.response.json;
-                                    return null;
+                                    content = new Uint8Array([MslEncoderFormat.JSON.identifier]);
                                 }
                                 
                                 // Retrieve the raw bytes if available,
                                 // otherwise convert the string value to bytes.
-                                var content;
-                                if (result.response.content instanceof Uint8Array)
+                                else if (result.response.content instanceof Uint8Array)
                                     content = result.response.content;
                                 else if (typeof result.response.body === 'string')
                                     content = textEncoding.getBytes(result.response.body, UTF_8);
@@ -366,7 +372,7 @@
                                 this._buffer.read(len, timeout, callback);
                             }, self);
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 }, self);
             }
