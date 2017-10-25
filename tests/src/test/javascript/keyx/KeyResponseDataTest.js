@@ -33,6 +33,7 @@ describe("KeyResponseData", function() {
     var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -63,7 +64,7 @@ describe("KeyResponseData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 1200);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
             	encoder = ctx.getMslEncoderFactory();
@@ -72,7 +73,7 @@ describe("KeyResponseData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return MASTER_TOKEN; }, "master token", 100);
+            waitsFor(function() { return MASTER_TOKEN; }, "master token", MslTestConstants.TIMEOUT);
             
             runs(function() {
             	MslTestUtils.toMslObject(encoder, MASTER_TOKEN, {
@@ -80,7 +81,7 @@ describe("KeyResponseData", function() {
             		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             	});
             });
-            waitsFor(function() { return MASTER_TOKEN_MO; }, "master token MSL object", 100);
+            waitsFor(function() { return MASTER_TOKEN_MO; }, "master token MSL object", MslTestConstants.TIMEOUT);
             
             runs(function() { initialized = true; });
         }
@@ -98,7 +99,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -118,7 +119,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -138,7 +139,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -158,7 +159,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
         	});
         });
-        waitsFor(function() { return keydata; }, "keydata", 100);
+        waitsFor(function() { return keydata; }, "keydata", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -171,7 +172,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -191,7 +192,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -207,7 +208,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -222,7 +223,7 @@ describe("KeyResponseData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };

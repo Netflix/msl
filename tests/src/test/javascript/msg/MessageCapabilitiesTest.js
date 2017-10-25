@@ -26,6 +26,7 @@ describe("MessageCapabilities", function() {
     var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
     var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -57,7 +58,7 @@ describe("MessageCapabilities", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -79,7 +80,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moCaps, moEncode;
         runs(function() {
@@ -94,7 +95,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -120,7 +121,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moCaps, moEncode;
         runs(function() {
@@ -135,7 +136,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -155,7 +156,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var ma = mo.getMslArray(KEY_COMPRESSION_ALGOS);
@@ -182,7 +183,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moCaps, moEncode;
         runs(function() {
@@ -195,7 +196,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -221,7 +222,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return encode; }, "encode", 100);
+        waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
         
         var moCaps, moEncode;
         runs(function() {
@@ -234,7 +235,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return moEncode; }, "moEncode", 100);
+        waitsFor(function() { return moEncode; }, "moEncode", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(moEncode).not.toBeNull();
@@ -260,7 +261,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return capsA2; }, "capsA2", 100);
+        waitsFor(function() { return capsA2; }, "capsA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(capsA.equals(capsA)).toBeTruthy();
@@ -291,7 +292,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return capsA2; }, "capsA2", 100);
+        waitsFor(function() { return capsA2; }, "capsA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(capsA.equals(capsA)).toBeTruthy();
@@ -322,7 +323,7 @@ describe("MessageCapabilities", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return capsA2; }, "capsA2", 100);
+        waitsFor(function() { return capsA2; }, "capsA2", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(capsA.equals(capsA)).toBeTruthy();

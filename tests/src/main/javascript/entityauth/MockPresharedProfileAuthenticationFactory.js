@@ -32,6 +32,7 @@
     var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
     var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
     var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
     var MockKeySetStore = require('../entityauth/MockKeySetStore.js');
     var MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');

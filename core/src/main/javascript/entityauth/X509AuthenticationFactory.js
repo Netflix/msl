@@ -80,9 +80,12 @@
 	                e.setEntityAuthenticationData(authdata);
 	            throw e;
 	        }
+	        
+            // Grab the optional private key.
+            var privkey = this.store.getPrivateKey(cert);
 	
 	        // Return the crypto context.
-	        return new RsaCryptoContext(ctx, identity, null, publicKey, RsaCryptoContext.Mode.SIGN_VERIFY);
+	        return new RsaCryptoContext(ctx, identity, privkey, publicKey, RsaCryptoContext.Mode.SIGN_VERIFY);
 	    },
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('X509AuthenticationFactory'));

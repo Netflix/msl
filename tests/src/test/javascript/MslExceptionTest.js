@@ -218,25 +218,25 @@ describe("MslException", function() {
     });
 
     it("set message ID", function() {
-    	var e = new MslException(MslError.MSL_PARSE_ERROR);
+        var e = new MslException(MslError.MSL_PARSE_ERROR);
         expect(e.messageId).toBeUndefined();
         e.messageId = 1;
         expect(e.messageId).toEqual(1);
     });
 
     it("negative message ID", function() {
-    	var f = function() {
-    		var e = new MslException(MslError.MSL_PARSE_ERROR);
-    		e.messageId = -1;
-    	};
-    	expect(f).toThrow(new RangeError());
+        var f = function() {
+            var e = new MslException(MslError.MSL_PARSE_ERROR);
+            e.messageId = -1;
+        };
+        expect(f).toThrow(new RangeError());
     });
 
     it("too large message ID", function() {
-    	var f = function() {
-    		var e = new MslException(MslError.MSL_PARSE_ERROR);
-    		e.messageId = MslConstants.MAX_LONG_VALUE + 2;
-    	};
-    	expect(f).toThrow(new RangeError());
+        var f = function() {
+            var e = new MslException(MslError.MSL_PARSE_ERROR);
+            e.messageId = MslConstants.MAX_LONG_VALUE + 2;
+        };
+        expect(f).toThrow(new RangeError());
     });
 });

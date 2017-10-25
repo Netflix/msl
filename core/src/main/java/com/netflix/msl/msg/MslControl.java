@@ -335,7 +335,7 @@ public class MslControl {
             }
 
             @Override
-            protected MslTokenizer generateTokenizer(final InputStream source, MslEncoderFormat format) {
+            protected MslTokenizer generateTokenizer(final InputStream source, final MslEncoderFormat format) {
                 throw new MslInternalException("DummyMslEncoderFactory.generateTokenizer() not supported.");
             }
 
@@ -1984,7 +1984,7 @@ public class MslControl {
         
         // If the application data needs to be encrypted and the builder will
         // not encrypt payloads, or the application data needs to be integrity
-        // protected and the bulder will not integrity protect payloads, or if
+        // protected and the builder will not integrity protect payloads, or if
         // the master token is expired, or if the message is to be sent with
         // user authentication data and the builder will not encrypt and
         // integrity protect the header, then we must either mark this message

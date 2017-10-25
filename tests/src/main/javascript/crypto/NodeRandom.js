@@ -32,7 +32,7 @@
          * 
          * @param {Uint8Array} b the array buffer.
          */
-        getRandomValues(b) {
+        getRandomValues: function getRandomValues(b) {
             var bytes = crypto.randomBytes(b.length);
             b.set(bytes);
         },

@@ -3,6 +3,7 @@ var isNodeJS = typeof window == "undefined" && typeof exports == "object";
 if (isNodeJS) {
     require('../../crypto/NodeRandom.js');
     require('../../crypto/NodeCrypto.js');
+    require('../../util/NodeGzipCompression.js');
     process.on('unhandledRejection', function(r) {
         console.log(r);
         if (r.stack) console.log(r.stack);
@@ -73,7 +74,7 @@ jasmine.Env.prototype.xparameterize = function(desc, paramDefinitions, specDefin
 var parameterize = function(description, paramDefinitions, specDefinitions) {
     return jasmine.getEnv().parameterize(description, paramDefinitions, specDefinitions);
 };
-if (isNodeJS) exports.parameterize = parameterize;
+if (isNodeJS) module.exports.parameterize = parameterize;
 
 /**
  * Disables a parameterized suite of specifications.  Used to disable some suites in a file, or files, temporarily during development.
@@ -85,7 +86,7 @@ if (isNodeJS) exports.parameterize = parameterize;
 var xparameterize = function(description, paramDefinitions, specDefinitions) {
   return jasmine.getEnv().xparameterize(description, paramDefinitions, specDefinitions);
 };
-if (isNodeJS) exports.xparameterize = xparameterize;
+if (isNodeJS) module.exports.xparameterize = xparameterize;
 
 /**
  * Matcher that checks that the expected exception was thrown by the actual.

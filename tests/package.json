@@ -1,7 +1,6 @@
 {
-  "name": "msl-tests",
-  "version": "1.1215.0",
-  "description": "Message Security Layer Tests",
+  "name": "msl-tests-exec",
+  "description": "Message Security Layer Tests Execution",
   "keywords": [
     "msl",
     "message security layer",
@@ -17,34 +16,10 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run all",
-    "test": "find src/test -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions src/main/javascript/lib/jasmine/msl-helpers.js",
-    "lint": "find src/test -type f -name '*.js' | xargs jshint --verbose",
-    "version": "echo `git describe --dirty`",
-    "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
-  },
-  "jshintConfig": {
-    "sub": true,
-    "expr": true,
-    "undef": true,
-    "typed": true,
-    "jasmine": true,
-    "predef": [
-      "window",
-      "console",
-      "setTimeout",
-      "clearTimeout",
-      "require",
-      "module",
-      "mkmodule",
-      "Promise",
-      "parameterize"
-    ]
-  },
-  "dependencies": {
-    "jsrsasign": "^7.2.2"
+    "test": "find ./src/test/javascript -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./src/main/javascript/lib/jasmine/msl-helpers.js"
   },
   "devDependencies": {
+    "jsrsasign": "^7.2.2",
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
     "jshint": "^2.9.5",

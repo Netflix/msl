@@ -36,6 +36,7 @@ describe("JsonWebEncryptionCryptoContext", function() {
 
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -241,7 +242,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY && RSA_PUBLIC_KEY && RSA_PRIVATE_KEY && AES_WRAP_KEY; }, "static initialization", 600);
+            waitsFor(function() { return ctx && AES_128_KEY && HMAC_256_KEY && RSA_PUBLIC_KEY && RSA_PRIVATE_KEY && AES_WRAP_KEY; }, "static initialization", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 SYMMETRIC_CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, KEY_ID, AES_128_KEY, HMAC_256_KEY, null);
@@ -267,7 +268,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var unwrapped;
             runs(function() {
@@ -278,7 +279,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped not received", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped not received", MslTestConstants.TIMEOUT);
             
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -294,7 +295,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext;
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, {
@@ -306,7 +307,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
             });
@@ -320,7 +321,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             var unwrapped;
             runs(function() {
                 expect(wrapped).not.toBeNull();
@@ -330,7 +331,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped not received", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped not received", MslTestConstants.TIMEOUT);
          
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -346,7 +347,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", 100);
+            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapHmac).toEqual(refHmac);
             });
@@ -361,7 +362,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -376,7 +377,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -386,7 +387,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -401,7 +402,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -411,7 +412,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -426,7 +427,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -436,7 +437,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -451,7 +452,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -461,7 +462,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -476,7 +477,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -486,7 +487,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -501,7 +502,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -511,7 +512,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -526,7 +527,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -536,7 +537,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -551,7 +552,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -561,7 +562,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -576,7 +577,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -586,7 +587,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -601,7 +602,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -611,7 +612,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -626,7 +627,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -636,7 +637,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -651,7 +652,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -661,7 +662,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -676,7 +677,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -686,7 +687,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -701,7 +702,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -739,7 +740,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -754,7 +755,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -768,7 +769,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -783,7 +784,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -796,7 +797,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -811,7 +812,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -825,7 +826,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -840,7 +841,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -853,7 +854,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -868,7 +869,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -880,7 +881,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -895,7 +896,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -907,7 +908,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -922,7 +923,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
 
             var ecek;
             runs(function() {
@@ -933,7 +934,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ecek; }, "ecek not received", 100);
+            waitsFor(function() { return ecek; }, "ecek not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -943,7 +944,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -958,7 +959,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -970,7 +971,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -995,7 +996,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             var unwrapped;
             runs(function() {
                 expect(wrapped).not.toBeNull();
@@ -1005,7 +1006,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped not received", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped not received", MslTestConstants.TIMEOUT);
          
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -1021,7 +1022,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", 100);
+            waitsFor(function() { return refCiphertext && wrapCiphertext; }, "ciphertexts", MslTestConstants.TIMEOUT);
             var refPlaintext, wrapPlaintext;
             runs(function() {
                 SYMMETRIC_CRYPTO_CONTEXT.decrypt(wrapCiphertext, {
@@ -1033,7 +1034,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", 100);
+            waitsFor(function() { return refPlaintext && wrapPlaintext; }, "plaintexts", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapPlaintext).toEqual(refPlaintext);
             });
@@ -1047,7 +1048,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             var unwrapped;
             runs(function() {
                 expect(wrapped).not.toBeNull();
@@ -1057,7 +1058,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return unwrapped; }, "unwrapped not received", 100);
+            waitsFor(function() { return unwrapped; }, "unwrapped not received", MslTestConstants.TIMEOUT);
             
             // We must verify the unwrapped key by performing a crypto
             // operation as the wrapped key is not exportable.
@@ -1073,7 +1074,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", 100);
+            waitsFor(function() { return refHmac && wrapHmac; }, "hmacs", MslTestConstants.TIMEOUT);
             runs(function() {
                 expect(wrapHmac).toEqual(refHmac);
             });
@@ -1088,7 +1089,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1103,7 +1104,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1113,7 +1114,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1128,7 +1129,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1138,7 +1139,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1153,7 +1154,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1163,7 +1164,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1178,7 +1179,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1188,7 +1189,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1203,7 +1204,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1213,7 +1214,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1228,7 +1229,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1238,7 +1239,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1253,7 +1254,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
 
             var exception;
             runs(function() {
@@ -1263,7 +1264,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1278,7 +1279,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1288,7 +1289,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1303,7 +1304,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1313,7 +1314,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1328,7 +1329,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1338,7 +1339,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1353,7 +1354,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1363,7 +1364,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1378,7 +1379,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1388,7 +1389,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1403,7 +1404,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1413,7 +1414,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1428,7 +1429,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1466,7 +1467,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1481,7 +1482,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1495,7 +1496,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1510,7 +1511,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1523,7 +1524,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1538,7 +1539,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1552,7 +1553,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1567,7 +1568,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1580,7 +1581,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1595,7 +1596,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1607,7 +1608,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1622,7 +1623,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1634,7 +1635,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1649,7 +1650,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
 
             var ecek;
             runs(function() {
@@ -1660,7 +1661,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ecek; }, "ecek not received", 100);
+            waitsFor(function() { return ecek; }, "ecek not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1670,7 +1671,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1685,7 +1686,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             
             var exception;
             runs(function() {
@@ -1697,7 +1698,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));
@@ -1722,11 +1723,11 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return secretKey; }, "secretKey", 100);
+                waitsFor(function() { return secretKey; }, "secretKey", MslTestConstants.TIMEOUT);
                 runs(function() {
                     cryptoContext = new JsonWebEncryptionCryptoContext(ctx, Algorithm.RSA_OAEP, Encryption.A128GCM, secretKey);
                 });
-                waitsFor(function() { return cryptoContext; }, "crypto context", 100);
+                waitsFor(function() { return cryptoContext; }, "crypto context", MslTestConstants.TIMEOUT);
                 runs(function() { initialized = true; });
             }
         });
@@ -1739,7 +1740,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.ENCRYPT_NOT_SUPPORTED));
@@ -1754,7 +1755,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.DECRYPT_NOT_SUPPORTED));
@@ -1769,7 +1770,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.SIGN_NOT_SUPPORTED));
@@ -1784,7 +1785,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.VERIFY_NOT_SUPPORTED));
@@ -1802,7 +1803,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return wrapped; }, "wrapped not received", 100);
+            waitsFor(function() { return wrapped; }, "wrapped not received", MslTestConstants.TIMEOUT);
             var exception;
             runs(function() {
                 cryptoContextB.unwrap(wrapped, WebCryptoAlgorithm.AES_CBC, WebCryptoUsage.ENCRYPT_DECRYPT, encoder, {
@@ -1810,7 +1811,7 @@ if (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY) {
                     error: function(e) { exception = e; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 100);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.UNWRAP_ERROR));

@@ -30,6 +30,7 @@ describe("EccCryptoContext", function() {
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** ECC public key A. */
@@ -125,7 +126,7 @@ describe("EccCryptoContext", function() {
                     error:  function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx && publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "static initialization", 1500);
+            waitsFor(function() { return ctx && publicKeyA && privateKeyA && publicKeyB && privateKeyB; }, "static initialization", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
                 initialized = true;
@@ -153,7 +154,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signatureA && signatureB; }, "signatures", 300);
+            waitsFor(function() { return signatureA && signatureB; }, "signatures", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(signatureA).not.toBeNull();
                 expect(signatureA.length).toBeGreaterThan(0);
@@ -177,7 +178,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", 300);
+            waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(verifiedAA).toBeTruthy();
                 expect(verifiedBB).toBeTruthy();
@@ -195,7 +196,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
             var verified;
             runs(function() {
                 cryptoContextB.verify(message, signature, encoder, {
@@ -203,7 +204,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return verified !== undefined; }, "verified", 300);
+            waitsFor(function() { return verified !== undefined; }, "verified", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 expect(verified).toBeFalsy();
             });
@@ -218,7 +219,7 @@ describe("EccCryptoContext", function() {
                     error: function(err) { exception = err; }
                 });
             });
-            waitsFor(function() { return exception; }, "exception", 300);
+            waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT_CRYPTO);
             runs(function() {
                 var f = function() { throw exception; };
                 expect(f).toThrow(new MslCryptoException(MslError.SIGN_NOT_SUPPORTED));
@@ -234,7 +235,7 @@ describe("EccCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
             });
-            waitsFor(function() { return signature; }, "signature", 300);
+            waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT_CRYPTO);
 
             var exception;
             runs(function() {

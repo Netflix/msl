@@ -63,7 +63,6 @@
 	var MslEncodable = require('../io/MslEncodable.js');
 	var MslConstants = require('../MslConstants.js');
 	var MslInternalException = require('../MslInternalException.js');
-	var MslUtils = require('../util/MslUtils.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
 	var MslCryptoException = require('../MslCryptoException.js');
 	var MslEncoderException = require('../io/MslEncoderException.js');
@@ -72,6 +71,7 @@
 	var MslMessageException = require('../MslMessageException.js');
 	var MslException = require('../MslException.js');
 	var Base64 = require('../util/Base64.js');
+	var MslCompression = require('../util/MslCompression.js');
 	
     /**
      * Key payload.
@@ -161,7 +161,7 @@
                 // Optionally compress the application data.
                 var payloadData;
                 if (compressionAlgo) {
-                    var compressed = MslUtils.compress(compressionAlgo, data);
+                    var compressed = MslCompression.compress(compressionAlgo, data);
 
                     // Only use compression if the compressed data is smaller than the
                     // uncompressed data.
@@ -386,7 +386,7 @@
                     } else if (compressionAlgo == null) {
                         data = compressedData;
                     } else {
-                        data = MslUtils.uncompress(compressionAlgo, compressedData);
+                        data = MslCompression.uncompress(compressionAlgo, compressedData);
                     }
                     
                     // Return the payload chunk.

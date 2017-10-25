@@ -22,6 +22,7 @@
     var X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
     var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     
 	/** X.509 private key. */
     var X509_PRIVATE_KEY =
@@ -64,7 +65,6 @@
     	"qKgnMxjK/eFOXwgEH33mfgzZWIVpsp3B689Cay6hpK1O2m2K2zLZhL7U3vNBQesB\n" +
     	"fk8SjxFv79piknm0xE1kPJFvvwtiMRGj4FsPYQ==\n" +
     	"-----END CERTIFICATE-----";
-;
     
     /**
      * X.509 ESN.
@@ -86,16 +86,16 @@
     var X509_PRIVKEY;
     
     try {
-    	X509_CERT = new X509();
-    	X509_CERT.readCertPEM(X509_SELF_SIGNED_CERT);
-    	X509_ESN = X509_CERT.getSubjectString();
-    	
+        X509_CERT = new X509();
+        X509_CERT.readCertPEM(X509_SELF_SIGNED_CERT);
+        X509_ESN = X509_CERT.getSubjectString();
+
         // TODO: implement
         // var rsaPrivKey = new RSAKey();
-    	// rsaPrivKey.readPrivateKeyFromPEMString(X509_PRIVATE_KEY);
-    	// X509_PRIVKEY = PrivateKey$create(rsaPrivKey, {result: });
+        // rsaPrivKey.readPrivateKeyFromPEMString(X509_PRIVATE_KEY);
+        // X509_PRIVKEY = PrivateKey$create(rsaPrivKey, {result: });
     } catch (e) {
-    	throw new MslInternalException("Hard-coded X.509 private key and self-signed certificate failure.", e);
+        throw new MslInternalException("Hard-coded X.509 private key and self-signed certificate failure.", e);
     }
 
     /**

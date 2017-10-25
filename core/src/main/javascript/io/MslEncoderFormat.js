@@ -33,24 +33,23 @@
     var formatsByName = {};
     /**
      * Map of identifiers onto formats.
-     * @type {Object<Uint8Array,MslEncodingFormat>}
+     * @type {Object<number,MslEncodingFormat>}
      */
     var formatsById = {};
     
     /**
      * JSON identifier.
-     * @type {Uint8Array}
+     * @type {number}
      * @const
      */
-    var JSON_IDENTIFIER = new Uint8Array(1);
-    JSON_IDENTIFIER[0] = 0x7b; // '{'
+    var JSON_IDENTIFIER = 0x7b; // '{'
 
     /**
      * Define an encoding format with the specified name and byte stream
      * identifier.
      * 
      * @param {string} name the encoder format name.
-     * @param {Uint8Array} identifier the byte stream identifier.
+     * @param {number} identifier the byte stream identifier.
      */
     var MslEncoderFormat = module.exports = function MslEncoderFormat(name, identifier) {
         // The properties.
@@ -72,7 +71,7 @@
         JSON : new MslEncoderFormat("JSON", JSON_IDENTIFIER),
         
         /**
-         * @param {string|Uint8Array} f the encoding format name or identifier.
+         * @param {string|number} f the encoding format name or identifier.
          * @return {MslEncoderFormat} the encoding format identified by the specified name or
          *         identifier, or {@code null} if there is none.
          */

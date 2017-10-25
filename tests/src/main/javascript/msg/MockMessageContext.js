@@ -128,7 +128,7 @@
 	                    throw new MslInternalException("Unsupported authentication type: " + scheme.name);
 	                }
 
-	                var keyRequestData = new Array();
+	                var keyRequestData = [];
 	                {
 	                    /* FIXME: Need Web Crypto Diffie-Hellman
 	                    var paramSpecs = ctx.getDhParameterSpecs();

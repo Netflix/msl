@@ -17,8 +17,7 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run all",
-    "lint": "find -E src/main/javascript -type f -name '*.js' ! -regex '.*/(jsrsasign|clarinet|promise).js' | xargs jshint --verbose",
+    "lint": "find -E . -type f -name '*.js' ! -regex '.*/(jsrsasign|clarinet|promise)\\.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose",
     "version": "echo `git describe --dirty`",
     "jsdoc": "rm -rf ./jsdoc && jsdoc ./* -c ./jsdoc_conf.json || echo $?"
   },
@@ -38,11 +37,9 @@
       "Promise"
     ]
   },
-  "dependencies": {
-    "clarinet": "^0.11.0",
-    "jsrsasign": "^7.2.2"
-  },
   "devDependencies": {
+    "clarinet": "^0.11.0",
+    "jsrsasign": "^7.2.2",
     "jshint": "^2.9.5"
   }
 }

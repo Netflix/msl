@@ -15,6 +15,7 @@
  */
 package com.netflix.msl.entityauth;
 
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
@@ -91,8 +92,11 @@ public class X509AuthenticationFactory extends EntityAuthenticationFactory {
             throw new MslEntityAuthException(MslError.X509CERT_NOT_YET_VALID, cert.toString(), e).setEntityAuthenticationData(x509ad);
         }
         
+        // Grab the optional private key.
+        final PrivateKey privkey = caStore.getPrivateKey(cert);
+        
         // Return the crypto context.
-        return new RsaCryptoContext(ctx, identity, null, publicKey, Mode.SIGN_VERIFY);
+        return new RsaCryptoContext(ctx, identity, privkey, publicKey, Mode.SIGN_VERIFY);
     }
 
     /** X.509 CA store. */

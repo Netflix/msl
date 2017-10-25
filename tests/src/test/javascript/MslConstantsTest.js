@@ -15,43 +15,43 @@
  */
 describe("MslConstants", function() {
     var MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
-    
+
     describe("MslConstants.DEFAULT_CHARSET", function() {
-    	it("encoding is UTF-8", function() {
-    		expect(MslConstants.DEFAULT_CHARSET).toEqual("utf-8");
-    	});
+        it("encoding is UTF-8", function() {
+            expect(MslConstants.DEFAULT_CHARSET).toEqual("utf-8");
+        });
     });
-    
+
     describe("MslConstants.ResponseCode", function() {
-    	it("fail equals 1", function() {
-    		expect(MslConstants.ResponseCode.FAIL).toEqual(1);
-    	});
-    	it("transient failure equals 2", function() {
-    		expect(MslConstants.ResponseCode.TRANSIENT_FAILURE).toEqual(2);
-    	});
-    	it("entity reauth equals 3", function() {
-    		expect(MslConstants.ResponseCode.ENTITY_REAUTH).toEqual(3);
-    	});
-    	it("user reauth equals 4", function() {
-    		expect(MslConstants.ResponseCode.USER_REAUTH).toEqual(4);
-    	});
-    	it("keyx required equals 5", function() {
-    		expect(MslConstants.ResponseCode.KEYX_REQUIRED).toEqual(5);
-    	});
-    	it("entity data reauth equals 6", function() {
-    		expect(MslConstants.ResponseCode.ENTITYDATA_REAUTH).toEqual(6);
-    	});
-    	it("user data reauth equals 7", function() {
-    		expect(MslConstants.ResponseCode.USERDATA_REAUTH).toEqual(7);
-    	});
-    	it("expired equals 8", function() {
-    		expect(MslConstants.ResponseCode.EXPIRED).toEqual(8);
-    	});
-    	it("replayed equals 9", function() {
-    		expect(MslConstants.ResponseCode.REPLAYED).toEqual(9);
-    	});
-    	it("sso token rejected equals 10", function() {
-    		expect(MslConstants.ResponseCode.SSOTOKEN_REJECTED).toEqual(10);
-    	});
+        it("fail equals 1", function() {
+            expect(MslConstants.ResponseCode.FAIL).toEqual(1);
+        });
+        it("transient failure equals 2", function() {
+            expect(MslConstants.ResponseCode.TRANSIENT_FAILURE).toEqual(2);
+        });
+        it("entity reauth equals 3", function() {
+            expect(MslConstants.ResponseCode.ENTITY_REAUTH).toEqual(3);
+        });
+        it("user reauth equals 4", function() {
+            expect(MslConstants.ResponseCode.USER_REAUTH).toEqual(4);
+        });
+        it("keyx required equals 5", function() {
+            expect(MslConstants.ResponseCode.KEYX_REQUIRED).toEqual(5);
+        });
+        it("entity data reauth equals 6", function() {
+            expect(MslConstants.ResponseCode.ENTITYDATA_REAUTH).toEqual(6);
+        });
+        it("user data reauth equals 7", function() {
+            expect(MslConstants.ResponseCode.USERDATA_REAUTH).toEqual(7);
+        });
+        it("expired equals 8", function() {
+            expect(MslConstants.ResponseCode.EXPIRED).toEqual(8);
+        });
+        it("replayed equals 9", function() {
+            expect(MslConstants.ResponseCode.REPLAYED).toEqual(9);
+        });
+        it("sso token rejected equals 10", function() {
+            expect(MslConstants.ResponseCode.SSOTOKEN_REJECTED).toEqual(10);
+        });
     });
 });

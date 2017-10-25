@@ -198,7 +198,7 @@
 		                entityAuthData = new UnauthenticatedSuffixedAuthenticationData("MOCKUNAUTH-ROOT", "MOCKUNAUTH-SUFFIX");
 		            } else {
 		                throw new MslInternalException("Unsupported authentication type: " + scheme);
-		            };
+		            }
 
 		            // Set message capabilities.
 		            var capabilities = new MessageCapabilities([MslConstants.CompressionAlgorithm.LZW], [ "en-US" ], [MslEncoderFormat.JSON]);
@@ -213,7 +213,7 @@
 		            var paramSpecs = MockDiffieHellmanParameters.getDefaultParameters();
 
 		            // Set up key exchange factories.
-		            var keyxFactories = new Array();
+		            var keyxFactories = [];
 		            keyxFactories.push(new AsymmetricWrappedExchange(authutils));
 		            keyxFactories.push(new SymmetricWrappedExchange(authutils));
 		            keyxFactories.push(new DiffieHellmanExchange(paramSpecs, authutils));

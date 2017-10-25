@@ -31,6 +31,7 @@ describe("EntityAuthenticationData", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     
     /** Key entity authentication scheme. */
@@ -52,7 +53,7 @@ describe("EntityAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -72,7 +73,7 @@ describe("EntityAuthenticationData", function() {
 	            error: function(e) { exception = e; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
     	
         runs(function() {
             var f = function() { throw exception; };
@@ -91,7 +92,7 @@ describe("EntityAuthenticationData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -110,7 +111,7 @@ describe("EntityAuthenticationData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
             var f = function() { throw exception; };
@@ -126,7 +127,7 @@ describe("EntityAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -139,7 +140,7 @@ describe("EntityAuthenticationData", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };

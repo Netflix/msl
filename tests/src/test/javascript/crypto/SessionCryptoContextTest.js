@@ -30,6 +30,7 @@ describe("SessionCryptoContext", function() {
     var MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
     var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
@@ -74,20 +75,20 @@ describe("SessionCryptoContext", function() {
 		var renewalWindow = new Date(Date.now() + 1000);
 		var expiration = new Date(Date.now() + 2000);
         var identity = MockPresharedAuthenticationFactory.PSK_ESN;
-        
+
         MasterToken.create(ctx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, signatureKey, {
-        	result: function(masterToken) {
-        	    var mo = MslTestUtils.toMslObject(encoder, masterToken, {
-        	        result: function(mo) {
+            result: function(masterToken) {
+                var mo = MslTestUtils.toMslObject(encoder, masterToken, {
+                    result: function(mo) {
                         var signature = mo.getBytes("signature");
                         ++signature[1];
                         mo.put("signature", signature);
                         MasterToken.parse(ctx, mo, callback);
-        	        },
-        	        error: callback.error,
-        	    });
-        	},
-        	error: callback.error,
+                    },
+                    error: callback.error,
+                });
+            },
+            error: callback.error,
         });
     }
     
@@ -107,7 +108,7 @@ describe("SessionCryptoContext", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
@@ -127,7 +128,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return masterToken; }, "master token not received", 100);
+    	waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
     	
     	runs(function() {
     		var f = function() {
@@ -145,7 +146,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -164,7 +165,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", 100);
+        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(ciphertextA).not.toBeNull();
 	        expect(ciphertextA).not.toEqual(messageA);
@@ -184,7 +185,7 @@ describe("SessionCryptoContext", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", 100);
+        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(plaintextA).not.toBeNull();
 	        expect(plaintextA).toEqual(messageA);
@@ -206,7 +207,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", MslTestConstants.TIMEOUT);
     	        
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -225,7 +226,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", 100);
+        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(ciphertextA).not.toBeNull();
 	        expect(ciphertextA).not.toEqual(messageA);
@@ -245,7 +246,7 @@ describe("SessionCryptoContext", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", 100);
+        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(plaintextA).not.toBeNull();
 	        expect(plaintextA).toEqual(messageA);
@@ -262,7 +263,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -274,7 +275,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
 
     	var envelope;
     	runs(function() {
@@ -284,7 +285,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return envelope; }, "parsed envelope not received", 100);
+    	waitsFor(function() { return envelope; }, "parsed envelope not received", MslTestConstants.TIMEOUT);
 
     	var shortEnvelope;
     	runs(function() {
@@ -296,7 +297,7 @@ describe("SessionCryptoContext", function() {
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
     	});
-    	waitsFor(function() { return shortEnvelope; }, "created envelope not received", 100);
+    	waitsFor(function() { return shortEnvelope; }, "created envelope not received", MslTestConstants.TIMEOUT);
     	
     	var encode;
     	runs(function() {
@@ -305,7 +306,7 @@ describe("SessionCryptoContext", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     	    });
     	});
-    	waitsFor(function() { return encode; }, "encode not received", 100);
+    	waitsFor(function() { return encode; }, "encode not received", MslTestConstants.TIMEOUT);
     	
     	var exception;
     	runs(function() {
@@ -314,7 +315,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { exception = e; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
     	
     	runs(function() {
     		var f = function() { throw exception; };
@@ -330,7 +331,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -342,7 +343,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
     	
     	var envelope;
     	runs(function() {
@@ -352,7 +353,7 @@ describe("SessionCryptoContext", function() {
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
     	});
-    	waitsFor(function() { return envelope; }, "parsed envelope not received", 100);
+    	waitsFor(function() { return envelope; }, "parsed envelope not received", MslTestConstants.TIMEOUT);
     	
     	var shortEnvelope;
     	runs(function() {
@@ -364,7 +365,7 @@ describe("SessionCryptoContext", function() {
 	    		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	    	});
     	});
-    	waitsFor(function() { return shortEnvelope; }, "created envelope not received", 100);
+    	waitsFor(function() { return shortEnvelope; }, "created envelope not received", MslTestConstants.TIMEOUT);
         
         var encode;
         runs(function() {
@@ -373,7 +374,7 @@ describe("SessionCryptoContext", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return encode; }, "encode not received", 100);
+        waitsFor(function() { return encode; }, "encode not received", MslTestConstants.TIMEOUT);
     	
     	var exception;
     	runs(function() {
@@ -382,7 +383,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { exception = e; }
         	});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 
     	runs(function() {
 	    	var f = function() { throw exception; };
@@ -398,7 +399,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -410,7 +411,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
     	
     	var encode;
     	runs(function() {
@@ -421,7 +422,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     	    });
     	});
-    	waitsFor(function() { return encode; }, "encode", 100);
+    	waitsFor(function() { return encode; }, "encode", MslTestConstants.TIMEOUT);
     	
     	var exception;
     	runs(function() {
@@ -430,7 +431,7 @@ describe("SessionCryptoContext", function() {
 	    		error: function(err) { exception = err; },
 	    	});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 
     	runs(function() {
     		var f = function() { throw exception; };
@@ -446,7 +447,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -458,7 +459,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
     	
     	var exception;
     	runs(function() {
@@ -468,7 +469,7 @@ describe("SessionCryptoContext", function() {
     			error: function(err) { exception = err; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 
     	runs(function() {
     		var f = function() { throw exception; };
@@ -489,7 +490,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
 
     	var messageA = new Uint8Array(32);
     	random.nextBytes(messageA);
@@ -521,7 +522,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
         
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -540,7 +541,7 @@ describe("SessionCryptoContext", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
 	        });
         });
-        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", 100);
+        waitsFor(function() { return ciphertextA && ciphertextB; }, "ciphertext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(ciphertextA).not.toBeNull();
 	        expect(ciphertextA).not.toEqual(messageA);
@@ -560,7 +561,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", 100);
+        waitsFor(function() { return plaintextA && plaintextB; }, "plaintext not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(plaintextA).not.toBeNull();
 	        expect(plaintextA).toEqual(messageA);
@@ -587,7 +588,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContextA && cryptoContextB; }, "crypto contexts not received", 100);
+    	waitsFor(function() { return cryptoContextA && cryptoContextB; }, "crypto contexts not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -599,7 +600,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
     	
     	var plaintext;
     	runs(function() {
@@ -611,7 +612,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return plaintext; }, "plaintext not received", 100);
+    	waitsFor(function() { return plaintext; }, "plaintext not received", MslTestConstants.TIMEOUT);
 
     	runs(function() {
     		expect(plaintext).not.toBeNull();
@@ -635,7 +636,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContextA; }, "crypto context A not received", 100);
+    	waitsFor(function() { return cryptoContextA; }, "crypto context A not received", MslTestConstants.TIMEOUT);
     	
     	var cryptoContextB;
     	runs(function() {
@@ -646,7 +647,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContextB; }, "crypto context B not received", 100);
+    	waitsFor(function() { return cryptoContextB; }, "crypto context B not received", MslTestConstants.TIMEOUT);
 
     	var message = new Uint8Array(32);
     	random.nextBytes(message);
@@ -658,7 +659,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); },
     		});
     	});
-    	waitsFor(function() { return ciphertext; }, "ciphertext not received", 100);
+    	waitsFor(function() { return ciphertext; }, "ciphertext not received", MslTestConstants.TIMEOUT);
     	
     	var exception;
     	runs(function() {
@@ -683,7 +684,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not received", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not received", MslTestConstants.TIMEOUT);
         
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -702,7 +703,7 @@ describe("SessionCryptoContext", function() {
             	error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });
         });
-        waitsFor(function() { return signatureA && signatureB; }, "signature not received", 100);
+        waitsFor(function() { return signatureA && signatureB; }, "signature not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(signatureA).not.toBeNull();
 	        expect(signatureA.length).toBeGreaterThan(0);
@@ -726,7 +727,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", 100);
+        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(verifiedAA).toBeTruthy();
 	        expect(verifiedBB).toBeTruthy();
@@ -750,7 +751,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContextA; }, "crypto context A not received", 100);
+    	waitsFor(function() { return cryptoContextA; }, "crypto context A not received", MslTestConstants.TIMEOUT);
     	
     	var cryptoContextB;
     	runs(function() {
@@ -761,7 +762,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContextB; }, "crypto context B not received", 100);
+    	waitsFor(function() { return cryptoContextB; }, "crypto context B not received", MslTestConstants.TIMEOUT);
         
     	var message = new Uint8Array(32);
         random.nextBytes(message);
@@ -773,7 +774,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return signature; }, "signature not received", 100);
+        waitsFor(function() { return signature; }, "signature not received", MslTestConstants.TIMEOUT);
         
         var verified;
         runs(function() {
@@ -782,7 +783,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return verified !== undefined; }, "verified not received", 100);
+        waitsFor(function() { return verified !== undefined; }, "verified not received", MslTestConstants.TIMEOUT);
         runs(function() {
         	expect(verified).toBeFalsy();
         });
@@ -801,7 +802,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", MslTestConstants.TIMEOUT);
     	
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -820,7 +821,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return signatureA && signatureB; }, "signature not received", 100);
+        waitsFor(function() { return signatureA && signatureB; }, "signature not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(signatureA).not.toBeNull();
 	        expect(signatureA.length).toBeGreaterThan(0);
@@ -844,7 +845,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", 100);
+        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(verifiedAA).toBeTruthy();
 	        expect(verifiedBB).toBeTruthy();
@@ -865,7 +866,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", MslTestConstants.TIMEOUT);
         
         var messageA = new Uint8Array(32);
         random.nextBytes(messageA);
@@ -884,7 +885,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); },
         	});
         });
-        waitsFor(function() { return signatureA && signatureB; }, "signature not received", 100);
+        waitsFor(function() { return signatureA && signatureB; }, "signature not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(signatureA).not.toBeNull();
 	        expect(signatureA.length).toBeGreaterThan(0);
@@ -908,7 +909,7 @@ describe("SessionCryptoContext", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", 100);
+        waitsFor(function() { return verifiedAA !== undefined && verifiedBB !== undefined && verifiedBA !== undefined; }, "verified not received", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(verifiedAA).toBeTruthy();
 	        expect(verifiedBB).toBeTruthy();
@@ -929,7 +930,7 @@ describe("SessionCryptoContext", function() {
     			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		});
     	});
-    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", 100);
+    	waitsFor(function() { return cryptoContext; }, "crypto context not recevied", MslTestConstants.TIMEOUT);
     	
     	var messageA = new Uint8Array(32);
     	random.nextBytes(messageA);
@@ -941,7 +942,7 @@ describe("SessionCryptoContext", function() {
     			error: function(err) { exception = err; },
     		});
     	});
-    	waitsFor(function() { return exception; }, "exception not received", 100);
+    	waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
     	
     	runs(function() {
     		var f = function() { throw exception; };

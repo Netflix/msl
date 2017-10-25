@@ -32,6 +32,8 @@ describe("MslCrypto", function() {
     var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     var Random = require('../../../../../core/src/main/javascript/util/Random.js');
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     
     describe("AES-KW", function() {
         /** RFC 3394 encryption key. */
@@ -63,7 +65,7 @@ describe("MslCrypto", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return RFC_KEK && RFC_KEYDATA; }, "initialization", 100);
+                waitsFor(function() { return RFC_KEK && RFC_KEYDATA; }, "initialization", MslTestConstants.TIMEOUT);
                 
                 runs(function() {
                     initialized = true;
@@ -83,7 +85,7 @@ describe("MslCrypto", function() {
                 MslCrypto['wrapKey'](KeyFormat.RAW, RFC_KEYDATA.rawKey, RFC_KEK.rawKey, WebCryptoAlgorithm.A128KW)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return ciphertext; }, "wrap", 100);
+            waitsFor(function() { return ciphertext; }, "wrap", MslTestConstants.TIMEOUT);
             
             var key;
             runs(function() {
@@ -98,7 +100,7 @@ describe("MslCrypto", function() {
                 MslCrypto['unwrapKey'](KeyFormat.RAW, ciphertext, RFC_KEK.rawKey, WebCryptoAlgorithm.A128KW, WebCryptoAlgorithm.AES_CBC, true, WebCryptoUsage.ENCRYPT_DECRYPT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return key; }, "unwrap", 100);
+            waitsFor(function() { return key; }, "unwrap", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(key).not.toBeNull();
@@ -144,7 +146,7 @@ describe("MslCrypto", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return RFC_K; }, "initialization", 100);
+                waitsFor(function() { return RFC_K; }, "initialization", MslTestConstants.TIMEOUT);
                 
                 runs(function() {
                     initialized = true;
@@ -166,7 +168,7 @@ describe("MslCrypto", function() {
                 MslCrypto['encrypt'](algo, RFC_K.rawKey, RFC_PLAINTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return ciphertext; }, "encrypt", 100);
+            waitsFor(function() { return ciphertext; }, "encrypt", MslTestConstants.TIMEOUT);
             
             var plaintext;
             runs(function() {
@@ -181,7 +183,7 @@ describe("MslCrypto", function() {
                 MslCrypto['decrypt'](algo, RFC_K.rawKey, RFC_CIPHERTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return plaintext; }, "decrypt", 100);
+            waitsFor(function() { return plaintext; }, "decrypt", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(plaintext).toEqual(RFC_PLAINTEXT);
@@ -216,7 +218,7 @@ describe("MslCrypto", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return RFC_K; }, "initialization", 100);
+                waitsFor(function() { return RFC_K; }, "initialization", MslTestConstants.TIMEOUT);
                 
                 runs(function() {
                     initialized = true;
@@ -236,7 +238,7 @@ describe("MslCrypto", function() {
                 MslCrypto['sign'](WebCryptoAlgorithm.HMAC_SHA256, RFC_K.rawKey, RFC_DATA)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return signature; }, "sign", 100);
+            waitsFor(function() { return signature; }, "sign", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(signature).toEqual(RFC_HMAC);
@@ -278,7 +280,7 @@ describe("MslCrypto", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return PRIVKEY && PUBKEY; }, "initialization", 100);
+                waitsFor(function() { return PRIVKEY && PUBKEY; }, "initialization", MslTestConstants.TIMEOUT);
                 
                 runs(function() {
                     initialized = true;
@@ -298,7 +300,7 @@ describe("MslCrypto", function() {
                 MslCrypto['encrypt'](WebCryptoAlgorithm.RSA_OAEP, PUBKEY.rawKey, PLAINTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return ciphertext; }, "encrypt", 100);
+            waitsFor(function() { return ciphertext; }, "encrypt", MslTestConstants.TIMEOUT);
             
             var plaintext;
             runs(function() {
@@ -313,7 +315,7 @@ describe("MslCrypto", function() {
                 MslCrypto['decrypt'](WebCryptoAlgorithm.RSA_OAEP, PRIVKEY.rawKey, ciphertext)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return plaintext; }, "decrypt", 100);
+            waitsFor(function() { return plaintext; }, "decrypt", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(plaintext).toEqual(PLAINTEXT);
@@ -331,7 +333,7 @@ describe("MslCrypto", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return aes128Key; }, "AES key", 100);
+            waitsFor(function() { return aes128Key; }, "AES key", MslTestConstants.TIMEOUT);
             
             var ciphertext;
             runs(function() {
@@ -344,7 +346,7 @@ describe("MslCrypto", function() {
                 MslCrypto['wrapKey'](KeyFormat.RAW, aes128Key.rawKey, PUBKEY.rawKey, WebCryptoAlgorithm.RSA_OAEP)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return ciphertext; }, "wrap", 100);
+            waitsFor(function() { return ciphertext; }, "wrap", MslTestConstants.TIMEOUT);
             
             var unwrappedKey;
             runs(function() {
@@ -362,7 +364,7 @@ describe("MslCrypto", function() {
                 MslCrypto['unwrapKey'](KeyFormat.RAW, ciphertext, PRIVKEY.rawKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoAlgorithm.AES_CBC, true, WebCryptoUsage.ENCRYPT_DECRYPT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return unwrappedKey; }, "unwrap", 100);
+            waitsFor(function() { return unwrappedKey; }, "unwrap", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(unwrappedKey.rawKey).toEqual(aes128Key.rawKey);
@@ -380,7 +382,7 @@ describe("MslCrypto", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return hmacSha256Key; }, "HMAC-SHA256 key", 100);
+            waitsFor(function() { return hmacSha256Key; }, "HMAC-SHA256 key", MslTestConstants.TIMEOUT);
             
             var ciphertext;
             runs(function() {
@@ -393,7 +395,7 @@ describe("MslCrypto", function() {
                 MslCrypto['wrapKey'](KeyFormat.RAW, hmacSha256Key.rawKey, PUBKEY.rawKey, WebCryptoAlgorithm.RSA_OAEP)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return ciphertext; }, "wrap", 100);
+            waitsFor(function() { return ciphertext; }, "wrap", MslTestConstants.TIMEOUT);
             
             var unwrappedKey;
             runs(function() {
@@ -411,7 +413,7 @@ describe("MslCrypto", function() {
                 MslCrypto['unwrapKey'](KeyFormat.RAW, ciphertext, PRIVKEY.rawKey, WebCryptoAlgorithm.RSA_OAEP, WebCryptoAlgorithm.HMAC_SHA256, true, WebCryptoUsage.SIGN_VERIFY)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return unwrappedKey; }, "unwrap", 100);
+            waitsFor(function() { return unwrappedKey; }, "unwrap", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(unwrappedKey.rawKey).toEqual(hmacSha256Key.rawKey);
@@ -469,7 +471,7 @@ describe("MslCrypto", function() {
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                     });
                 });
-                waitsFor(function() { return PRIVKEY && PUBKEY; }, "initialization", 100);
+                waitsFor(function() { return PRIVKEY && PUBKEY; }, "initialization", MslTestConstants.TIMEOUT);
                 runs(function() { initialized = true; });
             }
         });
@@ -486,7 +488,7 @@ describe("MslCrypto", function() {
                 MslCrypto['sign'](WebCryptoAlgorithm.ECDSA_SHA256, PRIVKEY.rawKey, RFC_PLAINTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return signature; }, "sign", 100);
+            waitsFor(function() { return signature; }, "sign", MslTestConstants.TIMEOUT);
             
             var verified;
             runs(function() {
@@ -501,7 +503,7 @@ describe("MslCrypto", function() {
                 MslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, PUBKEY.rawKey, signature, RFC_PLAINTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return verified !== undefined; }, "verify", 100);
+            waitsFor(function() { return verified !== undefined; }, "verify", MslTestConstants.TIMEOUT);
             
             var notVerified;
             runs(function() {
@@ -518,7 +520,7 @@ describe("MslCrypto", function() {
                 MslCrypto['verify'](WebCryptoAlgorithm.ECDSA_SHA256, PUBKEY.rawKey, notSignature, RFC_PLAINTEXT)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return notVerified !== undefined; }, "notVerified", 100);
+            waitsFor(function() { return notVerified !== undefined; }, "notVerified", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(notVerified).toBeFalsy();
@@ -564,7 +566,7 @@ describe("MslCrypto", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return privateKey && publicKey; }, "keys", 100);
+            waitsFor(function() { return privateKey && publicKey; }, "keys", MslTestConstants.TIMEOUT);
 
             runs(function() { initialized = true; });
         });
@@ -581,7 +583,7 @@ describe("MslCrypto", function() {
                 MslCrypto['sign'](algo, privateKey.rawKey, plaintext)
                 .then(oncomplete, onerror);
             });
-            waitsFor(function() { return signature; }, "sign", 100);
+            waitsFor(function() { return signature; }, "sign", MslTestConstants.TIMEOUT);
 
             var verified;
             runs(function() {
@@ -596,7 +598,7 @@ describe("MslCrypto", function() {
                 MslCrypto['verify'](algo, publicKey.rawKey, signature, plaintext)
                 .then(oncomplete, onerror);
             });
-            waitsFor(function() { return verified !== undefined; }, "verify", 100);
+            waitsFor(function() { return verified !== undefined; }, "verify", MslTestConstants.TIMEOUT);
 
             var notVerified;
             runs(function() {
@@ -613,7 +615,7 @@ describe("MslCrypto", function() {
                 MslCrypto['verify'](algo, publicKey.rawKey, notSignature, plaintext)
                 .then(oncomplete, onerror);
             });
-            waitsFor(function() { return notVerified !== undefined; }, "notVerified", 100);
+            waitsFor(function() { return notVerified !== undefined; }, "notVerified", MslTestConstants.TIMEOUT);
 
             runs(function() {
                 expect(notVerified).toBeFalsy();
@@ -659,7 +661,7 @@ describe("MslCrypto", function() {
                 MslCrypto['digest'](algo, plaintext)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return digest; }, "digest", 100);
+            waitsFor(function() { return digest; }, "digest", MslTestConstants.TIMEOUT);
             
             var badDigest;
             runs(function() {
@@ -676,7 +678,7 @@ describe("MslCrypto", function() {
                 MslCrypto['digest'](algo, badPlaintext)
                     .then(oncomplete, onerror);
             });
-            waitsFor(function() { return badDigest; }, "bad digest", 100);
+            waitsFor(function() { return badDigest; }, "bad digest", MslTestConstants.TIMEOUT);
             
             runs(function() {
                 expect(Arrays.equal(badDigest, sha)).toBeFalsy();

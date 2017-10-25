@@ -96,7 +96,7 @@ var SimpleMslContext;
          */
         init: function init(clientId, rsaStore, keyxMgr, errorCallback) {
             // Message capabilities.
-            var compressionAlgos = [ MslConstants$CompressionAlgorithm.LZW ];
+            var compressionAlgos = [ MslConstants.CompressionAlgorithm.LZW ];
             var languages = [ "US_en" ];
             var encoderFormats = [ MslEncoderFormat.JSON ];
             var msgCaps = new MessageCapabilities(compressionAlgos, languages, encoderFormats);
@@ -167,7 +167,7 @@ var SimpleMslContext;
 
         /** @inheritDoc */
         getEntityAuthenticationScheme: function getEntityAuthenticationScheme(name) {
-            return EntityAuthenticationScheme$getScheme(name);
+            return EntityAuthenticationScheme.getScheme(name);
         },
 
         /** @inheritDoc */
@@ -179,7 +179,7 @@ var SimpleMslContext;
 
         /** @inheritDoc */
         getUserAuthenticationScheme: function getUserAuthenticationScheme(name) {
-            return UserAuthenticationScheme$getScheme(name);
+            return UserAuthenticationScheme.getScheme(name);
         },
 
         /** @inheritDoc */
@@ -194,7 +194,7 @@ var SimpleMslContext;
 
         /** @inheritDoc */
         getKeyExchangeScheme: function getKeyExchangeScheme(name) {
-            return KeyExchangeScheme$getScheme(name);
+            return KeyExchangeScheme.getScheme(name);
         },
 
         /** @inheritDoc */

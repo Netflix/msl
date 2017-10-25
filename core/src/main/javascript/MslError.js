@@ -43,17 +43,9 @@
 	    /** Internal error code base value. */
 	    var BASE = 100000;
 	
-	    // There is no way to make the constructor private, so only add BASE if the
-	    // internal error code is less than BASE, as a safety check. In this way a
-	    // MslError could be created directly that is not one of the defined
-	    // constants.
-	    if (internalCode < BASE){
-	        internalCode = BASE + internalCode;
-	    }
-	
 	    // The properties.
 	    var props = {
-	        internalCode: { value: internalCode, writable: false, configurable: false },
+	        internalCode: { value: BASE + internalCode, writable: false, configurable: false },
 	        responseCode: { value: responseCode, writable: false, configurable: false },
 	        message: { value: msg, writable: false, configurable: false }
 	    };

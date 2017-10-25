@@ -50,6 +50,8 @@
          * converted to JWK for key import and vice versa for key export.
          */
         V2014_02_SAFARI: 4,
+        /** Netflix JavaScript Web Crypto API. */
+        NRDJS: 5,
         /** Latest (most compatible) version. */
         LATEST: 3,
     };
@@ -74,7 +76,7 @@
      * @return {WebCryptoVersion} the Web Crypto version in use.
      */
     var MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
-    	return mslCrypto$version;
+        return mslCrypto$version;
     };
 
     // Determine crypto subtle.
@@ -104,7 +106,7 @@
      * @param {object} the new crypto subtle interface.
      */
     var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
-    	nfCryptoSubtle = cryptoSubtle;
+        nfCryptoSubtle = cryptoSubtle;
     };
 
     // If extractable is not specified, default to false
@@ -145,17 +147,17 @@
 
     // If the native operation type is not a Promise, wrap it inside one.
     function promisedOperation(op) {
-    	if (!op.then) {
-    		return new Promise(function(resolve, reject) {
-    			op.oncomplete = function(e) {
-    				resolve(e.target.result);
-    			};
-    			op.onerror = function(e) {
-    				reject(e);
-    			};
-    		});
-    	}
-    	return op;
+        if (!op.then) {
+            return new Promise(function(resolve, reject) {
+                op.oncomplete = function(e) {
+                    resolve(e.target.result);
+                };
+                op.onerror = function(e) {
+                    reject(e);
+                };
+            });
+        }
+        return op;
     }
 
     var MslCrypto = module.exports = {
@@ -165,7 +167,8 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
-                	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
+                case WebCryptoVersion.NRDJS:
+                    var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
@@ -178,6 +181,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.decrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                default:
@@ -191,6 +195,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.sign(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
@@ -204,6 +209,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.verify(algorithm, key, signature, buffer);
                     return promisedOperation(op);
                 default:
@@ -217,6 +223,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.digest(algorithm, buffer);
                     return promisedOperation(op);
                 default:
@@ -232,6 +239,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.generateKey(algorithm, ext, ku);
                     return promisedOperation(op);
                 default:
@@ -247,6 +255,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.deriveKey(algorithm, baseKey, derivedKeyAlgorithm, ext, ku);
                     return promisedOperation(op);
                 default:
@@ -260,6 +269,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var op = nfCryptoSubtle.deriveBits(algorithm, baseKey, length);
                     return promisedOperation(op);
                 default:
@@ -275,6 +285,7 @@
                 case WebCryptoVersion.LEGACY:
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
+                case WebCryptoVersion.NRDJS:
                     op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
@@ -303,6 +314,7 @@
                 case WebCryptoVersion.LEGACY:
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
+                case WebCryptoVersion.NRDJS:
                     op = nfCryptoSubtle.exportKey(format, key);
                     return promisedOperation(op);
                 case WebCryptoVersion.V2014_02_SAFARI:
@@ -329,6 +341,7 @@
             var op;
             switch (mslCrypto$version) {
                 case WebCryptoVersion.LEGACY:
+                case WebCryptoVersion.NRDJS:
                     op = nfCryptoSubtle.wrapKey(keyToWrap, wrappingKey, wrappingAlgorithm);
                     break;
                 case WebCryptoVersion.V2014_01:
@@ -351,6 +364,7 @@
                 case WebCryptoVersion.V2014_01:
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
+                case WebCryptoVersion.NRDJS:
                     var ext = normalizeExtractable(extractable);
                     var ku = normalizeKeyUsage(usage);
                     op = nfCryptoSubtle.unwrapKey(format, wrappedKey, unwrappingKey, unwrapAlgorithm, unwrappedKeyAlgorithm, ext, ku);

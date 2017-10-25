@@ -42,7 +42,7 @@
     var WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
     var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
     var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js')
+    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
     var MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
     var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
     
@@ -62,7 +62,7 @@
     var AESKW_BLOCK_SIZE = 8;
     
     // Shortcuts.
-    const KeyType = NodeCryptoKey.KeyType;
+    var KeyType = NodeCryptoKey.KeyType;
     
     /**
      * <p>This setup is fairly confusing because Node.js crypto does not have
@@ -124,6 +124,8 @@
      * @throws {Error} if the algorithm name cannot be constructed.
      */
     function normalizeAlgorithmName(algo, key) {
+        var rawkey, bitlen;
+        
         // The names are based on OpenSSL and the output of crypto.getCiphers()
         // and crypto.getHashes().
         if (!('name' in algo))
@@ -132,18 +134,18 @@
             case WebCryptoAlgorithm.A128KW['name']:
             {
                 // We have to implement AES key wrap ourselves using ECB.
-                var rawkey = key.rawkey;
+                rawkey = key.rawkey;
                 if (!(rawkey instanceof Uint8Array))
                     throw new Error("Expected raw key to be a Uint8Array but was of type " + typeof key + ".");
-                var bitlen = rawkey.length * 8;
+                bitlen = rawkey.length * 8;
                 return 'aes-' + bitlen + '-ecb';
             }
             case WebCryptoAlgorithm.AES_CBC['name']:
             {
-                var rawkey = key.rawkey;
+                rawkey = key.rawkey;
                 if (!(rawkey instanceof Uint8Array))
                     throw new Error("Expected raw key to be a Uint8Array but was of type " + typeof key + ".");
-                var bitlen = rawkey.length * 8;
+                bitlen = rawkey.length * 8;
                 return 'aes-' + bitlen + '-cbc';
             }
             case WebCryptoAlgorithm.HMAC_SHA256['name']:
@@ -448,22 +450,24 @@
         },
         sign: function(algorithm, key, buffer) {
             return Promise.resolve().then(function() {
+                var rawkey, hashName, signature;
+                
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
                     var algoName = jsrsasignAlgorithmName(algorithm, key);
                     var sign = new rs.KJUR.crypto.Signature({alg: algoName});
-                    var rawkey = key.rawkey;
+                    rawkey = key.rawkey;
                     sign.init(rawkey);
                     var bufferHex = rs.ArrayBuffertohex(buffer.buffer);
                     var signatureHex = sign.signHex(bufferHex);
-                    var signature = rs.hextoArrayBuffer(signatureHex);
+                    signature = rs.hextoArrayBuffer(signatureHex);
                     return new Uint8Array(signature);
                 }
                 
                 // Handle HMAC.
                 else if (WebCryptoAlgorithm.isHmac(algorithm)) {
-                    var hashName = normalizeHashName(algorithm);
-                    var rawkey = key.rawkey;
+                    hashName = normalizeHashName(algorithm);
+                    rawkey = key.rawkey;
                     var hmac = crypto.createHmac(hashName, rawkey);
                     hmac.update(buffer);
                     return hmac.digest();
@@ -472,7 +476,7 @@
                 // Handle EC keys.
                 else if (WebCryptoAlgorithm.isEc(algorithm)) {
                     // Compute the hash.
-                    var hashName = normalizeHashName(algorithm);
+                    hashName = normalizeHashName(algorithm);
                     var hash = crypto.createHash(hashName);
                     hash.update(buffer);
                     var digest = hash.digest();
@@ -480,10 +484,10 @@
                     // Construct the 'elliptic' private key from ECKey.
                     var curveName = ellipticCurveName(algorithm, key);
                     var ec = new EC(curveName);
-                    var rawkey = key.rawkey;
+                    rawkey = key.rawkey;
                     var privkey = rawkey.d;
                     var eckey = ec.keyFromPrivate(privkey);
-                    var signature = eckey.sign(digest);
+                    signature = eckey.sign(digest);
                     return signature.toDER();
                 }
                 
@@ -493,12 +497,14 @@
         },
         verify: function(algorithm, key, signature, buffer) {
             return Promise.resolve().then(function() {
+                var rawkey, hashName, digest;
+                
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
                     var algoName = jsrsasignAlgorithmName(algorithm, key);
-                    var rawkey = key.rawkey;
+                    rawkey = key.rawkey;
                     var sign = new rs.KJUR.crypto.Signature({alg: algoName});
-                    var rawkey = key.rawkey;
+                    rawkey = key.rawkey;
                     sign.init(rawkey);
                     var bufferHex = rs.ArrayBuffertohex(buffer.buffer);
                     sign.updateHex(bufferHex);
@@ -508,26 +514,26 @@
                 
                 // Handle HMAC.
                 if (WebCryptoAlgorithm.isHmac(algorithm)) {
-                    var hashName = normalizeHashName(algorithm);
-                    var rawkey = key.rawkey;
+                    hashName = normalizeHashName(algorithm);
+                    rawkey = key.rawkey;
                     var hmac = crypto.createHmac(hashName, rawkey);
                     hmac.update(buffer);
-                    var digest = hmac.digest();
+                    digest = hmac.digest();
                     return MslUtils.safeEquals(digest, signature);
                 }
                 
                 // Handle EC keys.
                 else if (WebCryptoAlgorithm.isEc(algorithm)) {
                     // Compute the hash.
-                    var hashName = normalizeHashName(algorithm);
+                    hashName = normalizeHashName(algorithm);
                     var hash = crypto.createHash(hashName);
                     hash.update(buffer);
-                    var digest = hash.digest();
+                    digest = hash.digest();
                     
                     // Construct the 'elliptic' public key from ECKey.
                     var curveName = ellipticCurveName(algorithm);
                     var ec = new EC(curveName);
-                    var rawkey = key.rawkey;
+                    rawkey = key.rawkey;
                     var pubpt = {
                         x: rawkey.x,
                         y: rawkey.y
@@ -553,12 +559,12 @@
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
                     var pubexp = getBigEndianInteger(algorithm['publicExponent']);
-                    var keypair = ursa.generatePrivateKey(algorithm['modulusLength'], pubexp);
-                    var pubkey = keypair.toPublicPem('utf8');
-                    var privkey = keypair.toPrivatePem('utf8');
+                    var rsaKeypair = ursa.generatePrivateKey(algorithm['modulusLength'], pubexp);
+                    var rsaPubkey = rsaKeypair.toPublicPem('utf8');
+                    var rsaPrivkey = rsaKeypair.toPrivatePem('utf8');
                     return {
-                        publicKey: new NodeCryptoKey(pubkey, KeyType.PUBLIC, algorithm, true, ku),
-                        privateKey: new NodeCryptoKey(privkey, KeyType.PRIVATE, algorithm, ext, ku),
+                        publicKey: new NodeCryptoKey(rsaPubkey, KeyType.PUBLIC, algorithm, true, ku),
+                        privateKey: new NodeCryptoKey(rsaPrivkey, KeyType.PRIVATE, algorithm, ext, ku),
                     };
                 }
                 
@@ -567,24 +573,25 @@
                          WebCryptoAlgorithm.isEc(algorithm))
                 {
                     var curveName = eckeyCurveName(algorithm);
-                    var keypair = ECKey.createECKey(curveName);
+                    var ecKeypair = ECKey.createECKey(curveName);
                     return {
-                        publicKey: new NodeCryptoKey(keypair, KeyType.PUBLIC, algorithm, true, ku),
-                        privateKey: new NodeCryptoKey(keypair, KeyType.PRIVATE, algorithm, ext, ku),
+                        publicKey: new NodeCryptoKey(ecKeypair, KeyType.PUBLIC, algorithm, true, ku),
+                        privateKey: new NodeCryptoKey(ecKeypair, KeyType.PRIVATE, algorithm, ext, ku),
                     };
                 }
                 
                 // Handle Diffie-Hellman.
                 else if (algorithm['name'] == WebCryptoAlgorithm.DIFFIE_HELLMAN['name']) {
                     throw new Error("Diffie-Hellman is not supported.");
-                    
+                    /*
                     var diffieHellman = crypto.createDiffieHellman(algorithm['prime'], null, algorithm['generator'], null);
-                    var keypair = diffieHellman.generateKeys();
-                    var pubkey = keypair.getPublicKey();
+                    var dhKeypair = diffieHellman.generateKeys();
+                    var dhPubkey = dhKeypair.getPublicKey();
                     return {
-                        publicKey: new NodeCryptoKey(pubkey, KeyType.PUBLIC, algorithm, true, ku),
+                        publicKey: new NodeCryptoKey(dhPubkey, KeyType.PUBLIC, algorithm, true, ku),
                         privateKey: new NodeCryptoKey(diffieHellman, KeyType.PRIVATE, algorithm, ext, ku),
                     };
+                    */
                 }
                 
                 // Handle symmetric keys.
@@ -612,48 +619,54 @@
         },
         deriveBits: function(algorithm, baseKey, length) {
             return Promise.resolve().then(function() {
+                var bits, zerobits;
+                
                 // Handle ECDH.
                 if (algorithm['name'] == WebCryptoAlgorithm.ECDH['name'] && baseKey['type'] == KeyType.PRIVATE) {
                     throw new Error("Elliptic Curve Diffie-Hellman is not supported.");
                     
+                    /*
                     // Compute shared secret.
                     if (!('public' in algorithm))
                         throw new Error("Missing peer public key in algorithm " + JSON.stringify(algorithm) + ".");
-                    var peerkey = algorithm['public'].rawkey;
-                    var keypair = baseKey.rawkey;
-                    var ecdh = keypair.createECDH();
-                    var secret = ecdh.computeSecret(peerkey);
+                    var ecPeerkey = algorithm['public'].rawkey;
+                    var ecKeypair = baseKey.rawkey;
+                    var ecdh = ecKeypair.createECDH();
+                    var ecSecret = ecdh.computeSecret(ecPeerkey);
                     
                     // Zero-pad and truncate to the requested bit length.
-                    var byteLength = (length != null) ? Math.ceil(length / 8) : secret.length;
-                    if (byteLength > secret.length)
-                        throw new Error("Cannot derive " + length + " bits from shared secret of length " + (secret.length * 8) + " bits.");
-                    var bits = secret.slice(0, byteLength);
-                    var zerobits = bits.length * 8 - length;
+                    var byteLength = (length != null) ? Math.ceil(length / 8) : ecSecret.length;
+                    if (byteLength > ecSecret.length)
+                        throw new Error("Cannot derive " + length + " bits from shared secret of length " + (ecSecret.length * 8) + " bits.");
+                    bits = ecSecret.slice(0, byteLength);
+                    zerobits = bits.length * 8 - length;
                     if (zerobits > 0)
                         bits.fill(bits[0] << zerobits >> zerobits, 0, 1);
                     return bits;
+                    */
                 }
                 
                 // Handle Diffie-Hellman.
                 else if (algorithm['name'] == WebCryptoAlgorithm.DIFFIE_HELLMAN['name'] && baseKey['type'] == KeyType.PRIVATE) {
                     throw new Error("Diffie-Hellman is not supported.");
                     
+                    /*
                     if (!('public' in algorithm))
                         throw new Error("Missing peer public key in algorithm " + JSON.stringify(algorithm) + ".");
-                    var peerkey = algorithm['public'].rawkey;
+                    var dhPeerkey = algorithm['public'].rawkey;
                     var diffieHellman = baseKey.rawkey;
-                    var secret = diffieHellman.computeSecret(peerkey);
+                    var dhSecret = diffieHellman.computeSecret(dhPeerkey);
 
                     // Zero-pad and truncate to the requested bit length.
-                    var byteLength = (length != null) ? Math.ceil(length / 8) : secret.length;
-                    if (byteLength > secret.length)
-                        throw new Error("Cannot derive " + length + " bits from shared secret of length " + (secret.length * 8) + " bits.");
-                    var bits = secret.slice(0, byteLength);
-                    var zerobits = bits.length * 8 - length;
+                    var byteLength = (length != null) ? Math.ceil(length / 8) : dhSecret.length;
+                    if (byteLength > dhSecret.length)
+                        throw new Error("Cannot derive " + length + " bits from shared secret of length " + (dhSecret.length * 8) + " bits.");
+                    bits = dhSecret.slice(0, byteLength);
+                    zerobits = bits.length * 8 - length;
                     if (zerobits)
                         bits.fill(bits[0] << zerobits >> zerobits, 0, 1);
                     return bits;
+                    */
                 }
                 
                 // Unsupported.
@@ -662,17 +675,19 @@
         },
         importKey: function(format, keyData, algorithm, ext, ku) {
             return Promise.resolve().then(function() {
+                var pem, key, rawkey;
+                
                 // Handle RSA keys.
                 if (WebCryptoAlgorithm.isRsa(algorithm)) {
                     if (format == KeyFormat.SPKI) {
-                        var pem = der2pem(keyData, format);
-                        var key = ursa.coercePublicKey(pem);
-                        var rawkey = key.toPublicPem('utf8');
+                        pem = der2pem(keyData, format);
+                        key = ursa.coercePublicKey(pem);
+                        rawkey = key.toPublicPem('utf8');
                         return new NodeCryptoKey(rawkey, KeyType.PUBLIC, algorithm, ext, ku);
                     } else if (format == KeyFormat.PKCS8) {
-                        var pem = der2pem(keyData, format);
-                        var key = ursa.coercePrivateKey(pem);
-                        var rawkey = key.toPrivatePem('utf8');
+                        pem = der2pem(keyData, format);
+                        key = ursa.coercePrivateKey(pem);
+                        rawkey = key.toPrivatePem('utf8');
                         return new NodeCryptoKey(rawkey, KeyType.PRIVATE, algorithm, ext, ku);
                     } else if (format == KeyFormat.JWK) {
                         throw new Error("Cannot import RSA keys in JWK format.");
@@ -693,12 +708,12 @@
                         var privkey = new ECKey(pkcs8, 'pkcs8');
                         return new NodeCryptoKey(privkey, KeyType.PRIVATE, algorithm, ext, ku);
                     } else if (format == KeyFormat.JWK) {
-                        var jwk = keyData;
-                        var key = new ECKey(jwk);
-                        if (key.isPrivateECKey) {
-                            return new NodeCryptoKey(key, KeyType.PRIVATE, algorithm, ext, ku);
+                        var ecJwk = keyData;
+                        var ecKey = new ECKey(ecJwk);
+                        if (ecKey.isPrivateECKey) {
+                            return new NodeCryptoKey(ecKey, KeyType.PRIVATE, algorithm, ext, ku);
                         } else {
-                            return new NodeCryptoKey(key, KeyType.PUBLIC, algorithm, ext, ku);
+                            return new NodeCryptoKey(ecKey, KeyType.PUBLIC, algorithm, ext, ku);
                         }
                     }
                 }
@@ -707,10 +722,12 @@
                 else if (algorithm['name'] == WebCryptoAlgorithm.DIFFIE_HELLMAN['name']) {
                     throw new Error("Diffie-Hellman is not supported.");
                     
+                    /*
                     if (format == KeyFormat.SPKI) {
                         var y = keyData;
                         return new NodeCryptoKey(y, keytype, algorithm, ext, ku);
                     }
+                    */
                 }
                 
                 // Handle symmetric keys.
@@ -790,10 +807,12 @@
                 else if (algorithm['name'] == WebCryptoAlgorithm.DIFFIE_HELLMAN['name']) {
                     throw new Error("Diffie-Hellman is not supported.");
                     
+                    /*
                     if (key['type'] == KeyType.PUBLIC)
                         return key.rawkey;
-                    else if (key['type'] = KeyType.PRIVATE)
+                    else if (key['type'] == KeyType.PRIVATE)
                         return key.rawkey.getPrivateKey();
+                    */
                 }
                 
                 // Handle symmetric keys.
@@ -825,7 +844,7 @@
                 // Handle RSA-OAEP key wrap.
                 if (wrappingAlgorithm['name'] == WebCryptoAlgorithm.RSA_OAEP['name']) {
                     return self.exportKey(format, keyToWrap)
-                        .then((plaintext) => {
+                        .then(function(plaintext) {
                             return self.encrypt(wrappingAlgorithm, wrappingKey, plaintext);
                         });
                 }
@@ -833,7 +852,7 @@
                 // Handle AES key wrap.
                 else if (wrappingAlgorithm['name'] == WebCryptoAlgorithm.A128KW['name']) {
                     return self.exportKey(format, keyToWrap)
-                        .then((plaintext) => {
+                        .then(function(plaintext) {
                             // Compute alternate initial value.
                             var a = Arrays.copyOf(AESKW_AIV);
                             var r = Arrays.copyOf(plaintext);
@@ -886,7 +905,7 @@
                 // Handle RSA-OAEP key wrap.
                 if (unwrapAlgorithm['name'] == WebCryptoAlgorithm.RSA_OAEP['name']) {
                     return self.decrypt(unwrapAlgorithm, unwrappingKey, wrappedKey)
-                        .then((plaintext) => {
+                        .then(function(plaintext) {
                             return self.importKey(format, plaintext, unwrappedKeyAlgorithm, ext, ku);
                         });
                 }

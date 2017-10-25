@@ -31,18 +31,19 @@ describe("UserAuthenticationData", function() {
     var MslError = require('../../../../../core/src/main/javascript/MslError.js');
     var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    
+
     /** Key user authentication scheme. */
     var KEY_SCHEME = "scheme";
     /** Key user authentication data. */
     var KEY_AUTHDATA = "authdata";
-	
+
     /** MSL context. */
     var ctx;
     /** MSL encoder factory. */
     var encoder;
-    
+
     var initialized = false;
     beforeEach(function() {
         if (!initialized) {
@@ -52,14 +53,14 @@ describe("UserAuthenticationData", function() {
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
-            	encoder = ctx.getMslEncoderFactory();
-            	initialized = true;
+                encoder = ctx.getMslEncoderFactory();
+                initialized = true;
             });
         }
     });
-    
+
     it("no scheme", function() {
         var exception;
         runs(function() {
@@ -71,52 +72,52 @@ describe("UserAuthenticationData", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
-    
+
     it("no authdata", function() {
         var exception;
         runs(function() {
-	        var mo = encoder.createObject();
-	        mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
-	        mo.put(KEY_AUTHDATA + "x", encoder.createObject());
-	        UserAuthenticationData.parse(ctx, null, mo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_SCHEME, UserAuthenticationScheme.EMAIL_PASSWORD.name);
+            mo.put(KEY_AUTHDATA + "x", encoder.createObject());
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
     });
-    
+
     it("unidentified scheme", function() {
         var exception;
         runs(function() {
-	        var mo = encoder.createObject();
-	        mo.put(KEY_SCHEME, "x");
-	        mo.put(KEY_AUTHDATA, encoder.createObject());
-	        UserAuthenticationData.parse(ctx, null, mo, {
+            var mo = encoder.createObject();
+            mo.put(KEY_SCHEME, "x");
+            mo.put(KEY_AUTHDATA, encoder.createObject());
+            UserAuthenticationData.parse(ctx, null, mo, {
                 result: function() {},
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
-        
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslUserAuthException(MslError.UNIDENTIFIED_USERAUTH_SCHEME));
         });
     });
-    
+
     it("authentication factory not found", function() {
         var ctx;
         runs(function() {
@@ -125,8 +126,8 @@ describe("UserAuthenticationData", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return ctx; }, "ctx", 100);
-        
+        waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT);
+
         var exception;
         runs(function() {
             ctx.removeUserAuthenticationFactory(UserAuthenticationScheme.EMAIL_PASSWORD);
@@ -138,7 +139,7 @@ describe("UserAuthenticationData", function() {
                 error: function(e) { exception = e; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
 
         runs(function() {
             var f = function() { throw exception; };

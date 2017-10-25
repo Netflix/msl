@@ -32,6 +32,7 @@ describe("ErrorHeader", function() {
     var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
     var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
 
+    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
     var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
     var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
     
@@ -107,36 +108,36 @@ describe("ErrorHeader", function() {
     
     var initialized = false;
     beforeEach(function() {
-    	if (!initialized) {
+        if (!initialized) {
             runs(function() {
                 MockMslContext.create(EntityAuthenticationScheme.PSK, false, {
                     result: function(c) { ctx = c; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
             });
-            waitsFor(function() { return ctx; }, "ctx", 900);
-    		runs(function() {
-    		    encoder = ctx.getMslEncoderFactory();
-    			ctx.getEntityAuthenticationData(null, {
-    				result: function(entityAuthData) { ENTITY_AUTH_DATA = entityAuthData; },
-    				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    			});
-    		});
-    		waitsFor(function() { return ENTITY_AUTH_DATA; }, "entity authentication data", 100);
-    		runs(function() {
-    		    MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA, {
-    		        result: function(x) { ENTITY_AUTH_DATA_MO = x; },
+            waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
+            runs(function() {
+                encoder = ctx.getMslEncoderFactory();
+                ctx.getEntityAuthenticationData(null, {
+                    result: function(entityAuthData) { ENTITY_AUTH_DATA = entityAuthData; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-    		    });
-    		});
-    		waitsFor(function() { return ENTITY_AUTH_DATA_MO; }, "ENTITY_AUTH_DATA_MO", 100);
-    		runs(function() {
-    		    var scheme = ENTITY_AUTH_DATA.scheme;
-    		    var factory = ctx.getEntityAuthenticationFactory(scheme);
-    		    cryptoContext = factory.getCryptoContext(ctx, ENTITY_AUTH_DATA);
-    		    initialized = true;
-    		});
-    	}
+                });
+            });
+            waitsFor(function() { return ENTITY_AUTH_DATA; }, "entity authentication data", MslTestConstants.TIMEOUT);
+            runs(function() {
+                MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA, {
+                    result: function(x) { ENTITY_AUTH_DATA_MO = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return ENTITY_AUTH_DATA_MO; }, "ENTITY_AUTH_DATA_MO", MslTestConstants.TIMEOUT);
+            runs(function() {
+                var scheme = ENTITY_AUTH_DATA.scheme;
+                var factory = ctx.getEntityAuthenticationFactory(scheme);
+                cryptoContext = factory.getCryptoContext(ctx, ENTITY_AUTH_DATA);
+                initialized = true;
+            });
+        }
     });
 
     it("ctors", function() {
@@ -147,7 +148,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(errorHeader.entityAuthenticationData).toEqual(ENTITY_AUTH_DATA);
 	        expect(errorHeader.errorCode).toEqual(ERROR_CODE);
@@ -168,7 +169,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -177,7 +178,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
         
         var ciphertext, plaintext, signature;
         runs(function() {
@@ -190,7 +191,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = mo.getBytes(KEY_SIGNATURE);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
         
         var verified;
         runs(function() {
@@ -199,7 +200,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified", 100);
+        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -223,7 +224,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -233,7 +234,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var ciphertext, plaintext, signature;
         runs(function() {
@@ -246,7 +247,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = mo.getBytes(KEY_SIGNATURE);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
 
         var verified;
         runs(function() {
@@ -255,7 +256,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified", 100);
+        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -279,7 +280,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -289,7 +290,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var ciphertext, plaintext, signature;
         runs(function() {
@@ -302,7 +303,7 @@ describe("ErrorHeader", function() {
             });
             signature = mo.getBytes(KEY_SIGNATURE);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
 
         var verified;
         runs(function() {
@@ -311,7 +312,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return verified; }, "verified", 100);
+        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(verified).toBeTruthy();
@@ -335,7 +336,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -345,7 +346,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var ciphertext, plaintext, signature;
         runs(function() {
@@ -358,7 +359,7 @@ describe("ErrorHeader", function() {
 	        });
 	        signature = mo.getBytes(KEY_SIGNATURE);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
 
         var verified;
         runs(function() {
@@ -367,7 +368,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return verified; }, "verified", 100);
+        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
         
         runs(function() {
 	        expect(verified).toBeTruthy();
@@ -391,7 +392,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var mo;
         runs(function() {
@@ -401,7 +402,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return mo; }, "mo", 100);
+        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
 
         var ciphertext, plaintext, signature;
         runs(function() {
@@ -414,7 +415,7 @@ describe("ErrorHeader", function() {
             });
             signature = mo.getBytes(KEY_SIGNATURE);
         });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", 100);
+        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
 
         var verified;
         runs(function() {
@@ -423,7 +424,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return verified; }, "verified", 100);
+        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
         
         runs(function() {
             expect(verified).toBeTruthy();
@@ -447,7 +448,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -456,7 +457,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
         
         var header;
         runs(function() {
@@ -465,7 +466,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return header; }, "header", 100);
+        waitsFor(function() { return header; }, "header", MslTestConstants.TIMEOUT);
         
         runs(function() {
 	        expect(header).not.toBeNull();
@@ -491,7 +492,7 @@ describe("ErrorHeader", function() {
                 error: function(err) { exception = err; }
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         
         runs(function() {
         	var f = function() { throw exception; };
@@ -507,7 +508,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -516,7 +517,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -527,7 +528,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND));
@@ -542,7 +543,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -551,7 +552,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -562,7 +563,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -577,7 +578,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -586,7 +587,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -597,7 +598,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -612,7 +613,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -621,7 +622,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -632,7 +633,7 @@ describe("ErrorHeader", function() {
                 error: function(err) { exception = err; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -647,7 +648,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -656,7 +657,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -667,7 +668,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslCryptoException(MslError.MESSAGE_VERIFICATION_FAILED));
@@ -682,7 +683,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -691,7 +692,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -702,7 +703,7 @@ describe("ErrorHeader", function() {
 	        	error: function(err) { exception = err; },
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -717,7 +718,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -726,7 +727,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -746,7 +747,7 @@ describe("ErrorHeader", function() {
 	        	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 	        });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslCryptoException(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR));
@@ -761,7 +762,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -770,7 +771,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
     	
         var exception;
         runs(function() {
@@ -789,7 +790,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	});
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.HEADER_DATA_MISSING));
@@ -804,7 +805,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -813,7 +814,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -824,7 +825,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -837,7 +838,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -846,7 +847,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -859,7 +860,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var header;
         runs(function() {
@@ -870,7 +871,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return header; }, "header", 100);
+        waitsFor(function() { return header; }, "header", MslTestConstants.TIMEOUT);
     });
     
     it("invalid timestamp", function() {
@@ -881,7 +882,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -890,7 +891,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -901,7 +902,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -914,7 +915,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -923,7 +924,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -936,7 +937,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -947,7 +948,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -962,7 +963,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -971,7 +972,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -982,7 +983,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -995,7 +996,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1004,7 +1005,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1017,7 +1018,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1028,7 +1029,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -1043,7 +1044,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1052,7 +1053,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1063,7 +1064,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1076,7 +1077,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1085,7 +1086,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1098,7 +1099,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1109,7 +1110,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
@@ -1124,7 +1125,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { exception = e; }
         	});
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1139,7 +1140,7 @@ describe("ErrorHeader", function() {
         		error: function(e) { exception = e; }
         	});
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslInternalException(MslError.NONE));
@@ -1154,7 +1155,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1163,7 +1164,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1174,7 +1175,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1187,7 +1188,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1196,7 +1197,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1209,7 +1210,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1220,7 +1221,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
@@ -1235,7 +1236,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1244,7 +1245,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1255,7 +1256,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
 
         var modifiedPlaintext;
         runs(function() {
@@ -1268,7 +1269,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1277,7 +1278,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
 
         var modifiedSignature;
         runs(function() {
@@ -1290,7 +1291,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1301,7 +1302,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.MESSAGE_ID_OUT_OF_RANGE));
@@ -1316,7 +1317,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1325,7 +1326,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1336,7 +1337,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1349,7 +1350,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1358,7 +1359,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1371,7 +1372,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1382,7 +1383,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
@@ -1397,7 +1398,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1406,7 +1407,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1417,7 +1418,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1430,7 +1431,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1439,7 +1440,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1452,7 +1453,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1463,7 +1464,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
@@ -1478,7 +1479,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1487,7 +1488,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1498,7 +1499,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1511,7 +1512,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1520,7 +1521,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1533,7 +1534,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var moErrorHeader;
         runs(function() {
@@ -1544,7 +1545,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(moErrorHeader.internalCode).toEqual(-1);
         });
@@ -1558,7 +1559,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1567,7 +1568,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1578,7 +1579,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1591,7 +1592,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1600,7 +1601,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1613,7 +1614,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1624,7 +1625,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
@@ -1639,7 +1640,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1648,7 +1649,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1659,7 +1660,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1672,7 +1673,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1681,7 +1682,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1694,7 +1695,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var exception;
         runs(function() {
@@ -1705,7 +1706,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { exception = e; },
             });
         });
-        waitsFor(function() { return exception; }, "exception", 100);
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
         runs(function() {
         	var f = function() { throw exception; };
         	expect(f).toThrow(new MslMessageException(MslError.INTERNAL_CODE_NEGATIVE, MESSAGE_ID));
@@ -1720,7 +1721,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1729,7 +1730,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1740,7 +1741,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1753,7 +1754,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1762,7 +1763,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1775,7 +1776,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var moErrorHeader;
         runs(function() {
@@ -1786,7 +1787,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", MslTestConstants.TIMEOUT);
         runs(function() {
         	expect(moErrorHeader.errorMessage).toBeNull();
         });
@@ -1800,7 +1801,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         
         var errorHeaderMo;
         runs(function() {
@@ -1809,7 +1810,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", 100);
+        waitsFor(function() { return errorHeaderMo; }, "errorHeaderMo", MslTestConstants.TIMEOUT);
 
         var plaintext;
         runs(function() {
@@ -1820,7 +1821,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return plaintext; }, "plaintext", 100);
+        waitsFor(function() { return plaintext; }, "plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedPlaintext;
         runs(function() {
@@ -1833,7 +1834,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", 100);
+        waitsFor(function() { return modifiedPlaintext; }, "modified plaintext", MslTestConstants.TIMEOUT);
         
         var modifiedCiphertext;
         runs(function() {
@@ -1842,7 +1843,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", 100);
+        waitsFor(function() { return modifiedCiphertext; }, "modified ciphertext", MslTestConstants.TIMEOUT);
         
         var modifiedSignature;
         runs(function() {
@@ -1855,7 +1856,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return modifiedSignature; }, 100);
+        waitsFor(function() { return modifiedSignature; }, MslTestConstants.TIMEOUT);
         
         var moErrorHeader;
         runs(function() {
@@ -1866,7 +1867,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", 100);
+        waitsFor(function() { return moErrorHeader; }, "moErrorHeader", MslTestConstants.TIMEOUT);
         runs(function() {
             expect(moErrorHeader.userMessage).toBeNull();
         });
@@ -1886,7 +1887,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -1899,7 +1900,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1942,7 +1943,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -1972,7 +1973,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -1985,7 +1986,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -2015,7 +2016,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -2028,7 +2029,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -2058,7 +2059,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -2071,7 +2072,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -2105,7 +2106,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -2118,7 +2119,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
 	        expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -2152,7 +2153,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", 100);
+        waitsFor(function() { return errorHeaderA && errorHeaderB && errorHeaderC; }, "error headers", MslTestConstants.TIMEOUT);
         var errorHeaderA2;
         runs(function() {
             MslTestUtils.toMslObject(encoder, errorHeaderA, {
@@ -2165,7 +2166,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", 100);
+        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
 
         runs(function() {
             expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
@@ -2189,7 +2190,7 @@ describe("ErrorHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return errorHeader; }, "errorHeader", 100);
+        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
         runs(function() {
 	        expect(errorHeader.equals(null)).toBeFalsy();
 	        expect(errorHeader.equals(ERROR_MSG)).toBeFalsy();

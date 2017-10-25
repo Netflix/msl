@@ -19,6 +19,7 @@ describe("ConditionVariable", function() {
     var Random = require('../../../../../core/src/main/javascript/util/Random.js');
     
     var TIMEOUT = 150;
+    var WAIT = 200;
     var DELAY = 1;
     var NAME = "name";
     
@@ -79,7 +80,7 @@ describe("ConditionVariable", function() {
             setTimeout(function() { cv.signal(); }, DELAY);
             expect(counter.signaled).toEqual(0);
         });
-        waitsFor(function() { return counter.signaled == 1; }, "signaled", 100);
+        waitsFor(function() { return counter.signaled == 1; }, "signaled", WAIT);
     });
     
     it("wait and signal all", function() {
@@ -89,7 +90,7 @@ describe("ConditionVariable", function() {
             setTimeout(function() { cv.signalAll(); }, DELAY);
             expect(counter.signaled).toEqual(0);
         });
-        waitsFor(function() { return counter.signaled == 1; }, "signaled", 100);
+        waitsFor(function() { return counter.signaled == 1; }, "signaled", WAIT);
     });
     
     it("multiple wait and signal", function() {
@@ -103,26 +104,26 @@ describe("ConditionVariable", function() {
             }
             expect(counter.signaled).toEqual(0);
         });
-        waitsFor(function() { return names.length == 3; }, "names", 100);
+        waitsFor(function() { return names.length == 3; }, "names", WAIT);
 
         runs(function() {
             setTimeout(function() { cv.signal(); }, DELAY);
         });
-        waitsFor(function() { return counter.signaled == 1; }, "first", 100);
+        waitsFor(function() { return counter.signaled == 1; }, "first", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
             expect(counter.lastName).toEqual(expectedName);
             setTimeout(function() { cv.signal(); }, DELAY);
         });
-        waitsFor(function() { return counter.signaled == 2; }, "second", 100);
+        waitsFor(function() { return counter.signaled == 2; }, "second", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
             expect(counter.lastName).toEqual(expectedName);
             setTimeout(function() { cv.signal(); }, DELAY);
         });
-        waitsFor(function() { return counter.signaled == 3; }, "third", 100);
+        waitsFor(function() { return counter.signaled == 3; }, "third", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
@@ -142,7 +143,7 @@ describe("ConditionVariable", function() {
             expect(counter.signaled).toEqual(0);
             setTimeout(function() { cv.signalAll(); }, DELAY);
         });
-        waitsFor(function() { return names.length == 3 && counter.signaled == 3; }, "signaled", 100);
+        waitsFor(function() { return names.length == 3 && counter.signaled == 3; }, "signaled", WAIT);
         
         runs(function() {
             var lastName = names.pop();
@@ -164,7 +165,7 @@ describe("ConditionVariable", function() {
                 passed = true;
             }, DELAY);
         });
-        waitsFor(function() { return passed; }, "passed", 100);
+        waitsFor(function() { return passed; }, "passed", WAIT);
     });
     
     it("cancel", function() {
@@ -172,7 +173,7 @@ describe("ConditionVariable", function() {
             var ticket = cv.wait(TIMEOUT, counter.getCallback(NAME));
             setTimeout(function() { cv.cancel(ticket); }, DELAY);
         });
-        waitsFor(function() { return counter.cancelled == 1; }, "cancelled", 100);
+        waitsFor(function() { return counter.cancelled == 1; }, "cancelled", WAIT);
     });
     
     it("cancel multiple", function() {
@@ -188,26 +189,26 @@ describe("ConditionVariable", function() {
             }
             expect(counter.cancelled).toEqual(0);
         });
-        waitsFor(function() { return names.length == 3 && tickets.length == 3; }, "names & tickets", 100);
+        waitsFor(function() { return names.length == 3 && tickets.length == 3; }, "names & tickets", WAIT);
 
         runs(function() {
             setTimeout(function() { cv.cancel(tickets.shift()); }, DELAY);
         });
-        waitsFor(function() { return counter.cancelled == 1; }, "first", 100);
+        waitsFor(function() { return counter.cancelled == 1; }, "first", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
             expect(counter.lastName).toEqual(expectedName);
             setTimeout(function() { cv.cancel(tickets.shift()); }, DELAY);
         });
-        waitsFor(function() { return counter.cancelled == 2; }, "second", 100);
+        waitsFor(function() { return counter.cancelled == 2; }, "second", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
             expect(counter.lastName).toEqual(expectedName);
             setTimeout(function() { cv.cancel(tickets.shift()); }, DELAY);
         });
-        waitsFor(function() { return counter.cancelled == 3; }, "third", 100);
+        waitsFor(function() { return counter.cancelled == 3; }, "third", WAIT);
         
         runs(function() {
             var expectedName = names.shift();
@@ -224,7 +225,7 @@ describe("ConditionVariable", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return timedout; }, "timedout", 200);
+        waitsFor(function() { return timedout; }, "timedout", WAIT);
     });
     
     it("stress", function() {
@@ -295,7 +296,7 @@ describe("ConditionVariable", function() {
         runs(function() {
             addOperation();
         });
-        waitsFor(function() { return (counter.signaled + counter.cancelled) == MAX_WAITERS; }, "complete", 1000);
+        waitsFor(function() { return (counter.signaled + counter.cancelled) == MAX_WAITERS; }, "complete", 5 * WAIT);
         
         runs(function() {
             expect(numWaiters).toEqual(MAX_WAITERS);

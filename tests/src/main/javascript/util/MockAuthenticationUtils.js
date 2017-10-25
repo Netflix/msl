@@ -138,39 +138,39 @@
                 if (!entityUsers) return;
                 var revokedSchemes = entityUsers[user.uniqueKey()];
                 if (!revokedSchemes) return;
-                var index = revokedSchemes.indexOf(scheme);
-                if (index != -1)
-                    revokedSchemes.splice(index, 1);
+                var rsIndex = revokedSchemes.indexOf(scheme);
+                if (rsIndex != -1)
+                    revokedSchemes.splice(rsIndex, 1);
                 return;
             }
             
             // Form 1: entity => entity auth scheme
             if (scheme instanceof EntityAuthenticationScheme) {
-                var revokedSchemes = this._revokedEntityAuthSchemes[identity];
-                if (!revokedSchemes) return;
-                var index = revokedSchemes.indexOf(scheme);
-                if (index != -1)
-                    revokedSchemes.splice(index, 1);
+                var revokedEntityAuthSchemes = this._revokedEntityAuthSchemes[identity];
+                if (!revokedEntityAuthSchemes) return;
+                var reasIndex = revokedEntityAuthSchemes.indexOf(scheme);
+                if (reasIndex != -1)
+                    revokedEntityAuthSchemes.splice(reasIndex, 1);
                 return;
             }
     
             // Form 1: entity => user auth scheme
             if (scheme instanceof UserAuthenticationScheme) {
-                var revokedSchemes = this._revokedUserAuthSchemes[identity];
-                if (!revokedSchemes) return;
-                var index = revokedSchemes.indexOf(scheme);
-                if (index != -1)
-                    revokedSchemes.splice(index, 1);
+                var revokedUserAuthSchemes = this._revokedUserAuthSchemes[identity];
+                if (!revokedUserAuthSchemes) return;
+                var ruasIndex = revokedUserAuthSchemes.indexOf(scheme);
+                if (ruasIndex != -1)
+                    revokedUserAuthSchemes.splice(ruasIndex, 1);
                 return;
             }
     
             // Form 1: entity => key exchange scheme
             if (scheme instanceof KeyExchangeScheme) {
-                var revokedSchemes = this._revokedKeyxSchemes[identity];
-                if (!revokedSchemes) return;
-                var index = revokedSchemes.indexOf(scheme);
-                if (index != -1)
-                    revokedSchemes.splice(index, 1);
+                var revokedKeyxSchemes = this._revokedKeyxSchemes[identity];
+                if (!revokedKeyxSchemes) return;
+                var rksIndex = revokedKeyxSchemes.indexOf(scheme);
+                if (rksIndex != -1)
+                    revokedKeyxSchemes.splice(rksIndex, 1);
                 return;
             }
         },
@@ -224,40 +224,40 @@
             
             // Form 1: entity => entity auth scheme
             if (scheme instanceof EntityAuthenticationScheme) {
-                var revokedSchemes = this._revokedEntityAuthSchemes[identity];
-                if (!revokedSchemes) {
-                    revokedSchemes = [];
-                    this._revokedEntityAuthSchemes[identity] = revokedSchemes;
+                var revokedEntityAuthSchemes = this._revokedEntityAuthSchemes[identity];
+                if (!revokedEntityAuthSchemes) {
+                    revokedEntityAuthSchemes = [];
+                    this._revokedEntityAuthSchemes[identity] = revokedEntityAuthSchemes;
                 }
-                var index = revokedSchemes.indexOf(scheme);
-                if (index == -1)
-                    revokedSchemes.push(scheme);
+                var reasIndex = revokedEntityAuthSchemes.indexOf(scheme);
+                if (reasIndex == -1)
+                    revokedEntityAuthSchemes.push(scheme);
                 return;
             }
     
             // Form 1: entity => user auth scheme
             if (scheme instanceof UserAuthenticationScheme) {
-                var revokedSchemes = this._revokedUserAuthSchemes[identity];
-                if (!revokedSchemes) {
-                    revokedSchemes = [];
-                    this._revokedUserAuthSchemes[identity] = revokedSchemes;
+                var revokedUserAuthSchemes = this._revokedUserAuthSchemes[identity];
+                if (!revokedUserAuthSchemes) {
+                    revokedUserAuthSchemes = [];
+                    this._revokedUserAuthSchemes[identity] = revokedUserAuthSchemes;
                 }
-                var index = revokedSchemes.indexOf(scheme);
-                if (index == -1)
-                    revokedSchemes.push(scheme);
+                var ruasIndex = revokedUserAuthSchemes.indexOf(scheme);
+                if (ruasIndex == -1)
+                    revokedUserAuthSchemes.push(scheme);
                 return;
             }
     
             // Form 1: entity => key exchange scheme
             if (scheme instanceof KeyExchangeScheme) {
-                var revokedSchemes = this._revokedKeyxSchemes[identity];
-                if (!revokedSchemes) {
-                    revokedSchemes = [];
-                    this._revokedKeyxSchemes[identity] = revokedSchemes;
+                var revokedKeyxSchemes = this._revokedKeyxSchemes[identity];
+                if (!revokedKeyxSchemes) {
+                    revokedKeyxSchemes = [];
+                    this._revokedKeyxSchemes[identity] = revokedKeyxSchemes;
                 }
-                var index = revokedSchemes.indexOf(scheme);
-                if (index == -1)
-                    revokedSchemes.push(scheme);
+                var rksIndex = revokedKeyxSchemes.indexOf(scheme);
+                if (rksIndex == -1)
+                    revokedKeyxSchemes.push(scheme);
                 return;
             }
         },
@@ -284,23 +284,23 @@
             
             // Form 1: entity => entity auth scheme
             if (scheme instanceof EntityAuthenticationScheme) {
-                var revokedSchemes = this._revokedEntityAuthSchemes[identity];
-                if (!revokedSchemes) return true;
-                return revokedSchemes.indexOf(scheme) == -1;
+                var revokedEntityAuthSchemes = this._revokedEntityAuthSchemes[identity];
+                if (!revokedEntityAuthSchemes) return true;
+                return revokedEntityAuthSchemes.indexOf(scheme) == -1;
             }
     
             // Form 1: entity => user auth scheme
             if (scheme instanceof UserAuthenticationScheme) {
-                var revokedSchemes = this._revokedUserAuthSchemes[identity];
-                if (!revokedSchemes) return true;
-                return revokedSchemes.indexOf(scheme) == -1;
+                var revokedUserAuthSchemes = this._revokedUserAuthSchemes[identity];
+                if (!revokedUserAuthSchemes) return true;
+                return revokedUserAuthSchemes.indexOf(scheme) == -1;
             }
     
             // Form 1: entity => key exchange scheme
             if (scheme instanceof KeyExchangeScheme) {
-                var revokedSchemes = this._revokedKeyxSchemes[identity];
-                if (!revokedSchemes) return true;
-                return revokedSchemes.indexOf(scheme) == -1;
+                var revokedKeyxSchemes = this._revokedKeyxSchemes[identity];
+                if (!revokedKeyxSchemes) return true;
+                return revokedKeyxSchemes.indexOf(scheme) == -1;
             }
         },
     });
