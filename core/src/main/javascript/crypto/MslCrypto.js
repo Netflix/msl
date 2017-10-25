@@ -76,7 +76,7 @@
      * @return {WebCryptoVersion} the Web Crypto version in use.
      */
     var MslCrypto$getWebCryptoVersion = function MslCrypto$getWebCryptoVersion() {
-    	return mslCrypto$version;
+        return mslCrypto$version;
     };
 
     // Determine crypto subtle.
@@ -106,7 +106,7 @@
      * @param {object} the new crypto subtle interface.
      */
     var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
-    	nfCryptoSubtle = cryptoSubtle;
+        nfCryptoSubtle = cryptoSubtle;
     };
 
     // If extractable is not specified, default to false
@@ -168,7 +168,7 @@
                 case WebCryptoVersion.V2014_02:
                 case WebCryptoVersion.V2014_02_SAFARI:
                 case WebCryptoVersion.NRDJS:
-                	var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
+                    var op = nfCryptoSubtle.encrypt(algorithm, key, buffer);
                     return promisedOperation(op);
                 default:
                     throw new Error("Unsupported Web Crypto version " + mslCrypto$version + ".");
