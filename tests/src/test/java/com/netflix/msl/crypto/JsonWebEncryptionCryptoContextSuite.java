@@ -40,7 +40,6 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -57,9 +56,11 @@ import com.netflix.msl.crypto.JsonWebEncryptionCryptoContext.CekCryptoContext;
 import com.netflix.msl.crypto.JsonWebEncryptionCryptoContext.Encryption;
 import com.netflix.msl.crypto.JsonWebEncryptionCryptoContext.Format;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
+import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
+import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
@@ -135,9 +136,9 @@ public class JsonWebEncryptionCryptoContextSuite {
      * @param serialization JSON serialization.
      * @param key JSON key.
      * @return the requested Base64-encoded value.
-     * @throws JSONException if there is an error parsing the serialization.
+     * @throws MslEncoderException if there is an error parsing the serialization.
      */
-    private static String get(final byte[] serialization, final String key) throws JSONException {
+    private static String get(final byte[] serialization, final String key) throws MslEncoderException {
         final JSONObject serializationJo = new JSONObject(new String(serialization, UTF_8));
         final JSONArray recipients = serializationJo.getJSONArray(KEY_RECIPIENTS);
         final JSONObject recipient = recipients.getJSONObject(0);
@@ -163,10 +164,10 @@ public class JsonWebEncryptionCryptoContextSuite {
      * @param key JSON key.
      * @param value replacement value.
      * @return the modified JSON serialization.
-     * @throws JSONException if there is an error modifying the JSON
+     * @throws MslEncoderException if there is an error modifying the JSON
      *         serialization.
      */
-    private static byte[] replace(final byte[] serialization, final String key, final Object value) throws JSONException {
+    private static byte[] replace(final byte[] serialization, final String key, final Object value) throws MslEncoderException {
         final JSONObject serializationJo = new JSONObject(new String(serialization, UTF_8));
         final JSONArray recipients = serializationJo.getJSONArray(KEY_RECIPIENTS);
         final JSONObject recipient = recipients.getJSONObject(0);
@@ -199,10 +200,10 @@ public class JsonWebEncryptionCryptoContextSuite {
      * @param serialization JSON serialization.
      * @param key JSON key.
      * @return the modified JSON serialization.
-     * @throws JSONException if there is an error modifying the JSON
+     * @throws MslEncoderException if there is an error modifying the JSON
      *         serialization.
      */
-    private static byte[] remove(final byte[] serialization, final String key) throws JSONException {
+    private static byte[] remove(final byte[] serialization, final String key) throws MslEncoderException {
         final JSONObject serializationJo = new JSONObject(new String(serialization, UTF_8));
         final JSONArray recipients = serializationJo.getJSONArray(KEY_RECIPIENTS);
         final JSONObject recipient = recipients.getJSONObject(0);
@@ -375,6 +376,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_CS);
@@ -583,14 +585,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAlgorithm() throws JSONException, MslCryptoException {
+        public void missingAlgorithm() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -598,14 +600,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAlgorithm() throws MslCryptoException, JSONException {
+        public void invalidAlgorithm() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -613,14 +615,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingEncryption() throws MslCryptoException, JSONException {
+        public void missingEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -628,14 +630,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidEncryption() throws MslCryptoException, JSONException {
+        public void invalidEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -707,6 +709,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_JS);
@@ -748,7 +751,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void missingRecipients() throws MslCryptoException, JSONException {
+        public void missingRecipients() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -759,7 +762,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void invalidRecipients() throws MslCryptoException, JSONException {
+        public void invalidRecipients() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -770,7 +773,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
 
         @Test
-        public void missingRecipient() throws MslCryptoException, JSONException {
+        public void missingRecipient() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -781,7 +784,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void invalidRecipient() throws JSONException, MslCryptoException {
+        public void invalidRecipient() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -792,7 +795,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingHeader() throws MslCryptoException, JSONException {
+        public void missingHeader() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -803,7 +806,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidHeader() throws MslCryptoException, JSONException {
+        public void invalidHeader() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -814,7 +817,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingCek() throws MslCryptoException, JSONException {
+        public void missingCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -825,7 +828,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidCek() throws MslCryptoException, JSONException {
+        public void invalidCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.CIPHERTEXT_BAD_PADDING);
 
@@ -836,7 +839,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingIv() throws MslCryptoException, JSONException {
+        public void missingIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -847,7 +850,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidIv() throws MslCryptoException, JSONException {
+        public void invalidIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -858,7 +861,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingCiphertext() throws MslCryptoException, JSONException {
+        public void missingCiphertext() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -869,7 +872,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidCiphertext() throws MslCryptoException, JSONException {
+        public void invalidCiphertext() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -880,7 +883,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAuthenticationTag() throws MslCryptoException, JSONException {
+        public void missingAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -891,7 +894,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAuthenticationTag() throws MslCryptoException, JSONException {
+        public void invalidAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.INVALID_ALGORITHM_PARAMS);
 
@@ -902,7 +905,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void wrongAuthenticationTag() throws MslCryptoException, JSONException {
+        public void wrongAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -916,13 +919,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAlgorithm() throws JSONException, MslCryptoException {
+        public void missingAlgorithm() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -930,13 +933,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAlgorithm() throws MslCryptoException, JSONException {
+        public void invalidAlgorithm() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -944,13 +947,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingEncryption() throws MslCryptoException, JSONException {
+        public void missingEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -958,13 +961,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidEncryption() throws MslCryptoException, JSONException {
+        public void invalidEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -972,7 +975,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void badCek() throws MslCryptoException, JSONException {
+        public void badCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
@@ -984,7 +987,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void badIv() throws MslCryptoException, JSONException {
+        public void badIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -997,7 +1000,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void wrongCek() throws MslCryptoException, JSONException {
+        public void wrongCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1013,7 +1016,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void wrongIv() throws MslCryptoException, JSONException {
+        public void wrongIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1053,6 +1056,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, aesCryptoContext, Encryption.A256GCM, Format.JWE_CS);
@@ -1254,14 +1258,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAlgorithm() throws JSONException, MslCryptoException {
+        public void missingAlgorithm() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1269,14 +1273,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAlgorithm() throws MslCryptoException, JSONException {
+        public void invalidAlgorithm() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1284,14 +1288,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingEncryption() throws MslCryptoException, JSONException {
+        public void missingEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1299,14 +1303,14 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidEncryption() throws MslCryptoException, JSONException {
+        public void invalidEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1379,6 +1383,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, aesCryptoContext, Encryption.A256GCM, Format.JWE_JS);
@@ -1420,7 +1425,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void missingRecipients() throws MslCryptoException, JSONException {
+        public void missingRecipients() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1431,7 +1436,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void invalidRecipients() throws MslCryptoException, JSONException {
+        public void invalidRecipients() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1442,7 +1447,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
 
         @Test
-        public void missingRecipient() throws MslCryptoException, JSONException {
+        public void missingRecipient() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1453,7 +1458,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void invalidRecipient() throws JSONException, MslCryptoException {
+        public void invalidRecipient() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1464,7 +1469,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingHeader() throws MslCryptoException, JSONException {
+        public void missingHeader() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1475,7 +1480,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidHeader() throws MslCryptoException, JSONException {
+        public void invalidHeader() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1486,7 +1491,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingCek() throws MslCryptoException, JSONException {
+        public void missingCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1497,7 +1502,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidCek() throws MslCryptoException, JSONException {
+        public void invalidCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.INVALID_SYMMETRIC_KEY);
 
@@ -1508,7 +1513,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingIv() throws MslCryptoException, JSONException {
+        public void missingIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1519,7 +1524,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidIv() throws MslCryptoException, JSONException {
+        public void invalidIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1530,7 +1535,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingCiphertext() throws MslCryptoException, JSONException {
+        public void missingCiphertext() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1541,7 +1546,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidCiphertext() throws MslCryptoException, JSONException {
+        public void invalidCiphertext() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1552,7 +1557,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAuthenticationTag() throws MslCryptoException, JSONException {
+        public void missingAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
@@ -1563,7 +1568,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAuthenticationTag() throws MslCryptoException, JSONException {
+        public void invalidAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.INVALID_ALGORITHM_PARAMS);
 
@@ -1574,7 +1579,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
         
         @Test
-        public void wrongAuthenticationTag() throws MslCryptoException, JSONException {
+        public void wrongAuthenticationTag() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1588,13 +1593,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingAlgorithm() throws JSONException, MslCryptoException {
+        public void missingAlgorithm() throws MslEncoderException, MslCryptoException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1602,13 +1607,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidAlgorithm() throws MslCryptoException, JSONException {
+        public void invalidAlgorithm() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1616,13 +1621,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void missingEncryption() throws MslCryptoException, JSONException {
+        public void missingEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1630,13 +1635,13 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void invalidEncryption() throws MslCryptoException, JSONException {
+        public void invalidEncryption() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.JWE_PARSE_ERROR);
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final JSONObject header = new JSONObject(MslEncoderUtils.b64urlDecodeToString(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(header.toString()));
             
@@ -1644,7 +1649,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void badCek() throws MslCryptoException, JSONException {
+        public void badCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.INVALID_SYMMETRIC_KEY);
 
@@ -1657,7 +1662,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void badIv() throws MslCryptoException, JSONException {
+        public void badIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1670,7 +1675,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void wrongCek() throws MslCryptoException, JSONException {
+        public void wrongCek() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.INVALID_SYMMETRIC_KEY);
 
@@ -1686,7 +1691,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         }
     
         @Test
-        public void wrongIv() throws MslCryptoException, JSONException {
+        public void wrongIv() throws MslCryptoException, MslEncoderException {
             thrown.expect(MslCryptoException.class);
             thrown.expectMslError(MslError.UNWRAP_ERROR);
 
@@ -1709,6 +1714,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
             
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_CS);
