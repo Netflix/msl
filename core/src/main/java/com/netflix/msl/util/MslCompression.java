@@ -38,6 +38,9 @@ import com.netflix.msl.io.LZWOutputStream;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MslCompression {
+    /** Registered compression implementations. */
+    private static Map<CompressionAlgorithm,CompressionImpl> impls = new ConcurrentHashMap<CompressionAlgorithm,CompressionImpl>();
+    
     /**
      * <p>A data compression implementation. Implementations must be thread-
      * safe.</p>
@@ -202,7 +205,4 @@ public class MslCompression {
             throw new MslException(MslError.UNCOMPRESSION_ERROR, "algo " + compressionAlgo.name(), e);
         }
     }
-    
-    /** Registered compression implementations. */
-    private static Map<CompressionAlgorithm,CompressionImpl> impls = new ConcurrentHashMap<CompressionAlgorithm,CompressionImpl>();
 }
