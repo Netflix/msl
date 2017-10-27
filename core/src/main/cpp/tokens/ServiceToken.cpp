@@ -25,6 +25,7 @@
 #include <tokens/MasterToken.h>
 #include <tokens/UserIdToken.h>
 #include <util/Base64.h>
+#include <util/MslCompression.h>
 #include <util/MslContext.h>
 #include <util/MslUtils.h>
 
@@ -128,10 +129,10 @@ ServiceToken::ServiceToken(
     // Optionally compress the service data.
     if (compressionAlgo != MslConstants::CompressionAlgorithm::NOCOMPRESSION)
     {
-    	shared_ptr<ByteArray> compressed = MslUtils::compress(compressionAlgo, *data);
+        shared_ptr<ByteArray> compressed = MslCompression::compress(compressionAlgo, *data);
         // Only use compression if the compressed data is smaller than the
         // uncompressed data.
-        if (compressed->size() < data->size()) {
+        if (compressed && compressed->size() < data->size()) {
             compressionAlgo_ = compressionAlgo;
             compressedServicedata_ = compressed;
         } else {
@@ -249,7 +250,7 @@ void ServiceToken::init(shared_ptr<MslContext> ctx, shared_ptr<MslObject> servic
             }
 
             if (compressionAlgo_ != MslConstants::CompressionAlgorithm::NOCOMPRESSION) {
-                servicedata_ = MslUtils::uncompress(compressionAlgo_, *compressedServicedata_);
+                servicedata_ = MslCompression::uncompress(compressionAlgo_, *compressedServicedata_);
             } else {
                 servicedata_ = compressedServicedata_;
             }

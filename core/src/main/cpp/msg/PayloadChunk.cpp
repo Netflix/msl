@@ -23,6 +23,7 @@
 #include <crypto/ICryptoContext.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslObject.h>
+#include <util/MslCompression.h>
 #include <util/MslContext.h>
 #include <util/MslUtils.h>
 #include <string>
@@ -76,11 +77,11 @@ PayloadChunk::PayloadChunk(shared_ptr<MslContext> ctx,
 	// Optionally compress the application data.
 	shared_ptr<ByteArray> payloadData;
 	if (compressionAlgo != CompressionAlgorithm::NOCOMPRESSION) {
-		shared_ptr<ByteArray> compressed = MslUtils::compress(compressionAlgo, *data);
+		shared_ptr<ByteArray> compressed = MslCompression::compress(compressionAlgo, *data);
 
 		// Only use compression if the compressed data is smaller than the
 		// uncompressed data.
-		if (compressed->size() < data->size()) {
+		if (compressed && compressed->size() < data->size()) {
 			this->compressionAlgo = compressionAlgo;
 			payloadData = compressed;
 		} else {
@@ -184,7 +185,7 @@ PayloadChunk::PayloadChunk(shared_ptr<MslContext> ctx,
 		} else if (this->compressionAlgo == CompressionAlgorithm::NOCOMPRESSION) {
 			this->data = compressedData;
 		} else {
-			this->data = MslUtils::uncompress(compressionAlgo, *compressedData);
+			this->data = MslCompression::uncompress(compressionAlgo, *compressedData);
 		}
 	} catch (const MslEncoderException& e) {
 		stringstream ss;

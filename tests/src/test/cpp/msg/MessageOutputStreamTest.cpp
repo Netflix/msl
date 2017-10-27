@@ -47,6 +47,8 @@
 #include <tokens/UserIdToken.h>
 #include <tokens/ServiceToken.h>
 #include <userauth/UserAuthenticationData.h>
+#include <util/GzipCompression.h>
+#include <util/MslCompression.h>
 #include <util/MslContext.h>
 #include <cstdint>
 #include <memory>
@@ -125,6 +127,9 @@ public:
 		, ctx(make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false))
 		, encoder(ctx->getMslEncoderFactory())
 	{
+		shared_ptr<MslCompression::CompressionImpl> gzipImpl = make_shared<GzipCompression>();
+		MslCompression::registerImpl(MslConstants::CompressionAlgorithm::GZIP, gzipImpl);
+
 		shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, 1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		ENTITY_AUTH_DATA = ctx->getEntityAuthenticationData();

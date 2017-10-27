@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <util/Executor.h>
 #include <cmath>
+#include <functional>
 #include <memory>
 
 using namespace std;

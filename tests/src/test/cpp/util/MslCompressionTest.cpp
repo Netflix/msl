@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 #include <gtest/gtest.h>
-#include <util/MslUtils.h>
 #include <util/Base64.h>
+#include <util/GzipCompression.h>
+#include <util/MslCompression.h>
 #include <MslConstants.h>
 #include <MslError.h>
 #include <MslException.h>
@@ -39,43 +40,49 @@ const std::string str =
 
 } // namespace anonymous
 
-class MslUtilsTest : public ::testing::Test
+class MslCompressionTest : public ::testing::Test
 {
+public:
+	MslCompressionTest()
+	{
+		shared_ptr<MslCompression::CompressionImpl> gzipImpl = make_shared<GzipCompression>();
+		MslCompression::registerImpl(MslConstants::CompressionAlgorithm::GZIP, gzipImpl);
+	}
 };
 
-TEST_F(MslUtilsTest, unsupportedCompression)
+TEST_F(MslCompressionTest, unsupportedCompression)
 {
     const ByteArray data(str.begin(), str.end());
     try {
-        MslUtils::compress(MslConstants::CompressionAlgorithm::NOCOMPRESSION, data);
+        MslCompression::compress(MslConstants::CompressionAlgorithm::NOCOMPRESSION, data);
         ADD_FAILURE() << "Should have thrown.";
     } catch (const MslException& e) {
-        EXPECT_EQ(MslError::COMPRESSION_ERROR, e.getError());
+        EXPECT_EQ(MslError::UNSUPPORTED_COMPRESSION, e.getError());
     }
     try {
-        MslUtils::uncompress(MslConstants::CompressionAlgorithm::NOCOMPRESSION, data);
+    		MslCompression::uncompress(MslConstants::CompressionAlgorithm::NOCOMPRESSION, data);
         ADD_FAILURE() << "Should have thrown.";
     } catch (const MslException& e) {
-        EXPECT_EQ(MslError::UNCOMPRESSION_ERROR, e.getError());
+        EXPECT_EQ(MslError::UNSUPPORTED_COMPRESSION, e.getError());
     }
 }
 
-TEST_F(MslUtilsTest, gzipRoundtrip)
+TEST_F(MslCompressionTest, gzipRoundtrip)
 {
     shared_ptr<ByteArray> uncompressed = make_shared<ByteArray>(str.begin(), str.end());
-    shared_ptr<ByteArray> compressed = MslUtils::compress(MslConstants::CompressionAlgorithm::GZIP, *uncompressed);
+    shared_ptr<ByteArray> compressed = MslCompression::compress(MslConstants::CompressionAlgorithm::GZIP, *uncompressed);
     EXPECT_NE(*compressed, *uncompressed);
     EXPECT_LE(compressed->size(), uncompressed->size());
-    shared_ptr<ByteArray> uncompressed2 = MslUtils::uncompress(MslConstants::CompressionAlgorithm::GZIP, *compressed);
+    shared_ptr<ByteArray> uncompressed2 = MslCompression::uncompress(MslConstants::CompressionAlgorithm::GZIP, *compressed);
     EXPECT_NE(*compressed, *uncompressed2);
     EXPECT_GE(uncompressed2->size(), compressed->size());
     EXPECT_EQ(*uncompressed, *uncompressed2);
 
     shared_ptr<ByteArray> empty = make_shared<ByteArray>();
-    compressed = MslUtils::compress(MslConstants::CompressionAlgorithm::GZIP, *uncompressed);
+    compressed = MslCompression::compress(MslConstants::CompressionAlgorithm::GZIP, *uncompressed);
     EXPECT_NE(*compressed, *uncompressed);
     EXPECT_LE(compressed->size(), uncompressed->size());
-    uncompressed2 = MslUtils::uncompress(MslConstants::CompressionAlgorithm::GZIP, *compressed);
+    uncompressed2 = MslCompression::uncompress(MslConstants::CompressionAlgorithm::GZIP, *compressed);
     EXPECT_NE(*compressed, *uncompressed2);
     EXPECT_GE(uncompressed2->size(), compressed->size());
     EXPECT_EQ(*uncompressed, *uncompressed2);

@@ -40,26 +40,6 @@ class MslContext;
 namespace MslUtils {
 
 /**
- * Compress the provided data using the specified compression algorithm.
- *
- * @param compressionAlgo the compression algorithm.
- * @param data the data to compress.
- * @return the compressed data.
- * @throws MslException if there is an error compressing the data.
- */
-std::shared_ptr<ByteArray> compress(const MslConstants::CompressionAlgorithm& compressionAlgo, const ByteArray& data);
-
-/**
- * Uncompress the provided data using the specified compression algorithm.
- *
- * @param compressionAlgo the compression algorithm.
- * @param data the data to uncompress.
- * @return the uncompressed data.
- * @throws MslException if there is an error uncompressing the data.
- */
-std::shared_ptr<ByteArray> uncompress(const MslConstants::CompressionAlgorithm& compressionAlgo, const ByteArray& data);
-
-/**
  * Throws the provided {@code MslException} after translating it to the proper
  * original type.
  */
