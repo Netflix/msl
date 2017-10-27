@@ -61,7 +61,6 @@ import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
-import com.netflix.msl.util.Base64;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 
@@ -376,6 +375,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_CS);
@@ -591,7 +591,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -606,7 +606,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -621,7 +621,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -636,7 +636,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -708,6 +708,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_JS);
@@ -924,7 +925,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -938,7 +939,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -952,7 +953,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -966,7 +967,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1055,6 +1056,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, aesCryptoContext, Encryption.A256GCM, Format.JWE_CS);
@@ -1263,7 +1265,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1278,7 +1280,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1293,7 +1295,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1308,7 +1310,7 @@ public class JsonWebEncryptionCryptoContextSuite {
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String wrappedB64 = new String(wrapped, UTF_8);
             final String headerB64 = wrappedB64.substring(0, wrappedB64.indexOf('.'));
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, HEADER_INDEX, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1381,6 +1383,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
 
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, aesCryptoContext, Encryption.A256GCM, Format.JWE_JS);
@@ -1597,7 +1600,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ALGORITHM));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1611,7 +1614,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ALGORITHM, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1625,7 +1628,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             assertNotNull(header.remove(KEY_ENCRYPTION));
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1639,7 +1642,7 @@ public class JsonWebEncryptionCryptoContextSuite {
 
             final byte[] wrapped = cryptoContext.wrap(data, encoder, ENCODER_FORMAT);
             final String headerB64 = get(wrapped, KEY_HEADER);
-            final MslObject header = encoder.parseObject(Base64.decode(headerB64));
+            final MslObject header = encoder.parseObject(MslEncoderUtils.b64urlDecode(headerB64));
             header.put(KEY_ENCRYPTION, "x");
             final byte[] missingWrapped = replace(wrapped, KEY_HEADER, MslEncoderUtils.b64urlEncode(encoder.encodeObject(header, MslEncoderFormat.JSON)));
             
@@ -1712,6 +1715,7 @@ public class JsonWebEncryptionCryptoContextSuite {
         
         @BeforeClass
         public static void setup() throws NoSuchAlgorithmException, MslEncodingException, MslCryptoException {
+            JsonWebEncryptionCryptoContextSuite.setup();
             Security.addProvider(new BouncyCastleProvider());
             
             cryptoContext = new JsonWebEncryptionCryptoContext(ctx, rsaCryptoContext, Encryption.A128GCM, Format.JWE_CS);
