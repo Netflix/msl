@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -38,18 +38,18 @@ import com.netflix.msl.util.MslContext;
  * payload chunks carrying application data. Each payload chunk is individually
  * packaged but sequentially ordered. The end of the message is indicated by a
  * payload with no data.</p>
- * 
+ *
  * <p>No payload chunks may be included in an error message.</p>
- * 
+ *
  * <p>Data is buffered until {@link #flush()} or {@link #close()} is called.
  * At that point a new payload chunk is created and written out. Closing a
  * {@code MessageOutputStream} does not close the destination output stream in
  * case additional MSL messages will be written.</p>
- * 
+ *
  * <p>A copy of the payload chunks is kept in-memory and can be retrieved by a
  * a call to {@code getPayloads()} until {@code stopCaching()} is called. This
  * is used to facilitate automatic re-sending of messages.</p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageOutputStream extends OutputStream {
@@ -57,7 +57,7 @@ public class MessageOutputStream extends OutputStream {
      * Construct a new error message output stream. The header is output
      * immediately by calling {@code #flush()} on the destination output
      * stream.
-     * 
+     *
      * @param ctx the MSL context.
      * @param destination MSL output stream.
      * @param header error header.
@@ -73,7 +73,7 @@ public class MessageOutputStream extends OutputStream {
         } catch (final MslEncoderException e) {
             throw new IOException("Error encoding the error header.", e);
         }
-        
+
         this.ctx = ctx;
         this.destination = destination;
         this.encoderFormat = format;
@@ -89,12 +89,12 @@ public class MessageOutputStream extends OutputStream {
      * <p>Construct a new message output stream. The header is output
      * immediately by calling {@code #flush()} on the destination output
      * stream.</p>
-     * 
+     *
      * <p>The most preferred compression algorithm and encoder format supported
      * by the message header will be used. If this is a response, the message
      * header capabilities will already consist of the intersection of the
-     * local and remote entity capabiltities.</p>
-     * 
+     * local and remote entity capabilities.</p>
+     *
      * @param ctx the MSL context.
      * @param destination MSL output stream.
      * @param header message header.
@@ -103,7 +103,7 @@ public class MessageOutputStream extends OutputStream {
      */
     public MessageOutputStream(final MslContext ctx, final OutputStream destination, final MessageHeader header, final ICryptoContext cryptoContext) throws IOException {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
-        
+
         // Identify the compression algorithm and encoder format.
         final MessageCapabilities capabilities = header.getMessageCapabilities();
         final CompressionAlgorithm compressionAlgo;
@@ -117,7 +117,7 @@ public class MessageOutputStream extends OutputStream {
             compressionAlgo = null;
             encoderFormat = encoder.getPreferredFormat(null);
         }
-        
+
         // Encode the header.
         final byte[] encoding;
         try {
@@ -125,7 +125,7 @@ public class MessageOutputStream extends OutputStream {
         } catch (final MslEncoderException e) {
             throw new IOException("Error encoding the message header.", e);
         }
-        
+
         this.ctx = ctx;
         this.destination = destination;
         this.encoderFormat = encoderFormat;
@@ -136,7 +136,7 @@ public class MessageOutputStream extends OutputStream {
         this.destination.write(encoding);
         this.destination.flush();
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
@@ -150,7 +150,7 @@ public class MessageOutputStream extends OutputStream {
      * Set the payload chunk compression algorithm that will be used for all
      * future payload chunks. This function will flush any buffered data iff
      * the compression algorithm is being changed.
-     * 
+     *
      * @param compressionAlgo payload chunk compression algorithm. Null for no
      *        compression.
      * @return true if the compression algorithm is supported by the message,
@@ -165,7 +165,7 @@ public class MessageOutputStream extends OutputStream {
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
             throw new MslInternalException("Cannot write payload data for an error message.");
-        
+
         // Make sure the message is capable of using the compression algorithm.
         if (compressionAlgo != null) {
             if (capabilities == null)
@@ -174,13 +174,13 @@ public class MessageOutputStream extends OutputStream {
             if (!compressionAlgos.contains(compressionAlgo))
                 return false;
         }
-        
+
         if (this.compressionAlgo != compressionAlgo)
             flush();
         this.compressionAlgo = compressionAlgo;
         return true;
     }
-    
+
     /**
      * @return the message header. Will be null for error messages.
      */
@@ -189,7 +189,7 @@ public class MessageOutputStream extends OutputStream {
             return (MessageHeader)header;
         return null;
     }
-    
+
     /**
      * @return the error header. Will be null except for error messages.
      */
@@ -198,17 +198,17 @@ public class MessageOutputStream extends OutputStream {
             return (ErrorHeader)header;
         return null;
     }
-    
+
     /**
      * Returns the payloads sent so far. Once payload caching is turned off
      * this list will always be empty.
-     * 
+     *
      * @return an immutable ordered list of the payloads sent so far.
      */
     List<PayloadChunk> getPayloads() {
         return Collections.unmodifiableList(payloads);
     }
-    
+
     /**
      * Turns off caching of any message data (e.g. payloads).
      */
@@ -216,26 +216,26 @@ public class MessageOutputStream extends OutputStream {
         caching = false;
         payloads.clear();
     }
-    
+
     /**
      * By default the destination output stream is not closed when this message
      * output stream is closed. If it should be closed then this method can be
      * used to dictate the desired behavior.
-     * 
+     *
      * @param close true if the destination output stream should be closed,
      *        false if it should not.
      */
     public void closeDestination(final boolean close) {
         this.closeDestination = close;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.OutputStream#close()
      */
     @Override
     public void close() throws IOException {
         if (closed) return;
-        
+
         // Send a final payload that can be used to identify the end of data.
         // This is done by setting closed equal to true while the current
         // payload not null.
@@ -253,7 +253,7 @@ public class MessageOutputStream extends OutputStream {
      * Flush any buffered data out to the destination. This creates a payload
      * chunk. If there is no buffered data or this is an error message this
      * function does nothing.
-     * 
+     *
      * @throws IOException if buffered data could not be flushed.
      * @throws MslInternalException if writing an error message.
      * @see java.io.OutputStream#flush()
@@ -262,11 +262,11 @@ public class MessageOutputStream extends OutputStream {
     public void flush() throws IOException {
         // If the current payload is null, we are already closed.
         if (currentPayload == null) return;
-        
+
         // If we are not closed, and there is no data then we have nothing to
         // send.
         if (!closed && currentPayload.size() == 0) return;
-        
+
         // This is a no-op for error messages and handshake messages.
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null || messageHeader.isHandshake()) return;
@@ -283,7 +283,7 @@ public class MessageOutputStream extends OutputStream {
             destination.write(encoding);
             destination.flush();
             ++payloadSequenceNumber;
-            
+
             // If we are closed, get rid of the current payload. This prevents
             // us from sending any more payloads. Otherwise reset it for reuse.
             if (closed)
@@ -307,14 +307,14 @@ public class MessageOutputStream extends OutputStream {
         // Fail if closed.
         if (closed)
             throw new IOException("Message output stream already closed.");
-        
+
         // Make sure this is not an error message or handshake message.
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
             throw new MslInternalException("Cannot write payload data for an error message.");
         if (messageHeader.isHandshake())
             throw new MslInternalException("Cannot write payload data for a handshake message.");
-        
+
         // Append data.
         currentPayload.write(b, off, len);
     }
@@ -339,31 +339,31 @@ public class MessageOutputStream extends OutputStream {
 
     /** MSL context. */
     private final MslContext ctx;
-    
+
     /** Destination output stream. */
     private final OutputStream destination;
     /** MSL encoder format. */
     private final MslEncoderFormat encoderFormat;
     /** Message output stream capabilities. */
     private final MessageCapabilities capabilities;
-    
+
     /** Header. */
     private final Header header;
     /** Payload crypto context. */
     private final ICryptoContext cryptoContext;
-    
+
     /** Paload chunk compression algorithm. */
     private CompressionAlgorithm compressionAlgo;
     /** Current payload sequence number. */
     private long payloadSequenceNumber = 1;
     /** Current payload chunk data. */
     private ByteArrayOutputStream currentPayload = new ByteArrayOutputStream();
-    
+
     /** Stream is closed. */
     private boolean closed = false;
     /** True if the destination output stream should be closed. */
     private boolean closeDestination = false;
-    
+
     /** True if caching data. */
     private boolean caching = true;
     /** Ordered list of sent payloads. */

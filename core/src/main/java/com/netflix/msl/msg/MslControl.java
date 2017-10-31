@@ -1801,7 +1801,7 @@ public class MslControl {
         /**
          * Create a new result with the provided response and send result.
          * 
-         * @param response response message input stream.
+         * @param response response message input stream. May be {@code null}.
          * @param sent sent message result.
          */
         public SendReceiveResult(final MessageInputStream response, final SendResult sent) {
