@@ -42,12 +42,17 @@
 	var MslError = module.exports = function MslError(internalCode, responseCode, msg) {
 	    /** Internal error code base value. */
 	    var BASE = 100000;
+	    
+	    var toString = function toString() {
+            return "MslError{" + this.internalCode + "," + this.responseCode + "," + this.message + "}";
+        };
 	
 	    // The properties.
 	    var props = {
 	        internalCode: { value: BASE + internalCode, writable: false, configurable: false },
 	        responseCode: { value: responseCode, writable: false, configurable: false },
-	        message: { value: msg, writable: false, configurable: false }
+	        message: { value: msg, writable: false, configurable: false },
+	        toString: { value: toString, writable: false, enumerable: false },
 	    };
 	
 	    Object.defineProperties(this, props);
