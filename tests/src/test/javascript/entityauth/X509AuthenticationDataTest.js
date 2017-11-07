@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 describe("X509AuthenticationData", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
-    var X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var EntityAuthenticationData = require('msl-core/entityauth/EntityAuthenticationData.js');
+    var X509AuthenticationData = require('msl-core/entityauth/X509AuthenticationData.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslError = require('msl-core/MslError.js');
+    var X509 = require('msl-core/crypto/X509.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MockX509AuthenticationFactory = require('msl-tests/entityauth/MockX509AuthenticationFactory.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
 
     var hex2b64 = require('jsrsasign').hex2b64;
     

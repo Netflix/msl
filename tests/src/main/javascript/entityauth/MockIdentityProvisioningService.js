@@ -26,7 +26,7 @@
 (function(require, module) {
     "use strict";
     
-    var ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
+    var ProvisionedAuthenticationFactory = require('msl-core/entityauth/ProvisionedAuthenticationFactory.js');
     
     var MockIdentityProvisioningService = module.exports = ProvisionedAuthenticationFactory.IdentityProvisioningService.extend({
         /**

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 describe("ReadWriteLock", function() {
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var ReadWriteLock = require('../../../../../core/src/main/javascript/util/ReadWriteLock.js');
+    var Random = require('msl-core/util/Random.js');
+    var ReadWriteLock = require('msl-core/util/ReadWriteLock.js');
     
     var TIMEOUT = 75;
     var WAIT = 100;

@@ -16,19 +16,19 @@
 (function(require, module) {
     "use strict";
     
-    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    var EccAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationFactory.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
-    var EccCryptoContext = require('../../../../../core/src/main/javascript/crypto/EccCryptoContext.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
-    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
+    var ConditionVariable = require('msl-core/util/ConditionVariable.js');
+    var EccAuthenticationFactory = require('msl-core/entityauth/EccAuthenticationFactory.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var EccAuthenticationData = require('msl-core/entityauth/EccAuthenticationData.js');
+    var EccCryptoContext = require('msl-core/crypto/EccCryptoContext.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var WebCryptoNamedCurve = require('msl-core/crypto/WebCryptoNamedCurve.js');
+    var KeyFormat = require('msl-core/crypto/KeyFormat.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var PrivateKey = require('msl-core/crypto/PrivateKey.js');
     
     /** ECC public key. */
     var ECC_PUBKEY_JWK = {

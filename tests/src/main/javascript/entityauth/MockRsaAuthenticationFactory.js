@@ -16,18 +16,18 @@
 (function(require, module) {
     "use strict";
     
-    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    var RsaAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationFactory.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
-    var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+    var ConditionVariable = require('msl-core/util/ConditionVariable.js');
+    var RsaAuthenticationFactory = require('msl-core/entityauth/RsaAuthenticationFactory.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var RsaAuthenticationData = require('msl-core/entityauth/RsaAuthenticationData.js');
+    var RsaCryptoContext = require('msl-core/crypto/RsaCryptoContext.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var PrivateKey = require('msl-core/crypto/PrivateKey.js');
+    var KeyFormat = require('msl-core/crypto/KeyFormat.js');
     
     var MslTestUtils = require('../util/MslTestUtils.js');
     

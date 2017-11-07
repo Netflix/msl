@@ -20,20 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SymmetricCryptoContext", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    var MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var SecretKey = require('msl-core/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
+    var MslCiphertextEnvelope = require('msl-core/crypto/MslCiphertextEnvelope.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MockPresharedAuthenticationFactory = require('msl-tests/entityauth/MockPresharedAuthenticationFactory.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

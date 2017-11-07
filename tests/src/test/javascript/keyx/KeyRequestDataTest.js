@@ -24,15 +24,15 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("KeyRequestData", function() {
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    var KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
+    var KeyRequestData = require('msl-core/keyx/KeyRequestData.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslKeyExchangeException = require('msl-core/MslKeyExchangeException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
     
     /** Key key exchange scheme. */
     var KEY_SCHEME = "scheme";

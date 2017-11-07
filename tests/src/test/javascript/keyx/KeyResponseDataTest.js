@@ -24,18 +24,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("KeyResponseData", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    var KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
-    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
+    var KeyResponseData = require('msl-core/keyx/KeyResponseData.js');
+    var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslKeyExchangeException = require('msl-core/MslKeyExchangeException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

@@ -16,8 +16,8 @@
 (function(require, module) {
     "use strict";
     
-    var MslConstants = require("../../../../../core/src/main/javascript/MslConstants.js");
-    var MslCompression = require("../../../../../core/src/main/javascript/util/MslCompression.js");
+    var MslConstants = require("msl-core/MslConstants.js");
+    var MslCompression = require("msl-core/util/MslCompression.js");
     
     var zlib = require('zlib');
 

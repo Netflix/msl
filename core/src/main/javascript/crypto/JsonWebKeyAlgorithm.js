@@ -17,7 +17,7 @@
 (function(require, module) {
     "use strict";
     
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoAlgorithm = require('../crypto/WebCryptoAlgorithm.js');
     
     /** JSON Web Key algorithms. */
     var JsonWebKeyAlgorithm = module.exports = {

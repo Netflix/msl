@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 describe("MslCiphertextEnvelope", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var MslCiphertextEnvelope = require('../../../../../core/src/main/javascript/crypto/MslCiphertextEnvelope.js');
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var MslCiphertextEnvelope = require('msl-core/crypto/MslCiphertextEnvelope.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
     
     /** Key version. */
     var KEY_VERSION = "version";

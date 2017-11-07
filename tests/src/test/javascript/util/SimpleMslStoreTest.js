@@ -20,20 +20,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SimpleMslStore", function() {
-    var SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    var SessionCryptoContext = require('../../../../../core/src/main/javascript/crypto/SessionCryptoContext.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var SimpleMslStore = require('msl-core/util/SimpleMslStore.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
+    var NullCryptoContext = require('msl-core/crypto/NullCryptoContext.js');
+    var SessionCryptoContext = require('msl-core/crypto/SessionCryptoContext.js');
+    var Random = require('msl-core/util/Random.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslException = require('msl-core/MslException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
 
     /**
      * @param {Array.<ServiceToken>} tokensA first set of service tokens.

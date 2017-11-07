@@ -20,26 +20,26 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("DefaultMslEncoderFactory", function() {
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    var ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    var MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    var MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
-    var ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    var PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var DefaultMslEncoderFactory = require('msl-core/io/DefaultMslEncoderFactory.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var MslEncoderUtils = require('msl-core/io/MslEncoderUtils.js');
+    var ByteArrayOutputStream = require('msl-core/io/ByteArrayOutputStream.js');
+    var MessageHeader = require('msl-core/msg/MessageHeader.js');
+    var MessageOutputStream = require('msl-core/msg/MessageOutputStream.js');
+    var Arrays = require('msl-core/util/Arrays.js');
+    var MslEncoderException = require('msl-core/io/MslEncoderException.js');
+    var ByteArrayInputStream = require('msl-core/io/ByteArrayInputStream.js');
+    var Header = require('msl-core/msg/Header.js');
+    var PayloadChunk = require('msl-core/msg/PayloadChunk.js');
+    var Base64 = require('msl-core/util/Base64.js');
 
-    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('msl-core/lib/textEncoding.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
     
     /** Maximum number of object fields or array elements. */
     var MAX_NUM_ELEMENTS = 20;

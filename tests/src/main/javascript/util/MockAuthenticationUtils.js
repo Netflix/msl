@@ -22,11 +22,11 @@
 (function(require, module) {
     "use strict";
     
-    var AuthenticationUtils = require('../../../../../core/src/main/javascript/util/AuthenticationUtils.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    var MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
+    var AuthenticationUtils = require('msl-core/util/AuthenticationUtils.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var UserAuthenticationScheme = require('msl-core/userauth/UserAuthenticationScheme.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
+    var MslUser = require('msl-core/tokens/MslUser.js');
     
     var MockAuthenticationUtils = module.exports = AuthenticationUtils.extend({
         /**

@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
     
-    var EmailPasswordStore = require('../../../../../core/src/main/javascript/userauth/EmailPasswordStore.js');
+    var EmailPasswordStore = require('msl-core/userauth/EmailPasswordStore.js');
     
     /**
      * Create a new user and password pair.

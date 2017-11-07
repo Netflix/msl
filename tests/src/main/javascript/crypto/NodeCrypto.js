@@ -35,16 +35,16 @@
         "approached very carefully. We strongly advise against running MSL in a Node.js\n" +
         "environment.\n");
 
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var JsonWebKeyAlgorithm = require('../../../../../core/src/main/javascript/crypto/JsonWebKeyAlgorithm.js');
-    var WebCryptoNamedCurve = require('../../../../../core/src/main/javascript/crypto/WebCryptoNamedCurve.js');
-    var KeyFormat = require('../../../../../core/src/main/javascript/crypto/KeyFormat.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    var MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
-    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var Arrays = require('msl-core/util/Arrays.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var JsonWebKeyAlgorithm = require('msl-core/crypto/JsonWebKeyAlgorithm.js');
+    var WebCryptoNamedCurve = require('msl-core/crypto/WebCryptoNamedCurve.js');
+    var KeyFormat = require('msl-core/crypto/KeyFormat.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var MslUtils = require('msl-core/util/MslUtils.js');
+    var textEncoding = require('msl-core/lib/textEncoding.js');
     
     var NodeCryptoKey = require('../crypto/NodeCryptoKey.js');
     
