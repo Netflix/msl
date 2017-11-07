@@ -310,6 +310,11 @@ public:
      */
     inline bool operator!=(const MslError& rhs) const { return !(*this == rhs); }
 
+    // operator<< for easier use with output
+    friend inline std::ostream & operator<<(std::ostream& os, const MslError& me) {
+        return os << "MslError{" << me.internalCode_ << "," << me.responseCode_.intValue() << "," << me.msg_ << "}";
+    }
+
     MslError(const MslError& other);
     MslError& operator=(const MslError& other);
 

@@ -16,11 +16,13 @@
 
 #include <gtest/gtest.h>
 #include "MslError.h"
+#include <string>
+#include <sstream>
 
-namespace netflix
-{
-namespace msl
-{
+using namespace std;
+
+namespace netflix {
+namespace msl {
 
 using namespace netflix::msl::MslConstants;
 
@@ -47,5 +49,12 @@ TEST_F(MslErrorTest, DuplicateConstruction)
     EXPECT_THROW(MslError(0, ResponseCode::FAIL, "foo"), std::exception);
 }
 
-} /* namespace msl */
-} /* namespace netflix */
+TEST_F(MslErrorTest, ToString)
+{
+    string expected = "MslError{100000,1,Error parsing MSL encodable.}";
+    stringstream ss;
+    ss << MslError::MSL_PARSE_ERROR;
+    EXPECT_EQ(ss.str(), expected);
+}
+
+}} // namespace netflix::msl
