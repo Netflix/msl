@@ -26,17 +26,17 @@
 (function(require, module) {
 	"use strict";
 	
-	var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-	var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-	var MessageContext = require('../../../../../core/src/main/javascript/msg/MessageContext.js');
-	var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-	var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-	var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-	var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-	var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-	var AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-	var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-	var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
+	var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+	var SecretKey = require('msl-core/crypto/SecretKey.js');
+	var MessageContext = require('msl-core/msg/MessageContext.js');
+	var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+	var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+	var UserAuthenticationScheme = require('msl-core/userauth/UserAuthenticationScheme.js');
+	var EmailPasswordAuthenticationData = require('msl-core/userauth/EmailPasswordAuthenticationData.js');
+	var MslInternalException = require('msl-core/MslInternalException.js');
+	var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+	var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
+	var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
 	
 	var MockEmailPasswordAuthenticationFactory = require('../userauth/MockEmailPasswordAuthenticationFactory.js');
 	var MockRsaAuthenticationFactory = require('../entityauth/MockRsaAuthenticationFactory.js');

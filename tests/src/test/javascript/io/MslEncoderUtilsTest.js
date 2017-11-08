@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 describe("MslEncoderUtils", function() {
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
-    var MslArray = require('../../../../../core/src/main/javascript/io/MslArray.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var MslObject = require('msl-core/io/MslObject.js');
+    var MslArray = require('msl-core/io/MslArray.js');
+    var Random = require('msl-core/util/Random.js');
+    var MslEncoderUtils = require('msl-core/io/MslEncoderUtils.js');
     
     var KEY_BOOLEAN = "boolean";
     var KEY_NUMBER = "number";

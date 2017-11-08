@@ -20,9 +20,9 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("Base64", function() {
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var Base64 = require('msl-core/util/Base64.js');
 
-    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('msl-core/lib/textEncoding.js');
     
     /** UTF-8 charset. */
     var CHARSET = "utf-8";

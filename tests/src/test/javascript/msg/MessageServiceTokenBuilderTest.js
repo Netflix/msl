@@ -20,22 +20,22 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageServiceTokenBuilder", function() {
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    var MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-    var MessageServiceTokenBuilder = require('../../../../../core/src/main/javascript/msg/MessageServiceTokenBuilder.js');
-    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var Random = require('msl-core/util/Random.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var UserAuthenticationScheme = require('msl-core/userauth/UserAuthenticationScheme.js');
+    var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
+    var MessageBuilder = require('msl-core/msg/MessageBuilder.js');
+    var MessageServiceTokenBuilder = require('msl-core/msg/MessageServiceTokenBuilder.js');
+    var ServiceToken = require('msl-core/tokens/ServiceToken.js');
+    var NullCryptoContext = require('msl-core/crypto/NullCryptoContext.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MockMessageContext = require('../../../main/javascript/msg/MockMessageContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MockMessageContext = require('msl-tests/msg/MockMessageContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
     
 	var random = new Random();
 	var trustedNetCtx;

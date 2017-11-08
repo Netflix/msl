@@ -20,21 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("X509AuthenticationFactory", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var X509Store = require('../../../../../core/src/main/javascript/entityauth/X509Store.js');
-    var X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');
-    var X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var X509Store = require('msl-core/entityauth/X509Store.js');
+    var X509AuthenticationFactory = require('msl-core/entityauth/X509AuthenticationFactory.js');
+    var X509AuthenticationData = require('msl-core/entityauth/X509AuthenticationData.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var MslEncoderUtils = require('msl-core/io/MslEncoderUtils.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslEntityAuthException = require('msl-core/MslEntityAuthException.js');
+    var MslError = require('msl-core/MslError.js');
+    var X509 = require('msl-core/crypto/X509.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockX509AuthenticationFactory = require('../../../main/javascript/entityauth/MockX509AuthenticationFactory.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockX509AuthenticationFactory = require('msl-tests/entityauth/MockX509AuthenticationFactory.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

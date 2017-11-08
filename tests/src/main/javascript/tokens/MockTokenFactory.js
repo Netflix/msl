@@ -22,19 +22,19 @@
 (function(require, module) {
     "use strict";
     
-    var TokenFactory = require('../../../../../core/src/main/javascript/tokens/TokenFactory.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    var MslEncoderUtils = require('../../../../../core/src/main/javascript/io/MslEncoderUtils.js');
-    var MslEncoderException = require('../../../../../core/src/main/javascript/io/MslEncoderException.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    var MslUserIdTokenException = require('../../../../../core/src/main/javascript/MslUserIdTokenException.js');
-    var UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-    var MslUtils = require('../../../../../core/src/main/javascript/util/MslUtils.js');
+    var TokenFactory = require('msl-core/tokens/TokenFactory.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var MslMasterTokenException = require('msl-core/MslMasterTokenException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslException = require('msl-core/MslException.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MslEncoderUtils = require('msl-core/io/MslEncoderUtils.js');
+    var MslEncoderException = require('msl-core/io/MslEncoderException.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MasterToken = require('msl-core/tokens/MasterToken.js');
+    var MslUserIdTokenException = require('msl-core/MslUserIdTokenException.js');
+    var UserIdToken = require('msl-core/tokens/UserIdToken.js');
+    var MslUtils = require('msl-core/util/MslUtils.js');
     
     var MockMslUser = require('../tokens/MockMslUser.js');
 

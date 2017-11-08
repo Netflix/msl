@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
 
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Random = require('msl-core/util/Random.js');
 
     var crypto = require('crypto');
     

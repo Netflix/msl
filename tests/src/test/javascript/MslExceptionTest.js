@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 describe("MslException", function() {
-    var EmailPasswordAuthenticationData = require('../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    var MslException = require('../../../../core/src/main/javascript/MslException.js');
-    var EntityAuthenticationScheme = require('../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var MslError = require('../../../../core/src/main/javascript/MslError.js');
-    var MslConstants = require('../../../../core/src/main/javascript/MslConstants.js');
+    var EmailPasswordAuthenticationData = require('msl-core/userauth/EmailPasswordAuthenticationData.js');
+    var MslException = require('msl-core/MslException.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslConstants = require('msl-core/MslConstants.js');
 
-    var MockMslContext = require('../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../main/javascript/util/MslTestUtils.js');
-    var MockEmailPasswordAuthenticationFactory = require('../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
     
     /**
      * @return {UserAuthenticationData} dummy user authentication data.

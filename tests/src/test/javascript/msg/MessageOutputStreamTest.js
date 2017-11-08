@@ -24,30 +24,30 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("MessageOutputStream", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var ByteArrayOutputStream = require('../../../../../core/src/main/javascript/io/ByteArrayOutputStream.js');
-    var MessageHeader = require('../../../../../core/src/main/javascript/msg/MessageHeader.js');
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-    var MessageOutputStream = require('../../../../../core/src/main/javascript/msg/MessageOutputStream.js');
-    var ByteArrayInputStream = require('../../../../../core/src/main/javascript/io/ByteArrayInputStream.js');
-    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    var PayloadChunk = require('../../../../../core/src/main/javascript/msg/PayloadChunk.js');
-    var MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    var InterruptibleExecutor = require('../../../../../core/src/main/javascript/util/InterruptibleExecutor.js');
-    var MessageBuilder = require('../../../../../core/src/main/javascript/msg/MessageBuilder.js');
-    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslIoException = require('../../../../../core/src/main/javascript/MslIoException.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var ByteArrayOutputStream = require('msl-core/io/ByteArrayOutputStream.js');
+    var MessageHeader = require('msl-core/msg/MessageHeader.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var ErrorHeader = require('msl-core/msg/ErrorHeader.js');
+    var MessageOutputStream = require('msl-core/msg/MessageOutputStream.js');
+    var ByteArrayInputStream = require('msl-core/io/ByteArrayInputStream.js');
+    var Header = require('msl-core/msg/Header.js');
+    var PayloadChunk = require('msl-core/msg/PayloadChunk.js');
+    var MslObject = require('msl-core/io/MslObject.js');
+    var Arrays = require('msl-core/util/Arrays.js');
+    var InterruptibleExecutor = require('msl-core/util/InterruptibleExecutor.js');
+    var MessageBuilder = require('msl-core/msg/MessageBuilder.js');
+    var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslIoException = require('msl-core/MslIoException.js');
 
-    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('msl-core/lib/textEncoding.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
 
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

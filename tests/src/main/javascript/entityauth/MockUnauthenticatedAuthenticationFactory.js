@@ -22,10 +22,10 @@
 (function(require, module) {
     "use strict";
     
-    var UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
-    var UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
-    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var UnauthenticatedAuthenticationFactory = require('msl-core/entityauth/UnauthenticatedAuthenticationFactory.js');
+    var UnauthenticatedAuthenticationData = require('msl-core/entityauth/UnauthenticatedAuthenticationData.js');
+    var MslEntityAuthException = require('msl-core/MslEntityAuthException.js');
+    var MslError = require('msl-core/MslError.js');
     
     var MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
     

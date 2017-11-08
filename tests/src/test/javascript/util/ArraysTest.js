@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 describe("Arrays", function () {
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var Arrays = require('msl-core/util/Arrays.js');
 
     describe("Arrays.concat", function () {
 

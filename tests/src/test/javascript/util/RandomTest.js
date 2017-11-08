@@ -20,7 +20,7 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("Random", function() {
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Random = require('msl-core/util/Random.js');
     
     var ITERATIONS = 100000;
     var random = new Random();

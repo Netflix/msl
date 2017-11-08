@@ -95,8 +95,8 @@ if (isNodeJS) module.exports.xparameterize = xparameterize;
  * @param {number} messageId expected MSL message ID.
  */
 jasmine.Matchers.prototype.toThrow = function(expected, messageId) {
-  var MslException = require('../../../../../../core/src/main/javascript/MslException.js');
-  var MslError = require('../../../../../../core/src/main/javascript/MslError.js');
+  var MslException = require('msl-core/MslException.js');
+  var MslError = require('msl-core/MslError.js');
   
   var result = false;
   var exception;

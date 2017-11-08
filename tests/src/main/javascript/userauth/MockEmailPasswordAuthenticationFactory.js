@@ -22,12 +22,12 @@
 (function(require, module) {
     "use strict";
     
-    var UserAuthenticationFactory = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationFactory.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var EmailPasswordAuthenticationData = require('../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslUserAuthException = require('../../../../../core/src/main/javascript/MslUserAuthException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var UserAuthenticationFactory = require('msl-core/userauth/UserAuthenticationFactory.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var EmailPasswordAuthenticationData = require('msl-core/userauth/EmailPasswordAuthenticationData.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslUserAuthException = require('msl-core/MslUserAuthException.js');
+    var MslError = require('msl-core/MslError.js');
     
     var MockMslUser = require('../tokens/MockMslUser.js');
     

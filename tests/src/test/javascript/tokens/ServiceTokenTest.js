@@ -20,7 +20,7 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 parameterize("ServiceToken", function data() {
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslConstants = require('msl-core/MslConstants.js');
 
     return [
         [ null ],
@@ -28,28 +28,28 @@ parameterize("ServiceToken", function data() {
         ];
 },
 function(encoding, compressionAlgo) {
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    var MslException = require('../../../../../core/src/main/javascript/MslException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var SecretKey = require('msl-core/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var ServiceToken = require('msl-core/tokens/ServiceToken.js');
+    var MslException = require('msl-core/MslException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
 
-    var textEncoding = require('../../../../../core/src/main/javascript/lib/textEncoding.js');
+    var textEncoding = require('msl-core/lib/textEncoding.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    var MockEmailPasswordAuthenticationFactory = require('../../../main/javascript/userauth/MockEmailPasswordAuthenticationFactory.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
+    var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
 
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
