@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -33,7 +33,7 @@ import com.netflix.msl.MslConstants.ResponseCode;
 public class MslError {
     /** Internal error code set. */
     private static final Set<Integer> internalCodes = new HashSet<Integer>();
-    
+
     // 0 Message Security Layer
     public static final MslError MSL_PARSE_ERROR = new MslError(0, ResponseCode.FAIL, "Error parsing MSL encodable.");
     public static final MslError MSL_ENCODE_ERROR = new MslError(1, ResponseCode.FAIL, "Error encoding MSL encodable.");
@@ -148,7 +148,7 @@ public class MslError {
     public static final MslError SERVICETOKEN_TOKENDATA_INVALID = new MslError(3007, ResponseCode.FAIL, "Invalid service token data.");
     public static final MslError SERVICETOKEN_SIGNATURE_INVALID = new MslError(3008, ResponseCode.FAIL, "Invalid service token signature.");
     public static final MslError SERVICETOKEN_TOKENDATA_MISSING = new MslError(3009, ResponseCode.FAIL, "No service token data found.");
-    
+
     // 4 Entity Authentication
     public static final MslError UNIDENTIFIED_ENTITYAUTH_SCHEME = new MslError(4000, ResponseCode.FAIL, "Unable to identify entity authentication scheme.");
     public static final MslError ENTITYAUTH_FACTORY_NOT_FOUND = new MslError(4001, ResponseCode.FAIL, "No factory registered for entity authentication scheme.");
@@ -172,7 +172,7 @@ public class MslError {
     public static final MslError ENTITYAUTH_MASTERTOKEN_INVALID = new MslError(4036, ResponseCode.FAIL, "Invalid entity authentication data master token.");
     public static final MslError ECC_PUBLICKEY_NOT_FOUND = new MslError(4037, ResponseCode.ENTITYDATA_REAUTH, "ECC public key not found.");
     public static final MslError ECC_PRIVATEKEY_NOT_FOUND = new MslError(4038, ResponseCode.ENTITYDATA_REAUTH, "ECC private key not found.");
-    
+
     // 5 User Authentication
     public static final MslError UNIDENTIFIED_USERAUTH_SCHEME = new MslError(5003, ResponseCode.FAIL, "Unable to identify user authentication scheme.");
     public static final MslError USERAUTH_FACTORY_NOT_FOUND = new MslError(5004, ResponseCode.FAIL, "No factory registered for user authentication scheme.");
@@ -193,7 +193,7 @@ public class MslError {
     public static final MslError USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY = new MslError(5040, ResponseCode.USERDATA_REAUTH, "The entity is not associated with the user.");
     public static final MslError USERAUTH_ENTITYUSER_INCORRECT_DATA = new MslError(5041, ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
     public static final MslError USERAUTH_VERIFICATION_FAILED = new MslError(5042, ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed.");
-    
+
     // 6 Message
     public static final MslError UNSUPPORTED_COMPRESSION = new MslError(6000, ResponseCode.FAIL, "Unsupported compression algorithm.");
     public static final MslError COMPRESSION_ERROR = new MslError(6001, ResponseCode.FAIL, "Error compressing data.");
@@ -263,7 +263,7 @@ public class MslError {
     public static final MslError KEYX_INVALID_WRAPDATA = new MslError(7021, ResponseCode.FAIL, "Key exchange wrap data is invalid.");
     public static final MslError UNSUPPORTED_KEYX_SCHEME = new MslError(7022, ResponseCode.FAIL, "Unsupported key exchange scheme.");
     public static final MslError KEYX_IDENTITY_NOT_FOUND = new MslError(7023, ResponseCode.FAIL, "Key exchange identity not found.");
-    
+
     // 9 Internal Errors
     public static final MslError INTERNAL_EXCEPTION = new MslError(9000, ResponseCode.TRANSIENT_FAILURE, "Internal exception.");
     public static final MslError MSL_COMMS_FAILURE = new MslError(9001, ResponseCode.FAIL, "Error communicating with MSL entity.");
@@ -287,7 +287,7 @@ public class MslError {
                 throw new MslInternalException("Duplicate MSL error definition for error code " + internalCode + ".");
             internalCodes.add(internalCode);
         }
-        
+
         this.internalCode = MslError.BASE + internalCode;
         this.responseCode = responseCode;
         this.msg = msg;
@@ -313,7 +313,7 @@ public class MslError {
     public String getMessage() {
         return msg;
     }
-    
+
     /**
      * @param o the reference object with which to compare.
      * @return true if the internal code and response code are equal.
@@ -327,13 +327,21 @@ public class MslError {
         return this.internalCode == that.internalCode &&
             this.responseCode == that.responseCode;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
     @Override
     public int hashCode() {
         return Integer.valueOf(internalCode).hashCode() ^ responseCode.hashCode();
+    }
+
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
+    @Override
+    public String toString() {
+        return "MslError{" + internalCode + "," + responseCode.intValue() + "," + msg + "}";
     }
 
     /** Internal error code. */
