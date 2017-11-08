@@ -310,4 +310,9 @@ MslError& MslError::operator=(const MslError& other)
     return *this;
 }
 
+std::ostream & operator<<(std::ostream& os, const MslError& me)
+{
+    return os << "MslError{" << me.internalCode_ << "," << me.responseCode_.intValue() << "," << me.msg_ << "}";
+}
+
 }} // namespace netflix::msl
