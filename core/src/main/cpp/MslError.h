@@ -310,6 +310,9 @@ public:
      */
     inline bool operator!=(const MslError& rhs) const { return !(*this == rhs); }
 
+    // operator<< for easier use with output
+    friend std::ostream & operator<<(std::ostream& os, const MslError& me);
+
     MslError(const MslError& other);
     MslError& operator=(const MslError& other);
 
@@ -341,6 +344,8 @@ protected:
 
     friend class MslErrorTest_DuplicateConstruction_Test;  // For testing only
 };
+
+std::ostream & operator<<(std::ostream& os, const MslError& me);
 
 }} //namespace netflix::msl
 
