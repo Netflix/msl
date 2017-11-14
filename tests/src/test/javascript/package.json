@@ -1,6 +1,6 @@
 {
   "name": "msl-tests-exec",
-  "version": "1.1216.1",
+  "version": "1.1217.0",
   "description": "Message Security Layer Tests Execution",
   "keywords": [
     "msl",
@@ -20,8 +20,8 @@
     "test": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./node_modules/msl-tests/lib/jasmine/msl-helpers.js"
   },
   "dependencies": {
-    "msl-core": "^1.1216.1",
-    "msl-tests": "^1.1216.1"
+    "msl-core": "^1.1217.0",
+    "msl-tests": "^1.1217.0"
   },
   "devDependencies": {
     "clarinet": "^0.11.0",
