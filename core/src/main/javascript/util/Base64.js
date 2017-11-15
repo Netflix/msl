@@ -13,152 +13,127 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * <p>Base64 encoder/decoder. Can be configured with a backing
+ * implementation.</p>
+ * 
+ * @author Wesley Miaw <wmiaw@netflix.com>
+ */
 (function (require, module) {
     "use strict";
-
-    var map =    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/',
-        urlmap = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_',
-        padchar =    '=',
-        charNumber1 = { },
-        charNumber2 = { },
-        charNumber3 = { '=': 0, '.': 0 },
-        charNumber4 = { '=': 0, '.': 0 },
-        prepRegex = /\s*/g,
-        checkRegex = new RegExp('^([A-Za-z0-9+/_-]{4})*([A-Za-z0-9+/_-]{4}|[A-Za-z0-9+/_-]{3}=|[A-Za-z0-9+/_-]{2}==)?$');
-
-    var i = map.length;
-    while (i--) {
-        // pre-calculate values for each of quad-s
-        charNumber1[map[i]] = i * 0x40000;
-        charNumber2[map[i]] = i * 0x1000;
-        charNumber3[map[i]] = i * 0x40;
-        charNumber4[map[i]] = i;
-    }
-    var j = urlmap.length;
-    while (j--) {
-        // stop once we've already seen this character
-        if (map[j] == urlmap[j]) break;
-        // pre-calculate values for each of quad-s
-        charNumber1[urlmap[j]] = j * 0x40000;
-        charNumber2[urlmap[j]] = j * 0x1000;
-        charNumber3[urlmap[j]] = j * 0x40;
-        charNumber4[urlmap[j]] = j;
-    }
+    
+    var Class = require('../util/Class.js');
+    
+    /** Whitespace regular expression. */
+    var WHITESPACE_REGEX = /\s*/g;
+    /** Base64 validation regular expression. */
+    var BASE64_PATTERN = new RegExp('^([A-Za-z0-9+/_-]{4})*([A-Za-z0-9+/_-]{4}|[A-Za-z0-9+/_-]{3}=|[A-Za-z0-9+/_-]{2}==)?$');
 
     /**
-     * Base64 encode a byte array.
+     * <p>Validates that a string is a valid Base64 encoding. This uses a
+     * regular expression to perform the check. The empty string is also
+     * considered valid. All whitespace is ignored.</p>
      *
-     * @param {Uint8Array} a the data to encode.
-     * @param {?boolean} urlSafe true if unpadded URL-safe Base64 encoding
+     * @param {string} s the string to validate.
+     * @param {?boolean} urlSafe true if URL-safe Base64-encoding validation
      *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
-     * @return {String} the Base64 string representation of the data.
+     * @return {boolean} true if the string is a valid Base64 encoding.
      */
-    var base64$encode = function (a, urlSafe) {
-        var s = '',
-            i = 0,
-            l = a.length,
-            lMinus2 = l - 2,
-            triplet;
+    var isValidBase64 = function isValidBase64(s, urlSafe) {
+        var sanitized = s.replace(WHITESPACE_REGEX, '');
 
-        var table = (!urlSafe) ? map : urlmap;
-        var pad = (!urlSafe) ? padchar : '';
-
-        while (i < lMinus2) {
-            triplet =
-                (a[i++] * 0x10000) +
-                (a[i++] * 0x100) +
-                (a[i++]);
-
-            s +=
-                table[(triplet >>> 18)] +
-                table[(triplet >>> 12) & 0x3F] +
-                table[(triplet >>> 6) & 0x3F] +
-                table[(triplet) & 0x3F];
-        }
-
-        if (i == lMinus2) {
-            triplet =
-                (a[i++] * 0x10000) +
-                (a[i++] * 0x100);
-
-            s +=
-                table[(triplet >>> 18)] +
-                table[(triplet >>> 12) & 0x3F] +
-                table[(triplet >>> 6) & 0x3F] +
-                pad;
-
-        } else if (i == l - 1) {
-            triplet =
-                (a[i++] * 0x10000);
-
-            s +=
-                table[(triplet >>> 18)] +
-                table[(triplet >>> 12) & 0x3F] +
-                pad + pad;
-
-        }
-
-        return s;
-    };
-
-    /**
-     * Base64 decode a string.
-     *
-     * @param {String} a Base64 string representation of data.
-     * @param {?boolean} urlSafe true if unpadded URL-safe Base64 decoding
-     *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
-     * @return {Uint8Array} the decoded data.
-     * @throws Error if the Base64 string is the wrong length or is not Base64
-     *         encoded data. The empty string is considered valid.
-     */
-    var base64$decode = function (s, urlSafe) {
-        s = s.replace(prepRegex, '');
-        
         // Pad out urlsafe data so we can treat padded and unpadded incoming
         // data the same below.
         if (urlSafe) {
-            var overhang = s.length % 4;
+            var overhang = sanitized.length % 4;
             if (overhang) {
                 var toPad = 4 - overhang;
-                for (var i = 0; i < toPad; ++i) {
-                    s += padchar;
-                }
+                for (var i = 0; i < toPad; ++i)
+                    sanitized += padchar;
             }
         }
 
-        var l = s.length,
-            triplet;
+        // Verify string is a multiple of four and only contains valid
+        // characters.
+        if (sanitized.length % 4 != 0 || !BASE64_PATTERN.test(sanitized))
+            return false;
+        return true;
+    };
 
-        if (l % 4 != 0 || !checkRegex.test(s))
-            throw new Error('bad base64: ' + s);
+    /** Backing implementation. */
+    var impl;
 
-        var aLength = (l / 4) * 3 -
-                (s[l - 1] == padchar ? 1 : 0) -
-                (s[l - 2] == padchar ? 1 : 0),
-            a = new Uint8Array(aLength),
-            si = 0,
-            ai = 0;
+    /**
+     * <p>A Base64 encoder/decoder implementation. Implementations must be
+     * thread-safe.</p>
+     */
+    var Base64Impl = Class.create({
+        /**
+         * <p>Base64 encodes binary data.</p>
+         *
+         * @param {Uint8array} b the binary data.
+         * @param {?boolean} urlSafe true if unpadding URL-safe Base64-encoding
+         *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
+         * @return {string} the Base64-encoded binary data.
+         */
+        encode: function(b, urlSafe) {},
 
-        while (si < l) {
-            triplet =
-                charNumber1[s[si++]] +
-                charNumber2[s[si++]] +
-                charNumber3[s[si++]] +
-                charNumber4[s[si++]];
+        /**
+         * <p>Decodes a Base64-encoded string into its binary form.</p>
+         *
+         * @param {string} s the Base64-encoded string.
+         * @param {?boolean} urlSafe true if unpadded URL-safe Base64 decoding
+         *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
+         * @return {Uint8Array} the binary data.
+         * @throws Error if the argument is not a valid Base64-encoded string.
+         *         The empty string is considered valid.
+         */
+        decode: function(s, urlSafe) {},
+    });
+    
+    /**
+     * Set the backing implementation.
+     * 
+     * @param {Base64Impl} i the backing implementation.
+     * @throws TypeError if the implementation is {@code null}.
+     */
+    var setImpl = function setImpl(i) {
+        if (!i)
+            throw new TypeError("Base64 implementation cannot be null.");
+        impl = i;
+    }
 
-            a[ai++] = (triplet >>> 16);
-            if (ai < aLength) {
-                a[ai++] = (triplet >>> 8) & 0xFF;
-                if (ai < aLength) {
-                    a[ai++] = (triplet) & 0xFF;
-                }
-            }
-        }
+    /**
+     * <p>Base64 encodes binary data.</p>
+     *
+     * @param {Uint8Array} b the binary data.
+     * @param {?boolean} urlSafe true if unpadding URL-safe Base64-encoding
+     *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
+     * @return the Base64-encoded binary data.
+     */
+    var encode = function encode(b, urlSafe) {
+        return impl.encode(b, urlSafe);
+    };
 
-        return a;
+    /**
+     * <p>Decodes a Base64-encoded string into its binary form.</p>
+     *
+     * @param {string} s the Base64-encoded string.
+     * @param {?boolean} urlSafe true if unpadded URL-safe Base64 decoding
+     *        should be used (http://tools.ietf.org/html/rfc4648#section-5)
+     * @return {Uint8Array} the binary data.
+     * @throws Error if the argument is not a valid Base64-encoded string.
+     *         The empty string is considered valid.
+     */
+    var decode = function decode(s, urlSafe) {
+        return impl.decode(s, urlSafe);
     };
     
     // Exports.
-    module.exports.encode = base64$encode;
-    module.exports.decode = base64$decode;
+    module.exports.isValidBase64 = isValidBase64;
+    module.exports.Base64Impl = Base64Impl;
+    module.exports.setImpl = setImpl;
+    module.exports.encode = encode;
+    module.exports.decode = decode;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('Base64'));

@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -15,26 +15,21 @@
  */
 
 /**
- * <p>A Node.js crypto implementation of the MSL random abstraction.</p>
- *
- * @author Wesley Miaw <wmiaw@netflix.com>
+ * <p>Initializes MSL with default implementions in a web environment.</p>
  */
 (function(require, module) {
     "use strict";
-
-    var Random = require('msl-core/util/Random.js');
-
-    var crypto = require('crypto');
     
-    var NodeRandom = module.exports = {
-        /**
-         * Fill the provided array buffer with random bytes.
-         * 
-         * @param {Uint8Array} b the array buffer.
-         */
-        getRandomValues: function getRandomValues(b) {
-            var bytes = crypto.randomBytes(b.length);
-            b.set(bytes);
-        },
-    };
-})(require, (typeof module !== 'undefined') ? module : mkmodule('NodeRandom'));
+    var Base64Secure = require('../util/Base64Secure.js');
+    var LzwCompression = require('../util/LzwCompression.js');
+    var MslConstants = require('../MslConstants.js');
+
+    var MslInit = require('../util/MslInit.js');
+
+    var config = {};
+    config[MslInit.KEY_BASE64] = new Base64Secure();
+    config[MslInit.KEY_COMPRESSION] = {};
+    config[MslInit.KEY_COMPRESSION][MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
+    console.log(config);
+    MslInit.initialize(config);
+})(require, (typeof module !== 'undefined') ? module : mkmodule('WebMslInit'));

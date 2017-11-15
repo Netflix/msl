@@ -954,7 +954,4 @@
             });
         },
     };
-    
-    // Export Node crypto.
-    MslCrypto.setCryptoSubtle(NodeCryptoSubtle);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('NodeCrypto'));
