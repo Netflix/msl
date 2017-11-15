@@ -26,6 +26,7 @@
 
     var MslInternalException = require('../MslInternalException.js');
     var KeyFormat = require('../crypto/KeyFormat.js');
+    var PromiseFactory = require('../util/PromiseFactory.js');
     
     var ASN1 = require('../lib/asnjwk.js');
     var textEncoding = require('../lib/textEncoding.js');
@@ -148,7 +149,7 @@
     // If the native operation type is not a Promise, wrap it inside one.
     function promisedOperation(op) {
         if (!op.then) {
-            return new Promise(function(resolve, reject) {
+            return PromiseFactory.create(function(resolve, reject) {
                 op.oncomplete = function(e) {
                     resolve(e.target.result);
                 };
