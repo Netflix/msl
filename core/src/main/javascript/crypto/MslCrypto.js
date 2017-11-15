@@ -104,7 +104,7 @@
     /**
      * Override the crypto subtle interface providing the Web Crypto API.
      *
-     * @param {object} the new crypto subtle interface.
+     * @param {object} cryptoSubtle the new crypto subtle interface.
      */
     var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
         nfCryptoSubtle = cryptoSubtle;
