@@ -135,7 +135,7 @@
         
         // Throw an exception listing the unrecognized keys.
         if (unrecognizedKeys.length > 0)
-            throw new MslInternalException("Could not initial MSL for the following unrecognized options: " + unrecognizedKeys.join(", ") + ".");
+            throw new MslInternalException("Could not initialize MSL for the following unrecognized options: " + unrecognizedKeys.join(", ") + ".");
     };
     
     // Export keys.
