@@ -27,12 +27,49 @@ var MslConstants = require('msl-core/MslConstants.js');
 
 var MslInit = require('msl-core/util/MslInit.js');
 
-var config = {};
-config[MslInit.KEY_BASE64] = new Base64Secure();
-config[MslInit.KEY_RANDOM] = NodeRandom;
-config[MslInit.KEY_CRYPTO] = [MslCrypto.WebCryptoVersion.LATEST, NodeCrypto];
-config[MslInit.KEY_COMPRESSION] = {};
-config[MslInit.KEY_COMPRESSION][MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
-config[MslInit.KEY_COMPRESSION][MslConstants.CompressionAlgorithm.GZIP] = new NodeGzipCompression();
+var NodeConfiguration = MslInit.Configuration.extend({
+    init: function init() {
+        var base64Impl = new Base64Secure();
+        var compressionImpls = {};
+        compressionImpls[MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
+        compressionImpls[MslConstants.CompressionAlgorithm.GZIP] = new NodeGzipCompression();
+        
+        // The properties.
+        var props = {
+            _base64Impl: { value: base64Impl, writable: false, enumerable: false, configurable: false },
+            _compressionImpls: { value: compressionImpls, writable: false, enumerable: false, configurable: false },
+            _randomInterface: { value: NodeRandom, writable: false, enumerable: false, configurable: false },
+            _webCryptoVerson: { value: MslCrypto.WebCryptoVersion.LATEST, writable: false, enumerable: false, configurable: false },
+            _webCryptoApi: { value: NodeCrypto, writable: false, enumerable: false, configurable: false },
+        };
+        Object.defineProperties(this, props);
+    },
+    
+    /** @inheritDoc */
+    getBase64Impl: function getBase64Impl() {
+        return this._base64Impl;
+    },
+    
+    /** @inheritDoc */
+    getCompressionImpls: function getCompressionImpls() {
+        return this._compressionImpls;
+    },
+    
+    /** @inheritDoc */
+    getRandomInterface: function getRandomInterface() {
+        return this._randomInterface;
+    },
+    
+    /** @inheritDoc */
+    getWebCryptoVersion: function getWebCryptoVersion() {
+        return this._webCryptoVersion;
+    },
+    
+    /** @inheritDoc */
+    getWebCryptoApi: function getWebCryptoApi() {
+        return this._webCryptoApi;
+    },
+});
 
+var config = new NodeConfiguration();
 MslInit.initialize(config);

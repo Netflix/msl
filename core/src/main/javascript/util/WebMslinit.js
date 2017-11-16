@@ -26,10 +26,31 @@
 
     var MslInit = require('../util/MslInit.js');
 
-    var config = {};
-    config[MslInit.KEY_BASE64] = new Base64Secure();
-    config[MslInit.KEY_COMPRESSION] = {};
-    config[MslInit.KEY_COMPRESSION][MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
-    console.log(config);
+    var WebConfiguration = MslInit.Configuration.extend({
+        init: function init() {
+            var base64Impl = new Base64Secure();
+            var compressionImpls = {};
+            compressionImpls[MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
+            
+            // The properties.
+            var props = {
+                _base64Impl: { value: base64Impl, writable: false, enumerable: false, configurable: false },
+                _compressionImpls: { value: compressionImpls, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+        
+        /** @inheritDoc */
+        getBase64Impl: function getBase64Impl() {
+            return this._base64Impl;
+        },
+        
+        /** @inheritDoc */
+        getCompressionImpls: function getCompressionImpls() {
+            return this._compressionImpls;
+        },
+    });
+    
+    var config = new WebConfiguration();
     MslInit.initialize(config);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('WebMslInit'));

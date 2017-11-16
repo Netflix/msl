@@ -23,6 +23,7 @@
 (function(require, module) {
     "use strict";
     
+    var Class = require('../util/Class.js');
     var Base64 = require('../util/Base64.js');
     var MslCompression = require('../util/MslCompression.js');
     var Random = require('../util/Random.js');
@@ -30,126 +31,114 @@
     var MslInternalException = require('../MslInternalException.js');
     var PromiseFactory = require('../util/PromiseFactory.js');
     
-    /** Map key Base64. */
-    var KEY_BASE64 = 'base64';
-    /** Map key Compression. */
-    var KEY_COMPRESSION = 'compression';
-    /** Map key Random. */
-    var KEY_RANDOM = 'random';
-    /** Map key MslCrypto. */
-    var KEY_CRYPTO = 'crypto';
-    /** Map key Promise. */
-    var KEY_PROMISE = 'promise';
-    
-    // Configuration function map.
-    var f = {};
-    
     /**
-     * <p>Sets the Base64 implementation.</p>
+     * <p>Configuration provider.</p>
      * 
-     * @param {Base64Impl} b64 the Base64 implementation.
+     * <p>Each option is marked as either required or optional. Any option that
+     * returns {@code null} or {@code undefined} will be ignored.</p>
      */
-    f[KEY_BASE64] = function setBase64(b64) {
-        Base64.setImpl(b64);
-    };
-
-    /**
-     * <p>Registers one or more compression algorithm implementations. Pass
-     * {@code null} as a value to remove an implementation.</p>
-     * 
-     * @param {object<CompressionAlgorithm,CompressionImpl>} map the
-     *        compression algorithm implementations to register or remove.
-     */
-    f[KEY_COMPRESSION] = function setCompression(map) {
-        for (var algo in map) {
-            var impl = map[algo];
-            MslCompression.register(algo, impl);
-        }
-    };
-
-    /**
-     * <p>Sets the object used to access the {@code getRandomValues()}
-     * function. This is typically an instance of the crypto interface.</p>
-     * 
-     * @param {object} r the random function object.
-     */
-    f[KEY_RANDOM] = function setRandom(r) {
-        Random.setRandom(r);
-    };
-
-    /**
-     * <p>Sets the Web Crypto version and subtle interface providing the
-     * Web Crypto API.</p>
-     * 
-     * @param {WebCryptoVersion} version Web Crypto version to use.
-     * @param {object} crypto the crypto subtle object to use.
-     */
-    f[KEY_CRYPTO] = function setCrypto(version, crypto) {
-        MslCrypto.setWebCryptoVersion(version);
-        MslCrypto.setCryptoSubtle(crypto);
-    };
-
-    /**
-     * <p>Sets the Promise class definition.</p>
-     * 
-     * @param {function} p the Promise class definition.
-     */
-    f[KEY_PROMISE] = function setPromise(p) {
-        PromiseFactory.setImpl(p);
-    };
+    var Configuration = Class.create({
+       /**
+        * <p>Provides the Base64 implementation.</p>
+        * 
+        * <p><b>required</b></p>
+        * 
+        * @return {?Base64Impl} a Base64 implementation.
+        */
+        getBase64Impl: function() {},
+        
+        /**
+         * <p>Provides the set of compression algorithm implementations. An
+         * implementation value of {@code null} will remove any implementation
+         * currently registered for that algorithm.</p>
+         * 
+         * <p><b>optional</b>: default is no registered implementations</p>
+         * 
+         * @return {?object<CompressionAlgorithm,CompressionImpl>} a map of
+         *         compression algorithm implementations to register or remove.
+         */
+        getCompressionImpls: function() {},
+        
+        /**
+         * <p>Provides the object used to access the {@code getRandomValues()}
+         * function. This is typically an instance of the crypto interface.</p>
+         * 
+         * <p><b>optional</b>: default is the window.crypto interface</p>
+         * 
+         * @return {?object} the random function object.
+         */
+        getRandomInterface: function() {},
+        
+        /**
+         * <p>Provides the Web Crypto version.</p>
+         * 
+         * <p><b>optional</b>: default will attempt to detect the version</p>
+         * 
+         * @return {?WebCryptoVersion} Web Crypto version to use.
+         */
+        getWebCryptoVersion: function() {},
+        
+        /**
+         * <p>Provides the Web Crypto API subtle interface.</p>
+         * 
+         * <p><b>optional</b>: default will attempt to detect the interface</p>
+         * 
+         * @return {?object} the crypto subtle to use.
+         */
+        getWebCryptoApi: function() {},
+        
+        /**
+         * <p>Provides the Promise class definition.</p>
+         * 
+         * <p><b>optional</b>: default is the built-in Promise global</p>
+         * 
+         * @return {?function} the Promise class definition.
+         */
+        getPromiseClass: function() {},
+    });
     
     /**
-     * <p>Initialize multiple implementations using the provided map.</p>
+     * <p>Initialize multiple implementations using the provided configuration.</p>
      * 
-     * <p>The map supports the following key/value pairs.
-     * <ul>
-     * <li><b>base64</b>: {@see #setBase64(object)}</li>
-     * <li><b>compression</b>: {@see #setCompression(object<CompressionAlgorithm,CompressionImpl>)}</li>
-     * <li><b>domparser</b>: {@see #setDOMParser(function)}</li>
-     * <li><b>random</b>: {@see #setRandom(object)}</li>
-     * <li><b>mslcrypto</b>: {@see #setMslCrypto(version, object)} as an array</li>
-     * </ul></p>
-     * 
-     * @param {object<string,*>} config the configuration map.
-     * @throws MslInternalException if any of the provided keys are not
-     *         recognized. Initialization for all recognized keys will have
-     *         been performed, so the caller may wish to ignore this exception.
+     * @param {Configuration} config the MSL configuration.
      */
     var initialize = function initialize(config) {
-        var unrecognizedKeys = [];
+        // Base64.
+        var base64Impl = config.getBase64Impl();
+        if (base64Impl)
+            Base64.setImpl(base64Impl);
         
-        // Perform the requested configurations.
-        for (var key in config) {
-            // Collect unrecognized keys to throw an error.
-            if (!f[key]) {
-                unrecognizedKeys.push(key);
-                continue;
+        // Compression.
+        var compressionImpls = config.getCompressionImpls();
+        if (compressionImpls) {
+            for (var algo in compressionImpls) {
+                var impl = compressionImpls[algo];
+                MslCompression.register(algo, impl);
             }
-            
-            // Execute the configuration function.
-            var args = config[key];
-            if (!(args instanceof Array))
-                args = [ args ];
-            f[key].apply(this, args);
-        }
+        }   
         
-        // Throw an exception listing the unrecognized keys.
-        if (unrecognizedKeys.length > 0)
-            throw new MslInternalException("Could not initialize MSL for the following unrecognized options: " + unrecognizedKeys.join(", ") + ".");
+        // Random.
+        var randomInterface = config.getRandomInterface();
+        if (randomInterface)
+            Random.setRandom(randomInterface);
+        
+        // Crypto version.
+        var cryptoVersion = config.getWebCryptoVersion();
+        if (cryptoVersion !== null && cryptoVersion !== undefined)
+            MslCrypto.setWebCryptoVersion(cryptoVersion);
+        
+        // Crypto API.
+        var cryptoApi = config.getWebCryptoApi();
+        if (cryptoApi)
+            MslCrypto.setCryptoSubtle(cryptoApi);
+        
+        // Promise.
+        var promiseClass = config.getPromiseClass();
+        if (promiseClass)
+            PromiseFactory.setImpl(promiseClass);
     };
     
-    // Export keys.
-    module.exports.KEY_BASE64 = KEY_BASE64;
-    module.exports.KEY_COMPRESSION = KEY_COMPRESSION;
-    module.exports.KEY_RANDOM = KEY_RANDOM;
-    module.exports.KEY_CRYPTO = KEY_CRYPTO;
-    module.exports.KEY_PROMISE = KEY_PROMISE;
-    
-    // Export functions.
-    module.exports.setBase64 = f[KEY_BASE64];
-    module.exports.setCompression = f[KEY_COMPRESSION];
-    module.exports.setRandom = f[KEY_RANDOM];
-    module.exports.setCrypto = f[KEY_CRYPTO];
-    module.exports.setPromise = f[KEY_PROMISE];
+    // Exports.
+    module.exports.Configuration = Configuration;
     module.exports.initialize = initialize;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslInit'));
