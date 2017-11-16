@@ -16,7 +16,12 @@
 var isNodeJS = typeof window == "undefined" && typeof exports == "object";
 
 if (isNodeJS) {
-    require('../../util/NodeMslInit.js');
+    // Setup MSL for Node.js.
+    var MslSetup = require('msl-core/util/MslSetup.js');
+    var NodeMslSetup = require('../../util/NodeMslSetup.js');
+    MslSetup.execute(new NodeMslSetup());
+    
+    // Capture and output thrown errors.
     process.on('unhandledRejection', function(r) {
         console.log(r);
         if (r.stack) console.log(r.stack);

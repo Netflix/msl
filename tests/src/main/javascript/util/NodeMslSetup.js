@@ -15,7 +15,9 @@
  */
 
 /**
- * <p>Initializes MSL for use in a Node.js environment.</p>
+ * <p>MSL setup for a Node.js environment.</p>
+ * 
+ * @author Wesley Miaw <wmiaw@netflix.com>
  */
 var Base64Secure = require('msl-core/util/Base64Secure.js');
 var NodeRandom = require('../crypto/NodeRandom.js');
@@ -25,9 +27,12 @@ var LzwCompression = require('msl-core/util/LzwCompression.js');
 var NodeGzipCompression = require('../util/NodeGzipCompression.js');
 var MslConstants = require('msl-core/MslConstants.js');
 
-var MslInit = require('msl-core/util/MslInit.js');
+var MslSetup = require('msl-core/util/MslSetup.js');
 
-var NodeConfiguration = MslInit.Configuration.extend({
+var NodeMslSetup = module.exports = MslSetup.extend({
+    /**
+     * <p>Create new MSL setup for a Node.js environment.</p>
+     */
     init: function init() {
         var base64Impl = new Base64Secure();
         var compressionImpls = {};
@@ -70,6 +75,3 @@ var NodeConfiguration = MslInit.Configuration.extend({
         return this._webCryptoApi;
     },
 });
-
-var config = new NodeConfiguration();
-MslInit.initialize(config);

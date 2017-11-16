@@ -32,12 +32,12 @@
     var PromiseFactory = require('../util/PromiseFactory.js');
     
     /**
-     * <p>Configuration provider.</p>
+     * <p>Setup provider.</p>
      * 
      * <p>Each option is marked as either required or optional. Any option that
      * returns {@code null} or {@code undefined} will be ignored.</p>
      */
-    var Configuration = Class.create({
+    var MslSetup = module.exports = Class.create({
        /**
         * <p>Provides the Base64 implementation.</p>
         * 
@@ -98,18 +98,18 @@
     });
     
     /**
-     * <p>Initialize multiple implementations using the provided configuration.</p>
+     * <p>Execute the provided MSL setup.</p>
      * 
-     * @param {Configuration} config the MSL configuration.
+     * @param {MslSetup} setup the MSL setup.
      */
-    var initialize = function initialize(config) {
+    var execute = function execute(setup) {
         // Base64.
-        var base64Impl = config.getBase64Impl();
+        var base64Impl = setup.getBase64Impl();
         if (base64Impl)
             Base64.setImpl(base64Impl);
         
         // Compression.
-        var compressionImpls = config.getCompressionImpls();
+        var compressionImpls = setup.getCompressionImpls();
         if (compressionImpls) {
             for (var algo in compressionImpls) {
                 var impl = compressionImpls[algo];
@@ -118,27 +118,26 @@
         }   
         
         // Random.
-        var randomInterface = config.getRandomInterface();
+        var randomInterface = setup.getRandomInterface();
         if (randomInterface)
             Random.setRandom(randomInterface);
         
         // Crypto version.
-        var cryptoVersion = config.getWebCryptoVersion();
+        var cryptoVersion = setup.getWebCryptoVersion();
         if (cryptoVersion !== null && cryptoVersion !== undefined)
             MslCrypto.setWebCryptoVersion(cryptoVersion);
         
         // Crypto API.
-        var cryptoApi = config.getWebCryptoApi();
+        var cryptoApi = setup.getWebCryptoApi();
         if (cryptoApi)
             MslCrypto.setCryptoSubtle(cryptoApi);
         
         // Promise.
-        var promiseClass = config.getPromiseClass();
+        var promiseClass = setup.getPromiseClass();
         if (promiseClass)
             PromiseFactory.setImpl(promiseClass);
     };
     
     // Exports.
-    module.exports.Configuration = Configuration;
-    module.exports.initialize = initialize;
-})(require, (typeof module !== 'undefined') ? module : mkmodule('MslInit'));
+    module.exports.execute = execute;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MslSetup'));

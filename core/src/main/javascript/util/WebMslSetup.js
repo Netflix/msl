@@ -15,7 +15,9 @@
  */
 
 /**
- * <p>Initializes MSL with default implementions in a web environment.</p>
+ * <p>Default MSL setup for a web environment.</p>
+ * 
+ * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
     "use strict";
@@ -24,9 +26,12 @@
     var LzwCompression = require('../util/LzwCompression.js');
     var MslConstants = require('../MslConstants.js');
 
-    var MslInit = require('../util/MslInit.js');
+    var MslSetup = require('../util/MslSetup.js');
 
-    var WebConfiguration = MslInit.Configuration.extend({
+    var WebMslSetup = module.exports = MslSetup.extend({
+        /**
+         * <p>Create new default MSL setup for a web environment.</p>
+         */
         init: function init() {
             var base64Impl = new Base64Secure();
             var compressionImpls = {};
@@ -50,7 +55,4 @@
             return this._compressionImpls;
         },
     });
-    
-    var config = new WebConfiguration();
-    MslInit.initialize(config);
-})(require, (typeof module !== 'undefined') ? module : mkmodule('WebMslInit'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('WebMslSetup'));
