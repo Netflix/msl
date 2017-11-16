@@ -37,7 +37,4 @@
             b.set(bytes);
         },
     };
-
-    // Export Node random.
-    Random.setRandom(NodeRandom);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('NodeRandom'));

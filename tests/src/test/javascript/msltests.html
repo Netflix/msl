@@ -179,12 +179,21 @@
 <script type="text/javascript" src="../../../../core/src/main/javascript/msg/MslControl.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/AuthenticationUtils.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/Base64.js"></script>
+<script type="text/javascript" src="../../../../core/src/main/javascript/util/Base64Secure.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/MslCompression.js"></script>
+<script type="text/javascript" src="../../../../core/src/main/javascript/util/LzwCompression.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/MslContext.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/MslStore.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/MslUtils.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/NullMslStore.js"></script>
 <script type="text/javascript" src="../../../../core/src/main/javascript/util/SimpleMslStore.js"></script>
+<script type="text/javascript" src="../../../../core/src/main/javascript/util/MslSetup.js"></script>
+<script type="text/javascript" src="../../../../core/src/main/javascript/util/WebMslSetup.js"></script>
+<script type="text/javascript">
+	// Setup MSL for a web environment.
+	var setup = new WebMslSetup();
+	MslSetup.execute(setup);
+</script>
 
 <!-- test classes -->
 <script type="text/javascript" src="../../main/javascript/MslTestConstants.js"></script>
