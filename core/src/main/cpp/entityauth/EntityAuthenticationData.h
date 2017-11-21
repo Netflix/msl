@@ -70,7 +70,9 @@ public:
     static std::shared_ptr<EntityAuthenticationData> create(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<io::MslObject> entityAuthMo);
 
     /**
-     * @return the entity identity.
+     * <p>Returns the entity identity or the empty string if unknown.</p>
+     *
+     * @return the entity identity. May be the empty string.
      * @throws MslCryptoException if there is a crypto error accessing the
      *         entity identity.
      */

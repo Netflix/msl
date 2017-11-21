@@ -1214,21 +1214,21 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             const string sender = (masterToken) ? responseHeader->getSender() : entityAuthData->getIdentity();
             if ((masterToken && masterToken->isDecrypted() && masterToken->getIdentity() != sender))
             {
-            	stringstream ss;
-            	ss << "sender " << sender << "; master token " << masterToken->getIdentity();
-            	throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
+                stringstream ss;
+                ss << "sender " << sender << "; master token " << masterToken->getIdentity();
+                throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
             }
-            if (localIdentity == sender)
+            if (!localIdentity.empty() && localIdentity == sender)
             {
-            	stringstream ss;
-            	ss << sender << " == " << localIdentity;
+                stringstream ss;
+                ss << sender << " == " << localIdentity;
                 throw MslMessageException(MslError::UNEXPECTED_LOCAL_MESSAGE_SENDER, ss.str());
             }
 
             // Reject messages if the message recipient is specified and not
             // equal to the local entity.
             const string recipient = responseHeader->getRecipient();
-            if (!recipient.empty() && recipient != localIdentity)
+            if (!recipient.empty() && !localIdentity.empty() && recipient != localIdentity)
                 throw MslMessageException(MslError::MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
 
             // If there is a request update the stored crypto contexts.
@@ -1263,7 +1263,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
         } else {
             // Reject errors if the sender is equal to this entity.
             const string sender = errorHeader->getEntityAuthenticationData()->getIdentity();
-            if (localIdentity == sender)
+            if (!localIdentity.empty() && localIdentity == sender)
                 throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, sender);
         }
 
