@@ -75,9 +75,9 @@ public class RsaAuthenticationData extends EntityAuthenticationData {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "RSA authdata " + rsaAuthMo, e);
         }
     }
-    
-    /**
-     * @return the entity identity.
+
+    /* (non-Javadoc)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getIdentity()
      */
     @Override
     public String getIdentity() {

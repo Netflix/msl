@@ -1777,13 +1777,13 @@
                                                         sender = (masterToken) ? responseHeader.sender : entityAuthData.getIdentity();
                                                         if ((masterToken && masterToken.isDecrypted() && masterToken.identity != sender))
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.identity);
-                                                        if (localIdentity == sender)
+                                                        if (localIdentity && localIdentity == sender)
                                                             throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
 
                                                         // Reject messages if the message recipient is specified and not
                                                         // equal to the local entity.
                                                         var recipient = responseHeader.recipient;
-                                                        if (recipient && recipient != localIdentity)
+                                                        if (recipient && localIdentity && recipient != localIdentity)
                                                             throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient);
 
                                                         // If there is a request update the stored crypto contexts.
@@ -1818,7 +1818,7 @@
                                                     } else {
                                                         // Reject errors if the sender is equal to this entity.
                                                         sender = errorHeader.entityAuthenticationData.getIdentity();
-                                                        if (localIdentity == sender)
+                                                        if (localIdentity && localIdentity == sender)
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
                                                     }
 
