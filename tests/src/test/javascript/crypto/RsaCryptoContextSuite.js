@@ -20,21 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("RsaCryptoContext", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var SecretKey = require('msl-core/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var RsaCryptoContext = require('msl-core/crypto/RsaCryptoContext.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
 	
     /** Key pair ID. */
     var KEYPAIR_ID = "keypairid";

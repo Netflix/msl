@@ -22,11 +22,11 @@
 (function(require, module) {
     "use strict";
     
-    var MslContext = require('../../../../../core/src/main/javascript/util/MslContext.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var UserAuthenticationScheme = require('../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
-    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MslContext = require('msl-core/util/MslContext.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var UserAuthenticationScheme = require('msl-core/userauth/UserAuthenticationScheme.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
     
 	/** MSL encryption key. */
     var MSL_ENCRYPTION_KEY = "HVjzuPdH0Wqxk8TApiTqzw==";
@@ -52,31 +52,31 @@
 	     *         authentication data.
 	     */
 		init: function init(scheme, peerToPeer, callback) {
-		    var UnauthenticatedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
-		    var UnauthenticatedSuffixedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
-		    var MasterTokenProtectedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/MasterTokenProtectedAuthenticationFactory.js');
-		    var ProvisionedAuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/ProvisionedAuthenticationFactory.js');
-		    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-		    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-		    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-		    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-		    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-		    var PresharedProfileAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedProfileAuthenticationData.js');
-		    var X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
-		    var RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
-		    var EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
-		    var UnauthenticatedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
-		    var UnauthenticatedSuffixedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/UnauthenticatedSuffixedAuthenticationData.js');
-		    var MessageCapabilities = require('../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
-		    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
-		    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-		    var SymmetricCryptoContext = require('../../../../../core/src/main/javascript/crypto/SymmetricCryptoContext.js');
-		    var AsymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-		    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-		    var DiffieHellmanExchange = require('../../../../../core/src/main/javascript/keyx/DiffieHellmanExchange.js');
-		    var SimpleMslStore = require('../../../../../core/src/main/javascript/util/SimpleMslStore.js');
-		    var DefaultMslEncoderFactory = require('../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
-		    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+		    var UnauthenticatedAuthenticationFactory = require('msl-core/entityauth/UnauthenticatedAuthenticationFactory.js');
+		    var UnauthenticatedSuffixedAuthenticationFactory = require('msl-core/entityauth/UnauthenticatedSuffixedAuthenticationFactory.js');
+		    var MasterTokenProtectedAuthenticationFactory = require('msl-core/entityauth/MasterTokenProtectedAuthenticationFactory.js');
+		    var ProvisionedAuthenticationFactory = require('msl-core/entityauth/ProvisionedAuthenticationFactory.js');
+		    var SecretKey = require('msl-core/crypto/SecretKey.js');
+		    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+		    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+		    var MslInternalException = require('msl-core/MslInternalException.js');
+		    var PresharedAuthenticationData = require('msl-core/entityauth/PresharedAuthenticationData.js');
+		    var PresharedProfileAuthenticationData = require('msl-core/entityauth/PresharedProfileAuthenticationData.js');
+		    var X509AuthenticationData = require('msl-core/entityauth/X509AuthenticationData.js');
+		    var RsaAuthenticationData = require('msl-core/entityauth/RsaAuthenticationData.js');
+		    var EccAuthenticationData = require('msl-core/entityauth/EccAuthenticationData.js');
+		    var UnauthenticatedAuthenticationData = require('msl-core/entityauth/UnauthenticatedAuthenticationData.js');
+		    var UnauthenticatedSuffixedAuthenticationData = require('msl-core/entityauth/UnauthenticatedSuffixedAuthenticationData.js');
+		    var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
+		    var MslConstants = require('msl-core/MslConstants.js');
+		    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+		    var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
+		    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+		    var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
+		    var DiffieHellmanExchange = require('msl-core/keyx/DiffieHellmanExchange.js');
+		    var SimpleMslStore = require('msl-core/util/SimpleMslStore.js');
+		    var DefaultMslEncoderFactory = require('msl-core/io/DefaultMslEncoderFactory.js');
+		    var Random = require('msl-core/util/Random.js');
 		    
 		    var MockAuthenticationUtils = require('../util/MockAuthenticationUtils.js');
             var MockIdentityProvisioningService = require('../entityauth/MockIdentityProvisioningService.js');

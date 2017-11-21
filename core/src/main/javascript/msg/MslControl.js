@@ -509,7 +509,7 @@
      *
      * Create a new result with the provided response and send result.
      *
-     * @param {MessageInputStream} response response message input stream.
+     * @param {MessageInputStream} response response message input stream. May be {@code null}.
      * @param {SendResult} sent sent message result.
      */
     function SendReceiveResult(response, sent) {

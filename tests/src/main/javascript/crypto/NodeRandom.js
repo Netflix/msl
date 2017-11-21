@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
 
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Random = require('msl-core/util/Random.js');
 
     var crypto = require('crypto');
     
@@ -37,7 +37,4 @@
             b.set(bytes);
         },
     };
-
-    // Export Node random.
-    Random.setRandom(NodeRandom);
 })(require, (typeof module !== 'undefined') ? module : mkmodule('NodeRandom'));

@@ -22,21 +22,21 @@
 (function(require, module) {
     "use strict";
     
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var PrivateKey = require('../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    var PublicKey = require('../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    var UserIdToken = require('../../../../../core/src/main/javascript/tokens/UserIdToken.js');
-    var NullCryptoContext = require('../../../../../core/src/main/javascript/crypto/NullCryptoContext.js');
-    var ServiceToken = require('../../../../../core/src/main/javascript/tokens/ServiceToken.js');
-    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslCrypto = require('../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var PrivateKey = require('msl-core/crypto/PrivateKey.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var MasterToken = require('msl-core/tokens/MasterToken.js');
+    var UserIdToken = require('msl-core/tokens/UserIdToken.js');
+    var NullCryptoContext = require('msl-core/crypto/NullCryptoContext.js');
+    var ServiceToken = require('msl-core/tokens/ServiceToken.js');
+    var SecretKey = require('msl-core/crypto/SecretKey.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var Random = require('msl-core/util/Random.js');
     
 	/** Base service token name. */
     var SERVICE_TOKEN_NAME = "serviceTokenName";

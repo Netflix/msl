@@ -22,7 +22,7 @@
 (function(require, module) {
     "use strict";
     
-    var MslUser = require('../../../../../core/src/main/javascript/tokens/MslUser.js');
+    var MslUser = require('msl-core/tokens/MslUser.js');
         
     var MockMslUser = module.exports = MslUser.extend({
         /**

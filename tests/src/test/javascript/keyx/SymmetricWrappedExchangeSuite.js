@@ -20,30 +20,30 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SymmetricWrappedExchangeSuite", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var SymmetricWrappedExchange = require('../../../../../core/src/main/javascript/keyx/SymmetricWrappedExchange.js');
-    var KeyExchangeScheme = require('../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslKeyExchangeException = require('../../../../../core/src/main/javascript/MslKeyExchangeException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var KeyRequestData = require('../../../../../core/src/main/javascript/keyx/KeyRequestData.js');
-    var KeyResponseData = require('../../../../../core/src/main/javascript/keyx/KeyResponseData.js');
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
-    var AsyncExecutor = require('../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var MasterToken = require('../../../../../core/src/main/javascript/tokens/MasterToken.js');
-    var PresharedAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/PresharedAuthenticationData.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslMasterTokenException = require('../../../../../core/src/main/javascript/MslMasterTokenException.js');
-    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var Random = require('msl-core/util/Random.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslKeyExchangeException = require('msl-core/MslKeyExchangeException.js');
+    var MslError = require('msl-core/MslError.js');
+    var KeyRequestData = require('msl-core/keyx/KeyRequestData.js');
+    var KeyResponseData = require('msl-core/keyx/KeyResponseData.js');
+    var Arrays = require('msl-core/util/Arrays.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var MasterToken = require('msl-core/tokens/MasterToken.js');
+    var PresharedAuthenticationData = require('msl-core/entityauth/PresharedAuthenticationData.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslMasterTokenException = require('msl-core/MslMasterTokenException.js');
+    var MslEntityAuthException = require('msl-core/MslEntityAuthException.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
-    var MockAuthenticationUtils = require('../../../main/javascript/util/MockAuthenticationUtils.js');
-    var MockPresharedAuthenticationFactory = require('../../../main/javascript/entityauth/MockPresharedAuthenticationFactory.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
+    var MockAuthenticationUtils = require('msl-tests/util/MockAuthenticationUtils.js');
+    var MockPresharedAuthenticationFactory = require('msl-tests/entityauth/MockPresharedAuthenticationFactory.js');
     
 	/** MSL encoder format. */
 	var ENCODER_FORMAT = MslEncoderFormat.JSON;

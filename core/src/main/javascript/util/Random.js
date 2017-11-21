@@ -37,7 +37,7 @@
     /**
      * Override the crypto interface providing the function getRandomValues().
      *
-     * @param {object} the new crypto interface.
+     * @param {object} crypto the new crypto interface.
      */
     var Random$setCrypto = function Random$setCrypto(crypto) {
         nfCrypto = crypto;

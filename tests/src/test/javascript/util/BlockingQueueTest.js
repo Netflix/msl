@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 describe("BlockingQueue", function() {
-    var BlockingQueue = require('../../../../../core/src/main/javascript/util/BlockingQueue.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
-    var Arrays = require('../../../../../core/src/main/javascript/util/Arrays.js');
+    var BlockingQueue = require('msl-core/util/BlockingQueue.js');
+    var Random = require('msl-core/util/Random.js');
+    var Arrays = require('msl-core/util/Arrays.js');
     
     var TIMEOUT = 150;
     var WAIT = 200;

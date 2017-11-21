@@ -20,21 +20,21 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("ErrorHeader", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var ErrorHeader = require('../../../../../core/src/main/javascript/msg/ErrorHeader.js');
-    var Header = require('../../../../../core/src/main/javascript/msg/Header.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslMessageException = require('../../../../../core/src/main/javascript/MslMessageException.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
-    var MslConstants = require('../../../../../core/src/main/javascript/MslConstants.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var ErrorHeader = require('msl-core/msg/ErrorHeader.js');
+    var Header = require('msl-core/msg/Header.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslMessageException = require('msl-core/MslMessageException.js');
+    var Base64 = require('msl-core/util/Base64.js');
+    var MslConstants = require('msl-core/MslConstants.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

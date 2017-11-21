@@ -1,5 +1,6 @@
 {
   "name": "msl-tests-exec",
+  "version": "1.1217.0",
   "description": "Message Security Layer Tests Execution",
   "keywords": [
     "msl",
@@ -16,13 +17,18 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "test": "find ./src/test/javascript -type f -name '*.js' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./src/main/javascript/lib/jasmine/msl-helpers.js"
+    "test": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./node_modules/msl-tests/lib/jasmine/msl-helpers.js"
+  },
+  "dependencies": {
+    "msl-core": "^1.1217.0",
+    "msl-tests": "^1.1217.0"
   },
   "devDependencies": {
-    "jsrsasign": "^7.2.2",
+    "clarinet": "^0.11.0",
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
     "jshint": "^2.9.5",
+    "jsrsasign": "^7.2.2",
     "ursa": "^0.9.4"
   }
 }

@@ -20,18 +20,18 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EccAuthenticationData", function() {
-    var MslEncoderFormat = require('../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var EccAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EccAuthenticationData.js');
-    var EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
-    var RsaAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/RsaAuthenticationData.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var EccAuthenticationData = require('msl-core/entityauth/EccAuthenticationData.js');
+    var EntityAuthenticationData = require('msl-core/entityauth/EntityAuthenticationData.js');
+    var RsaAuthenticationData = require('msl-core/entityauth/RsaAuthenticationData.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslError = require('msl-core/MslError.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
-    var MockEccAuthenticationFactory = require('../../../main/javascript/entityauth/MockEccAuthenticationFactory.js');
-    var MslTestUtils = require('../../../main/javascript/util/MslTestUtils.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MockEccAuthenticationFactory = require('msl-tests/entityauth/MockEccAuthenticationFactory.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
     
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

@@ -30,8 +30,6 @@
     var MslError = require('../MslError.js');
     var Class = require('../util/Class.js');
     var MslIoException = require('../MslIoException.js');
-
-    var lzw = require('../lib/lzw.js');
     
     // Shortcuts
     var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
@@ -65,24 +63,6 @@
          */
         uncompress: function(data) {},
     });
-    
-    /**
-     * Default LZW compression implementation.
-     */
-    var LzwCompressionImpl = CompressionImpl.extend({
-        /** @inheritDoc */
-        compress: function compress(data) {
-            return lzw.compress(data);
-        },
-        
-        /** @inheritDoc */
-        uncompress: function uncompress(data) {
-            return lzw.extend(data);
-        },
-    });
-    
-    if (lzw && typeof lzw.compress === 'function' && typeof lzw.extend === 'function')
-        MslCompression$register(CompressionAlgorithm.LZW, new LzwCompressionImpl());
         
     /**
      * <p>Register a compression algorithm implementation. Pass {@code null} to

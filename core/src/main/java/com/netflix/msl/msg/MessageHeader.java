@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -61,17 +61,17 @@ import com.netflix.msl.util.MslContext;
  * verified using the master token. The sender will also be included. If no
  * master token exists, the header data will be verified and encrypted based on
  * the entity authentication scheme.</p>
- * 
+ *
  * <p>If peer tokens exist, the message recipient is expected to use the peer
  * master token to secure its response and send the peer user ID token and peer
  * service tokens back in the header data. The request's tokens should be
  * included as the response's peer tokens.</p>
- * 
+ *
  * <p>If key response data exists, it applies to the token set the receiving
  * entity uses to identify itself. In a trusted services network the key
  * response data applies to the primary tokens. In a peer-to-peer network the
  * key response data applies to the peer tokens.</p>
- * 
+ *
  * <p>The header data is represented as
  * {@code
  * headerdata = {
@@ -111,13 +111,13 @@ import com.netflix.msl.util.MslContext;
  * <li>{@code peeruseridtoken} is the peer user ID token</li>
  * <li>{@code peerservicetokens} are the peer service tokens</li>
  * </ul></p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageHeader extends Header {
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
-    
+
     // Message header data.
     /** Key sender. */
     private static final String KEY_SENDER = "sender";
@@ -147,7 +147,7 @@ public class MessageHeader extends Header {
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
     /** Key service tokens. */
     private static final String KEY_SERVICE_TOKENS = "servicetokens";
-    
+
     // Message header peer data.
     /** Key peer master token. */
     private static final String KEY_PEER_MASTER_TOKEN = "peermastertoken";
@@ -155,7 +155,7 @@ public class MessageHeader extends Header {
     private static final String KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
     /** Key peer service tokens. */
     private static final String KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
-    
+
     /**
      * Container struct for message header data.
      */
@@ -198,7 +198,7 @@ public class MessageHeader extends Header {
             this.userIdToken = userIdToken;
             this.serviceTokens = serviceTokens;
         }
-        
+
         public final String recipient;
         public final long messageId;
         public final Long nonReplayableId;
@@ -211,7 +211,7 @@ public class MessageHeader extends Header {
         public final UserIdToken userIdToken;
         public final Set<ServiceToken> serviceTokens;
     }
-    
+
     /**
      * Container struct for header peer data.
      */
@@ -229,22 +229,22 @@ public class MessageHeader extends Header {
             this.peerUserIdToken = peerUserIdToken;
             this.peerServiceTokens = peerServiceTokens;
         }
-        
+
         public final MasterToken peerMasterToken;
         public final UserIdToken peerUserIdToken;
         public final Set<ServiceToken> peerServiceTokens;
     }
-    
+
     /**
      * <p>Construct a new message header with the provided message data.</p>
-     * 
+     *
      * <p>Headers are encrypted and signed. If a master token is provided, it
      * will be used for this purpose. Otherwise the crypto context appropriate
      * for the entity authentication scheme will be used. N.B. Either the
      * entity authentication data or the master token must be provided.</p>
-     * 
+     *
      * <p>Peer tokens are only processed if operating in peer-to-peer mode.</p>
-     * 
+     *
      * @param ctx MSL context.
      * @param entityAuthData the entity authentication data. May be null if a
      *        master token is provided.
@@ -252,8 +252,7 @@ public class MessageHeader extends Header {
      *        authentication data is provided.
      * @param headerData message header data container.
      * @param peerData message header peer data container.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
+     * @throws MslEncodingException if there is an error encoding the data.
      * @throws MslCryptoException if there is an error encrypting or signing
      *         the message.
      * @throws MslMasterTokenException if the header master token is not
@@ -265,11 +264,11 @@ public class MessageHeader extends Header {
         // Message ID must be within range.
         if (headerData.messageId < 0 || headerData.messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
-        
+
         // Message entity must be provided.
         if (entityAuthData == null && masterToken == null)
             throw new MslInternalException("Message entity authentication data or master token must be provided.");
-        
+
         // Only include the recipient if the message will be encrypted.
         final boolean encrypted;
         if (masterToken != null) {
@@ -278,7 +277,7 @@ public class MessageHeader extends Header {
             final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
             encrypted = scheme.encrypts();
         }
-            
+
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
@@ -303,7 +302,7 @@ public class MessageHeader extends Header {
             this.peerUserIdToken = null;
             this.peerServiceTokens = Collections.emptySet();
         }
-        
+
         // Grab token verification master tokens.
         final MasterToken tokenVerificationMasterToken, peerTokenVerificationMasterToken;
         if (this.keyResponseData != null) {
@@ -321,19 +320,19 @@ public class MessageHeader extends Header {
             tokenVerificationMasterToken = this.masterToken;
             peerTokenVerificationMasterToken = this.peerMasterToken;
         }
-     
+
         // Check token combinations.
         if (this.userIdToken != null && (tokenVerificationMasterToken == null || !this.userIdToken.isBoundTo(tokenVerificationMasterToken)))
             throw new MslInternalException("User ID token must be bound to a master token.");
         if (this.peerUserIdToken != null && (peerTokenVerificationMasterToken == null || !this.peerUserIdToken.isBoundTo(peerTokenVerificationMasterToken)))
             throw new MslInternalException("Peer user ID token must be bound to a peer master token.");
-        
+
         // Grab the user.
         if (this.userIdToken != null)
             this.user = this.userIdToken.getUser();
         else
             this.user = null;
-        
+
         // All service tokens must be unbound or if bound, bound to the
         // provided tokens.
         for (final ServiceToken serviceToken : this.serviceTokens) {
@@ -348,7 +347,7 @@ public class MessageHeader extends Header {
             if (peerServiceToken.isUserIdTokenBound() && (this.peerUserIdToken == null || !peerServiceToken.isBoundTo(this.peerUserIdToken)))
                 throw new MslInternalException("User ID token bound peer service tokens must be bound to the provided peer user ID token.");
         }
-        
+
         // Construct the header data.
         try {
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
@@ -378,12 +377,12 @@ public class MessageHeader extends Header {
                 .setUserAuthenticationData(this.userAuthData)
                 .setMessageId(this.messageId);
         }
-        
+
         // Create the correct crypto context.
         if (this.masterToken != null) {
             // Use a stored master token crypto context if we have one.
             final ICryptoContext cachedCryptoContext = ctx.getMslStore().getCryptoContext(this.masterToken);
-            
+
             // If there was no stored crypto context try making one from
             // the master token. We can only do this if we can open up the
             // master token.
@@ -419,22 +418,22 @@ public class MessageHeader extends Header {
 
     /**
      * <p>Construct a new message from the provided JSON object.</p>
-     * 
+     *
      * <p>Headers are encrypted and signed. If a master token is found, it will
      * be used for this purpose. Otherwise the crypto context appropriate for
      * the entity authentication scheme will be used. Either the master token
      * or entity authentication data must be found.</p>
-     * 
+     *
      * <p>If user authentication data is included user authentication will be
      * performed. If a user ID token is included then its user information is
      * considered to be trusted.</p>
-     * 
+     *
      * <p>Service tokens will be decrypted and verified with the provided crypto
      * contexts identified by token name. A default crypto context may be
      * provided by using the empty string as the token name; if a token name is
      * not explicitly mapped onto a crypto context, the default crypto context
      * will be used.</p>
-     * 
+     *
      * @param ctx MSL context.
      * @param headerdataBytes encoded header data.
      * @param entityAuthData the entity authentication data. May be null if a
@@ -463,19 +462,19 @@ public class MessageHeader extends Header {
      */
     protected MessageHeader(final MslContext ctx, final byte[] headerdataBytes, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
-        
+
         final byte[] plaintext;
         try {
             this.entityAuthData = (masterToken == null) ? entityAuthData : null;
             this.masterToken = masterToken;
             if (entityAuthData == null && masterToken == null)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
-            
+
             // Create the correct crypto context.
             if (masterToken != null) {
                 // Use a stored master token crypto context if we have one.
                 final ICryptoContext cachedCryptoContext = ctx.getMslStore().getCryptoContext(masterToken);
-                
+
                 // If there was no stored crypto context try making one from
                 // the master token. We can only do this if we can open up the
                 // master token.
@@ -501,7 +500,7 @@ public class MessageHeader extends Header {
                     throw e;
                 }
             }
-            
+
             // Verify and decrypt the header data.
             //
             // Throw different errors depending on whether or not a master
@@ -522,10 +521,10 @@ public class MessageHeader extends Header {
             e.setEntityAuthenticationData(entityAuthData);
             throw e;
         }
-        
+
         try {
             headerdata = encoder.parseObject(plaintext);
-            
+
             // Pull the message ID first because any error responses need to
             // use it.
             this.messageId = headerdata.getLong(KEY_MESSAGE_ID);
@@ -534,18 +533,18 @@ public class MessageHeader extends Header {
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "headerdata " + Base64.encode(plaintext), e).setMasterToken(masterToken).setEntityAuthenticationData(entityAuthData);
         }
-        
+
         try {
             // If the message was sent with a master token pull the sender.
             this.sender = (this.masterToken != null) ? headerdata.getString(KEY_SENDER) : null;
             this.recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
             this.timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
-            
+
             // Pull key response data.
             final MasterToken tokenVerificationMasterToken;
             if (headerdata.has(KEY_KEY_RESPONSE_DATA)) {
                 this.keyResponseData = KeyResponseData.create(ctx, headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-                
+
                 // The key response data master token is used for token
                 // verification in a trusted services network. Otherwise it
                 // will be used for peer token verification, which is handled
@@ -580,7 +579,7 @@ public class MessageHeader extends Header {
             } else {
                 this.user = null;
             }
-            
+
             // Service tokens are authenticated by the master token if it
             // exists or by the application crypto context.
             final Set<ServiceToken> serviceTokens = new HashSet<ServiceToken>();
@@ -604,17 +603,17 @@ public class MessageHeader extends Header {
             e.setMessageId(this.messageId);
             throw e;
         }
-        
+
         try {
             this.nonReplayableId = (headerdata.has(KEY_NON_REPLAYABLE_ID)) ? headerdata.getLong(KEY_NON_REPLAYABLE_ID) : null;
             this.renewable = headerdata.getBoolean(KEY_RENEWABLE);
             // FIXME: Make handshake required once all MSL stacks are updated.
             this.handshake = (headerdata.has(KEY_HANDSHAKE)) ? headerdata.getBoolean(KEY_HANDSHAKE) : false;
-            
+
             // Verify values.
             if (nonReplayableId != null && (nonReplayableId < 0 || nonReplayableId > MslConstants.MAX_LONG_VALUE))
                 throw new MslMessageException(MslError.NONREPLAYABLE_ID_OUT_OF_RANGE, "headerdata " + headerdata);
-            
+
             // Pull message capabilities.
             if (headerdata.has(KEY_CAPABILITIES)) {
                 final MslObject capabilitiesMo = headerdata.getMslObject(KEY_CAPABILITIES, encoder);
@@ -622,7 +621,7 @@ public class MessageHeader extends Header {
             } else {
                 this.capabilities = null;
             }
-            
+
             // Pull key request data containers.
             final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
             if (headerdata.has(KEY_KEY_REQUEST_DATA)) {
@@ -632,7 +631,7 @@ public class MessageHeader extends Header {
                 }
             }
             this.keyRequestData = Collections.unmodifiableSet(keyRequestData);
-            
+
             // Only process peer-to-peer tokens if in peer-to-peer mode.
             if (ctx.isPeerToPeer()) {
                 // Pull peer master token.
@@ -646,7 +645,7 @@ public class MessageHeader extends Header {
                     peerVerificationMasterToken = this.keyResponseData.getMasterToken();
                 else
                     peerVerificationMasterToken = this.peerMasterToken;
-                    
+
                 // Pull peer user ID token. User ID tokens are always
                 // authenticated by a master token.
                 try {
@@ -657,7 +656,7 @@ public class MessageHeader extends Header {
                     e.setMasterToken(peerVerificationMasterToken);
                     throw e;
                 }
-    
+
                 // Peer service tokens are authenticated by the peer master
                 // token if it exists or by the application crypto context.
                 final Set<ServiceToken> peerServiceTokens = new HashSet<ServiceToken>();
@@ -694,7 +693,7 @@ public class MessageHeader extends Header {
             throw e;
         }
     }
-    
+
     /**
      * @return true if the message header crypto context provides encryption.
      * @see #getCryptoContext()
@@ -714,37 +713,37 @@ public class MessageHeader extends Header {
     public ICryptoContext getCryptoContext() {
         return messageCryptoContext;
     }
-    
+
     /**
      * Returns the user if the user has been authenticated or a user ID token
      * was provided.
-     * 
+     *
      * @return the user. May be null.
      */
     public MslUser getUser() {
         return user;
     }
-    
+
     /**
      * Returns the entity authentication data. May be null if the entity has
      * already been authenticated and is using a master token instead.
-     * 
+     *
      * @return the entity authentication data.
      */
     public EntityAuthenticationData getEntityAuthenticationData() {
         return entityAuthData;
     }
-    
+
     /**
      * Returns the primary master token identifying the entity and containing
      * the session keys. May be null if the entity has not been authenticated.
-     * 
+     *
      * @return the master token. May be null.
      */
     public MasterToken getMasterToken() {
         return masterToken;
     }
-    
+
     /**
      * @return the sender entity identity. Will be {@code null} if the message
      *         is using entity authentication data.
@@ -752,7 +751,7 @@ public class MessageHeader extends Header {
     public String getSender() {
         return sender;
     }
-    
+
     /**
      * @return the recipient entity identity. Will be {@code null} if there is
      *         no specified recipient.
@@ -760,133 +759,133 @@ public class MessageHeader extends Header {
     public String getRecipient() {
         return recipient;
     }
-    
+
     /**
      * @return the timestamp. May be null.
      */
     public Date getTimestamp() {
         return (timestamp != null) ? new Date(timestamp * MILLISECONDS_PER_SECOND) : null;
     }
-    
+
     /**
      * @return the message ID.
      */
     public long getMessageId() {
         return messageId;
     }
-    
+
     /**
      * @return the non-replayable ID. May be null.
      */
     public Long getNonReplayableId() {
         return nonReplayableId;
     }
-    
+
     /**
      * @return true if the message renewable flag is set.
      */
     public boolean isRenewable() {
         return renewable;
     }
-    
+
     /**
      * @return true if the message handshake flag is set.
      */
     public boolean isHandshake() {
         return handshake;
     }
-    
+
     /**
      * @return the message capabilities. May be null.
      */
     public MessageCapabilities getMessageCapabilities() {
         return capabilities;
     }
-    
+
     /**
      * @return key request data. May be empty.
      */
     public Set<KeyRequestData> getKeyRequestData() {
         return keyRequestData;
     }
-    
+
     /**
      * @return key response data. May be null.
      */
     public KeyResponseData getKeyResponseData() {
         return keyResponseData;
     }
-    
+
     /**
      * Returns the user authentication data. May be null if the user has
      * already been authenticated and is using a user ID token or if there is
      * no user authentication requested.
-     * 
+     *
      * @return the user authentication data. May be null.
      */
     public UserAuthenticationData getUserAuthenticationData() {
         return userAuthData;
     }
-    
+
     /**
      * Returns the primary user ID token identifying the user. May be null if
      * the user has not been authenticated.
-     * 
+     *
      * @return the user ID token. May be null.
      */
     public UserIdToken getUserIdToken() {
         return userIdToken;
     }
-    
+
     /**
      * Returns the primary service tokens included in this message.
-     * 
+     *
      * The returned list is immutable.
-     * 
+     *
      * @return the service tokens. May be empty if no there are no service
-     *         tokens. 
+     *         tokens.
      */
     public Set<ServiceToken> getServiceTokens() {
         return serviceTokens;
     }
-    
+
     /**
      * Returns the master token that should be used by an entity responding to
      * this message. Will be null if the responding entity should use its own
      * entity authentication data or the primary master token.
-     * 
+     *
      * @return the peer master token. May be null.
      */
     public MasterToken getPeerMasterToken() {
         return peerMasterToken;
     }
-    
+
     /**
      * Returns the user ID token that must be used by an entity responding to
      * this message if an peer master token is provided. May be null if peer
      * user authentication has not occurred. Will be null if there is no peer
      * master token.
-     * 
+     *
      * @return the peer user ID token. May be null.
      */
     public UserIdToken getPeerUserIdToken() {
         return peerUserIdToken;
     }
-    
+
     /**
      * <p>Returns the service tokens that must be used by an entity responding
      * to this message. May be null if the responding entity should use the
      * primary service tokens.</p>
-     * 
+     *
      * <p>The returned list is immutable.</p>
-     * 
+     *
      * @return the peer service tokens. May be empty if no there are no peer
      *         service tokens.
      */
     public Set<ServiceToken> getPeerServiceTokens() {
         return peerServiceTokens;
     }
-    
+
     /* (non-Javadoc)
      * @see com.netflix.msl.io.MslEncodable#toMslEncoding(com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
@@ -895,7 +894,7 @@ public class MessageHeader extends Header {
         // Return any cached encoding.
         if (encodings.containsKey(format))
             return encodings.get(format);
-        
+
         // Encrypt and sign the header data.
         final byte[] plaintext = encoder.encodeObject(headerdata, format);
         final byte[] ciphertext;
@@ -910,7 +909,7 @@ public class MessageHeader extends Header {
         } catch (final MslCryptoException e) {
             throw new MslEncoderException("Error signging the header data.", e);
         }
-        
+
         // Create the encoding.
         final MslObject header = encoder.createObject();
         if (masterToken != null)
@@ -920,12 +919,12 @@ public class MessageHeader extends Header {
         header.put(Header.KEY_HEADERDATA, ciphertext);
         header.put(Header.KEY_SIGNATURE, signature);
         final byte[] encoding = encoder.encodeObject(header, format);
-        
+
         // Cache and return the encoding.
         encodings.put(format, encoding);
         return encoding;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#equals(java.lang.Object)
      */
@@ -963,7 +962,7 @@ public class MessageHeader extends Header {
              peerUserIdToken == that.peerUserIdToken) &&
             peerServiceTokens.equals(that.peerServiceTokens);
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#hashCode()
      */
@@ -994,7 +993,7 @@ public class MessageHeader extends Header {
     private final MasterToken masterToken;
     /** Header data. */
     private final MslObject headerdata;
-    
+
     /** Sender. */
     private final String sender;
     /** Recipient. */
@@ -1021,17 +1020,17 @@ public class MessageHeader extends Header {
     private final UserIdToken userIdToken;
     /** Service tokens (immutable). */
     private final Set<ServiceToken> serviceTokens;
-    
+
     /** Peer master token. */
     private final MasterToken peerMasterToken;
     /** Peer user ID token. */
     private final UserIdToken peerUserIdToken;
     /** Peer service tokens (immutable). */
     private final Set<ServiceToken> peerServiceTokens;
-    
+
     /** User (if authenticated). */
     private final MslUser user;
-    
+
     /** Message crypto context. */
     private final ICryptoContext messageCryptoContext;
 

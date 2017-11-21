@@ -24,15 +24,15 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("EntityAuthenticationData", function() {
-    var EntityAuthenticationScheme = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
-    var MslObject = require('../../../../../core/src/main/javascript/io/MslObject.js');
-    var EntityAuthenticationData = require('../../../../../core/src/main/javascript/entityauth/EntityAuthenticationData.js');
-    var MslEncodingException = require('../../../../../core/src/main/javascript/MslEncodingException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
-    var MslEntityAuthException = require('../../../../../core/src/main/javascript/MslEntityAuthException.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var MslObject = require('msl-core/io/MslObject.js');
+    var EntityAuthenticationData = require('msl-core/entityauth/EntityAuthenticationData.js');
+    var MslEncodingException = require('msl-core/MslEncodingException.js');
+    var MslError = require('msl-core/MslError.js');
+    var MslEntityAuthException = require('msl-core/MslEntityAuthException.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
-    var MockMslContext = require('../../../main/javascript/util/MockMslContext.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockMslContext = require('msl-tests/util/MockMslContext.js');
     
     /** Key entity authentication scheme. */
     var KEY_SCHEME = "scheme";

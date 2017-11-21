@@ -1,6 +1,6 @@
 {
   "name": "msl-tests",
-  "version": "1.1216.0",
+  "version": "1.1217.0",
   "description": "Message Security Layer Tests",
   "keywords": [
     "msl",
@@ -41,11 +41,14 @@
       "Buffer"
     ]
   },
+  "dependencies": {
+    "msl-core": "^1.1217.0"
+  },
   "devDependencies": {
-    "jsrsasign": "^7.2.2",
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
     "jshint": "^2.9.5",
+    "jsrsasign": "^7.2.2",
     "ursa": "^0.9.4"
   }
 }

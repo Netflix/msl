@@ -16,13 +16,13 @@
 (function(require, module) {
     "use strict";
     
-    var X509 = require('../../../../../core/src/main/javascript/crypto/X509.js');
-    var MslInternalException = require('../../../../../core/src/main/javascript/MslInternalException.js');
-    var X509AuthenticationFactory = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationFactory.js');
-    var X509AuthenticationData = require('../../../../../core/src/main/javascript/entityauth/X509AuthenticationData.js');
-    var RsaCryptoContext = require('../../../../../core/src/main/javascript/crypto/RsaCryptoContext.js');
-    var MslCryptoException = require('../../../../../core/src/main/javascript/MslCryptoException.js');
-    var MslError = require('../../../../../core/src/main/javascript/MslError.js');
+    var X509 = require('msl-core/crypto/X509.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
+    var X509AuthenticationFactory = require('msl-core/entityauth/X509AuthenticationFactory.js');
+    var X509AuthenticationData = require('msl-core/entityauth/X509AuthenticationData.js');
+    var RsaCryptoContext = require('msl-core/crypto/RsaCryptoContext.js');
+    var MslCryptoException = require('msl-core/MslCryptoException.js');
+    var MslError = require('msl-core/MslError.js');
     
 	/** X.509 private key. */
     var X509_PRIVATE_KEY =

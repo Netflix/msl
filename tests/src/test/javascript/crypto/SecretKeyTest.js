@@ -20,12 +20,12 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 describe("SecretKey", function() {
-    var SecretKey = require('../../../../../core/src/main/javascript/crypto/SecretKey.js');
-    var WebCryptoAlgorithm = require('../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var Base64 = require('../../../../../core/src/main/javascript/util/Base64.js');
+    var SecretKey = require('msl-core/crypto/SecretKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var Base64 = require('msl-core/util/Base64.js');
 
-    var MslTestConstants = require('../../../main/javascript/MslTestConstants.js');
+    var MslTestConstants = require('msl-tests/MslTestConstants.js');
     
     /** 128-bit key. */
     var keydata128B64 = "rXIN3PgEoTjJzeqSD1SwDw==";

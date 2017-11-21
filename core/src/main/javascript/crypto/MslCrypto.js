@@ -26,6 +26,7 @@
 
     var MslInternalException = require('../MslInternalException.js');
     var KeyFormat = require('../crypto/KeyFormat.js');
+    var PromiseFactory = require('../util/PromiseFactory.js');
     
     var ASN1 = require('../lib/asnjwk.js');
     var textEncoding = require('../lib/textEncoding.js');
@@ -103,7 +104,7 @@
     /**
      * Override the crypto subtle interface providing the Web Crypto API.
      *
-     * @param {object} the new crypto subtle interface.
+     * @param {object} cryptoSubtle the new crypto subtle interface.
      */
     var MslCrypto$setCryptoSubtle = function MslCrypto$setCryptoSubtle(cryptoSubtle) {
         nfCryptoSubtle = cryptoSubtle;
@@ -148,7 +149,7 @@
     // If the native operation type is not a Promise, wrap it inside one.
     function promisedOperation(op) {
         if (!op.then) {
-            return new Promise(function(resolve, reject) {
+            return PromiseFactory.create(function(resolve, reject) {
                 op.oncomplete = function(e) {
                     resolve(e.target.result);
                 };

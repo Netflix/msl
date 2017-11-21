@@ -51,10 +51,14 @@
     
     var MessageOutputStream = module.exports = OutputStream.extend({
         /**
-         * Construct a new message output stream. The header is output
+         * <p>Construct a new message output stream. The header is output
          * immediately by calling {@code #flush()} on the destination output
-         * stream. The most preferred compression algorithm supported by the
-         * local entity and message header will be used.
+         * stream.</p>
+         *
+         * <p>The most preferred compression algorithm and encoder format supported
+         * by the message header will be used. If this is a response, the message
+         * header capabilities will already consist of the intersection of the
+         * local and remote entity capabilities.</p>
          *
          * @param {MslContext} ctx the MSL context.
          * @param {OutputStream} destination MSL output stream.

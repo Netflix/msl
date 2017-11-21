@@ -13,31 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * <p>LZW data compression and uncompression backed by pure JavaScript
+ * implementation.</p>
+ *
+ * <p>This class is thread-safe.</p>
+ *
+ * @author Wesley Miaw <wmiaw@netflix.com>
+ */
 (function(require, module) {
     "use strict";
     
-    var MslConstants = require("msl-core/MslConstants.js");
-    var MslCompression = require("msl-core/util/MslCompression.js");
+    var MslCompression = require('../util/MslCompression.js');
     
-    var zlib = require('zlib');
-
+    var lzw = require('../lib/lzw.js');
+    
     // Shortcuts.
-    var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
     var CompressionImpl = MslCompression.CompressionImpl;
-
-    var GzipCompression = module.exports = CompressionImpl.extend({
+    
+    /**
+     * Default LZW compression implementation.
+     */
+    var LzwCompression = module.exports = CompressionImpl.extend({
         /** @inheritDoc */
-        compress: function(data) {
-            return zlib.deflateSync(data);
+        compress: function compress(data) {
+            return lzw.compress(data);
         },
-
+        
         /** @inheritDoc */
-        uncompress: function(data) {
-            return zlib.inflateSync(data);
-        }
+        uncompress: function uncompress(data) {
+            return lzw.extend(data);
+        },
     });
-
-    // Export Node GZIP.
-    var gzip = new GzipCompression();
-    MslCompression.register(CompressionAlgorithm.GZIP, gzip);
-})(require, (typeof module !== 'undefined') ? module : mkmodule('NodeGzipCompression'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('LzwCompression'));

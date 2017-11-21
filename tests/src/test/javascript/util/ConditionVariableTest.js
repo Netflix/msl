@@ -15,8 +15,8 @@
  */
 
 describe("ConditionVariable", function() {
-    var ConditionVariable = require('../../../../../core/src/main/javascript/util/ConditionVariable.js');
-    var Random = require('../../../../../core/src/main/javascript/util/Random.js');
+    var ConditionVariable = require('msl-core/util/ConditionVariable.js');
+    var Random = require('msl-core/util/Random.js');
     
     var TIMEOUT = 150;
     var WAIT = 200;
