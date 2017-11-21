@@ -69,9 +69,9 @@ public class UnauthenticatedAuthenticationData extends EntityAuthenticationData 
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "unauthenticated authdata " + unauthenticatedAuthMo, e);
         }
     }
-    
-    /**
-     * @return the entity identity.
+
+    /* (non-Javadoc)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getIdentity()
      */
     @Override
     public String getIdentity() {

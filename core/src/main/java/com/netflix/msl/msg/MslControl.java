@@ -1732,13 +1732,13 @@ public class MslControl {
                 final String sender = (masterToken != null) ? responseHeader.getSender() : entityAuthData.getIdentity();
                 if (masterToken != null && masterToken.isDecrypted() && !masterToken.getIdentity().equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.getIdentity());
-                if (localIdentity.equals(sender))
+                if (localIdentity != null && localIdentity.equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
 
                 // Reject messages if the message recipient is specified and not
                 // equal to the local entity.
                 final String recipient = responseHeader.getRecipient();
-                if (recipient != null && !recipient.equals(localIdentity))
+                if (recipient != null && localIdentity != null && !recipient.equals(localIdentity))
                     throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
 
                 // If there is a request update the stored crypto contexts.
@@ -1773,7 +1773,7 @@ public class MslControl {
             } else {
                 // Reject errors if the sender is equal to this entity.
                 final String sender = errorHeader.getEntityAuthenticationData().getIdentity();
-                if (localIdentity.equals(sender))
+                if (localIdentity != null && localIdentity.equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
             }
             
