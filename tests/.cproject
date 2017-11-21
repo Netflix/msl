@@ -30,7 +30,7 @@
 								</option>
 								<option id="macosx.cpp.link.option.paths.1082102412" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.1103657322" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -51,7 +51,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1527158162" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -133,7 +133,7 @@
 								</option>
 								<option id="macosx.cpp.link.option.paths.1230734662" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.715455431" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -154,7 +154,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.349980858" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -228,7 +228,7 @@
 							<tool id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base.566618787" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base">
 								<option id="macosx.cpp.link.option.paths.852422524" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/lib"/>
 								</option>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.macosx.base.1521214507" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.macosx.base">
@@ -245,7 +245,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1845721471" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -320,7 +320,7 @@
 							<tool id="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base.1234075371" name="MacOS X C++ Linker" superClass="cdt.managedbuild.tool.macosx.cpp.linker.macosx.base">
 								<option id="macosx.cpp.link.option.paths.917301000" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/lib"/>
 								</option>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.assembler.macosx.base.789704543" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.macosx.base">
@@ -337,7 +337,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2l/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2m/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1520566858" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
