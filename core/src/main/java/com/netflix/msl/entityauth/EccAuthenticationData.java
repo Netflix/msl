@@ -73,9 +73,9 @@ public class EccAuthenticationData extends EntityAuthenticationData {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "ECC authdata " + eccAuthMo, e);
         }
     }
-    
-    /**
-     * @return the entity identity.
+
+    /* (non-Javadoc)
+     * @see com.netflix.msl.entityauth.EntityAuthenticationData#getIdentity()
      */
     @Override
     public String getIdentity() {

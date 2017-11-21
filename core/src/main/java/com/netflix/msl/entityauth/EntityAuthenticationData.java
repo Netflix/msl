@@ -107,7 +107,7 @@ public abstract class EntityAuthenticationData implements MslEncodable {
     }
     
     /**
-     * @return the entity identity.
+     * @return the entity identity. May be {@code null} if unknown.
      * @throws MslCryptoException if there is a crypto error accessing the
      *         entity identity.
      */
