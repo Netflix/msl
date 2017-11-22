@@ -100,7 +100,8 @@ public:
      *         data.
      * @throws MslMessageException if the message does not contain an entity
      *         authentication data or a master token, the header data is
-     *         missing or invalid, or the message ID is negative.
+     *         missing or invalid, or the message ID is negative, or the
+     *         message is not encrypted and contains user authentication data.
      * @throws MslException if the message does not contain an entity
      *         authentication data or a master token or a token is improperly
      *         bound to another token.

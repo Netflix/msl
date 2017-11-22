@@ -169,6 +169,11 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
         encrypted = scheme.encrypts();
     }
 
+    // Do not allow user authentication data to be included if the message
+    // will not be encrypted.
+    if (!encrypted && headerData->userAuthData)
+        throw MslInternalException("User authentication data cannot be included if the message is not encrypted.");
+
     entityAuthData = (!mt) ? ead : shared_ptr<EntityAuthenticationData>();
     masterToken = mt;
     nonReplayableId = headerData->nonReplayableId;
@@ -433,8 +438,20 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx,
             ? UserAuthenticationData::create(ctx, tokenVerificationMasterToken, headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder))
             : shared_ptr<UserAuthenticationData>();
 
-        // Verify the user authentication data.
+        // Identify the user if any.
         if (userAuthData) {
+            // Reject unencrypted messages containing user authentication data.
+            bool encrypted;
+            if (masterToken) {
+                encrypted = true;
+            } else {
+                const EntityAuthenticationScheme scheme = entityAuthData->getScheme();
+                encrypted = scheme.encrypts();
+            }
+            if (!encrypted)
+                throw MslMessageException(MslError::UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
+
+            // Verify the user authentication data.
             const UserAuthenticationScheme scheme = userAuthData->getScheme();
             shared_ptr<UserAuthenticationFactory> factory = ctx->getUserAuthenticationFactory(scheme);
             if (!factory)

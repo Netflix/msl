@@ -653,15 +653,18 @@ private: // methods
      *         authentication data.
      * @throws MslUserAuthException if unable to create the user authentication
      *         data.
-     * @throws MslMessageException if the message master token is expired and
-     *         the message is not renewable.
      * @throws MslMasterTokenException if the master token is not trusted and
      *         needs to be.
      * @throws MslKeyExchangeException if there is an error with the key
      *         request data or key response data or the key exchange scheme is
      *         not supported.
-     * @throws MslMessageException if the message master token is expired and
-     *         the message is not renewable.
+     * @throws MslMessageException if the message does not contain an entity
+     *         authentication data or a master token, or a token is improperly
+     *         bound to another token, or there is an error updating the
+     *         service tokens, or the header data is missing or invalid, or the
+     *         message ID is negative, or the message is not encrypted and
+     *         contains user authentication data, or if the message master
+     *         token is expired and the message is not renewable.
      * @throws MslException if the message does not contain an entity
      *         authentication data or a master token, or a token is improperly
      *         bound to another token, or there is an error updating the
@@ -717,7 +720,9 @@ private: // methods
      * @throws MslMessageException if the message master token is expired and
      *         the message is not renewable, if there is an error building the
      *         request, or if the response message ID does not equal the
-     *         expected value.
+     *         expected value, or the header data is missing or invalid, or the
+     *         message ID is negative, or the message is not encrypted and
+     *         contains user authentication data.
      * @throws MslException if the message does not contain an entity
      *         authentication data or a master token, or a token is improperly
      *         bound to another token, or there is an error updating the
