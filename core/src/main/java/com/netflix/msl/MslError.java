@@ -237,6 +237,7 @@ public class MslError {
     public static final MslError MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED = new MslError(6039, ResponseCode.ENTITY_REAUTH, "Message header master token-based signature verification failed.");
     public static final MslError MESSAGE_REPLAYED_UNRECOVERABLE = new MslError(6040, ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover.");
     public static final MslError UNEXPECTED_LOCAL_MESSAGE_SENDER = new MslError(6041, ResponseCode.FAIL, "Message sender is equal to the local entity.");
+    public static final MslError UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA = new MslError(6042, ResponseCode.FAIL, "User authentication data included in unencrypted message header.");
 
     // 7 Key Exchange
     public static final MslError UNIDENTIFIED_KEYX_SCHEME = new MslError(7000, ResponseCode.FAIL, "Unable to identify key exchange scheme.");
