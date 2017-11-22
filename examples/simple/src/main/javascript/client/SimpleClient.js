@@ -40,8 +40,13 @@ var SimpleClient$create;
         getResponse: function getResponse(request, timeout, callback) {
             var self = this;
             
+            // We need to declare the XMLHttpRequest reference here to provide
+            // the abort function.
+            var xhr;
+            
+            // Deliver the XMLHttpRequest result asynchronously.
             InterruptibleExecutor(callback, function() {
-                var xhr = new XMLHttpRequest();
+                xhr = new XMLHttpRequest();
                 xhr.onload = function onload() {
                     callback.result({body: this.responseText});
                 };
@@ -49,6 +54,10 @@ var SimpleClient$create;
                 xhr.timeout = timeout;
                 xhr.send(request.body);
             }, self);
+            
+            // Define the abort function to dereference the XMLHttpRequest
+            // after being called.
+            return { abort: function() { xhr.abort() } };
         },
     });
 
