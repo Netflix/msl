@@ -38,7 +38,6 @@ import javax.crypto.spec.SecretKeySpec;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -1009,6 +1008,7 @@ public class MessageHeaderTest {
         final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
         
         final HeaderDataBuilder builder = new HeaderDataBuilder(x509Ctx, MASTER_TOKEN, USER_ID_TOKEN, false);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
         final HeaderData headerData = builder.build();
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = x509Ctx.getEntityAuthenticationData(null);
@@ -3067,6 +3067,49 @@ public class MessageHeaderTest {
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+    }
+    
+    @Test(expected = MslInternalException.class)
+    public void unencryptedUserAuthDataCtor() throws MslEncodingException, MslCryptoException, MslException {
+        final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+        
+        final HeaderDataBuilder builder = new HeaderDataBuilder(x509Ctx, null, null, false);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = x509Ctx.getEntityAuthenticationData(null);
+        new MessageHeader(x509Ctx, entityAuthData, null, headerData, peerData);
+    }
+    
+    @Test
+    public void unencryptedUserAuthDataParseHeader() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
+        thrown.expect(MslMessageException.class);
+        thrown.expectMslError(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA);
+        thrown.expectMessageId(MESSAGE_ID);
+
+        final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
+
+        final HeaderDataBuilder builder = new HeaderDataBuilder(x509Ctx, null, null, true);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = x509Ctx.getEntityAuthenticationData(null);
+        final MessageHeader messageHeader = new MessageHeader(x509Ctx, entityAuthData, null, headerData, peerData);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        
+        // The header data is not encrypted.
+        final byte[] plaintext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
+        headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, USER_AUTH_DATA);
+        final byte[] headerdata = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+        
+        // The header data must be signed or it will not be processed.
+        final EntityAuthenticationFactory factory = x509Ctx.getEntityAuthenticationFactory(entityAuthData.getScheme());
+        final ICryptoContext cryptoContext = factory.getCryptoContext(x509Ctx, entityAuthData);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
+        
+        Header.parseHeader(x509Ctx, messageHeaderMo, CRYPTO_CONTEXTS);
     }
     
     @Test(expected = UnsupportedOperationException.class)

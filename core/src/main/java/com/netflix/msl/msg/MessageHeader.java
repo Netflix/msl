@@ -278,6 +278,11 @@ public class MessageHeader extends Header {
             encrypted = scheme.encrypts();
         }
 
+        // Do not allow user authentication data to be included if the message
+        // will not be encrypted.
+        if (!encrypted && headerData.userAuthData != null)
+            throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
+
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
         this.nonReplayableId = headerData.nonReplayableId;
@@ -457,7 +462,8 @@ public class MessageHeader extends Header {
      *         trusted and needs to be to accept this message header.
      * @throws MslMessageException if the message does not contain an entity
      *         authentication data or a master token, the header data is
-     *         missing or invalid, or the message ID is negative.
+     *         missing or invalid, or the message ID is negative, or the
+     *         message is not encrypted and contains user authentication data.
      * @throws MslException if a token is improperly bound to another token.
      */
     protected MessageHeader(final MslContext ctx, final byte[] headerdataBytes, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final byte[] signature, final Map<String,ICryptoContext> cryptoContexts) throws MslEncodingException, MslCryptoException, MslKeyExchangeException, MslUserAuthException, MslMasterTokenException, MslMessageException, MslEntityAuthException, MslException {
@@ -566,8 +572,14 @@ public class MessageHeader extends Header {
                 ? UserAuthenticationData.create(ctx, tokenVerificationMasterToken, headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder))
                 : null;
 
-            // Verify the user authentication data.
+            // Identify the user if any.
             if (this.userAuthData != null) {
+                // Reject unencrypted messages containing user authentication data.
+                final boolean encrypted = (masterToken != null) ? true : entityAuthData.getScheme().encrypts();
+                if (!encrypted)
+                    throw new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
+
+                // Verify the user authentication data.
                 final UserAuthenticationScheme scheme = this.userAuthData.getScheme();
                 final UserAuthenticationFactory factory = ctx.getUserAuthenticationFactory(scheme);
                 if (factory == null)
