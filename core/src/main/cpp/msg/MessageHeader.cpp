@@ -441,13 +441,7 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx,
         // Identify the user if any.
         if (userAuthData) {
             // Reject unencrypted messages containing user authentication data.
-            bool encrypted;
-            if (masterToken) {
-                encrypted = true;
-            } else {
-                const EntityAuthenticationScheme scheme = entityAuthData->getScheme();
-                encrypted = scheme.encrypts();
-            }
+            bool encrypted = (masterToken) ? true : entityAuthData->getScheme().encrypts();
             if (!encrypted)
                 throw MslMessageException(MslError::UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
 
