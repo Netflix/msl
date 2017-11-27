@@ -2530,7 +2530,8 @@ private:
      *         or integrity protected when required, a user could not be
      *         attached due to lack of a master token, or if the maximum
      *         message count is hit.
-     * @throws MslException if there was an error creating the response.
+     * @throws MslException if there was an error creating or processing a
+     *         message.
      * @throws MslErrorResponseException if there was an error sending an
      *         automatically generated error response.
      * @throws IOException if there was an error writing the message.

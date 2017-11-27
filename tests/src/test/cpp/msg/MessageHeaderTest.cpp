@@ -1100,6 +1100,7 @@ TEST_F(MessageHeaderTest, x509isEncrypting)
     shared_ptr<MslContext> x509Ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::X509, false);
 
     HeaderDataBuilder builder(x509Ctx, MASTER_TOKEN, USER_ID_TOKEN, false);
+    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
     shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
     shared_ptr<EntityAuthenticationData> entityAuthData = x509Ctx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
@@ -3401,6 +3402,54 @@ TEST_F(MessageHeaderTest, invalidUserAuthParseHeader)
     }
 }
 
+TEST_F(MessageHeaderTest, unencryptedUserAuthDataCtor)
+{
+    shared_ptr<MockMslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
+
+    HeaderDataBuilder builder(rsaCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
+    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
+    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
+    shared_ptr<EntityAuthenticationData> entityAuthData = rsaCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
+    EXPECT_THROW(MessageHeader(rsaCtx, entityAuthData, shared_ptr<MasterToken>(), headerData, peerData), MslInternalException);
+}
+
+TEST_F(MessageHeaderTest, unencryptedUserAuthDataParseHeader)
+{
+//    thrown.expect(MslMessageException.class);
+//    thrown.expectMessageId(MESSAGE_ID);
+
+    shared_ptr<MockMslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
+
+    HeaderDataBuilder builder(rsaCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
+    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
+    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
+    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
+    shared_ptr<EntityAuthenticationData> entityAuthData = rsaCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(rsaCtx, entityAuthData, shared_ptr<MasterToken>(), headerData, peerData);
+    shared_ptr<MslObject> messageHeaderMo = MslTestUtils::toMslObject(encoder, messageHeader);
+
+    // The header data is not encrypted.
+    shared_ptr<ByteArray> plaintext = messageHeaderMo->getBytes(KEY_HEADERDATA);
+    shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
+    headerdataMo->put(KEY_USER_AUTHENTICATION_DATA, dynamic_pointer_cast<MslEncodable>(USER_AUTH_DATA));
+    shared_ptr<ByteArray> headerdata = encoder->encodeObject(headerdataMo, ENCODER_FORMAT);
+    messageHeaderMo->put(KEY_HEADERDATA, headerdata);
+
+    // The header data must be signed or it will not be processed.
+    shared_ptr<EntityAuthenticationFactory> factory = rsaCtx->getEntityAuthenticationFactory(entityAuthData->getScheme());
+    shared_ptr<ICryptoContext> cryptoContext = factory->getCryptoContext(rsaCtx, entityAuthData);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    messageHeaderMo->put(KEY_SIGNATURE, signature);
+
+    try {
+        Header::parseHeader(rsaCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+        ADD_FAILURE() << "Should have thrown.";
+    } catch (const MslMessageException& e) {
+        EXPECT_EQ(MslError::UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA, e.getError());
+        EXPECT_EQ(MESSAGE_ID, e.getMessageId());
+    }
+}
+
 #if 0 // FIXME: It's not clear these immutable* tests will ever work in C++
 TEST_F(MessageHeaderTest, immutableKeyRequestData)
 {
@@ -3482,7 +3531,7 @@ TEST_F(MessageHeaderTest, equalsEntityAuthData)
 
 TEST_F(MessageHeaderTest, equalsMasterTokenEntityAuthData)
 {
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
+    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
     shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
 
@@ -3504,7 +3553,7 @@ TEST_F(MessageHeaderTest, equalsSender)
 {
     shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
 
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
+    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
     shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
     shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
     shared_ptr<MessageHeader> messageHeaderA = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
