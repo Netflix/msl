@@ -6587,7 +6587,7 @@ describe("MessageHeader", function() {
         
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.NONE), MESSAGE_ID);
+            expect(f).toThrow(new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA), MESSAGE_ID);
         });
 	});
 

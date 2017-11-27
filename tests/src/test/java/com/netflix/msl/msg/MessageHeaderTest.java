@@ -3083,6 +3083,7 @@ public class MessageHeaderTest {
     @Test
     public void unencryptedUserAuthDataParseHeader() throws MslEncodingException, MslCryptoException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
+        thrown.expectMslError(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA);
         thrown.expectMessageId(MESSAGE_ID);
 
         final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
