@@ -575,13 +575,7 @@ public class MessageHeader extends Header {
             // Identify the user if any.
             if (this.userAuthData != null) {
                 // Reject unencrypted messages containing user authentication data.
-                final boolean encrypted;
-                if (masterToken != null) {
-                    encrypted = true;
-                } else {
-                    final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
-                    encrypted = scheme.encrypts();
-                }
+                final boolean encrypted = (masterToken != null) ? true : entityAuthData.getScheme().encrypts();
                 if (!encrypted)
                     throw new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
 

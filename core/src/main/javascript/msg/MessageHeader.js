@@ -1334,13 +1334,7 @@
                                                     var user;
                                                     if (userAuthData) {
                                                         // Reject unencrypted messages containing user authentication data.
-                                                        var encrypted;
-                                                        if (masterToken) {
-                                                            encrypted = true;
-                                                        } else {
-                                                            var scheme = entityAuthData.scheme;
-                                                            encrypted = scheme.encrypts;
-                                                        }
+                                                        var encrypted = (masterToken) ? true : entityAuthData.scheme.encrypts;
                                                         if (!encrypted)
                                                             throw new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                                                         
