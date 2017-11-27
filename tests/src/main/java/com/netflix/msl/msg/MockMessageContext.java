@@ -79,7 +79,6 @@ public class MockMessageContext implements MessageContext {
      * @param ctx MSL context.
      * @param bitlength key length in bits.
      * @return a new key of the specified bit length.
-     * @throws CryptoException if there is an error creating the key.
      */
     private static SecretKey getSecretKey(final MslContext ctx, final int bitlength, final String algorithm) {
         final byte[] keydata = new byte[bitlength / Byte.SIZE];
@@ -99,13 +98,10 @@ public class MockMessageContext implements MessageContext {
      *         found.
      * @throws InvalidAlgorithmParameterException if key generation parameters
      *         are invalid.
-     * @throws CryptoException if there is an error creating a key.
-     * @throws MslCryptoException if the service token crypto context keys are
-     *         the wrong length.
      * @throws MslKeyExchangeException if there is an error accessing Diffie-
      *         Hellman parameters.
      */
-    public MockMessageContext(final MslContext ctx, final String userId, final UserAuthenticationScheme scheme) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslCryptoException, MslKeyExchangeException {
+    public MockMessageContext(final MslContext ctx, final String userId, final UserAuthenticationScheme scheme) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslKeyExchangeException {
         this.recipient = null;
         this.encrypted = false;
         this.integrityProtected = false;
@@ -175,6 +171,7 @@ public class MockMessageContext implements MessageContext {
     /* (non-Javadoc)
      * @see com.netflix.msl.msg.MessageContext#getRecipient()
      */
+    @Override
     public String getRecipient() {
         return recipient;
     }
