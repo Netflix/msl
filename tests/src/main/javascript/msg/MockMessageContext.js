@@ -75,7 +75,7 @@
         });
     }
     
-    var MockMessageContext = MessageContext.extend({
+    var MockMessageContext = module.exports = MessageContext.extend({
 	    /**
 	     * Create a new test message context.
 	     * 
