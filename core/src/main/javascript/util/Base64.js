@@ -104,7 +104,7 @@
         if (!i)
             throw new TypeError("Base64 implementation cannot be null.");
         impl = i;
-    }
+    };
 
     /**
      * <p>Base64 encodes binary data.</p>

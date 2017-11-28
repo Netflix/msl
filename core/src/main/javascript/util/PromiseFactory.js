@@ -36,7 +36,7 @@
      */
     var setImpl = function setImpl(i) {
         impl = i;
-    }
+    };
     
     /**
      * <p>Returns a new Promise instance.</p>
@@ -46,7 +46,7 @@
      */
     var create = function create(executor) {
         return new impl(executor);
-    }
+    };
 
     /* global Promise: false */
     if (typeof Promise !== 'undefined')
