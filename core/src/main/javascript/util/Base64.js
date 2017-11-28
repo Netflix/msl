@@ -29,6 +29,8 @@
     var WHITESPACE_REGEX = /\s*/g;
     /** Base64 validation regular expression. */
     var BASE64_PATTERN = new RegExp('^([A-Za-z0-9+/_-]{4})*([A-Za-z0-9+/_-]{4}|[A-Za-z0-9+/_-]{3}=|[A-Za-z0-9+/_-]{2}==)?$');
+    /** Padding character. */
+    var PADCHAR = "=";
 
     /**
      * <p>Validates that a string is a valid Base64 encoding. This uses a
@@ -50,7 +52,7 @@
             if (overhang) {
                 var toPad = 4 - overhang;
                 for (var i = 0; i < toPad; ++i)
-                    sanitized += padchar;
+                    sanitized += PADCHAR;
             }
         }
 
