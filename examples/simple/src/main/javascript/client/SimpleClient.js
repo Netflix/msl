@@ -18,48 +18,6 @@ var SimpleClient$create;
 
 (function() {
     "use strict";
-    
-    /**
-     * <p>An HTTP location that is implemented using XMLHttpRequest.</p>
-     */
-    var Xhr = Url.IHttpLocation.extend({
-        /**
-         * <p>Create a new XHR pointing at the specified endpoint.
-         * 
-         * @param {string} endpoint the url to send the request to.
-         */
-        init: function(endpoint) {
-            // Set properties.
-            var props = {
-                _endpoint: { value: endpoint, writable: false, enumerable: false, configurable: false },
-            };
-            Object.defineProperties(this, props);
-        },
-        
-        /** @inheritDoc */
-        getResponse: function getResponse(request, timeout, callback) {
-            var self = this;
-            
-            // We need to declare the XMLHttpRequest reference here to provide
-            // the abort function.
-            var xhr;
-            
-            // Deliver the XMLHttpRequest result asynchronously.
-            InterruptibleExecutor(callback, function() {
-                xhr = new XMLHttpRequest();
-                xhr.onload = function onload() {
-                    callback.result({body: this.responseText});
-                };
-                xhr.open("POST", this._endpoint);
-                xhr.timeout = timeout;
-                xhr.send(request.body);
-            }, self);
-            
-            // Define the abort function to dereference the XMLHttpRequest
-            // after being called.
-            return { abort: function() { xhr.abort() } };
-        },
-    });
 
     /**
      * <p>An example JavaScript MSL client that sends requests to the example
