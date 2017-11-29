@@ -27,7 +27,7 @@
     
     var Xhr = module.exports = Url.IHttpLocation.extend({
         /**
-         * <p>Create a new XHR pointing at the specified endpoint.
+         * <p>Create a new XHR pointing at the specified endpoint.</p>
          * 
          * @param {string} endpoint the url to send the request to.
          */
@@ -51,8 +51,11 @@
             InterruptibleExecutor(callback, function() {
                 /* globals XMLHttpRequest: false */
                 xhr = new XMLHttpRequest();
+                xhr.responseType = "arraybuffer";
                 xhr.onload = function onload() {
-                    callback.result({body: this.responseText});
+                    AsyncExecutor(callback, function() {
+                        return { content: new Uint8Array(this.response) };
+                    }, self);
                 };
                 xhr.ontimeout = callback.timeout;
                 xhr.onerror = callback.error;
