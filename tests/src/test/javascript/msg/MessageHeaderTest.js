@@ -4649,7 +4649,7 @@ describe("MessageHeader", function() {
 		});
 		waitsFor(function() { return messageHeaderMo; }, "messageHeaderMo", MslTestConstants.TIMEOUT);
         
-        var exception;
+        var header;
         runs(function() {
             // Before modifying the header data we need to decrypt it.
             var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
@@ -4671,7 +4671,7 @@ describe("MessageHeader", function() {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
 		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-		                                        result: function() {},
+		                                        result: function(h) { header = h; },
 		                                        error: function(err) { exception = err; },
 		                                    });
 		                                },
@@ -4687,13 +4687,94 @@ describe("MessageHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
+        waitsFor(function() { return header; }, "header", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(header instanceof MessageHeader).toBeTruthy();
+            
+            var moMessageHeader = header;
+            expect(moMessageHeader.sender).toEqual(null);
+        });
+	});
+	
+    it("invalid sender", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", MslTestConstants.TIMEOUT);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+        
+        var messageHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, messageHeader, {
+                result: function(x) { messageHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderMo; }, "messageHeaderMo", MslTestConstants.TIMEOUT);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(plaintext) {
+                    var headerdataMo = encoder.parseObject(plaintext);
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataMo.put(KEY_SENDER, 1234);
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                        result: function(plaintext) {
+                            cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+                                result: function(headerdata) {
+                                    messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+                            
+                                    // The header data must be signed or it will not be processed.
+                                    cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+                                        result: function(signature) {
+                                            messageHeaderMo.put(KEY_SIGNATURE, signature);
+                                            Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+                                                result: function() {},
+                                                error: function(e) { exception = e; },
+                                            });
+                                        },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
         waitsFor(function() { return exception; }, "exception not received", 300);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
-	});
-	
+    });
+
 	it("missing timestamp", function() {
         var builder;
         runs(function() {
