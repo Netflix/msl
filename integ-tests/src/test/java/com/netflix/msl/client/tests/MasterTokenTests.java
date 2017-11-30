@@ -55,6 +55,7 @@ public class MasterTokenTests extends BaseTestClass {
 
     private static final String PATH = "/test";
     private static final int TIME_OUT = 60000; // 60 Seconds
+    private static final String USER_ID = "userId";
 
     @BeforeClass
     public void setup() throws IOException, URISyntaxException, MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException {
@@ -71,6 +72,7 @@ public class MasterTokenTests extends BaseTestClass {
                 .setPath(PATH)
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();

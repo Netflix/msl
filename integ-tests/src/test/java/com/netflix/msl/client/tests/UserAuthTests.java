@@ -15,6 +15,15 @@
  */
 package com.netflix.msl.client.tests;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.NoSuchAlgorithmException;
+import java.util.concurrent.ExecutionException;
+
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
+
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
@@ -27,14 +36,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
-import org.testng.annotations.BeforeClass;
-import org.testng.annotations.Test;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.concurrent.ExecutionException;
 
 /**
  * User: skommidi
@@ -42,9 +43,10 @@ import java.util.concurrent.ExecutionException;
  */
 public class UserAuthTests extends BaseTestClass {
     private static final int TIME_OUT = 60000; // 60 Seconds
-    private int numThreads = 0;
+    private final int numThreads = 0;
     private ServerConfiguration serverConfig;
     private static final String PATH = "/test";
+    private static final String USER_ID = "userId";
 
     @BeforeClass
     public void setup() throws IOException, URISyntaxException {
@@ -64,11 +66,12 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.NONE)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.DIFFIE_HELLMAN);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenThe(message)
                 .shouldBe().validFirstEntityAuthNONEMsg()
@@ -84,6 +87,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setInvalidUserAuthData(InvalidUserAuthScheme.INVALID_EMAIL)
                 .setMaxUserAuthRetryCount(5)
@@ -91,7 +95,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -107,6 +111,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setInvalidUserAuthData(InvalidUserAuthScheme.INVALID_PASSWORD)
                 .setMaxUserAuthRetryCount(5)
@@ -114,7 +119,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -130,6 +135,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setInvalidUserAuthData(InvalidUserAuthScheme.EMPTY_EMAIL)
                 .setMaxUserAuthRetryCount(5)
@@ -137,7 +143,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -153,6 +159,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setInvalidUserAuthData(InvalidUserAuthScheme.EMPTY_PASSWORD)
                 .setMaxUserAuthRetryCount(5)
@@ -160,7 +167,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -176,6 +183,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.NONE)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.DIFFIE_HELLMAN)
                 .setNullUserAuthData();
@@ -202,6 +210,7 @@ public class UserAuthTests extends BaseTestClass {
                 .setPath(PATH)
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.X509)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setInvalidUserAuthData(InvalidUserAuthScheme.INVALID_EMAIL)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED)
@@ -209,7 +218,7 @@ public class UserAuthTests extends BaseTestClass {
                 .resetCurrentUserAuthRetryCount();
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenThe(message)
                 .shouldBe().validFirstEntityAuthX509Msg()
