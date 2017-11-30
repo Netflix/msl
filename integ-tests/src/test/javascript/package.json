@@ -1,6 +1,6 @@
 {
   "name": "msl-integ-tests-exec",
-  "version": "1.1218.0",
+  "version": "1.1219.0",
   "description": "Message Security Layer Integration Tests Execution",
   "keywords": [
     "msl",
@@ -21,8 +21,8 @@
     "lint": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose"
   },
   "dependencies": {
-    "msl-core": "^1.1218.0",
-    "msl-tests": "^1.1218.0"
+    "msl-core": "^1.1219.0",
+    "msl-tests": "^1.1219.0"
   },
   "devDependencies": {
     "clarinet": "^0.11.0",
