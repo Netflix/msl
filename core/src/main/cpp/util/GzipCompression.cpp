@@ -65,7 +65,7 @@ void compress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out,
     // retrieve the compressed bytes blockwise
     do {
         zs.next_out = reinterpret_cast<Bytef*>(&tmpBuf[0]);
-        zs.avail_out = sizeof(uint8_t) * tmpBuf.size();
+        zs.avail_out = (uInt)(sizeof(uint8_t) * tmpBuf.size());
 
         ret = deflate(&zs, Z_FINISH);
 
@@ -104,7 +104,7 @@ void decompress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out)
     // get the decompressed bytes blockwise using repeated calls to inflate
     do {
         zs.next_out = reinterpret_cast<Bytef*>(&tmpBuf[0]);
-        zs.avail_out = sizeof(uint8_t) * tmpBuf.size();
+        zs.avail_out = (uInt)(sizeof(uint8_t) * tmpBuf.size());
 
         ret = inflate(&zs, 0);
 

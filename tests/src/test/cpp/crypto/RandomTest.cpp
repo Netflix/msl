@@ -112,7 +112,7 @@ TEST_F(RandomTest, nextIntRange)
     for (int i=0; i<NITERATIONS; ++i)
         values.insert(random->nextInt(rangeMax));
     EXPECT_LE(0, *values.begin());
-    EXPECT_GE(rangeMax-1, *values.rbegin());
+    EXPECT_GE(rangeMax-1, (unsigned)(*values.rbegin()));
 }
 
 TEST_F(RandomTest, nextLongRange)
@@ -123,7 +123,7 @@ TEST_F(RandomTest, nextLongRange)
     for (int i=0; i<NITERATIONS; ++i)
         values.insert(random->nextLong(rangeMax));
     EXPECT_LE(0, *values.begin());
-    EXPECT_GE(rangeMax-1, *values.rbegin());
+    EXPECT_GE(rangeMax-1, (unsigned)(*values.rbegin()));
 }
 
 }}} // namespace netflix::msl::crypto
