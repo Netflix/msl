@@ -408,7 +408,7 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx,
 
     try {
         // If the message was sent with a master token pull the sender.
-        sender = (masterToken) ? headerdata->getString(KEY_SENDER) : string();
+        sender = (masterToken && headerdata->has(KEY_SENDER)) ? headerdata->getString(KEY_SENDER) : string();
         recipient = (headerdata->has(KEY_RECIPIENT)) ? headerdata->getString(KEY_RECIPIENT) : string();
         timestamp = (headerdata->has(KEY_TIMESTAMP)) ? headerdata->getLong(KEY_TIMESTAMP) : -1;
 

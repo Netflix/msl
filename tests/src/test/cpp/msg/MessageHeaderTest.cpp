@@ -2583,6 +2583,42 @@ TEST_F(MessageHeaderTest, missingSender)
     shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
+    shared_ptr<Header> header = Header::parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+    EXPECT_TRUE(instanceof<MessageHeader>(header.get()));
+
+    shared_ptr<MessageHeader> moMessageHeader = dynamic_pointer_cast<MessageHeader>(header);
+    EXPECT_EQ(string(), moMessageHeader->getSender());
+}
+
+TEST_F(MessageHeaderTest, invalidSender)
+{
+//    thrown.expect(MslEncodingException.class);
+//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
+    builder.setNull(KEY_KEY_REQUEST_DATA);
+    builder.setNull(KEY_KEY_RESPONSE_DATA);
+    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
+    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
+    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<entityauth::EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
+    shared_ptr<MslObject> messageHeaderMo = MslTestUtils::toMslObject(encoder, messageHeader);
+
+    // Before modifying the header data we need to decrypt it.
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<SessionCryptoContext>(trustedNetCtx, MASTER_TOKEN);
+    shared_ptr<ByteArray> ciphertext = messageHeaderMo->getBytes(KEY_HEADERDATA);
+    shared_ptr<ByteArray> plaintext = cryptoContext->decrypt(ciphertext, encoder);
+    shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
+
+    // After modifying the header data we need to encrypt it.
+    headerdataMo->put<int>(KEY_SENDER, 1234);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    messageHeaderMo->put(KEY_HEADERDATA, headerdata);
+
+    // The header data must be signed or it will not be processed.
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    messageHeaderMo->put(KEY_SIGNATURE, signature);
+
     try {
         Header::parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
         ADD_FAILURE() << "Should have thrown.";
