@@ -1212,7 +1212,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             // or if the remote entity identity is equal to this entity
             // identity.
             const string sender = (masterToken) ? responseHeader->getSender() : entityAuthData->getIdentity();
-            if ((masterToken && masterToken->isDecrypted() && masterToken->getIdentity() != sender))
+            if ((masterToken && masterToken->isDecrypted() && !sender.empty() && masterToken->getIdentity() != sender))
             {
                 stringstream ss;
                 ss << "sender " << sender << "; master token " << masterToken->getIdentity();
