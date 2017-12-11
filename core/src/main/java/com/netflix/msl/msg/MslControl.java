@@ -1733,7 +1733,7 @@ public class MslControl {
                 // or if the remote entity identity is equal to this entity
                 // identity.
                 final String sender = (masterToken != null) ? responseHeader.getSender() : entityAuthData.getIdentity();
-                if (masterToken != null && masterToken.isDecrypted() && !masterToken.getIdentity().equals(sender))
+                if (masterToken != null && masterToken.isDecrypted() && sender != null && !masterToken.getIdentity().equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.getIdentity());
                 if (localIdentity != null && localIdentity.equals(sender))
                     throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
