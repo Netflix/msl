@@ -68,7 +68,7 @@
 	                charCode = ((charCode & 0x0F) << 12) + ((bytes[i++] & 0x3F) << 6) + (bytes[i++] & 0x3F);
 	            } else {
 	                // 1111xxxx	10xxxxxx 10xxxxxx 10xxxxxx (or more)
-	                // JavaScript only rupports 2 byte characters
+	                // JavaScript only supports 2 byte characters
 	                throw new Error("unsupported character");
 	            }
 	        }

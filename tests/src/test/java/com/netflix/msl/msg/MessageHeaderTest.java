@@ -2330,9 +2330,6 @@ public class MessageHeaderTest {
     
     @Test
     public void missingSender() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
-        thrown.expect(MslEncodingException.class);
-        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
         builder.set(KEY_KEY_REQUEST_DATA, null);
         builder.set(KEY_KEY_RESPONSE_DATA, null);
@@ -2357,9 +2354,46 @@ public class MessageHeaderTest {
         final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
-        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+        Header header = Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+        assertNotNull(header);
+        assertTrue(header instanceof MessageHeader);
+        final MessageHeader moMessageHeader = (MessageHeader)header;
+
+        assertNull(moMessageHeader.getSender());
     }
     
+    @Test
+    public void invalidSender() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
+        thrown.expect(MslEncodingException.class);
+        thrown.expectMslError(MslError.MSL_PARSE_ERROR);
+
+        final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);
+        builder.set(KEY_KEY_REQUEST_DATA, null);
+        builder.set(KEY_KEY_RESPONSE_DATA, null);
+        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+        final HeaderData headerData = builder.build();
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
+        final MslObject messageHeaderMo = MslTestUtils.toMslObject(encoder, messageHeader);
+        
+        // Before modifying the header data we need to decrypt it.
+        final ICryptoContext cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
+        final byte[] ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
+        final MslObject headerdataMo = encoder.parseObject(plaintext);
+        
+        // After modifying the header data we need to encrypt it.
+        headerdataMo.put(KEY_SENDER, 1234); // sender must be a String
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+        
+        // The header data must be signed or it will not be processed.
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        messageHeaderMo.put(KEY_SIGNATURE, signature);
+        
+        Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
+    }
+
     @Test
     public void missingTimestamp() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
         final HeaderDataBuilder builder = new HeaderDataBuilder(trustedNetCtx, null, null, false);

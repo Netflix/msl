@@ -20,4 +20,4 @@ gretty {
     jvmArgs = ['-Xmx512m']
 }
 
-war.baseName = "msl-test-server"
+war.baseName = "msl-integ-tests"

@@ -111,7 +111,7 @@ public class ReceiveMessageContext implements MessageContext {
      */
     @Override
     public Set<KeyRequestData> getKeyRequestData() {
-        return null;
+        return Collections.emptySet();
     }
 
     /* (non-Javadoc)

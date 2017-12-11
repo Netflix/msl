@@ -75,7 +75,7 @@
         });
     }
     
-    var MockMessageContext = MessageContext.extend({
+    var MockMessageContext = module.exports = MessageContext.extend({
 	    /**
 	     * Create a new test message context.
 	     * 
@@ -265,14 +265,14 @@
 	     * @param {UserAuthenticationData} userAuthData the new user authentication data.
 	     */
 	    setUserAuthData: function setUserAuthData(userAuthData) {
-	    	this.userAuthData = userAuthData;
+            this.userAuthData = userAuthData;
 	    },
 	
 	    /** @inheritDoc */
 	    getUserAuthData: function getUserAuthData(reauthCode, renewable, required, callback) {
-	    	// Default implementation just returns the existing user authentication
-	    	// data. Override to implement specific behavior.
-	    	callback.result(this.userAuthData);
+            // Default implementation just returns the existing user authentication
+            // data. Override to implement specific behavior.
+            callback.result(this.userAuthData);
 	    },
 	    
 	    /**
@@ -296,21 +296,21 @@
 	
 	    /** @inheritDoc */
 	    getKeyRequestData: function getKeyRequestData(callback) {
-	    	callback.result(this.keyRequestData);
+            callback.result(this.keyRequestData);
 	    },
 	
 	    /** @inheritDoc */
 	    updateServiceTokens: function updateServiceTokens(builder, handshake, callback) {
-	        // Default implementation does nothing. Override to implement specific
-	        // behavior.
-	    	callback.result(true);
+            // Default implementation does nothing. Override to implement specific
+            // behavior.
+            callback.result(true);
 	    },
 	
 	    /** @inheritDoc */
 	    write: function write(output, timeout, callback) {
-	        // Default implementation does nothing. Override to implement specific
-	        // behavior.
-	    	callback.result(true);
+            // Default implementation does nothing. Override to implement specific
+            // behavior.
+            callback.result(true);
 	    },
 	    
 	    /**
