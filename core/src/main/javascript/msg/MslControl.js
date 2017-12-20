@@ -1814,7 +1814,7 @@
                                                         // sender is not equal to the master token identity or if the
                                                         // sender is equal to this entity.
                                                         sender = (masterToken) ? responseHeader.sender : entityAuthData.getIdentity();
-                                                        if ((masterToken && masterToken.isDecrypted() && masterToken.identity != sender))
+                                                        if ((masterToken && masterToken.isDecrypted() && sender && masterToken.identity != sender))
                                                             throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.identity);
                                                         if (localIdentity && localIdentity == sender)
                                                             throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);

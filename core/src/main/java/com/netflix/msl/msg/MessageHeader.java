@@ -542,7 +542,7 @@ public class MessageHeader extends Header {
 
         try {
             // If the message was sent with a master token pull the sender.
-            this.sender = (this.masterToken != null) ? headerdata.getString(KEY_SENDER) : null;
+            this.sender = (this.masterToken != null && headerdata.has(KEY_SENDER)) ? headerdata.getString(KEY_SENDER) : null;
             this.recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
             this.timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
 

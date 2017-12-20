@@ -55,7 +55,7 @@
                 xhr.onload = function onload() {
                     AsyncExecutor(callback, function() {
                         return { content: new Uint8Array(this.response) };
-                    }, self);
+                    }, xhr);
                 };
                 xhr.ontimeout = callback.timeout;
                 xhr.onerror = callback.error;
