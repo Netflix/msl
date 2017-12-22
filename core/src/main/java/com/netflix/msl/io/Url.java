@@ -32,7 +32,11 @@ public interface Url {
      */
     public static interface Connection {
         /**
-         * Returns an input stream that reads from this connection.
+         * <p>Returns an input stream that reads from this connection.</p>
+         * 
+         * <p>Asking for the input stream must not prevent use of the output
+         * stream, but reading from the input stream may prevent further
+         * writing to the output stream.</p>
          * 
          * @return an input stream that reads from this connection.
          * @throws IOException if an I/O error occurs while creating the input
@@ -41,7 +45,11 @@ public interface Url {
         public InputStream getInputStream() throws IOException;
         
         /**
-         * Returns an output stream that writes to this connection.
+         * <p>Returns an output stream that writes to this connection.</p>
+         * 
+         * <p>Asking for the output stream must not prevent use of the input
+         * stream, but writing to the output stream may prevent further reading
+         * from the input stream.</p>
          * 
          * @return an output stream that writes to this connection.
          * @throws IOException if an I/O error occurs while creating the output

@@ -15,7 +15,6 @@
  */
 package com.netflix.msl.msg;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -3094,85 +3093,6 @@ public class MslControl {
      * clients, and peer-to-peer servers.</p>
      */
     private class RequestService implements Callable<MslChannel> {
-        /**
-         * A delayed input stream does not open the real input stream until
-         * one of its methods is called.
-         */
-        private class DelayedInputStream extends FilterInputStream {
-            /**
-             * Create a new delayed input stream that will not attempt to
-             * construct the input stream from the URL connection until it is
-             * actually needed (i.e. read from).
-             * 
-             * @param conn backing URL connection.
-             */
-            public DelayedInputStream(final Connection conn) {
-                super(null);
-                this.conn = conn;
-            }
-            
-            @Override
-            public int available() throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                return super.available();
-            }
-
-            @Override
-            public void close() throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                super.close();
-            }
-
-            @Override
-            public synchronized void mark(final int readlimit) {
-            }
-
-            @Override
-            public boolean markSupported() {
-                return false;
-            }
-
-            @Override
-            public int read() throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                return in.read();
-            }
-
-            @Override
-            public int read(final byte[] b, final int off, final int len) throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                return super.read(b, off, len);
-            }
-
-            @Override
-            public int read(final byte[] b) throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                return super.read(b);
-            }
-
-            @Override
-            public synchronized void reset() throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                super.reset();
-            }
-
-            @Override
-            public long skip(final long n) throws IOException {
-                if (in == null)
-                    in = conn.getInputStream();
-                return super.skip(n);
-            }
-            
-            /** Connection providing the input stream. */
-            private final Connection conn;
-        }
-        
         /** MSL context. */
         private final MslContext ctx;
         /** Message context. */
@@ -3566,7 +3486,7 @@ public class MslControl {
                     final long start = System.currentTimeMillis();
                     final Connection conn = remoteEntity.openConnection();
                     out = conn.getOutputStream();
-                    in = new DelayedInputStream(conn);
+                    in = conn.getInputStream();
                     lockTimeout = timeout - (int)(System.currentTimeMillis() - start);
                     openedStreams = true;
                 } catch (final IOException e) {
