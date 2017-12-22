@@ -18,6 +18,7 @@ package com.netflix.msl.client.tests;
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidAlgorithmParameterException;
@@ -102,7 +103,7 @@ public class ServiceTokenTests extends BaseTestClass {
             final Connection connection = remoteEntity.openConnection();
 
             out = connection.getOutputStream();
-            in = new DelayedInputStream(connection);
+            in = connection.getInputStream();
         } catch (final IOException e) {
             if(out != null) out.close();
             if(in != null) in.close();
@@ -193,5 +194,5 @@ public class ServiceTokenTests extends BaseTestClass {
     private ServerConfiguration serverConfig;
     private final int numThreads = 0;
     private OutputStream out;
-    private DelayedInputStream in;
+    private InputStream in;
 }

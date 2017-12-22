@@ -20,6 +20,7 @@ import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidAlgorithmParameterException;
@@ -97,7 +98,7 @@ public class UserIdTokenTests extends BaseTestClass {
             final Connection connection = remoteEntity.openConnection();
 
             out = connection.getOutputStream();
-            in = new DelayedInputStream(connection);
+            in = connection.getInputStream();
         } catch (final IOException e) {
             if(out != null) out.close();
             if(in != null) in.close();
@@ -231,5 +232,5 @@ public class UserIdTokenTests extends BaseTestClass {
     private ServerConfiguration serverConfig;
     private final int numThreads = 0;
     private OutputStream out;
-    private DelayedInputStream in;
+    private InputStream in;
 }
