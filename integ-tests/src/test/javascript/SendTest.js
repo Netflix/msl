@@ -46,7 +46,7 @@ describe("SendTest", function() {
     var url = require('url');
     
     /**
-     * A message context that will write data and require encryption and
+     * A message context that will write data without requiring encryption or
      * integrity protection.
      */
     var WriteMessageContext = MockMessageContext.extend({
