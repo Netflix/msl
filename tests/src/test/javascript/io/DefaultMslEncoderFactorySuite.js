@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,7 @@ describe("DefaultMslEncoderFactory", function() {
     var Header = require('msl-core/msg/Header.js');
     var PayloadChunk = require('msl-core/msg/PayloadChunk.js');
     var Base64 = require('msl-core/util/Base64.js');
-
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -395,8 +394,8 @@ describe("DefaultMslEncoderFactory", function() {
     describe("Tokenizer", function() {
         /** Example payloads. */
         var PAYLOADS = [
-            textEncoding.getBytes("payload1", MslConstants.DEFAULT_CHARSET),
-            textEncoding.getBytes("payload2", MslConstants.DEFAULT_CHARSET),
+            TextEncoding.getBytes("payload1", MslConstants.DEFAULT_CHARSET),
+            TextEncoding.getBytes("payload2", MslConstants.DEFAULT_CHARSET),
         ];
         
         var jsonMessageData, unsupportedMessageData;

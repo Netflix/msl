@@ -1,5 +1,5 @@
 ﻿/**
- * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,43 +14,48 @@
  * limitations under the License.
  */
 describe("textEncoding", function () {
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
+    var TextEncodingUtf8 = require('msl-core/util/TextEncodingUtf8.js');
+    
+    beforeEach(function() {
+        TextEncoding.setImpl(new TextEncodingUtf8());
+    });
 
-    describe("textEncoding.getString", function () {
+    describe("TextEncoding.getString", function () {
 
         it("empty", function () {
             var arr = new Uint8Array([]);
             var str = "";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
         it("one latin byte", function () {
             var arr = new Uint8Array([65]);
             var str = "A";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
         it("latin", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 103, 114, 97, 110, 100, 109, 97]);
             var str = "hello, grandma";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
         it("cyrillic", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 208, 177, 208, 176, 208, 177, 209, 131, 209, 136, 208, 186, 208, 176]);
             var str = "hello, бабушка";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
         it("japanese", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 231, 165, 150, 230, 175, 141, 33]);
             var str = "hello, 祖母!";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
         it("japanese long", function () {
@@ -65,46 +70,46 @@ describe("textEncoding", function () {
             ]);
             var str = "来覚買ド応秋ネイ工光せでだ備江ヲテ漁雄どドら技堀へうな威5議コ掲天弁ける滋5真ど社前同イフ地";
 
-            expect(textEncoding.getString(arr)).toEqual(str);
+            expect(TextEncoding.getString(arr)).toEqual(str);
         });
 
     });
 
-    describe("textEncoding.getBytes", function () {
+    describe("TextEncoding.getBytes", function () {
 
         it("empty", function () {
             var arr = new Uint8Array([]);
             var str = "";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
         it("one latin byte", function () {
             var arr = new Uint8Array([65]);
             var str = "A";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
         it("latin", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 103, 114, 97, 110, 100, 109, 97]);
             var str = "hello, grandma";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
         it("cyrillic", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 208, 177, 208, 176, 208, 177, 209, 131, 209, 136, 208, 186, 208, 176]);
             var str = "hello, бабушка";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
         it("japanese short", function () {
             var arr = new Uint8Array([104, 101, 108, 108, 111, 44, 32, 231, 165, 150, 230, 175, 141, 33]);
             var str = "hello, 祖母!";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
         it("japanese long", function () {
@@ -119,7 +124,7 @@ describe("textEncoding", function () {
             ]);
             var str = "来覚買ド応秋ネイ工光せでだ備江ヲテ漁雄どドら技堀へうな威5議コ掲天弁ける滋5真ど社前同イフ地";
 
-            expect(textEncoding.getBytes(str)).toEqual(arr);
+            expect(TextEncoding.getBytes(str)).toEqual(arr);
         });
 
     });

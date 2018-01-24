@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ describe("MslCrypto", function() {
     var Arrays = require('msl-core/util/Arrays.js');
     var Base64 = require('msl-core/util/Base64.js');
     var Random = require('msl-core/util/Random.js');
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     
@@ -438,7 +438,7 @@ describe("MslCrypto", function() {
                 0xF2, 0xF1, 0xB2, 0x0C, 0x2D, 0x7E, 0x9F, 0x51, 0x77, 0xA3, 0xC2, 0x94, 0xD4, 0x46, 0x22, 0x99 ]),
         };
         /** RFC 6979 plaintext. */
-        var RFC_PLAINTEXT = textEncoding.getBytes("message");
+        var RFC_PLAINTEXT = TextEncoding.getBytes("message");
         
         var PRIVKEY, PUBKEY;
         

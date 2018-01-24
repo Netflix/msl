@@ -145,7 +145,7 @@ var SimpleRequestMessageContext;
         write: function(output, timeout, callback) {
             AsyncExecutor(callback, function() {
                 var json = JSON.stringify(this._request);
-                var jsonBytes = textEncoding.getBytes(json, MslConstants.DEFAULT_CHARSET);
+                var jsonBytes = TextEncoding.getBytes(json, MslConstants.DEFAULT_CHARSET);
                 output.write(jsonBytes, 0, jsonBytes.length, timeout, {
                     result: function(numWritten) {
                         // Technically we should check that numWritten is equal
