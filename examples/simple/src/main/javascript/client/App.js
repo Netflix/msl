@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -249,7 +249,7 @@ function sendRequest() {
             var isIntegrityProtected = document.getElementById('integrity-protected').checked;
             var isNonReplayable = document.getElementById('non-replayable').checked;
             var isRequestingTokens = document.getElementById('requesting-tokens').checked;
-            var data = textEncoding.getBytes(document.getElementById('data').value);
+            var data = TextEncoding.getBytes(document.getElementById('data').value);
             request = new AdvancedRequest(recipient, isEncrypted, isIntegrityProtected, isNonReplayable, isRequestingTokens, data);
             break;
         default:
@@ -319,7 +319,7 @@ function showResponse(mis) {
                 return;
 
             // Convert the bytes to text and update the response field.
-            var s = textEncoding.getString(bytes, MslConstants.DEFAULT_CHARSET);
+            var s = TextEncoding.getString(bytes, MslConstants.DEFAULT_CHARSET);
             responseText.innerHTML += s;
 
             // Continue reading.
@@ -327,7 +327,7 @@ function showResponse(mis) {
         },
         timeout: function(bytes) {
             // Convert the bytes to text and update the response field.
-            var s = textEncoding.getString(bytes, MslConstants.DEFAULT_CHARSET);
+            var s = TextEncoding.getString(bytes, MslConstants.DEFAULT_CHARSET);
             responseText.innerHTML += s;
 
             // Notify of timeout.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,9 @@ describe("PayloadChunk", function() {
     var MslCryptoException = require('msl-core/MslCryptoException.js');
     var MslEncodingException = require('msl-core/MslEncodingException.js');
     var MslMessageException = require('msl-core/MslMessageException.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var lzw = require('msl-core/lib/lzw.js');
-    var textEncoding = require('msl-core/lib/textEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -101,7 +101,7 @@ describe("PayloadChunk", function() {
     var SEQ_NO = 1;
     var MSG_ID = 42;
     var END_OF_MSG = false;
-    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants.DEFAULT_CHARSET);
+    var DATA = TextEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", TextEncoding.Encoding.UTF_8);
     var CRYPTO_CONTEXT;
 
     /** Raw data. */
