@@ -25,7 +25,7 @@
 	
 	var InputStream = require('../io/InputStream.js');
 	var OutputStream = require('../io/OutputStream.js');
-	var FilterStreamFactory = require('../io/FilterStreamFactory.js');
+	var FilterStreamFactory = require('../msg/FilterStreamFactory.js');
 	
     /**
      * A filter input stream that outputs read data to stdout. A new line is
