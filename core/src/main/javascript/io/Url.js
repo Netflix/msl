@@ -240,9 +240,9 @@
         },
 
         /** @inheritDoc */
-        mark: function mark() {
+        mark: function mark(readlimit) {
             if (this._buffer)
-                this._buffer.mark();
+                this._buffer.mark(readlimit);
             // If the buffer doesn't exist yet, it is implicitly marked as that
             // is the behavior of ByteArrayInputStream.
         },

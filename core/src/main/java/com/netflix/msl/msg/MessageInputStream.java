@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -59,21 +59,21 @@ import com.netflix.msl.util.MslContext;
  * payload chunks carrying application data. Each payload chunk is individually
  * packaged but sequentially ordered. No payload chunks may be included in an
  * error message.</p>
- * 
+ *
  * <p>Data is read until an end-of-message payload chunk is encountered or an
  * error occurs. Closing a {@code MessageInputStream} does not close the source
  * input stream in case additional MSL messages will be read.</p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageInputStream extends InputStream {
     /**
      * <p>Return the crypto context resulting from key response data contained
      * in the provided header.</p>
-     * 
+     *
      * <p>The {@link MslException}s thrown by this method will not have the
      * entity or user set.</p>
-     * 
+     *
      * @param ctx MSL context.
      * @param header header.
      * @param keyRequestData key request data for key exchange.
@@ -94,11 +94,11 @@ public class MessageInputStream extends InputStream {
         final MessageHeader messageHeader = header;
         final MasterToken masterToken = messageHeader.getMasterToken();
         final KeyResponseData keyResponse = messageHeader.getKeyResponseData();
-        
+
         // If there is no key response data then return null.
         if (keyResponse == null)
             return null;
-        
+
         // If the key response data master token is decrypted then use the
         // master token keys to create the crypto context.
         final MasterToken keyxMasterToken = keyResponse.getMasterToken();
@@ -158,20 +158,20 @@ public class MessageInputStream extends InputStream {
         // payloads will not decrypt properly. Throw an exception.
         throw new MslKeyExchangeException(MslError.KEYX_RESPONSE_REQUEST_MISMATCH, Arrays.toString(keyRequestData.toArray()));
     }
-    
+
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
-     * 
+     *
      * <p>If key request data is provided and a matching key response data is
      * found in the message header the key exchange will be performed to
      * process the message payloads.</p>
-     * 
+     *
      * <p>Service tokens will be decrypted and verified with the provided crypto
      * contexts identified by token name. A default crypto context may be
      * provided by using the empty string as the token name; if a token name is
      * not explcitly mapped onto a crypto context, the default crypto context
      * will be used.</p>
-     * 
+     *
      * @param ctx MSL context.
      * @param source MSL input stream.
      * @param keyRequestData key request data to use when processing key
@@ -218,7 +218,7 @@ public class MessageInputStream extends InputStream {
             throw new MslEncodingException(MslError.MSL_PARSE_ERROR, "header", e);
         }
         this.header = Header.parseHeader(ctx, mo, cryptoContexts);
-        
+
         try {
             // For error messages there are no key exchange or payload crypto
             // contexts.
@@ -227,7 +227,7 @@ public class MessageInputStream extends InputStream {
                 this.cryptoContext = null;
                 return;
             }
-            
+
             // Grab the key exchange crypto context, if any.
             final MessageHeader messageHeader = (MessageHeader)this.header;
             this.keyxCryptoContext = getKeyxCryptoContext(ctx, messageHeader, keyRequestData);
@@ -237,12 +237,12 @@ public class MessageInputStream extends InputStream {
             // context.
             if (ctx.isPeerToPeer() || this.keyxCryptoContext == null)
                 this.cryptoContext = messageHeader.getCryptoContext();
-                
+
             // Otherwise the payload crypto context equals the key exchange
             // crypto context.
             else
                 this.cryptoContext = this.keyxCryptoContext;
-            
+
             // If this is a handshake message but it is not renewable or does
             // not contain key request data then reject the message.
             if (messageHeader.isHandshake() &&
@@ -250,7 +250,7 @@ public class MessageInputStream extends InputStream {
             {
                 throw new MslMessageException(MslError.HANDSHAKE_DATA_MISSING, messageHeader.toString());
             }
-            
+
             // If I am in peer-to-peer mode or the master token is verified
             // (i.e. issued by the local entity which is therefore a trusted
             // network server) then perform the master token checks.
@@ -262,7 +262,7 @@ public class MessageInputStream extends InputStream {
                 final MslError revoked = factory.isMasterTokenRevoked(ctx, masterToken);
                 if (revoked != null)
                     throw new MslMasterTokenException(revoked, masterToken);
-                
+
                 // If the user ID token has been revoked then reject the
                 // message. We know the master token is not null and that it is
                 // verified so we assume the user ID token is as well.
@@ -272,14 +272,14 @@ public class MessageInputStream extends InputStream {
                     if (uitRevoked != null)
                         throw new MslUserIdTokenException(uitRevoked, userIdToken);
                 }
-                
+
                 // If the master token is expired...
                 if (masterToken.isExpired(null)) {
                     // If the message is not renewable or does not contain key
                     // request data then reject the message.
                     if (!messageHeader.isRenewable() || messageHeader.getKeyRequestData().isEmpty())
                         throw new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader.toString());
-                    
+
                     // If the master token will not be renewed by the token
                     // factory then reject the message.
                     //
@@ -290,7 +290,7 @@ public class MessageInputStream extends InputStream {
                         throw new MslMessageException(notRenewable, "Master token is expired and not renewable.");
                 }
             }
-            
+
             // If the message is non-replayable (it is not from a trusted
             // network server).
             final Long nonReplayableId = messageHeader.getNonReplayableId();
@@ -299,7 +299,7 @@ public class MessageInputStream extends InputStream {
                 // message.
                 if (masterToken == null)
                     throw new MslMessageException(MslError.INCOMPLETE_NONREPLAYABLE_MESSAGE, messageHeader.toString());
-                
+
                 // If the non-replayable ID is not accepted then notify the
                 // sender.
                 final TokenFactory factory = ctx.getTokenFactory();
@@ -323,7 +323,7 @@ public class MessageInputStream extends InputStream {
             throw e;
         }
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#finalize()
      */
@@ -335,7 +335,7 @@ public class MessageInputStream extends InputStream {
 
     /**
      * Retrieve the next MSL object.
-     * 
+     *
      * @return the next MSL object or null if none remaining.
      * @throws MslEncodingException if there is a problem parsing the data.
      */
@@ -344,12 +344,12 @@ public class MessageInputStream extends InputStream {
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
             throw new MslInternalException("Read attempted with error message.");
-        
+
         // If we previously reached the end of the message, don't try to read
         // more.
         if (eom)
             return null;
-        
+
         // Otherwise read the next MSL object.
         try {
             if (!tokenizer.more(-1)) {
@@ -364,7 +364,7 @@ public class MessageInputStream extends InputStream {
 
     /**
      * Retrieve the next payload chunk data.
-     * 
+     *
      * @return the next payload chunk data or null if none remaining.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
@@ -379,16 +379,16 @@ public class MessageInputStream extends InputStream {
         final MessageHeader messageHeader = getMessageHeader();
         if (messageHeader == null)
             throw new MslInternalException("Read attempted with error message.");
-        
+
         // If reading buffered data return the next buffered payload data.
         if (payloadIterator != null && payloadIterator.hasNext())
             return payloadIterator.next();
-        
+
         // Otherwise read the next payload.
         final MslObject mo = nextMslObject();
         if (mo == null) return null;
         final PayloadChunk payload = new PayloadChunk(ctx, mo, cryptoContext);
-        
+
         // Make sure the payload belongs to this message and is the one we are
         // expecting.
         final MasterToken masterToken = messageHeader.getMasterToken();
@@ -410,7 +410,7 @@ public class MessageInputStream extends InputStream {
                 .setUserAuthenticationData(userAuthData);
         }
         ++payloadSequenceNumber;
-        
+
         // FIXME remove this logic once the old handshake inference logic
         // is no longer supported.
         // Check for a handshake if this is the first payload chunk.
@@ -418,27 +418,29 @@ public class MessageInputStream extends InputStream {
             handshake = (messageHeader.isRenewable() && !messageHeader.getKeyRequestData().isEmpty() &&
                 payload.isEndOfMessage() && payload.getData().length == 0);
         }
-        
+
         // Check for end of message.
         if (payload.isEndOfMessage())
             eom = true;
-        
-        // Save the payload in the buffer and return it. We have to unset the
-        // payload iterator since we're adding to the payloads list.
+
+        // If mark was called save the payload in the buffer. We have to unset
+        // the payload iterator since we're adding to the payloads list.
         final ByteArrayInputStream data = new ByteArrayInputStream(payload.getData());
-        payloads.add(data);
-        payloadIterator = null;
+        if (payloads != null) {
+            payloads.add(data);
+            payloadIterator = null;
+        }
         return data;
     }
-    
+
     /**
      * Returns true if the message is a handshake message.
-     * 
+     *
      * FIXME
      * This method should be removed by a direct query of the message header
      * once the old behavior of inferred handshake messages based on a single
      * empty payload chunk is no longer supported.
-     * 
+     *
      * @return true if the message is a handshake message.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.
@@ -450,13 +452,13 @@ public class MessageInputStream extends InputStream {
      */
     public boolean isHandshake() throws MslCryptoException, MslEncodingException, MslMessageException, MslInternalException, MslException {
         final MessageHeader messageHeader = getMessageHeader();
-        
+
         // Error messages are not handshake messages.
         if (messageHeader == null) return false;
-        
+
         // If the message header has its handshake flag set return true.
         if (messageHeader.isHandshake()) return true;
-        
+
         // If we haven't read a payload we don't know if this is a handshake
         // message or not. This also implies the current payload is null.
         if (handshake == null) {
@@ -476,7 +478,7 @@ public class MessageInputStream extends InputStream {
         // Return the current handshake status.
         return handshake.booleanValue();
     }
-    
+
     /**
      * @return the message header. Will be null for error messages.
      */
@@ -485,7 +487,7 @@ public class MessageInputStream extends InputStream {
             return (MessageHeader)header;
         return null;
     }
-    
+
     /**
      * @return the error header. Will be null except for error messages.
      */
@@ -494,12 +496,12 @@ public class MessageInputStream extends InputStream {
             return (ErrorHeader)header;
         return null;
     }
-    
+
     /**
      * Returns the sender's entity identity. The identity will be unknown if
      * the local entity is a trusted network client and the message was sent by
      * a trusted network server using the local entity's master token.
-     * 
+     *
      * @return the sender's entity identity or null if unknown.
      * @throws MslCryptoException if there is a crypto error accessing the
      *         entity identity;
@@ -515,12 +517,12 @@ public class MessageInputStream extends InputStream {
         final ErrorHeader errorHeader = getErrorHeader();
         return errorHeader.getEntityAuthenticationData().getIdentity();
     }
-    
+
     /**
      * Returns the user associated with the message. The user will be unknown
      * if the local entity is a trusted network client and the message was sent
      * by a trusted network server.
-     * 
+     *
      * @return the user associated with the message or null if unknown.
      */
     public MslUser getUser() {
@@ -529,14 +531,14 @@ public class MessageInputStream extends InputStream {
             return null;
         return messageHeader.getUser();
     }
-    
+
     /**
      * @return the payload crypto context. Will be null for error messages.
      */
     public ICryptoContext getPayloadCryptoContext() {
         return cryptoContext;
     }
-    
+
     /**
      * @return the key exchange crypto context. Will be null if no key response
      *         data was returned in this message and for error messages.
@@ -544,7 +546,7 @@ public class MessageInputStream extends InputStream {
     public ICryptoContext getKeyExchangeCryptoContext() {
         return keyxCryptoContext;
     }
-    
+
     /* (non-Javadoc)
      * @see java.io.InputStream#available()
      */
@@ -553,27 +555,29 @@ public class MessageInputStream extends InputStream {
         // Start with the amount available in the current payload.
         if (currentPayload == null) return 0;
         int available = currentPayload.available();
-        
+
         // If there is buffered data, iterate over all subsequent buffered
         // payloads.
-        final int startIndex = payloads.indexOf(currentPayload);
-        if (startIndex != -1 && startIndex < payloads.size() - 1) {
-            final Iterator<ByteArrayInputStream> nextPayloads = payloads.listIterator(startIndex + 1);
-            while (nextPayloads.hasNext()) {
-                final ByteArrayInputStream payload = nextPayloads.next();
-                available += payload.available();
+        if (payloads != null) {
+            final int startIndex = payloads.indexOf(currentPayload);
+            if (startIndex != -1 && startIndex < payloads.size() - 1) {
+                final Iterator<ByteArrayInputStream> nextPayloads = payloads.listIterator(startIndex + 1);
+                while (nextPayloads.hasNext()) {
+                    final ByteArrayInputStream payload = nextPayloads.next();
+                    available += payload.available();
+                }
             }
         }
-        
+
         // Return available bytes.
         return available;
     }
-    
+
     /**
      * By default the source input stream is not closed when this message input
      * stream is closed. If it should be closed then this method can be used to
      * dictate the desired behavior.
-     * 
+     *
      * @param close true if the source input stream should be closed, false if
      *        it should not.
      */
@@ -590,7 +594,7 @@ public class MessageInputStream extends InputStream {
         // to reuse the connection.
         if (closeSource)
             source.close();
-        
+
         // Otherwise if this is not a handshake message or error message then
         // consume all payloads that may still be on the source input stream.
         else {
@@ -603,7 +607,7 @@ public class MessageInputStream extends InputStream {
                 }
             } catch (final MslException e) {
                 // Ignore exceptions.
-            } 
+            }
         }
     }
 
@@ -612,23 +616,34 @@ public class MessageInputStream extends InputStream {
      */
     @Override
     public void mark(final int readlimit) {
+        // Remember the read limit, reset the read count.
+        this.readlimit = readlimit;
+        this.readcount = 0;
+
+        // Initialize the payload buffer if we were not already buffering data.
+        if (payloads == null)
+            payloads = new LinkedList<ByteArrayInputStream>();
+
         // If there is a current payload...
         if (currentPayload != null) {
             // Remove all buffered data earlier than the current payload.
-            payloadIterator = null;
             while (payloads.size() > 0 && !payloads.get(0).equals(currentPayload))
                 payloads.remove(0);
-            
+
+            // Add the current payload if it was not already buffered.
+            if (payloads.size() == 0)
+                payloads.add(currentPayload);
+
             // Reset the iterator to continue reading buffered data from the
             // current payload.
             payloadIterator = payloads.listIterator();
             currentPayload = payloadIterator.next();
-            
+
             // Set the new mark point on the current payload.
             currentPayload.mark(readlimit);
             return;
         }
-        
+
         // Otherwise we've either read to the end or haven't read anything at
         // all yet. Discard all buffered data.
         payloadIterator = null;
@@ -664,7 +679,7 @@ public class MessageInputStream extends InputStream {
             readException = null;
             throw e;
         }
-        
+
         // Return end of stream immediately for handshake messages.
         try {
             if (this.isHandshake())
@@ -677,18 +692,18 @@ public class MessageInputStream extends InputStream {
             readException = null;
             throw new IOException("Error reading the payload chunk.", e);
         }
-        
+
         // Read from payloads until we are done or cannot read anymore.
         int bytesRead = 0;
         while (bytesRead < len) {
             final int read = (currentPayload != null) ? currentPayload.read(cbuf, off + bytesRead, len - bytesRead) : -1;
-            
+
             // If we read some data continue.
             if (read != -1) {
                 bytesRead += read;
                 continue;
             }
-            
+
             // Otherwise grab the next payload data.
             try {
                 currentPayload = nextData();
@@ -702,16 +717,31 @@ public class MessageInputStream extends InputStream {
                     readException = ioe;
                     return bytesRead;
                 }
-                
+
                 // Otherwise throw the exception now.
                 throw ioe;
             }
         }
-        
+
         // If nothing was read (but something was requested) return end of
         // stream.
         if (bytesRead == 0 && len > 0)
             return -1;
+
+        // If buffering data increment the read count.
+        if (payloads != null) {
+            readcount += bytesRead;
+
+            // If the read count exceeds the read limit stop buffering payloads
+            // and reset the read count and limit, but retain the payload
+            // iterator as we need to continue reading from any buffered data.
+            if (readcount > readlimit) {
+                payloads = null;
+                readcount = readlimit = 0;
+            }
+        }
+
+        // Return the number of bytes read.
         return bytesRead;
     }
 
@@ -728,6 +758,10 @@ public class MessageInputStream extends InputStream {
      */
     @Override
     public void reset() throws IOException {
+        // Do nothing if we are not buffering.
+        if (payloads == null)
+            return;
+
         // Reset all payloads and initialize the payload iterator.
         //
         // We need to reset the payloads since we are going to re-read them and
@@ -740,6 +774,9 @@ public class MessageInputStream extends InputStream {
         } else {
             currentPayload = null;
         }
+
+        // Reset the read count.
+        readcount = 0;
     }
 
     /* (non-Javadoc)
@@ -751,13 +788,13 @@ public class MessageInputStream extends InputStream {
         int bytesSkipped = 0;
         while (bytesSkipped < n) {
             final long skipped = (currentPayload != null) ? currentPayload.skip(n - bytesSkipped) : 0;
-            
+
             // If we skipped some data continue.
             if (skipped != 0) {
                 bytesSkipped += skipped;
                 continue;
             }
-            
+
             // Otherwise grab the next payload data.
             try {
                 currentPayload = nextData();
@@ -771,43 +808,47 @@ public class MessageInputStream extends InputStream {
         }
         return bytesSkipped;
     }
-    
+
     /** MSL context. */
     private final MslContext ctx;
     /** MSL input stream. */
     private final InputStream source;
     /** MSL tokenizer. */
     private final MslTokenizer tokenizer;
-    
+
     /** Header. */
     private final Header header;
     /** Payload crypto context. */
     private final ICryptoContext cryptoContext;
     /** Key exchange crypto context. */
     private final ICryptoContext keyxCryptoContext;
-    
+
     /** Current payload sequence number. */
     private long payloadSequenceNumber = 1;
     /** End of message reached. */
     private boolean eom = false;
     /** Handshake message. */
     private Boolean handshake = null;
-    
+
     /** True if the source input stream should be closed. */
     private boolean closeSource = false;
-    
+
     /**
-     * Buffered payload data.
-     * 
-     * This list contains all payload data that has been read since the last
-     * call to {@link #mark(int)}.
+     * Buffered payload data. Not null if buffering data.
+     *
+     * This list contains all payload data that has been referenced since the
+     * last call to {@link #mark(int)}.
      */
-    private final List<ByteArrayInputStream> payloads = new LinkedList<ByteArrayInputStream>();
+    private List<ByteArrayInputStream> payloads = null;
     /** Buffered payload data iterator. Not null if reading buffered data. */
     private ListIterator<ByteArrayInputStream> payloadIterator = null;
+    /** Mark read limit. */
+    private int readlimit = 0;
+    /** Mark read count. */
+    private int readcount = 0;
     /** Current payload chunk data. */
     private ByteArrayInputStream currentPayload = null;
-    
+
     /** Cached read exception. */
     private IOException readException = null;
 }
