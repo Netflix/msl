@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ describe("MessageOutputStream", function() {
     var MslInternalException = require('msl-core/MslInternalException.js');
     var MslError = require('msl-core/MslError.js');
     var MslIoException = require('msl-core/MslIoException.js');
-
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -57,7 +56,7 @@ describe("MessageOutputStream", function() {
     /** Maximum payload chunk data size in bytes. */
     var MAX_DATA_SIZE = 10 * 1024;
     /** Compressible data. */
-    var COMPRESSIBLE_DATA = textEncoding.getBytes(
+    var COMPRESSIBLE_DATA = TextEncoding.getBytes(
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me."

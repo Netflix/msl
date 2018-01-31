@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 	var ClarinetParser = require('../io/ClarinetParser.js');
 	var JsonMslObject = require('../io/JsonMslObject.js');
 	var MslConstants = require('../MslConstants.js');
-	var textEncoding = require('../lib/textEncoding.js');
+	var TextEncoding = require('../util/TextEncoding.js');
 
     /**
      * Delay time between read attempts in milliseconds.
@@ -66,7 +66,7 @@
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
-                _charset: { value: MslConstants.DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
+                _charset: { value: TextEncoding.Encoding.UTF_8, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
                 _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
                 /** @type {ClarinetParser} */
@@ -107,7 +107,7 @@
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
+                        	json = this._remainingData.concat(TextEncoding.getString(data, this._charset));
                         } catch (e) {
                         	throw new MslEncoderException("Invalid JSON text encoding.", e);
                         }
@@ -145,7 +145,7 @@
                         // to parse the JSON.
                         var json;
                         try {
-                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
+                        	json = this._remainingData.concat(TextEncoding.getString(data, this._charset));
                         } catch (e) {
                         	throw new MslEncoderException("Invalid JSON text encoding.");
                         }

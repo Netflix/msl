@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 	
 	var MslArray = require('../io/MslArray.js');
 	var MslObject = require('../io/MslObject.js');
-	var textEncoding = require('../lib/textEncoding.js');
+	var TextEncoding = require('../util/TextEncoding.js');
 	var MslConstants = require('../MslConstants.js');
 	var MslEncodable = require('../io/MslEncodable.js');
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
@@ -32,13 +32,6 @@
 	var MslException = require('../MslException.js');
 	var Base64 = require('../util/Base64.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
-    
-    /**
-     * UTF-8 charset.
-     * @const
-     * @type {string}
-     */
-    var UTF_8 = 'utf-8';
     
     /**
      * Encode the provided MSL object into JSON.
@@ -51,20 +44,20 @@
      * @throws MslEncoderException if there is an error encoding the data.
      */
     var JsonMslObject$encode = function JsonMslObject$encode(encoder, object, callback) {
-    	AsyncExecutor(callback, function() {
-    		var jsonObject = (object instanceof JsonMslObject)
-    			? object
-    			: new JsonMslObject(encoder, object);
-    		
-    		jsonObject.toJSONString(encoder, {
-    			result: function(json) {
-    				AsyncExecutor(callback, function() {
-    					return textEncoding.getBytes(json, UTF_8);
-    				});
-    			},
-    			error: callback.error,
-    		});
-    	});
+        AsyncExecutor(callback, function() {
+            var jsonObject = (object instanceof JsonMslObject)
+                ? object
+                : new JsonMslObject(encoder, object);
+
+            jsonObject.toJSONString(encoder, {
+                result: function(json) {
+                    AsyncExecutor(callback, function() {
+                        return TextEncoding.getBytes(json, TextEncoding.Encoding.UTF_8);
+                    });
+                },
+                error: callback.error,
+            });
+        });
     };
     
     var JsonMslObject = module.exports = MslObject.extend({
@@ -112,7 +105,7 @@
 
                 // Uint8Array
                 else if (source instanceof Uint8Array) {
-                    var json = textEncoding.getString(source, UTF_8);
+                    var json = TextEncoding.getString(source, TextEncoding.Encoding.UTF_8);
                     var jo = JSON.parse(json);
                     if (!(jo instanceof Object) || jo.constructor !== Object)
                         throw new MslEncoderException("Invalid JSON object encoding.");
