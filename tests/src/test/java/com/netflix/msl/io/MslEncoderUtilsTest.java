@@ -295,9 +295,7 @@ public class MslEncoderUtilsTest {
             // Decode the base64 to bytes and to a string.
             {
                 final byte[] decoded = MslEncoderUtils.b64urlDecode(base64);
-                final String decodedString = MslEncoderUtils.b64urlDecodeToString(base64);
                 assertArrayEquals(text.getBytes(UTF_8), decoded);
-                assertEquals(decodedString, text);
             }
         }
     }

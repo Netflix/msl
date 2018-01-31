@@ -1,0 +1,93 @@
+/**
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//struct TestData
+//{
+//    const char* key;
+//    const char* msg;
+//    const char* mac;
+//};
+
+// http://csrc.nist.gov/groups/STM/cavp/message-authentication.html#hmac
+const int hmacSha256DataLen = 8;
+const TestData hmacSha256Data[hmacSha256DataLen] = {
+//[L=32]
+//
+//Count = 30
+//Klen = 40
+//Tlen = 32
+{
+"9779d9120642797f1747025d5b22b7ac607cab08e1758f2f3a46c8be1e25c53b8c6a8f58ffefa176",
+"b1689c2591eaf3c9e66070f8a77954ffb81749f1b00346f9dfe0b2ee905dcc288baf4a92de3f4001dd9f44c468c3d07d6c6ee82faceafc97c2fc0fc0601719d2dcd0aa2aec92d1b0ae933c65eb06a03c9c935c2bad0459810241347ab87e9f11adb30415424c6c7f5f22a003b8ab8de54f6ded0e3ab9245fa79568451dfa258e",
+"769f00d3e6a6cc1fb426a14a4f76c6462e6149726e0dee0ec0cf97a16605ac8b",
+},
+{
+//Count = 31
+//Klen = 40
+//Tlen = 32
+"09675f2dcc4783b599f18fb765583668a0fd8ae4096f6fcdc60d4f35b4130fbefcd542ffe7459d2a",
+"0cf2198c31376f5c8915660137725f2bbc180a986e5a7bda27fa81593a4a339bab92cbc39fb2b8581108ee48c794812d845a72ce8008c9e915d9e330bbb90e9136aa53ba0e6693dd4046d6b03362dfb9edfa04c887153cc5de677aab8c7839d517035879679c29727e96c5426324a2575fbe678d6cc7fef5eb6cebd595cfddef",
+"6b142d4dfe217f1881aa0e6483b271dd5d43f70b85605953a0fef272ddde46ca",
+},
+{
+//Count = 32
+//Klen = 40
+//Tlen = 32
+"cfd4a44910c9e567507abb6cede4fe601a7a2765c9755aa2cf6ba4814223811a26a8a1ef499cebd9",
+"3fb301cb4092f9623aa5ffd690d22d65d56e5a1c330b9c4a0d910c34e391c90a76d5401a2d3caa44b8c5d5aef3e928b90d2ee233e9f9a2cec4a32cd019d06a0dc1fcb1125f5746a4fbd32169ed7bf0e4fd065fa7c8ac97c366380484495f5c5b6850dd1c9d8cd6694cf8686e46308ed0ed1f5bdf98cd831339771db63de5a7de",
+"20153bf8ea2953c48251ebcc4161f8b6e28499e5c76c24014cff4a9e2f62d25c",
+},
+{
+//Count = 33
+//Klen = 40
+//Tlen = 32
+"5448998f9d8f98534addf0c8ba631c496bf8a8006cbb46ad15fa1fa2f55367120c19348c3afa90c3",
+"1c4396f7b7f9228e832a13692002ba2aff439dcb7fddbfd456c022d133ee8903a2d482562fdaa493ce3916d77a0c51441dab26f6b0340238a36a71f87fc3e179cabca9482b704971ce69f3f20ab64b70413d6c2908532b2a888a9fc224cae1365da410b6f2e298904b63b4a41726321835a4774dd063c211cfc8b5166c2d11a2",
+"7e8cba9dd9f06ebdd7f92e0f1a67c7f4df52693c212bdd84f67370b351533c6c",
+},
+{
+//Count = 34
+//Klen = 40
+//Tlen = 32
+"9da0c114682f82c1d1e9b54430580b9c569489ca16b92ee10498d55d7cad5db5e652063439311e04",
+"4953408be3ddde42521eb625a37af0d2cf9ed184f5b627e5e7e0e824e8e11648b418e5c4c1b0204bc519c9e578b800439bdd254f39f641082d03a28de44ac677644c7b6c8df743f29f1dfd80fd25c2db31010ea02f60201cde24a364d4168da261d848aed01c10dee9149c1ebb29004398f0d29c605a8bca032b31d241ad3371",
+"cdeacfcebf46cc9d7e4d4175e5d8d267c23a64cde83e867e5001ecf26fbd30d2",
+},
+{
+//Count = 35
+//Klen = 40
+//Tlen = 32
+"aaafd08fd89bebe239ab65bb190b86d49c5d39faa50b1109f7dc8b179bc693f0810449c36a68041a",
+"44131187c07a8e3979254b0c1d1cfa8081f0beb8890633744932af3f6987c7eace6e153876f639dba46b1e9f3e2a7fe673b3a954a00082cb7516ca9a54d9a1f1f924499960192ee1e3b623dca4a9efc92a6608d34f769efb5912db5267f06a6b0f5d3610458c74347e2ee32916425213ef2f649d5c1090ea3d4f6bcf6b752a3f",
+"0c19ab5d4ee7b64396eff7b2ca9efa5ca7369c1a1ed14952445d2fb5ece9473a",
+},
+{
+//Count = 36
+//Klen = 40
+//Tlen = 32
+"b06f7ca7a5dd8baf2ca940811edad87a33da666dc427bcf4d54a8e03520dd5c399e9729d39be1494",
+"32b45fbcbaf262bbe347360bd6076c43dc26ba9573fcabaea14595de886ccc793b09157dd0a85d74b6ccab9c49335446a45c6e7cb64786e6997c96ef1e4e3123ad6101db4c6a731dfd36b1be4deed1c92a994b25f5e2b171d81b9a335a83e03230c40b2056c00c7c5f8d2fb70abe4b9615e53bd756569217072d8bf362923f6e",
+"a9c9d3993fe7ec4c2033ccf3b73b3407cd999d67455b43a75d6ba97efda3be63",
+},
+{
+//Count = 37
+//Klen = 40
+//Tlen = 32
+"2dff35c2fe5039123d4c5d9feb7d5167e3e959b31841abec1e5b18b0ece2ef25e04d1f8d030d9b1b",
+"14890f3b2ee63746c8249909013571a403eb54273760090db5959b06ff59acfaee6d0c4aece58b5964d10b4b771dd90cf1b63d947bee4f6a12220d67b79aabbd68b02a3850352cc33b10072d4c28182df2855aa418b236239c659dad036155be6b9c908bc09dc38c3329b538e81ed710ef9fd3de7671673f3da5745f4a785204",
+"468d8498d46afe74a0ffb541b847bac724faeabd48c41322bf534b284c4e9fe0",
+},
+};

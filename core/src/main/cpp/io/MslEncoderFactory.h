@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,11 +85,14 @@ public:
      *
      * @param source the binary data to tokenize.
      * @return the {@link MslTokenizer}.
-     * @throws MslEncoderException if there is a problem reading the byte
-     *         stream identifier or if the encoder format is not supported.
+     * @throws IOException if there is a problem reading the byte stream
+     *         identifier.
+     * @throws MslEncoderException if the encoder format is not recognized or
+     *         is not supported.
      */
     std::shared_ptr<MslTokenizer> createTokenizer(std::shared_ptr<InputStream> source);
 
+protected:
     /**
      * Create a new {@link MslTokenizer} of the specified encoder format.
      *
@@ -100,6 +103,7 @@ public:
      */
     virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format) = 0;
 
+public:
     /**
      * Create a new {@link MslObject} populated with the provided map.
      *

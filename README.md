@@ -21,6 +21,8 @@ The Java MSL code base requires the [org.json](http://www.json.org/java/) and [B
 
 The JavaScript MSL code base includes some third-party libraries within the lib/ directory, most notably the [Clarinet](https://github.com/dscape/clarinet) parser and [jsrsasign](http://kjur.github.io/jsrsasign/).
 
+The C++ MSL code base requires [OpenSSL](https://www.openssl.org) and includes some third-party libraries within the lib/ directory: [Chromium Numerics](https://chromium.googlesource.com/chromium/src/base/+/master/numerics/), [RapidJSON](http://rapidjson.org), [RSA Converter](https://rsaconverter.sourceforge.io), and [UTF-8 with CPP in a Portable Way](https://github.com/nemtrif/utfcpp). The unit tests also include some third-party libraries within the tests lib/ directory: [Google Mock](https://github.com/google/googlemock) and [Google Test](https://github.com/google/googletest).
+
 All third-party libraries are subject to their respective license agreements.
 
 ## Getting Started
@@ -61,6 +63,17 @@ Your browser may not support all Web Crypto API algorithms, key sizes, and featu
 To include the JavaScript MSL stack in your JavaScript application you must include all of the MSL JavaScript source files required by your MSL configuration. An example list of the required source files can be found in [src/test/javascript/msltests.html](src/test/javascript/msltests.html).
 
 An example client is provided under [src/examples/simple/src/main/javascript/client/](src/examples/simple/src/main/javascript/client/). The example client is a web page that will send requests to the example Java server. The example client MSL configuration is specific to this client and should not be used to configure your application, but it can be used as the basis for doing so.
+
+### C++
+
+The C++ MSL code base requires C++11 and CMake.
+
+The code base has been built and tested under the following environments:
+
+- Xcode 8 and Homebrew (gcc6, openssl) for Mac OS.  
+Compiler flags: <code>\-std=c\+\+0x \-DGTEST_DONT_DEFINE_FAIL=1 \-DRAPIDJSON_HAS_STDSTRING=1</code>.
+- Xcode 8 for iOS.  
+Compiler flags: <code>\-std=gnu\+\+11 \-DGTEST_DONT_DEFINE_FAIL=1 \-DRAPIDJSON_HAS_STDSTRING=1</code>.
 
 ## LICENSE
 

@@ -40,7 +40,6 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * Test ECC asymmetric keys authentication factory.
- *
  */
 public class MockEccAuthenticationFactory extends EntityAuthenticationFactory {
 

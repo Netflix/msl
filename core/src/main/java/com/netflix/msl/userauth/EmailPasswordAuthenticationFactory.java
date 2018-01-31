@@ -83,13 +83,13 @@ public class EmailPasswordAuthenticationFactory extends UserAuthenticationFactor
         
         // Verify the scheme is still permitted.
         if (!authutils.isSchemePermitted(identity, user, this.getScheme()))
-            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
+            throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(epad);
         
         // If a user ID token was provided validate the user identities.
         if (userIdToken != null) {
             final MslUser uitUser = userIdToken.getUser();
             if (!user.equals(uitUser))
-                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser);
+                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUserAuthenticationData(epad);
         }
         
         // Return the user.
