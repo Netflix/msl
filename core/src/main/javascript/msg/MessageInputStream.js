@@ -225,6 +225,12 @@
                         _handshake: { value: null, writable: true, enumerable: false, configurable: false },
                         _closeSource: { value: false, writable: true, enumerable: false, configurable: false },
                         /**
+                         * True if buffering.
+                         * 
+                         * @type {boolean}
+                         */
+                        _buffering: { value: false, writable: true, enumerable: false, configurable: false },
+                        /**
                          * Buffered payload data.
                          * 
                          * @type {Array.<Uint8Array>}
@@ -234,11 +240,11 @@
                         _payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
                         /**
                          * First payload byte offset when {@link #mark(int)}
-                         * was called. Will be -1 if not buffering data.
+                         * was called.
                          * 
                          * @type {number}
                          */
-                        _markOffset: { value: -1, writable: true, enumerable: false, configurable: false },
+                        _markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
                         /**
                          * Mark read limit. -1 for no limit.
                          * 
@@ -1059,7 +1065,7 @@
             this._readcount = 0;
 
             // Start buffering.
-            this._markOffset = 0;
+            this._buffering = true;
             
             // If there is a current payload...
             if (this._currentPayload) {
@@ -1226,14 +1232,14 @@
                                     this._payloadOffset += count;
 
                                     // If buffering data increment the read count.
-                                    if (this._markOffset != -1) {
+                                    if (this._buffering) {
                                         this._readcount += count;
                                         
                                         // If the read count exceeds the read limit stop buffering payloads
                                         // and reset the read count and limit, but retain the payload
                                         // iterator as we need to continue reading from any buffered data.
                                         if (this._readlimit != -1 && this._readcount > this._readlimit) {
-                                            this._markOffset = -1;
+                                            this._buffering = false;
                                             this._readcount = this._readlimit = 0;
                                         }
                                     }
@@ -1307,7 +1313,7 @@
         /** @inheritDoc */
         reset: function reset() {
             // Do nothing if we are not buffering.
-            if (this._markOffset == -1)
+            if (!this._buffering)
                 return;
             
             // Reset all payloads and initialize the payload iterator.

@@ -620,9 +620,8 @@ public class MessageInputStream extends InputStream {
         this.readlimit = readlimit;
         this.readcount = 0;
 
-        // Initialize the payload buffer if we were not already buffering data.
-        if (payloads == null)
-            payloads = new LinkedList<ByteArrayInputStream>();
+        // Start buffering.
+        buffering = true;
 
         // If there is a current payload...
         if (currentPayload != null) {
@@ -729,14 +728,14 @@ public class MessageInputStream extends InputStream {
             return -1;
 
         // If buffering data increment the read count.
-        if (payloads != null) {
+        if (buffering) {
             readcount += bytesRead;
 
             // If the read count exceeds the read limit stop buffering payloads
             // and reset the read count and limit, but retain the payload
             // iterator as we need to continue reading from any buffered data.
             if (readcount > readlimit) {
-                payloads = null;
+                buffering = false;
                 readcount = readlimit = 0;
             }
         }
@@ -759,7 +758,7 @@ public class MessageInputStream extends InputStream {
     @Override
     public void reset() throws IOException {
         // Do nothing if we are not buffering.
-        if (payloads == null)
+        if (!buffering)
             return;
 
         // Reset all payloads and initialize the payload iterator.
@@ -833,13 +832,15 @@ public class MessageInputStream extends InputStream {
     /** True if the source input stream should be closed. */
     private boolean closeSource = false;
 
+    /** True if buffering. */
+    private boolean buffering = false;
     /**
-     * Buffered payload data. Not null if buffering data.
+     * Buffered payload data.
      *
      * This list contains all payload data that has been referenced since the
      * last call to {@link #mark(int)}.
      */
-    private List<ByteArrayInputStream> payloads = null;
+    private final List<ByteArrayInputStream> payloads = new LinkedList<ByteArrayInputStream>();;
     /** Buffered payload data iterator. Not null if reading buffered data. */
     private ListIterator<ByteArrayInputStream> payloadIterator = null;
     /** Mark read limit. */
