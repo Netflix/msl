@@ -60,9 +60,23 @@ public:
      * the reset method repositions this stream at the last marked position so
      * that subsequent reads re-read the same bytes.
      *
+     * <p> The <code>readlimit</code> arguments tells this input stream to
+     * allow that many bytes to be read before the mark position gets
+     * invalidated.
+     *
+     * <p> The general contract of <code>mark</code> is that, if the method
+     * <code>markSupported</code> returns <code>true</code>, the stream somehow
+     * remembers all the bytes read after the call to <code>mark</code> and
+     * stands ready to supply those same bytes again if and whenever the method
+     * <code>reset</code> is called.  However, the stream is not required to
+     * remember any data at all if more than <code>readlimit</code> bytes are
+     * read from the stream before <code>reset</code> is called.
+     *
+     * @param readlimit optional maximum limit of bytes that can be read before
+     *        the mark position becomes invalid.
      * @see #reset()
      */
-    virtual void mark() = 0;
+    virtual void mark(size_t readlimit) = 0;
 
     /**
      * Repositions this stream to the position at the time the mark method was
