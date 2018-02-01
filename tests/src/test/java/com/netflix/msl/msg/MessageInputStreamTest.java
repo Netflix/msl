@@ -1224,7 +1224,7 @@ public class MessageInputStreamTest {
     }
 
     @Test
-    public void markOneReadlimit() throws IOException, MslEncodingException, MslEntityAuthException, MslUserAuthException, MslException, MslEncoderException {
+    public void markOneReadLimit() throws IOException, MslEncodingException, MslEntityAuthException, MslUserAuthException, MslException, MslEncoderException {
         final ByteArrayOutputStream baos = new ByteArrayOutputStream();
         final ICryptoContext cryptoContext = MESSAGE_HEADER.getCryptoContext();
         for (int i = 0; i < MAX_PAYLOAD_CHUNKS; ++i) {
