@@ -24,6 +24,7 @@
     
     var Url = require('../io/Url.js');
     var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+    var AsyncExecutor = require('../util/AsyncExecutor.js');
     
     var Xhr = module.exports = Url.IHttpLocation.extend({
         /**
