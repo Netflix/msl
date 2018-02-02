@@ -515,7 +515,7 @@ public final class CmdArguments {
      */
     private int getInteger(final String name, final int def) {
         final String s = argMap.get(name);
-        return (s != null) ? Integer.valueOf(s) : def;
+        return (s != null) ? Integer.parseInt(s) : def;
     }
 
     /**
