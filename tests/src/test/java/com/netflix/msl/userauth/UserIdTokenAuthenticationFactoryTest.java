@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.netflix.msl.tokens.MockTokenFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -40,6 +39,7 @@ import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MockMslUser;
+import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MockAuthenticationUtils;
@@ -53,8 +53,8 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class UserIdTokenAuthenticationFactoryTest {
-	/** MSL encoder format. */
-	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
+    /** MSL encoder format. */
+    private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** Key master token. */
     private static final String KEY_MASTER_TOKEN = "mastertoken";
@@ -70,7 +70,7 @@ public class UserIdTokenAuthenticationFactoryTest {
     private static MockAuthenticationUtils authutils;
     /** User authentication factory. */
     private static UserAuthenticationFactory factory;
-    /** Token Factory. */
+    /** Token factory. */
     private static MockTokenFactory tokenFactory;
 
     /** Master token. */
@@ -83,10 +83,10 @@ public class UserIdTokenAuthenticationFactoryTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
-        tokenFactory = new MockTokenFactory();
-        ctx.setTokenFactory(tokenFactory);
         factory = new UserIdTokenAuthenticationFactory(authutils);
         ctx.addUserAuthenticationFactory(factory);
+        tokenFactory = new MockTokenFactory();
+        ctx.setTokenFactory(tokenFactory);
         
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1L, 1L);
         final MslUser user = new MockMslUser(1);
@@ -98,6 +98,7 @@ public class UserIdTokenAuthenticationFactoryTest {
         USER_ID_TOKEN = null;
         MASTER_TOKEN = null;
         
+        tokenFactory = null;
         factory = null;
         authutils = null;
         encoder = null;
@@ -213,5 +214,4 @@ public class UserIdTokenAuthenticationFactoryTest {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
         factory.authenticate(ctx, MASTER_TOKEN.getIdentity(), data, null);
     }
-
 }
