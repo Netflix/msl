@@ -18,6 +18,7 @@ package burp;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
@@ -216,7 +217,7 @@ public class MSLHttpListener implements IHttpListener {
 
         WiretapMessageInputStream mis;
         try {
-            final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes());
+            final ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(body.getBytes(MslConstants.DEFAULT_CHARSET));
             mis = new WiretapMessageInputStream(this.ctx, byteArrayInputStream, this.msgCtx.getKeyRequestData(), this.msgCtx.getCryptoContexts());
         } catch (final IOException e) {
             throw new WiretapException(e.getMessage(), e);
