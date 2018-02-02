@@ -134,13 +134,9 @@ public class MslStoreData implements Serializable {
     public static byte[] serialize(final SimpleMslStore ms, final MslContext ctx) throws IOException, MslEncoderException {
         final MslStoreData msd = new MslStoreData(ctx, ms);
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream oos = null;
-        try {
-            oos = new ObjectOutputStream(out);
+        try (ObjectOutputStream oos = new ObjectOutputStream(out)) {
             oos.writeObject(msd);
             return out.toByteArray();
-        } finally {
-            if (oos != null) try { oos.close(); } catch (final Exception ignore) { }
         }
     }
 

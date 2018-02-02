@@ -286,18 +286,12 @@ public final class SharedUtil {
             throw new IllegalArgumentException(file + " not a file");
         }
         final Properties p = new Properties();
-        FileInputStream fis = null;
-        InputStreamReader isr = null;
-        BufferedReader br = null;
-        try {
-            fis = new FileInputStream(f);
-            isr = new InputStreamReader(fis, MslConstants.DEFAULT_CHARSET);
-            br  = new BufferedReader(isr);
+        try(
+                FileInputStream fis = new FileInputStream(f);
+                InputStreamReader isr = new InputStreamReader(fis, MslConstants.DEFAULT_CHARSET);
+                BufferedReader br  = new BufferedReader(isr);
+        ) {
             p.load(br);
-        } finally {
-            if (fis != null) try { fis.close(); } catch (final IOException ignore) {}
-            if (isr != null) try { isr.close(); } catch (final IOException ignore) {}
-            if (br != null) try { br.close(); } catch (final IOException ignore) {}
         }
         return p;
     }
