@@ -165,7 +165,6 @@
 	    USERIDTOKEN_USERDATA_PARSE_ERROR : new MslError(2018, MslConstants.ResponseCode.USER_REAUTH, "Error parsing user ID token user data."),
 	    USERIDTOKEN_REVOKED : new MslError(2019, MslConstants.ResponseCode.USER_REAUTH, "User ID token is revoked."),
 	    USERIDTOKEN_REJECTED_BY_APP : new MslError(2020, MslConstants.ResponseCode.USERDATA_REAUTH, "User ID token is rejected by the application."),
-        USERIDTOKEN_REVOKE_CHECK_ERROR : new MslError(2021, MslConstants.ResponseCode.USER_REAUTH, "User ID token could not be checked for revocation."),
 
         // 3 Service Token
 	    SERVICETOKEN_MASTERTOKEN_MISMATCH : new MslError(3000, MslConstants.ResponseCode.FAIL, "Service token master token serial number does not match master token serial number."),
@@ -223,8 +222,9 @@
 	    USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY : new MslError(5040, MslConstants.ResponseCode.USER_REAUTH, "The entity is not associated with the user."),
 	    USERAUTH_ENTITYUSER_INCORRECT_DATA : new MslError(5041, MslConstants.ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type."),
 	    USERAUTH_VERIFICATION_FAILED : new MslError(5042, MslConstants.ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed."),
-	    
-	    // 6 Message
+        USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR : new MslError(5043, MslConstants.ResponseCode.USERDATA_REAUTH, "User ID token could not be checked for revocation."),
+
+        // 6 Message
 	    UNSUPPORTED_COMPRESSION : new MslError(6000, MslConstants.ResponseCode.FAIL, "Unsupported compression algorithm."),
 	    COMPRESSION_ERROR : new MslError(6001, MslConstants.ResponseCode.FAIL, "Error compressing data."),
 	    UNCOMPRESSION_ERROR : new MslError(6002, MslConstants.ResponseCode.FAIL, "Error uncompressing data."),

@@ -40,10 +40,9 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
      * 
      * @param authutils authentication utilities.
      */
-    public UserIdTokenAuthenticationFactory(final AuthenticationUtils authutils, final TokenFactory tokenFactory) {
+    public UserIdTokenAuthenticationFactory(final AuthenticationUtils authutils) {
         super(UserAuthenticationScheme.USER_ID_TOKEN);
         this.authutils = authutils;
-        this.tokenFactory = tokenFactory;
     }
 
     /* (non-Javadoc)
@@ -89,9 +88,9 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
         // Verify token is still valid
         final MslError revokeMslError;
         try {
-            revokeMslError = tokenFactory.isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken);
+            revokeMslError = ctx.getTokenFactory().isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken);
         } catch (MslException e) {
-            throw new MslUserAuthException(MslError.USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while check User Id Token for revocation", e).setUserAuthenticationData(uitad);
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while check User Id Token for revocation", e).setUserAuthenticationData(uitad);
         }
         if (revokeMslError!=null) {
             throw new MslUserAuthException(revokeMslError, "Token used to authenticate was revoked").setUserAuthenticationData(uitad);
@@ -111,6 +110,4 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
     /** Authentication utilities. */
     private final AuthenticationUtils authutils;
 
-    /** Token Factory. */
-    private final TokenFactory tokenFactory;
 }

@@ -84,7 +84,8 @@ public class UserIdTokenAuthenticationFactoryTest {
         encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
         tokenFactory = new MockTokenFactory();
-        factory = new UserIdTokenAuthenticationFactory(authutils, tokenFactory);
+        ctx.setTokenFactory(tokenFactory);
+        factory = new UserIdTokenAuthenticationFactory(authutils);
         ctx.addUserAuthenticationFactory(factory);
         
         MASTER_TOKEN = MslTestUtils.getMasterToken(ctx, 1L, 1L);

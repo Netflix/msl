@@ -136,7 +136,6 @@ public class MslError {
     public static final MslError USERIDTOKEN_USERDATA_PARSE_ERROR = new MslError(2018, ResponseCode.USER_REAUTH, "Error parsing user ID token user data.");
     public static final MslError USERIDTOKEN_REVOKED = new MslError(2019, ResponseCode.USER_REAUTH, "User ID token is revoked.");
     public static final MslError USERIDTOKEN_REJECTED_BY_APP = new MslError(2020, ResponseCode.USERDATA_REAUTH, "User ID token is rejected by the application.");
-    public static final MslError USERIDTOKEN_REVOKE_CHECK_ERROR = new MslError(2021, ResponseCode.USER_REAUTH, "User ID token could not be checked for revocation.");
 
     // 3 Service Token
     public static final MslError SERVICETOKEN_MASTERTOKEN_MISMATCH = new MslError(3000, ResponseCode.FAIL, "Service token master token serial number does not match master token serial number.");
@@ -194,6 +193,7 @@ public class MslError {
     public static final MslError USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY = new MslError(5040, ResponseCode.USERDATA_REAUTH, "The entity is not associated with the user.");
     public static final MslError USERAUTH_ENTITYUSER_INCORRECT_DATA = new MslError(5041, ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
     public static final MslError USERAUTH_VERIFICATION_FAILED = new MslError(5042, ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed.");
+    public static final MslError USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR = new MslError(5043, ResponseCode.USERDATA_REAUTH, "User ID token could not be checked for revocation.");
 
     // 6 Message
     public static final MslError UNSUPPORTED_COMPRESSION = new MslError(6000, ResponseCode.FAIL, "Unsupported compression algorithm.");
