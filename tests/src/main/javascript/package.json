@@ -1,6 +1,6 @@
 {
   "name": "msl-tests",
-  "version": "1.1219.0",
+  "version": "1.1220.0",
   "description": "Message Security Layer Tests",
   "keywords": [
     "msl",
@@ -42,7 +42,7 @@
     ]
   },
   "dependencies": {
-    "msl-core": "^1.1218.1"
+    "msl-core": "^1.1220.0"
   },
   "devDependencies": {
     "ec-key": "0.0.2",
