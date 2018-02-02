@@ -17,11 +17,14 @@ package com.netflix.msl.userauth;
 
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslUserAuthException;
+import com.netflix.msl.MslUserIdTokenException;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.tokens.MslUser;
+import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.AuthenticationUtils;
 import com.netflix.msl.util.MslContext;
@@ -81,7 +84,18 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
         // Verify the scheme is still permitted.
         if (!authutils.isSchemePermitted(identity, user, this.getScheme()))
             throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
-        
+
+        // Verify token is still valid
+        final MslError revokeMslError;
+        try {
+            revokeMslError = ctx.getTokenFactory().isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken);
+        } catch (MslException e) {
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while check User Id Token for revocation", e).setUserAuthenticationData(uitad);
+        }
+        if (revokeMslError!=null) {
+            throw new MslUserAuthException(revokeMslError, "Token used to authenticate was revoked").setUserAuthenticationData(uitad);
+        }
+
         // If a user ID token was provided validate the user identities.
         if (userIdToken != null) {
             final MslUser uitUser = userIdToken.getUser();
@@ -95,4 +109,5 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
 
     /** Authentication utilities. */
     private final AuthenticationUtils authutils;
+
 }

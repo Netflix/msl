@@ -19,6 +19,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.netflix.msl.tokens.MockTokenFactory;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -69,7 +70,9 @@ public class UserIdTokenAuthenticationFactoryTest {
     private static MockAuthenticationUtils authutils;
     /** User authentication factory. */
     private static UserAuthenticationFactory factory;
-    
+    /** Token Factory. */
+    private static MockTokenFactory tokenFactory;
+
     /** Master token. */
     private static MasterToken MASTER_TOKEN;
     /** User ID token. */
@@ -80,6 +83,8 @@ public class UserIdTokenAuthenticationFactoryTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
         authutils = new MockAuthenticationUtils();
+        tokenFactory = new MockTokenFactory();
+        ctx.setTokenFactory(tokenFactory);
         factory = new UserIdTokenAuthenticationFactory(authutils);
         ctx.addUserAuthenticationFactory(factory);
         
@@ -102,6 +107,7 @@ public class UserIdTokenAuthenticationFactoryTest {
     @After
     public void reset() {
         authutils.reset();
+        tokenFactory.reset();
     }
     
     @Test
@@ -196,4 +202,16 @@ public class UserIdTokenAuthenticationFactoryTest {
         final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
         factory.authenticate(ctx, MASTER_TOKEN.getIdentity(), data, null);
     }
+
+    @Test
+    public void tokenRevoked() throws MslUserIdTokenException, MslUserAuthException {
+        thrown.expect(MslUserAuthException.class);
+        thrown.expectMslError(MslError.USERIDTOKEN_REVOKED);
+
+        tokenFactory.setRevokedUserIdToken(USER_ID_TOKEN);
+
+        final UserIdTokenAuthenticationData data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+        factory.authenticate(ctx, MASTER_TOKEN.getIdentity(), data, null);
+    }
+
 }
