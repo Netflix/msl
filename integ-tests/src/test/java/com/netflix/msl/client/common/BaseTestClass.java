@@ -103,7 +103,7 @@ public class BaseTestClass {
 
     public void loadProperties() throws IOException {
         final Properties prop = new Properties();
-        prop.load(BaseTestClass.class.getClassLoader().getResourceAsStream("test.properties"));
+        prop.load(BaseTestClass.class.getResourceAsStream("/test.properties"));
 
         final String grettyHttpPort = System.getProperty("gretty.httpPort");
         final String grettyContextPath = System.getProperty("gretty.contextPath");

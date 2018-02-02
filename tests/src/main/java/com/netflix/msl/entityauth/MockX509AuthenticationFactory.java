@@ -43,9 +43,9 @@ import com.netflix.msl.util.MslContext;
  */
 public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
     /** X.509 private key. */
-    private static final String X509_PRIVATE_KEY = "entityauth/msl.key";
+    private static final String X509_PRIVATE_KEY = "/entityauth/msl.key";
     /** X.509 self-signed resource certificate. */
-    private static final String X509_SELF_SIGNED_CERT = "entityauth/msl.pem";
+    private static final String X509_SELF_SIGNED_CERT = "/entityauth/msl.pem";
     
     /** X.509 ESN. */
     public static final String X509_ESN;
@@ -55,9 +55,8 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
     public static final PrivateKey X509_PRIVKEY;
     
     static {
-        final ClassLoader loader = MockX509AuthenticationFactory.class.getClassLoader();
         try {
-            final URL certUrl = loader.getResource(X509_SELF_SIGNED_CERT);
+            final URL certUrl = MockX509AuthenticationFactory.class.getResource(X509_SELF_SIGNED_CERT);
             final InputStream certInputStream = certUrl.openStream();
             final CertificateFactory factory = CertificateFactory.getInstance("X.509");
             X509_CERT = (X509Certificate)factory.generateCertificate(certInputStream);
@@ -67,7 +66,7 @@ public class MockX509AuthenticationFactory extends EntityAuthenticationFactory {
         }
         
         try {
-            final URL keyUrl = loader.getResource(X509_PRIVATE_KEY);
+            final URL keyUrl = MockX509AuthenticationFactory.class.getResource(X509_PRIVATE_KEY);
             final InputStream keyInputStream = keyUrl.openStream();
             final ByteArrayOutputStream key = new ByteArrayOutputStream();
             do {
