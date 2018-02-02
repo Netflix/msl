@@ -37,7 +37,7 @@
             var base64Impl = new Base64Secure();
             var compressionImpls = {};
             compressionImpls[MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
-            var textEncodingImpl = new TextEncodingUtf8;
+            var textEncodingImpl = new TextEncodingUtf8();
             
             // The properties.
             var props = {
