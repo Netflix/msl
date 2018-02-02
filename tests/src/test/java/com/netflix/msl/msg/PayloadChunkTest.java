@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import java.util.zip.GZIPInputStream;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import com.netflix.msl.util.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -55,6 +54,7 @@ import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.Base64;
+import com.netflix.msl.util.IOUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;

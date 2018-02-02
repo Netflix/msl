@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.netflix.msl.io;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
-import com.netflix.msl.util.IOUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.netflix.msl.util.IOUtils;
 
 /**
  * LZW input stream tests.

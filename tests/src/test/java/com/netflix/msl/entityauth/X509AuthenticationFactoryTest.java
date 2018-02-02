@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,17 +19,13 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-import com.netflix.msl.util.IOUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -47,6 +43,7 @@ import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.IOUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslTestUtils;
