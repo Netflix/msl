@@ -479,16 +479,26 @@ bool MessageInputStream::close(int timeout)
 	return true;
 }
 
-void MessageInputStream::mark()
+void MessageInputStream::mark(size_t readlimit)
 {
+    // Remember the read limit, reset the read count.
+    readlimit_ = readlimit;
+    readcount_ = 0;
+
+    // Start buffering.
+    buffering_ = true;
+
 	// If there is a current payload...
 	if (currentPayload_) {
 		// Remove all buffered data earlier than the current payload.
-		payloadIterator_ = -1;
 		size_t offset = 0;
 		while (offset < payloads_.size() && payloads_[offset] != currentPayload_)
 			++offset;
 		payloads_.erase(payloads_.begin(), payloads_.begin() + static_cast<ptrdiff_t>(offset));
+
+		// Add the current payload if it was not already buffered.
+		if (payloads_.size() == 0)
+		    payloads_.push_back(currentPayload_);
 
 		// Reset the iterator to continue reading buffered data from the
 		// current payload.
@@ -496,7 +506,7 @@ void MessageInputStream::mark()
 		currentPayload_ = payloads_[static_cast<size_t>(payloadIterator_++)];
 
 		// Set the new mark point on the current payload.
-		currentPayload_->mark();
+		currentPayload_->mark(readlimit);
 		return;
 	}
 
@@ -566,11 +576,30 @@ int MessageInputStream::read(ByteArray& out, size_t offset, size_t len, int time
 	// stream.
 	if (bytesRead == 0 && len > 0)
 		return -1;
+
+	// If buffering data increment the read count.
+	if (buffering_) {
+	    readcount_ += bytesRead;
+
+	    // If the read count exceeds the read limit stop buffering payloads
+	    // and reset the read count and limit, but retain the payload
+	    // iterator as we need to continue reading from any buffered data.
+	    if (readcount_ > readlimit_) {
+	        buffering_ = false;
+	        readcount_ = readlimit_ = 0;
+	    }
+	}
+
+	// Return the number of bytes read.
 	return static_cast<int>(bytesRead);
 }
 
 void MessageInputStream::reset()
 {
+    // Do nothing if we are not buffering.
+    if (!buffering_)
+        return;
+
     // Reset all payloads and initialize the payload iterator.
     //
     // We need to reset the payloads since we are going to re-read them and
@@ -583,6 +612,9 @@ void MessageInputStream::reset()
 	} else {
 		currentPayload_.reset();
 	}
+
+	// Reset the read count.
+	readcount_ = 0;
 }
 
 }}} // namespace netflix::msl::msg

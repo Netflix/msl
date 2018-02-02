@@ -123,7 +123,7 @@ shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStre
     // Read the byte stream identifier.
     const int WIDTH = 1;
     ByteArray buffer(WIDTH);
-    source->mark();
+    source->mark(1);
     const int count = source->read(buffer, 0, WIDTH, TIMEOUT); // TODO: Someone has to tell me this timeout.
     if (count == -1)
         throw new MslEncoderException("End of stream reached when attempting to read the byte stream identifier.");

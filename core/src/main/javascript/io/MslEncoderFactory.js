@@ -123,7 +123,7 @@
                 
                 // Read the byte stream identifier.
                 var bufferedSource = source.markSupported() ? source : new BufferedInputStream(source);
-                bufferedSource.mark();
+                bufferedSource.mark(1);
                 bufferedSource.read(1, timeout, {
                     result: function(bytes) {
                         AsyncExecutor(callback, function() {

@@ -224,11 +224,39 @@
                         _eom: { value: false, writable: true, enumerable: false, configurable: false },
                         _handshake: { value: null, writable: true, enumerable: false, configurable: false },
                         _closeSource: { value: false, writable: true, enumerable: false, configurable: false },
-                        /** @type {Array.<Uint8Array>} */
+                        /**
+                         * True if buffering.
+                         * 
+                         * @type {boolean}
+                         */
+                        _buffering: { value: false, writable: true, enumerable: false, configurable: false },
+                        /**
+                         * Buffered payload data.
+                         * 
+                         * @type {Array.<Uint8Array>}
+                         */
                         _payloads: { value: [], writable: true, enumerable: false, configurable: false },
                         _payloadIndex: { value: -1, writable: true, enumerable: false, configurable: false },
                         _payloadOffset: { value: 0, writable: true, enuemrable: false, configurable: false },
+                        /**
+                         * First payload byte offset when {@link #mark(int)}
+                         * was called.
+                         * 
+                         * @type {number}
+                         */
                         _markOffset: { value: 0, writable: true, enumerable: false, configurable: false },
+                        /**
+                         * Mark read limit. -1 for no limit.
+                         * 
+                         * @type {number}
+                         */
+                        _readlimit: { value: 0, writable: true, enumerable: false, configurable: false },
+                        /**
+                         * Mark read count.
+                         * 
+                         * @type {number}
+                         */
+                        _readcount: { value: 0, writable: true, enumerable: false, configurable: false },
                         _currentPayload: { value: null, writable: true, enumerable: false, configurable: false },
                         _readException: { value: null, writable: true, enumerable: false, configurable: false },
                         // Set true once the header has been read and payloads may
@@ -755,12 +783,13 @@
                                         if (payload.isEndOfMessage())
                                             this._eom = true;
 
-                                        // Save the payload in the buffer and return it. We have to
-                                        // unset the payload iterator since we're adding to the
-                                        // payloads list.
+                                        // If mark was called save the payload in the buffer. We have to unset
+                                        // the payload iterator since we're adding to the payloads list.
                                         var data = payload.data;
-                                        this._payloads.push(data);
-                                        this._payloadIndex = -1;
+                                        if (this._markOffset != -1) {
+                                            this._payloads.push(data);
+                                            this._payloadIndex = -1;
+                                        }
                                         return data;
                                     }, self);
                                 },
@@ -1030,12 +1059,23 @@
         },
 
         /** @inheritDoc */
-        mark: function mark() {
+        mark: function mark(readlimit) {
+            // Remember the read limit, reset the read count.
+            this._readlimit = (readlimit) ? readlimit : -1;
+            this._readcount = 0;
+
+            // Start buffering.
+            this._buffering = true;
+            
             // If there is a current payload...
             if (this._currentPayload) {
                 // Remove all buffered data earlier than the current payload.
                 while (this._payloads.length > 0 && this._payloads[0] !== this._currentPayload)
                     this._payloads.shift();
+                
+                // Add the current payload if it was not already buffered.
+                if (this._payloads.length == 0)
+                    this._payloads.push(this._currentPayload);
 
                 // Reset the iterator to continue reading buffered data from the
                 // current payload.
@@ -1190,6 +1230,19 @@
                                     read = count;
                                     dataOffset += count;
                                     this._payloadOffset += count;
+
+                                    // If buffering data increment the read count.
+                                    if (this._buffering) {
+                                        this._readcount += count;
+                                        
+                                        // If the read count exceeds the read limit stop buffering payloads
+                                        // and reset the read count and limit, but retain the payload
+                                        // iterator as we need to continue reading from any buffered data.
+                                        if (this._readlimit != -1 && this._readcount > this._readlimit) {
+                                            this._buffering = false;
+                                            this._readcount = this._readlimit = 0;
+                                        }
+                                    }
                                 }
                             }
 
@@ -1259,6 +1312,10 @@
 
         /** @inheritDoc */
         reset: function reset() {
+            // Do nothing if we are not buffering.
+            if (!this._buffering)
+                return;
+            
             // Reset all payloads and initialize the payload iterator.
             //
             // We need to reset the payloads since we are going to re-read them and
@@ -1270,6 +1327,9 @@
             } else {
                 this._currentPayload = null;
             }
+            
+            // Reset the read count.
+            this._readcount = 0;
         },
     });
 

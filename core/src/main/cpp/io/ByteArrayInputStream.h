@@ -68,7 +68,7 @@ public:
     virtual bool close(int timeout = -1) { (void)timeout; closed_ = true; return true; }
 
     /** @inheritDoc */
-    virtual void mark() { mark_ = currentPosition_; }
+    virtual void mark(size_t /*readlimit*/) { mark_ = currentPosition_; }
 
     /** @inheritDoc */
     virtual void reset() { currentPosition_ = mark_; }

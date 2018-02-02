@@ -171,7 +171,7 @@ public:
     virtual bool close(int timeout = -1);
 
     /** @inheritDoc */
-    virtual void mark();
+    virtual void mark(size_t readlimit);
 
     /** @inheritDoc */
     virtual bool markSupported() { return true; }
@@ -233,6 +233,8 @@ private:
     /** True if the source input stream should be closed. */
     bool closeSource_ = false;
 
+    /** True if buffering. */
+    bool buffering_ = false;
     /**
      * Buffered payload data.
      *
@@ -242,6 +244,10 @@ private:
     std::vector<std::shared_ptr<io::ByteArrayInputStream>> payloads_;
     /** Buffered payload data iterator. Not -1 if reading buffered data. */
     int payloadIterator_ = -1;
+    /** Mark read limit. */
+    size_t readlimit_ = 0;
+    /** Mark read count. */
+    size_t readcount_ = 0;
     /** Current payload chunk data. */
     std::shared_ptr<io::ByteArrayInputStream> currentPayload_;
 

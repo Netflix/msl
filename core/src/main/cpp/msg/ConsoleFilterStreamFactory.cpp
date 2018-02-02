@@ -58,8 +58,8 @@ public:
 	}
 
 	/** @inheritDoc */
-	virtual void mark() {
-		in_->mark();
+	virtual void mark(size_t readlimit) {
+		in_->mark(readlimit);
 	}
 
 	/** @inheritDoc */
