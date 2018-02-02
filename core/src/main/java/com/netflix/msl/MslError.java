@@ -136,6 +136,7 @@ public class MslError {
     public static final MslError USERIDTOKEN_USERDATA_PARSE_ERROR = new MslError(2018, ResponseCode.USER_REAUTH, "Error parsing user ID token user data.");
     public static final MslError USERIDTOKEN_REVOKED = new MslError(2019, ResponseCode.USER_REAUTH, "User ID token is revoked.");
     public static final MslError USERIDTOKEN_REJECTED_BY_APP = new MslError(2020, ResponseCode.USERDATA_REAUTH, "User ID token is rejected by the application.");
+    public static final MslError USERIDTOKEN_REVOKE_CHECK_ERROR = new MslError(2021, ResponseCode.USER_REAUTH, "User ID token could not be checked for revocation.");
 
     // 3 Service Token
     public static final MslError SERVICETOKEN_MASTERTOKEN_MISMATCH = new MslError(3000, ResponseCode.FAIL, "Service token master token serial number does not match master token serial number.");

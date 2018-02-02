@@ -165,8 +165,9 @@
 	    USERIDTOKEN_USERDATA_PARSE_ERROR : new MslError(2018, MslConstants.ResponseCode.USER_REAUTH, "Error parsing user ID token user data."),
 	    USERIDTOKEN_REVOKED : new MslError(2019, MslConstants.ResponseCode.USER_REAUTH, "User ID token is revoked."),
 	    USERIDTOKEN_REJECTED_BY_APP : new MslError(2020, MslConstants.ResponseCode.USERDATA_REAUTH, "User ID token is rejected by the application."),
-	
-	    // 3 Service Token
+        USERIDTOKEN_REVOKE_CHECK_ERROR : new MslError(2021, MslConstants.ResponseCode.USER_REAUTH, "User ID token could not be checked for revocation."),
+
+        // 3 Service Token
 	    SERVICETOKEN_MASTERTOKEN_MISMATCH : new MslError(3000, MslConstants.ResponseCode.FAIL, "Service token master token serial number does not match master token serial number."),
 	    SERVICETOKEN_USERIDTOKEN_MISMATCH : new MslError(3001, MslConstants.ResponseCode.FAIL, "Service token user ID token serial number does not match user ID token serial number."),
 	    SERVICETOKEN_SERVICEDATA_INVALID : new MslError(3002, MslConstants.ResponseCode.FAIL, "Service token data invalid."),
