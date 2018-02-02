@@ -316,9 +316,15 @@
 	                        .setUserAuthenticationData(userAuthData)
 	                        .setMessageId(requestMessageId);
                     }
-                    user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
+                    factory.authenticate(ctx, masterToken.identity, userAuthData, null, {
+                        result: function(user) {
+                            tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
+                        },
+                        error: callback.error,
+                    });
+                } else {
+                    tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 }
-                tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 return;
             }
 

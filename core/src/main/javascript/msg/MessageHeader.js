@@ -1344,7 +1344,20 @@
                                                         if (!factory)
                                                             throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                                                         var identity = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
-                                                        user = factory.authenticate(ctx, identity, userAuthData, userIdToken);
+                                                        factory.authenticate(ctx, identity, userAuthData, userIdToken, {
+                                                            result: function(user) {
+                                                                // Service tokens are authenticated by the master token if it
+                                                                // exists or by the application crypto context.
+                                                                getServiceTokens(ctx, tokensMa, tokenVerificationMasterToken, userIdToken, cryptoContexts, headerdata, {
+                                                                    result: function(serviceTokens) {
+                                                                        buildHeader(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, user, serviceTokens, callback);
+                                                                    },
+                                                                    error: callback.error,
+                                                                });
+                                                            },
+                                                            error: callback.error,
+                                                        });
+                                                        return;
                                                     } else if (userIdToken) {
                                                         user = userIdToken.user;
                                                     } else {

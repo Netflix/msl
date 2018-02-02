@@ -38,6 +38,7 @@
 	var BlockingQueue = require('../util/BlockingQueue.js');
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
 	var TextEncoding = require('../util/TextEncoding.js');
+	var MslConstants = require('../MslConstants.js');
 	
     /**
      * Interface for getting an HTTP response given a request.
