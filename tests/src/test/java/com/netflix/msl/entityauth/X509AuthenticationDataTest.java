@@ -30,6 +30,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+import com.netflix.msl.util.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -60,7 +61,7 @@ public class X509AuthenticationDataTest {
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** X.509 expired resource certificate. */
-    private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
+    private static final String X509_EXPIRED_CERT = "/entityauth/expired.pem";
     
     /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
@@ -76,11 +77,7 @@ public class X509AuthenticationDataTest {
     public static void setup() throws IOException, MslEncodingException, MslCryptoException, CertificateException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
         encoder = ctx.getMslEncoderFactory();
-        
-        final URL expiredUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_EXPIRED_CERT);
-        final InputStream expiredInputStream = expiredUrl.openStream();
-        final CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        expiredCert = (X509Certificate)factory.generateCertificate(expiredInputStream);
+        expiredCert = IOUtils.readX509(X509_EXPIRED_CERT);
     }
     
     @AfterClass

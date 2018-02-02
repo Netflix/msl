@@ -23,15 +23,14 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
+import com.netflix.msl.util.IOUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -50,7 +49,6 @@ import com.netflix.msl.crypto.JcaAlgorithm;
 import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.LZWInputStream;
-import com.netflix.msl.io.LZWOutputStreamTest;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
@@ -71,7 +69,7 @@ public class PayloadChunkTest {
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** RAW data file. */
-    private static final String DATAFILE = "pg1112.txt";
+    private static final String DATAFILE = "/pg1112.txt";
     
     /** Key payload. */
     private static final String KEY_PAYLOAD = "payload";
@@ -105,31 +103,13 @@ public class PayloadChunkTest {
                 {
                     final ByteArrayInputStream bais = new ByteArrayInputStream(data);
                     final GZIPInputStream gzis = new GZIPInputStream(bais);
-                    final byte[] buffer = new byte[data.length];
-                    final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                    while (buffer.length > 0) {
-                        final int bytesRead = gzis.read(buffer);
-                        if (bytesRead == -1) break;
-                        baos.write(buffer, 0, bytesRead);
-                    }
-                    return baos.toByteArray();
+                    return IOUtils.readAllBytes(gzis);
                 }
                 case LZW:
                 {
                     final ByteArrayInputStream bais = new ByteArrayInputStream(data);
                     final LZWInputStream lzwis = new LZWInputStream(bais);
-                    try {
-                        final byte[] buffer = new byte[data.length];
-                        final ByteArrayOutputStream baos = new ByteArrayOutputStream(data.length);
-                        while (buffer.length > 0) {
-                            final int bytesRead = lzwis.read(buffer);
-                            if (bytesRead == -1) break;
-                            baos.write(buffer, 0, bytesRead);
-                        }
-                        return baos.toByteArray();
-                    } finally {
-                        lzwis.close();
-                    }
+                    return IOUtils.readAllBytes(lzwis);
                 }
                 default:
                     throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
@@ -176,20 +156,7 @@ public class PayloadChunkTest {
         CRYPTO_CONTEXT = new SymmetricCryptoContext(ctx, CRYPTO_CONTEXT_ID, ENCRYPTION_KEY, HMAC_KEY, null);
         
         // Load the raw file.
-        final ClassLoader loader = LZWOutputStreamTest.class.getClassLoader();
-        final InputStream raw = loader.getResourceAsStream(DATAFILE);
-        try {
-            final ByteArrayOutputStream rawos = new ByteArrayOutputStream();
-            final byte[] data = new byte[256 * 1024];
-            do {
-                final int read = raw.read(data);
-                if (read == -1) break;
-                rawos.write(data, 0, read);
-            } while (true);
-            rawdata = rawos.toByteArray();
-        } finally {
-            raw.close();
-        }
+        rawdata = IOUtils.readResource(DATAFILE);
     }
     
     @AfterClass

@@ -29,6 +29,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
+import com.netflix.msl.util.IOUtils;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -60,9 +61,9 @@ public class X509AuthenticationFactoryTest {
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** X.509 expired resource certificate. */
-    private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
+    private static final String X509_EXPIRED_CERT = "/entityauth/expired.pem";
     /** X.509 untrusted resource certificate. */
-    private static final String X509_UNTRUSTED_CERT = "entityauth/untrusted.pem";
+    private static final String X509_UNTRUSTED_CERT = "/entityauth/untrusted.pem";
 
     /** Key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
@@ -78,16 +79,9 @@ public class X509AuthenticationFactoryTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
         encoder = ctx.getMslEncoderFactory();
         
-        final CertificateFactory x509Factory = CertificateFactory.getInstance("X.509");
-        
-        final URL expiredUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_EXPIRED_CERT);
-        final InputStream expiredInputStream = expiredUrl.openStream();
-        expiredCert = (X509Certificate)x509Factory.generateCertificate(expiredInputStream);
+        expiredCert = IOUtils.readX509(X509_EXPIRED_CERT);
+        untrustedCert = IOUtils.readX509(X509_UNTRUSTED_CERT);
 
-        final URL untrustedUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_UNTRUSTED_CERT);
-        final InputStream untrustedInputStream = untrustedUrl.openStream();
-        untrustedCert = (X509Certificate)x509Factory.generateCertificate(untrustedInputStream);
-        
         final X509Store caStore = new X509Store();
         caStore.addTrusted(MockX509AuthenticationFactory.X509_CERT);
         authutils = new MockAuthenticationUtils();
