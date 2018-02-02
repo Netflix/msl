@@ -323,15 +323,6 @@ public class MessageInputStream extends InputStream {
             throw e;
         }
     }
-    
-    /* (non-Javadoc)
-     * @see java.lang.Object#finalize()
-     */
-    @Override
-    protected void finalize() throws Throwable {
-        // Do not close the source because we might want to reuse it.
-        super.finalize();
-    }
 
     /**
      * Retrieve the next MSL object.
