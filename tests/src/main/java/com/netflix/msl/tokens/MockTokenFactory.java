@@ -238,6 +238,16 @@ public class MockTokenFactory implements TokenFactory {
         }
     }
 
+    /**
+     * Reset the Token Factory state
+     */
+    public void reset() {
+        sequenceNumber = -1;
+        revokedMasterToken = null;
+        largestNonReplayableId = 0;
+        revokedUserIdToken = null;
+    }
+
     /** Newest master token sequence number. (-1 accepts all master tokens.) */
     protected long sequenceNumber = -1;
     /** Revoked master token. (null accepts all master tokens.) */
