@@ -52,8 +52,8 @@
         },
         
         /** @inheritDoc */
-        mark: function mark() {
-        	this._input.mark();
+        mark: function mark(readlimit) {
+            this._input.mark(readlimit);
         },
         
         /** @inheritDoc */
