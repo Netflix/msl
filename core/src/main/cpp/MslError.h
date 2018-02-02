@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -199,6 +199,7 @@ public:
     USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY,
     USERAUTH_ENTITYUSER_INCORRECT_DATA,
 	USERAUTH_VERIFICATION_FAILED,
+	USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR,
 
     // 6 Message
     UNSUPPORTED_COMPRESSION,

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,46 +32,46 @@ class MockTokenFactory : public TokenFactory
 public:
 	virtual ~MockTokenFactory() {};
 
-    MockTokenFactory();
+	MockTokenFactory();
 
-    /**
-     * @param sequenceNumber the newest master token sequence number, or -1 to
-     *        accept all master tokens as the newest.
-     */
-    void setNewestMasterToken(int64_t sequenceNumber) {
-    	this->sequenceNumber = sequenceNumber;
-    }
+	/**
+	 * @param sequenceNumber the newest master token sequence number, or -1 to
+	 *        accept all master tokens as the newest.
+	 */
+	void setNewestMasterToken(int64_t sequenceNumber) {
+	    this->sequenceNumber = sequenceNumber;
+	}
 
-    /**
-     * @param masterToken the master token to consider revoked or {@code null}
-     *        to unset.
-     */
-    void setRevokedMasterToken(std::shared_ptr<MasterToken> masterToken) {
-    	revokedMasterToken = masterToken;
-    }
+	/**
+	 * @param masterToken the master token to consider revoked or {@code null}
+	 *        to unset.
+	 */
+	void setRevokedMasterToken(std::shared_ptr<MasterToken> masterToken) {
+	    revokedMasterToken = masterToken;
+	}
 
-    /** @inheritDoc */
-    virtual MslError isMasterTokenRevoked(std::shared_ptr<util::MslContext> ctx,
-                std::shared_ptr<MasterToken> masterToken);
+	/** @inheritDoc */
+	virtual MslError isMasterTokenRevoked(std::shared_ptr<util::MslContext> ctx,
+	        std::shared_ptr<MasterToken> masterToken);
 
-    /**
-     * @param nonReplayableId the largest non-replayable ID, or -1 to accept
-     *        all non-replayable IDs.
-     */
-    void setLargestNonReplayableId(int64_t nonReplayableId) {
-    	largestNonReplayableId = nonReplayableId;
-    }
+	/**
+	 * @param nonReplayableId the largest non-replayable ID, or -1 to accept
+	 *        all non-replayable IDs.
+	 */
+	void setLargestNonReplayableId(int64_t nonReplayableId) {
+	    largestNonReplayableId = nonReplayableId;
+	}
 
-    /** @inheritDoc */
-    virtual MslError acceptNonReplayableId(std::shared_ptr<util::MslContext> ctx,
-                 std::shared_ptr<MasterToken> masterToken, int64_t nonReplayableId);
+	/** @inheritDoc */
+	virtual MslError acceptNonReplayableId(std::shared_ptr<util::MslContext> ctx,
+	        std::shared_ptr<MasterToken> masterToken, int64_t nonReplayableId);
 
-    /** @inheritDoc */
-    virtual std::shared_ptr<MasterToken> createMasterToken(
-            std::shared_ptr<util::MslContext> ctx,
-            std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData,
-            const crypto::SecretKey& encryptionKey, const crypto::SecretKey& hmacKey,
-            std::shared_ptr<io::MslObject> issuerData);
+	/** @inheritDoc */
+	virtual std::shared_ptr<MasterToken> createMasterToken(
+	        std::shared_ptr<util::MslContext> ctx,
+	        std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData,
+	        const crypto::SecretKey& encryptionKey, const crypto::SecretKey& hmacKey,
+	        std::shared_ptr<io::MslObject> issuerData);
 
     /** @inheritDoc */
     virtual MslError isMasterTokenRenewable(std::shared_ptr<util::MslContext> ctx,
@@ -109,6 +109,16 @@ public:
     /** @inheritDoc */
     virtual std::shared_ptr<MslUser> createUser(std::shared_ptr<util::MslContext> ctx,
             const std::string& userdata);
+
+    /**
+     * Reset the token factory state.
+     */
+    void reset() {
+        sequenceNumber = -1;
+        revokedMasterToken.reset();
+        largestNonReplayableId = 0;
+        revokedUserIdToken.reset();
+    }
 
 protected:
     /** Newest master token sequence number. (-1 accepts all master tokens.) */
