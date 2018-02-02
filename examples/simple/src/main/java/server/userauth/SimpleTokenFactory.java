@@ -90,9 +90,8 @@ public class SimpleTokenFactory implements TokenFactory {
         
         // Accept if there is no non-replayable ID.
         final String key = masterToken.getIdentity() + ":" + masterToken.getSerialNumber();
-        final Long largestNonReplayableId = nonReplayableIds.get(key);
+        final Long largestNonReplayableId = nonReplayableIds.putIfAbsent(key, nonReplayableId);
         if (largestNonReplayableId == null) {
-            nonReplayableIds.put(key, nonReplayableId);
             return null;
         }
         
