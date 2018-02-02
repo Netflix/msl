@@ -114,7 +114,7 @@ public abstract class MslEncoderFactory {
      */
     @SuppressWarnings("unchecked")
     static String stringify(final Object value) {
-        if (value == null || value.equals(null)) {
+        if (value == null) {
             return "null";
         } else if (value instanceof MslObject || value instanceof MslArray) {
             return value.toString();
