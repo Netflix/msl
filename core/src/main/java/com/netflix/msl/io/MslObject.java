@@ -61,10 +61,11 @@ public class MslObject {
      */
     public MslObject(final Map<?,?> map) {
         if (map != null) {
-            for (final Object key : map.keySet()) {
+            for (final Map.Entry<?,?> entry: map.entrySet()) {
+                Object key = entry.getKey();
                 if (!(key instanceof String))
                     throw new IllegalArgumentException("Map key is not a string.");
-                final Object value = map.get(key);
+                final Object value = entry.getValue();
                 put((String)key, value);
             }
         }
