@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,11 @@ describe("UserIdTokenAuthenticationFactory", function() {
     var MockAuthenticationUtils = require('msl-tests/util/MockAuthenticationUtils.js');
     var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
     var MockMslUser = require('msl-tests/tokens/MockMslUser.js');
+    var MockTokenFactory = require('msl-tests/tokens/MockTokenFactory.js');
     
-	/** MSL encoder format. */
-	var ENCODER_FORMAT = MslEncoderFormat.JSON;
-	
+    /** MSL encoder format. */
+    var ENCODER_FORMAT = MslEncoderFormat.JSON;
+    
     /** Key master token. */
     var KEY_MASTER_TOKEN = "mastertoken";
     
@@ -49,6 +50,8 @@ describe("UserIdTokenAuthenticationFactory", function() {
     var authutils;
     /** User authentication factory. */
     var factory;
+    /** Token factory. */
+    var tokenFactory;
     
     /** Master token. */
     var MASTER_TOKEN;
@@ -65,10 +68,12 @@ describe("UserIdTokenAuthenticationFactory", function() {
             });
             waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
-            	encoder = ctx.getMslEncoderFactory();
+                encoder = ctx.getMslEncoderFactory();
                 authutils = new MockAuthenticationUtils();
                 factory = new UserIdTokenAuthenticationFactory(authutils);
                 ctx.addUserAuthenticationFactory(factory);
+                tokenFactory = new MockTokenFactory();
+                ctx.setTokenFactory(tokenFactory);
             
                 MslTestUtils.getMasterToken(ctx, 1, 1, {
                     result: function(x) { MASTER_TOKEN = x; },
@@ -89,19 +94,20 @@ describe("UserIdTokenAuthenticationFactory", function() {
     
     afterEach(function() {
         authutils.reset();
+        tokenFactory.reset();
     });
     
     it("create data", function() {
-    	var data, userAuthMo;
-    	runs(function() {
-	        data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-	        data.getAuthData(encoder, ENCODER_FORMAT, {
-	        	result: function(x) { userAuthMo = x; },
+        var data, userAuthMo;
+        runs(function() {
+            data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+            data.getAuthData(encoder, ENCODER_FORMAT, {
+                result: function(x) { userAuthMo = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
-	        });
-    	});
-    	waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
-        
+            });
+        });
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
+
         var authdata;
         runs(function() {
             factory.createData(ctx, null, userAuthMo, {
@@ -119,16 +125,16 @@ describe("UserIdTokenAuthenticationFactory", function() {
     });
     
     it("encode exception", function() {
-    	var userAuthMo;
-    	runs(function() {
+        var userAuthMo;
+        runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
             data.getAuthData(encoder, ENCODER_FORMAT, {
-            	result: function(x) { userAuthMo = x; },
+                result: function(x) { userAuthMo = x; },
                 error: function(e) { exception = e; },
             });
-    	});
-    	waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
-    	
+        });
+        waitsFor(function() { return userAuthMo; }, "userAuthMo", MslTestConstants.TIMEOUT);
+        
         var exception;
         runs(function() {
             userAuthMo.remove(KEY_MASTER_TOKEN);
@@ -147,9 +153,20 @@ describe("UserIdTokenAuthenticationFactory", function() {
     
     it("authenticate", function() {
         var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-        var user = factory.authenticate(ctx, MASTER_TOKEN.identity, data, null);
-        expect(user).not.toBeNull();
-        expect(user).toEqual(USER_ID_TOKEN.user);
+        
+        var user;
+        runs(function() {
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function(x) { user = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return user; }, "user", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(user).not.toBeNull();
+            expect(user).toEqual(USER_ID_TOKEN.user);
+        });
     });
     
     it("authenticate user ID token", function() {
@@ -171,10 +188,18 @@ describe("UserIdTokenAuthenticationFactory", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
+        var user;
         runs(function() {
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            var u = factory.authenticate(ctx, MASTER_TOKEN.identity, data, userIdToken);
-            expect(u).toEqual(USER_ID_TOKEN.user);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, userIdToken, {
+                result: function(x) { user = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return user; }, "user", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(user).toEqual(USER_ID_TOKEN.user);
         });
     });
     
@@ -198,11 +223,18 @@ describe("UserIdTokenAuthenticationFactory", function() {
         });
         waitsFor(function() { return userIdToken; }, "user ID token", MslTestConstants.TIMEOUT);
         
+        var exception;
         runs(function() {
-            var f = function() {
-                var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-                factory.authenticate(ctx, MASTER_TOKEN.identity, data, userIdToken);
-            };
+            var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, userIdToken, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            var f = function() { throw exception; };
             expect(f).toThrow(new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH));
         });
     });
@@ -216,16 +248,23 @@ describe("UserIdTokenAuthenticationFactory", function() {
             });
         });
         waitsFor(function() { return untrustedMasterToken; }, "untrusted master token", MslTestConstants.TIMEOUT);
-        
+
+        var exception;
         runs(function() {
-            var f = function() {
-                var data = new UserIdTokenAuthenticationData(untrustedMasterToken, USER_ID_TOKEN);
-                factory.authenticate(ctx, MASTER_TOKEN.identity, data, null);
-            };
+            var data = new UserIdTokenAuthenticationData(untrustedMasterToken, USER_ID_TOKEN);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
+        runs(function() {
+            var f = function() { throw exception; };
             expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED));
         });
     });
-    
+
     it("mismatched master token identity", function() {
         var mismatchedCtx;
         runs(function() {
@@ -244,12 +283,19 @@ describe("UserIdTokenAuthenticationFactory", function() {
             });
         });
         waitsFor(function() { return mismatchedMasterToken; }, "mismatched master token", MslTestConstants.TIMEOUT);
-        
+
+        var exception;
         runs(function() {
-            var f = function() {
-                var data = new UserIdTokenAuthenticationData(mismatchedMasterToken, USER_ID_TOKEN);
-                factory.authenticate(ctx, MASTER_TOKEN.identity, data, null);
-            };
+            var data = new UserIdTokenAuthenticationData(mismatchedMasterToken, USER_ID_TOKEN);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
+        runs(function() {
+            var f = function() { throw exception; };
             expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH));
         });
     });
@@ -263,23 +309,58 @@ describe("UserIdTokenAuthenticationFactory", function() {
             });
         });
         waitsFor(function() { return untrustedUserIdToken; }, "untrusted user ID token", MslTestConstants.TIMEOUT);
-        
+
+        var exception;
         runs(function() {
-            var f = function() {
-                var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, untrustedUserIdToken);
-                factory.authenticate(ctx, MASTER_TOKEN.identity, data, null);
-            };
+            var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, untrustedUserIdToken);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
+        runs(function() {
+            var f = function() { throw exception; };
             expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED));
         });
     });
     
     it("user not permitted", function() {
-        var f = function() {
+        var exception;
+        runs(function() {
             authutils.disallowScheme(MASTER_TOKEN.identity, USER_ID_TOKEN.user, UserAuthenticationScheme.USER_ID_TOKEN);
 
             var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
-            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null);
-        };
-        expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA));
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA));
+        });
+    });
+    
+    it("token revoked", function() {
+        var exception;
+        runs(function() {
+            tokenFactory.setRevokedUserIdToken(USER_ID_TOKEN);
+
+            var data = new UserIdTokenAuthenticationData(MASTER_TOKEN, USER_ID_TOKEN);
+            factory.authenticate(ctx, MASTER_TOKEN.identity, data, null, {
+                result: function() {},
+                error: function(e) { exception = e; },
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslUserAuthException(MslError.USERIDTOKEN_REVOKED));
+        });
     });
 });
