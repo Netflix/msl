@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
     var UserIdTokenAuthenticationData = require('msl-core/userauth/UserIdTokenAuthenticationData.js');
     var MslUserAuthException = require('msl-core/MslUserAuthException.js');
     var MslError = require('msl-core/MslError.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
     
     var MockUserIdTokenAuthenticationFactory = module.exports = UserAuthenticationFactory.extend({
         /**
@@ -65,42 +66,68 @@
         },
     
         /** @inheritDoc */
-        authenticate: function authentication(ctx, identity, data, userIdToken) {
-            // Make sure we have the right kind of user authentication data.
-            if (!(data instanceof UserIdTokenAuthenticationData))
-                throw new MslInternalException("Incorrect authentication data type " + data + ".");
-            var uitad = data;
+        authenticate: function authentication(ctx, identity, data, userIdToken, callback) {
+            var self = this;
             
-            // Extract and check master token.
-            var uitadMasterToken = uitad.masterToken;
-            var uitadIdentity = uitadMasterToken.identity;
-            if (!uitadIdentity)
-                throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
-            if (identity != uitadIdentity)
-                throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitadIdentity).setUserAuthenticationData(uitad);
+            AsyncExecutor(callback, function() {
+                // Make sure we have the right kind of user authentication data.
+                if (!(data instanceof UserIdTokenAuthenticationData))
+                    throw new MslInternalException("Incorrect authentication data type " + data + ".");
+                var uitad = data;
+
+                // Extract and check master token.
+                var uitadMasterToken = uitad.masterToken;
+                var uitadIdentity = uitadMasterToken.identity;
+                if (!uitadIdentity)
+                    throw new MslUserAuthException(MslError.USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
+                if (identity != uitadIdentity)
+                    throw new MslUserAuthException(MslError.USERAUTH_ENTITY_MISMATCH, "entity identity " + identity + "; uad identity " + uitadIdentity).setUserAuthenticationData(uitad);
+
+                // Authenticate the user.
+                var uitadUserIdToken = uitad.userIdToken;
+                var user = uitadUserIdToken.user;
+                if (!user)
+                    throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
+
+                // Verify the user.
+                if (!uitadMasterToken.equals(this.masterToken) ||
+                        !uitadUserIdToken.equals(this.userIdToken))
+                {
+                    throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme.name + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
+                }
+
+                // Verify token has not been revoked.
+                ctx.getTokenFactory().isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken, {
+                    result: function(revokeMslError) {
+                        AsyncExecutor(callback, function() {
+                            if (revokeMslError)
+                                throw new MslUserAuthException(revokeMslError, "User ID token used to authenticate was revoked.").setUserAuthenticationData(uitad);
+                            validateIdentities(user, uitad);
+                        }, self);
+                    },
+                    error: function(e) {
+                        AsyncExecutor(callback, function() {
+                            if (e instanceof MslException)
+                                throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while checking User ID Token for revocation", e).setUserAuthenticationData(uitad);
+                            throw e;
+                        }, self);
+                    }
+                });
+            }, self);
             
-            // Authenticate the user.
-            var uitadUserIdToken = uitad.userIdToken;
-            var user = uitadUserIdToken.user;
-            if (!user)
-                throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
-            
-            // Verify the user.
-            if (!uitadMasterToken.equals(this.masterToken) ||
-                !uitadUserIdToken.equals(this.userIdToken))
-            {
-                throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.scheme.name + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
+            function validateIdentities(user, uitad) {
+                AsyncExecutor(callback, function() {
+                    // If a user ID token was provided validate the user identities.
+                    if (userIdToken) {
+                        var uitUser = userIdToken.user;
+                        if (!user.equals(uitUser))
+                            throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUserAuthenticationData(uitad);
+                    }
+
+                    // Return the user.
+                    return user;
+                }, this);
             }
-            
-            // If a user ID token was provided validate the user identities.
-            if (userIdToken) {
-                var uitUser = userIdToken.user;
-                if (!user.equals(uitUser))
-                    throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser).setUserAuthenticationData(uitad);
-            }
-            
-            // Return the user.
-            return user;
         },
     });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MockUserIdTokenAuthenticationFactory'));

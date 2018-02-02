@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 #include "../util/MockMslContext.h"
 #include "../util/MslTestUtils.h"
 #include "../tokens/MockMslUser.h"
+#include "../tokens/MockTokenFactory.h"
 
 using namespace std;
 using namespace testing;
@@ -65,16 +66,19 @@ public:
     , encoder(ctx->getMslEncoderFactory())
     , authutils(make_shared<MockAuthenticationUtils>())
     , factory(make_shared<UserIdTokenAuthenticationFactory>(authutils))
+    , tokenFactory(make_shared<MockTokenFactory>())
     , ENCODER_FORMAT(MslEncoderFormat::JSON)
     , MASTER_TOKEN(MslTestUtils::getMasterToken(ctx, 1L, 1L))
     {
         ctx->addUserAuthenticationFactory(factory);
+        ctx->setTokenFactory(tokenFactory);
         shared_ptr<MslUser> user = make_shared<MockMslUser>(1);
         USER_ID_TOKEN = MslTestUtils::getUserIdToken(ctx, MASTER_TOKEN, 1L, user);
     }
     ~UserIdTokenAuthenticationFactoryTest()
     {
         authutils->reset();
+        tokenFactory->reset();
     }
 protected:
     /** MSL context. */
@@ -85,6 +89,8 @@ protected:
     shared_ptr<MockAuthenticationUtils> authutils;
     /** User authentication factory-> */
     shared_ptr<UserAuthenticationFactory> factory;
+    /** Token factory. */
+    shared_ptr<MockTokenFactory> tokenFactory;
     /** MSL encoder format. */
     const MslEncoderFormat ENCODER_FORMAT;
     /** Master token. */
@@ -213,6 +219,22 @@ TEST_F(UserIdTokenAuthenticationFactoryTest, userNotPermitted)
         ADD_FAILURE() << "Should have thrown.";
     } catch (const MslUserAuthException& e) {
         EXPECT_EQ(MslError::USERAUTH_ENTITYUSER_INCORRECT_DATA, e.getError());
+    }
+}
+
+TEST_F(UserIdTokenAuthenticationFactoryTest, tokenRevoked)
+{
+//    thrown.expect(MslUserAuthException.class);
+//    thrown.expectMslError(MslError.USERIDTOKEN_REVOKED);
+
+    tokenFactory->setRevokedUserIdToken(USER_ID_TOKEN);
+
+    shared_ptr<UserIdTokenAuthenticationData> data = make_shared<UserIdTokenAuthenticationData>(MASTER_TOKEN, USER_ID_TOKEN);
+    try {
+        factory->authenticate(ctx, MASTER_TOKEN->getIdentity(), data, USER_ID_TOKEN);
+        ADD_FAILURE() << "Should have thrown.";
+    } catch (const MslUserAuthException& e) {
+        EXPECT_EQ(MslError::USERIDTOKEN_REVOKED, e.getError());
     }
 }
 

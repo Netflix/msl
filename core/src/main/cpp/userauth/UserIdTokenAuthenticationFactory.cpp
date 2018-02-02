@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 #include <MslUserAuthException.h>
 #include <tokens/MasterToken.h>
 #include <tokens/MslUser.h>
+#include <tokens/TokenFactory.h>
 #include <tokens/UserIdToken.h>
 #include <userauth/UserIdTokenAuthenticationFactory.h>
 #include <userauth/UserIdTokenAuthenticationData.h>
@@ -57,52 +58,60 @@ shared_ptr<UserAuthenticationData> UserIdTokenAuthenticationFactory::createData(
 }
 
 shared_ptr<MslUser> UserIdTokenAuthenticationFactory::authenticate(
-        shared_ptr<MslContext> /*ctx*/,
+        shared_ptr<MslContext> ctx,
         const string& identity,
         shared_ptr<UserAuthenticationData> data,
         shared_ptr<UserIdToken> userIdToken)
 {
-        // Make sure we have the right kind of user authentication data.
-        if (!instanceof<UserIdTokenAuthenticationData>(data.get()))
-            throw MslInternalException("Incorrect authentication data type.");
-        shared_ptr<UserIdTokenAuthenticationData> uitad = static_pointer_cast<UserIdTokenAuthenticationData>(data);
+    // Make sure we have the right kind of user authentication data.
+    if (!instanceof<UserIdTokenAuthenticationData>(data.get()))
+        throw MslInternalException("Incorrect authentication data type.");
+    shared_ptr<UserIdTokenAuthenticationData> uitad = static_pointer_cast<UserIdTokenAuthenticationData>(data);
 
-        // Verify the scheme is permitted.
-        if(!authutils_->isSchemePermitted(identity, getScheme()))
-            throw MslUserAuthException(MslError::USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " +
+    // Verify the scheme is permitted.
+    if(!authutils_->isSchemePermitted(identity, getScheme()))
+        throw MslUserAuthException(MslError::USERAUTH_ENTITY_INCORRECT_DATA, "Authentication scheme " +
                 getScheme().name() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
 
-        // Extract and check master token.
-        shared_ptr<MasterToken> uitadMasterToken = uitad->getMasterToken();
-        const string uitadIdentity = uitadMasterToken->getIdentity();
-        if (uitadIdentity.empty())
-            throw MslUserAuthException(MslError::USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
-        if (identity != uitadIdentity)
-            throw MslUserAuthException(MslError::USERAUTH_ENTITY_MISMATCH, "entity identity " +
+    // Extract and check master token.
+    shared_ptr<MasterToken> uitadMasterToken = uitad->getMasterToken();
+    const string uitadIdentity = uitadMasterToken->getIdentity();
+    if (uitadIdentity.empty())
+        throw MslUserAuthException(MslError::USERAUTH_MASTERTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
+    if (identity != uitadIdentity)
+        throw MslUserAuthException(MslError::USERAUTH_ENTITY_MISMATCH, "entity identity " +
                 identity + "; uad identity " + uitadIdentity).setUserAuthenticationData(uitad);
 
-        // Authenticate the user.
-        shared_ptr<UserIdToken> uitadUserIdToken = uitad->getUserIdToken();
-        shared_ptr<MslUser> user = uitadUserIdToken->getUser();
-        if (!user)
-            throw MslUserAuthException(MslError::USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
+    // Authenticate the user.
+    shared_ptr<UserIdToken> uitadUserIdToken = uitad->getUserIdToken();
+    shared_ptr<MslUser> user = uitadUserIdToken->getUser();
+    if (!user)
+        throw MslUserAuthException(MslError::USERAUTH_USERIDTOKEN_NOT_DECRYPTED).setUserAuthenticationData(uitad);
 
-        // Verify the scheme is still permitted.
-        if (!authutils_->isSchemePermitted(identity, user, getScheme()))
-            throw MslUserAuthException(MslError::USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " +
+    // Verify the scheme is still permitted.
+    if (!authutils_->isSchemePermitted(identity, user, getScheme()))
+        throw MslUserAuthException(MslError::USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " +
                 getScheme().name() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
 
-        // If a user ID token was provided validate the user identities.
-        if (userIdToken) {
-            shared_ptr<MslUser> uitUser = userIdToken->getUser();
-            if (!user->equals(uitUser))
-                throw MslUserAuthException(MslError::USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " +
-                    user->getEncoded() + "; uit user " + uitUser->getEncoded()).setUserAuthenticationData(uitad);
-        }
+    // Verify token has not been revoked.
+    MslError revokeMslError = MslError::OK;
+    try {
+        revokeMslError = ctx->getTokenFactory()->isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken);
+    } catch (const MslException& e) {
+        throw MslUserAuthException(MslError::USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while checking user ID token for revocation.", e).setUserAuthenticationData(uitad);
+    }
+    if (revokeMslError != MslError::OK)
+        throw MslUserAuthException(revokeMslError, "User ID token used to authenticate was revoked.").setUserAuthenticationData(uitad);
 
-        // Return the user.
-        return user;
+    // If a user ID token was provided validate the user identities.
+    if (userIdToken) {
+        shared_ptr<MslUser> uitUser = userIdToken->getUser();
+        if (!user->equals(uitUser))
+            throw MslUserAuthException(MslError::USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " +
+                    user->getEncoded() + "; uit user " + uitUser->getEncoded()).setUserAuthenticationData(uitad);
     }
 
-
+    // Return the user.
+    return user;
+}
 }}} // netflix::msl::userauth
