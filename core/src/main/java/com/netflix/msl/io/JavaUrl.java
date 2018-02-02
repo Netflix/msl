@@ -30,7 +30,7 @@ public class JavaUrl implements Url {
      * An implementation of the {@link Connection} interface backed by the
      * built-in Java {@link URLConnection} class.
      */
-    public class JavaConnection implements Connection {
+    public static class JavaConnection implements Connection {
         /**
          * Create a new Java connection with the backing URL connection.
          * 
