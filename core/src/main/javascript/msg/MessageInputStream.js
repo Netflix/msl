@@ -833,7 +833,7 @@
                                 throw new MslInternalException("Timeout while waiting for MessageInputStream.isReady() despite no timeout being specified.");
                             });
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 } else {
                     perform();

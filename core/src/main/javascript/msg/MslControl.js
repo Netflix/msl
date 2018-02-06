@@ -1607,9 +1607,23 @@
                                         this._streamFactory.createOutputStream(ctx, os, requestHeader, payloadCryptoContext, null, timeout, {
                                             result: function(request) {
                                                 InterruptibleExecutor(callback, function() {
+                                                    // Register abort function.
                                                     service.setAbort(function() { request.abort(); });
                                                     request.closeDestination(closeDestination);
-                                                    write(request, handshake);
+                                                    
+                                                    // Wait until the output stream is ready.
+                                                    request.isReady({
+                                                        result: function(ready) {
+                                                            InterruptibleExecutor(callback, function() {
+                                                                // If aborted throw an exception.
+                                                                if (!ready)
+                                                                    throw new MslInterruptedException('MessageOutputStream aborted.');
+                                                                write(request, handshake);
+                                                            }, self);
+                                                        },
+                                                        timeout: callback.timeout,
+                                                        error: callback.error,
+                                                    });
                                                 }, self);
                                             },
                                             timeout: callback.timeout,
@@ -1699,6 +1713,7 @@
          */
         receive: function receive(service, ctx, msgCtx, input, request, timeout, callback) {
             var self = this;
+            
             InterruptibleExecutor(callback, function() {
                 // Stop and throw an exception if aborted.
                 if (service.isAborted())
@@ -1712,152 +1727,159 @@
                 var is = (this._filterFactory) ? this._filterFactory.getInputStream(input) : input;
                 this._streamFactory.createInputStream(ctx, is, keyRequestData, cryptoContexts, timeout, {
                     result: function(response) {
-                        // Register abort function.
-                        service.setAbort(function() { response.abort(); });
+                        InterruptibleExecutor(callback, function() {
+                            // Register abort function.
+                            service.setAbort(function() { response.abort(); });
 
-                        // Wait until the input stream is ready.
-                        response.isReady({
-                            result: function(ready) {
-                                InterruptibleExecutor(callback, function() {
-                                    // If aborted throw an exception.
-                                    if (!ready)
-                                        throw new MslInterruptedException('MessageInputStream aborted.');
-
-                                    // Deliver the received header to the debug context.
-                                    var responseHeader = response.getMessageHeader();
-                                    var errorHeader = response.getErrorHeader();
-                                    var debugCtx = msgCtx.getDebugContext();
-                                    if (debugCtx) debugCtx.receivedHeader((responseHeader) ? responseHeader : errorHeader);
-
-                                    // Pull the response master token or entity authentication data and
-                                    // user ID token or user authentication data to attach them to any
-                                    // thrown exceptions.
-                                    var masterToken, entityAuthData, userIdToken, userAuthData;
-                                    if (responseHeader) {
-                                        masterToken = responseHeader.masterToken;
-                                        entityAuthData = responseHeader.entityAuthenticationData;
-                                        userIdToken = responseHeader.userIdToken;
-                                        userAuthData = responseHeader.userAuthenticationData;
-                                    } else {
-                                        masterToken = null;
-                                        entityAuthData = errorHeader.entityAuthenticationData;
-                                        userIdToken = null;
-                                        userAuthData = null;
-                                    }
-
-                                    // If there is a request, make sure the response message ID equals the
-                                    // request message ID + 1.
-                                    if (request) {
-                                        // Only enforce this for message headers and error headers that are
-                                        // not entity re-authentcate or entity data re-authenticate (as in
-                                        // those cases the remote entity is not always able to extract the
-                                        // request message ID).
-                                        var errorCode = (errorHeader) ? errorHeader.errorCode : null;
-                                        if (responseHeader ||
-                                            (errorCode != MslConstants.ResponseCode.FAIL && errorCode != MslConstants.ResponseCode.TRANSIENT_FAILURE && errorCode != MslConstants.ResponseCode.ENTITY_REAUTH && errorCode != MslConstants.ResponseCode.ENTITYDATA_REAUTH))
-                                        {
-                                            var responseMessageId = (responseHeader) ? responseHeader.messageId : errorHeader.messageId;
-                                            var expectedMessageId = MessageBuilder.incrementMessageId(request.messageId);
-                                            if (responseMessageId != expectedMessageId) {
-                                                throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId)
-                                                    .setMasterToken(masterToken)
-                                                    .setEntityAuthenticationData(entityAuthData)
-                                                    .setUserIdToken(userIdToken)
-                                                    .setUserAuthenticationData(userAuthData);
-                                            }
-                                        }
-                                    }
-
-                                    // Process the response.
-                                    ctx.getEntityAuthenticationData(null, {
-                                        result: function(ead) {
-                                            InterruptibleExecutor(callback, function() {
-                                                var localIdentity = ead.getIdentity();
-                                                var sender;
-                                                try {
-                                                    if (responseHeader) {
-                                                        // Reject messages if this is a trusted network server and the
-                                                        // sender is not equal to the master token identity or if the
-                                                        // sender is equal to this entity.
-                                                        sender = (masterToken) ? responseHeader.sender : entityAuthData.getIdentity();
-                                                        if ((masterToken && masterToken.isDecrypted() && sender && masterToken.identity != sender))
-                                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.identity);
-                                                        if (localIdentity && localIdentity == sender)
-                                                            throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
-
-                                                        // Reject messages if the message recipient is specified and not
-                                                        // equal to the local entity.
-                                                        var recipient = responseHeader.recipient;
-                                                        if (recipient && localIdentity && recipient != localIdentity)
-                                                            throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient);
-
-                                                        // If there is a request update the stored crypto contexts.
-                                                        if (request)
-                                                            this.updateIncomingCryptoContexts(ctx, request, response);
-
-                                                        // In trusted network mode the local tokens are the primary tokens.
-                                                        // In peer-to-peer mode they are the peer tokens. The master token
-                                                        // might be in the key response data.
-                                                        var keyResponseData = responseHeader.keyResponseData;
-                                                        var tokenVerificationMasterToken;
-                                                        var localUserIdToken;
-                                                        var serviceTokens;
-                                                        if (!ctx.isPeerToPeer()) {
-                                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
-                                                            localUserIdToken = responseHeader.userIdToken;
-                                                            serviceTokens = responseHeader.serviceTokens;
-                                                        } else {
-                                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
-                                                            localUserIdToken = responseHeader.peerUserIdToken;
-                                                            serviceTokens = responseHeader.peerServiceTokens;
-                                                        }
-
-                                                        // Save any returned user ID token if the local entity is not the
-                                                        // issuer of the user ID token.
-                                                        var userId = msgCtx.getUserId();
-                                                        if (userId && localUserIdToken && !localUserIdToken.isVerified())
-                                                            ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
-
-                                                        // Update the stored service tokens.
-                                                        this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-                                                    } else {
-                                                        // Reject errors if the sender is equal to this entity.
-                                                        sender = errorHeader.entityAuthenticationData.getIdentity();
-                                                        if (localIdentity && localIdentity == sender)
-                                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
-                                                    }
-
-                                                    // Update the synchronized clock if we are a trusted network client
-                                                    // (there is a request) or peer-to-peer entity.
-                                                    var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
-                                                    if (timestamp && (request || ctx.isPeerToPeer()))
-                                                        ctx.updateRemoteTime(timestamp);
-                                                } catch (e) {
-                                                    if (e instanceof MslException) {
-                                                        e.setMasterToken(masterToken);
-                                                        e.setEntityAuthenticationData(entityAuthData);
-                                                        e.setUserIdToken(userIdToken);
-                                                        e.setUserAuthenticationData(userAuthData);
-                                                    }
-                                                    throw e;
-                                                }
-
-                                                // Return the result.
-                                                return response;
-                                            }, self);
-                                        },
-                                        error: callback.error,
-                                    });
-                                }, self);
-                            },
-                            timeout: callback.timeout,
-                            error: callback.error,
-                        });
+                            // Wait until the input stream is ready.
+                            response.isReady({
+                                result: function(ready) {
+                                    InterruptibleExecutor(callback, function() {
+                                        // If aborted throw an exception.
+                                        if (!ready)
+                                            throw new MslInterruptedException('MessageInputStream aborted.');
+                                        process(response);
+                                    }, self);
+                                },
+                                timeout: callback.timeout,
+                                error: callback.error,
+                            });
+                        }, self);
                     },
                     timeout: callback.timeout,
                     error: callback.error,
                 });
             }, self);
+            
+            function process(response) {
+                InterruptibleExecutor(callback, function() {
+                    // Deliver the received header to the debug context.
+                    var responseHeader = response.getMessageHeader();
+                    var errorHeader = response.getErrorHeader();
+                    var debugCtx = msgCtx.getDebugContext();
+                    if (debugCtx) debugCtx.receivedHeader((responseHeader) ? responseHeader : errorHeader);
+
+                    // Pull the response master token or entity authentication data and
+                    // user ID token or user authentication data to attach them to any
+                    // thrown exceptions.
+                    var masterToken, entityAuthData, userIdToken, userAuthData;
+                    if (responseHeader) {
+                        masterToken = responseHeader.masterToken;
+                        entityAuthData = responseHeader.entityAuthenticationData;
+                        userIdToken = responseHeader.userIdToken;
+                        userAuthData = responseHeader.userAuthenticationData;
+                    } else {
+                        masterToken = null;
+                        entityAuthData = errorHeader.entityAuthenticationData;
+                        userIdToken = null;
+                        userAuthData = null;
+                    }
+
+                    // If there is a request, make sure the response message ID equals the
+                    // request message ID + 1.
+                    if (request) {
+                        // Only enforce this for message headers and error headers that are
+                        // not entity re-authentcate or entity data re-authenticate (as in
+                        // those cases the remote entity is not always able to extract the
+                        // request message ID).
+                        var errorCode = (errorHeader) ? errorHeader.errorCode : null;
+                        if (responseHeader ||
+                            (errorCode != MslConstants.ResponseCode.FAIL && errorCode != MslConstants.ResponseCode.TRANSIENT_FAILURE && errorCode != MslConstants.ResponseCode.ENTITY_REAUTH && errorCode != MslConstants.ResponseCode.ENTITYDATA_REAUTH))
+                        {
+                            var responseMessageId = (responseHeader) ? responseHeader.messageId : errorHeader.messageId;
+                            var expectedMessageId = MessageBuilder.incrementMessageId(request.messageId);
+                            if (responseMessageId != expectedMessageId) {
+                                throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId)
+                                .setMasterToken(masterToken)
+                                .setEntityAuthenticationData(entityAuthData)
+                                .setUserIdToken(userIdToken)
+                                .setUserAuthenticationData(userAuthData);
+                            }
+                        }
+                    }
+
+                    // Process the response.
+                    ctx.getEntityAuthenticationData(null, {
+                        result: function(ead) {
+                            InterruptibleExecutor(callback, function() {
+                                var localIdentity = ead.getIdentity();
+                                var sender;
+                                try {
+                                    if (responseHeader) {
+                                        // Reject messages if this is a trusted network server and the
+                                        // sender is not equal to the master token identity or if the
+                                        // sender is equal to this entity.
+                                        sender = (masterToken) ? responseHeader.sender : entityAuthData.getIdentity();
+                                        if ((masterToken && masterToken.isDecrypted() && sender && masterToken.identity != sender))
+                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.identity);
+                                        if (localIdentity && localIdentity == sender)
+                                            throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
+
+                                        // Reject messages if the message recipient is specified and not
+                                        // equal to the local entity.
+                                        var recipient = responseHeader.recipient;
+                                        if (recipient && localIdentity && recipient != localIdentity)
+                                            throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient);
+
+                                        // If there is a request update the stored crypto contexts.
+                                        if (request)
+                                            this.updateIncomingCryptoContexts(ctx, request, response);
+
+                                        // In trusted network mode the local tokens are the primary tokens.
+                                        // In peer-to-peer mode they are the peer tokens. The master token
+                                        // might be in the key response data.
+                                        var keyResponseData = responseHeader.keyResponseData;
+                                        var tokenVerificationMasterToken;
+                                        var localUserIdToken;
+                                        var serviceTokens;
+                                        if (!ctx.isPeerToPeer()) {
+                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
+                                            localUserIdToken = responseHeader.userIdToken;
+                                            serviceTokens = responseHeader.serviceTokens;
+                                        } else {
+                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
+                                            localUserIdToken = responseHeader.peerUserIdToken;
+                                            serviceTokens = responseHeader.peerServiceTokens;
+                                        }
+
+                                        // Save any returned user ID token if the local entity is not the
+                                        // issuer of the user ID token.
+                                        var userId = msgCtx.getUserId();
+                                        if (userId && localUserIdToken && !localUserIdToken.isVerified())
+                                            ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
+
+                                        // Update the stored service tokens.
+                                        this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
+                                    } else {
+                                        // Reject errors if the sender is equal to this entity.
+                                        sender = errorHeader.entityAuthenticationData.getIdentity();
+                                        if (localIdentity && localIdentity == sender)
+                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
+                                    }
+
+                                    // Update the synchronized clock if we are a trusted network client
+                                    // (there is a request) or peer-to-peer entity.
+                                    var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
+                                    if (timestamp && (request || ctx.isPeerToPeer()))
+                                        ctx.updateRemoteTime(timestamp);
+                                } catch (e) {
+                                    if (e instanceof MslException) {
+                                        e.setMasterToken(masterToken);
+                                        e.setEntityAuthenticationData(entityAuthData);
+                                        e.setUserIdToken(userIdToken);
+                                        e.setUserAuthenticationData(userAuthData);
+                                    }
+                                    throw e;
+                                }
+
+                                // Return the result.
+                                return response;
+                            }, self);
+                        },
+                        error: callback.error,
+                    });
+                }, self);
+            }
         },
 
         /**
@@ -2785,18 +2807,34 @@
                 // Send error response.
                 ctrl._streamFactory.createOutputStream(ctx, output, errorHeader, null, format, timeout, {
                     result: function(response) {
-                        service.setAbort(function() { response.abort(); });
-                        response.close(timeout, {
-                            result: function(success) {
-                                InterruptibleExecutor(callback, function() {
-                                    // If aborted throw an exception.
-                                    if (!success)
-                                        throw new MslInterruptedException('sendError aborted.');
-                                    return success;
-                                });
-                            },
-                            timeout: callback.timeout,
-                            error: callback.error,
+                        InterruptibleExecutor(callback, function() {
+                            // Register abort function.
+                            service.setAbort(function() { response.abort(); });
+                            
+                            // Wait until the output stream is ready.
+                            response.isReady({
+                                result: function(ready) {
+                                    InterruptibleExecutor(callback, function() {
+                                        // If aborted throw an exception.
+                                        if (!ready)
+                                            throw new MslInterruptedException('sendError aborted.');
+                                        response.close(timeout, {
+                                            result: function(success) {
+                                                InterruptibleExecutor(callback, function() {
+                                                    // If aborted throw an exception.
+                                                    if (!success)
+                                                        throw new MslInterruptedException('sendError aborted.');
+                                                    return success;
+                                                });
+                                            },
+                                            timeout: callback.timeout,
+                                            error: callback.error,
+                                        });
+                                    });
+                                },
+                                timeout: callback.timeout,
+                                error: callback.error,
+                            });
                         });
                     },
                     timeout: callback.timeout,
