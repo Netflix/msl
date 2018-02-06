@@ -34,20 +34,20 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
-	"use strict";
-	
-	var OutputStream = require('../io/OutputStream.js');
-	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
-	var MessageHeader = require('../msg/MessageHeader.js');
-	var MessageCapabilities = require('../msg/MessageCapabilities.js');
+    "use strict";
+    
+    var OutputStream = require('../io/OutputStream.js');
+    var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+    var MessageHeader = require('../msg/MessageHeader.js');
+    var MessageCapabilities = require('../msg/MessageCapabilities.js');
     var PayloadChunk = require('../msg/PayloadChunk.js');
-	var MslConstants = require('../MslConstants.js');
-	var BlockingQueue = require('../util/BlockingQueue.js');
-	var MslEncoderException = require('../io/MslEncoderException.js');
-	var MslIoException = require('../MslIoException.js');
-	var MslInternalException = require('../MslInternalException.js');
-	var ErrorHeader = require('../msg/ErrorHeader.js');
-	var MslException = require('../MslException.js');
+    var MslConstants = require('../MslConstants.js');
+    var BlockingQueue = require('../util/BlockingQueue.js');
+    var MslEncoderException = require('../io/MslEncoderException.js');
+    var MslIoException = require('../MslIoException.js');
+    var MslInternalException = require('../MslInternalException.js');
+    var ErrorHeader = require('../msg/ErrorHeader.js');
+    var MslException = require('../MslException.js');
     
     var MessageOutputStream = module.exports = OutputStream.extend({
         /**
@@ -77,8 +77,8 @@
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-            	var encoder = ctx.getMslEncoderFactory();
-            	
+                var encoder = ctx.getMslEncoderFactory();
+                
                 // The supported compression algorithms is the intersection of what the
                 // local entity supports and what the remote entity supports.
                 var capabilities;
@@ -143,71 +143,127 @@
                 
                 // Encode the header.
                 header.toMslEncoding(encoder, encoderFormat, {
-                	result: function(encoding) {
-                		destination.write(encoding, 0, encoding.length, timeout, {
-                    		result: function(numWritten) {
-                    			try {
-                    				// If aborted do nothing.
-                    				if (self._aborted) {
-                    					ready();
-                    					return;
-                    				}
+                    result: function(encoding) {
+                        destination.write(encoding, 0, encoding.length, timeout, {
+                            result: function(numWritten) {
+                                try {
+                                    // If aborted do nothing.
+                                    if (self._aborted) {
+                                        ready();
+                                        return;
+                                    }
 
-                    				// Check if timed out.
-                    				if (numWritten < encoding.length) {
-                    					self._timedout = true;
-                    					ready();
-                    					return;
-                    				}
-                    				destination.flush(timeout, {
-                    					result: function(success) {
-                    						// If aborted do nothing.
-                    						if (self._aborted) {
-                    							ready();
-                    							return;
-                    						}
-                    						self._timedout = !success;
+                                    // Check if timed out.
+                                    if (numWritten < encoding.length) {
+                                        self._timedout = true;
+                                        ready();
+                                        return;
+                                    }
+                                    destination.flush(timeout, {
+                                        result: function(success) {
+                                            // If aborted do nothing.
+                                            if (self._aborted) {
+                                                ready();
+                                                return;
+                                            }
+                                            self._timedout = !success;
 
-                    						// Notify all that it is ready.
-                    						ready();
-                    					},
-                    					timeout: function() {
-                    						self._timedout = true;
-                    						ready();
-                    					},
-                    					error: function(e) {
-                    						self._errored = e;
-                    						ready();
-                    					}
-                    				});
-                    			} catch (e) {
-                    				self._errored = e;
-                    				ready();
-                    			}
-                    		},
-                    		timeout: function() {
-                    			self._timedout = true;
-                    			ready();
-                    		},
-                    		error: function(e) {
-                    			self._errored = e;
-                    			ready();
-                    		}
-                    	});
-                	},
-                	error: function(e) {
-                		if (e instanceof MslEncoderException)
-                			self._errored = new MslIoException("Error encoding the message header.", e);
-                		else
-                			self._errored = e;
-                		ready();
-                	},
+                                            // Notify all that it is ready.
+                                            ready();
+                                        },
+                                        timeout: function() {
+                                            self._timedout = true;
+                                            ready();
+                                        },
+                                        error: function(e) {
+                                            self._errored = e;
+                                            ready();
+                                        }
+                                    });
+                                } catch (e) {
+                                    self._errored = e;
+                                    ready();
+                                }
+                            },
+                            timeout: function() {
+                                self._timedout = true;
+                                ready();
+                            },
+                            error: function(e) {
+                                self._errored = e;
+                                ready();
+                            }
+                        });
+                    },
+                    error: function(e) {
+                        if (e instanceof MslEncoderException)
+                            self._errored = new MslIoException("Error encoding the message header.", e);
+                        else
+                            self._errored = e;
+                        ready();
+                    },
                 });
 
                 // Return this immediately instead of after writing the header
                 // so the write can be aborted.
                 return this;
             }, self);
+        },
+
+        /**
+         * Block until the message output stream has successfully written the
+         * message header and been fully initialized. The timeout callback will
+         * be triggered based off the timeout value provided to the
+         * constructor.
+         *
+         * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
+         *        callback the callback will receive true once the message
+         *        output stream is ready or false if it has been aborted,
+         *        notified of timeout, or any exceptions thrown during the
+         *        message initialization.
+         */
+        isReady: function isReady(callback) {
+            var self = this;
+
+            InterruptibleExecutor(callback, function() {
+                // If not ready wait until we are ready.
+                if (!this._ready) {
+                    this._readyQueue.poll(-1, {
+                        result: function(elem) {
+                            InterruptibleExecutor(callback, function() {
+                                // If aborted return false.
+                                if (elem === undefined) return false;
+                                else perform();
+                            }, self);
+                        },
+                        timeout: function() {
+                            InterruptibleExecutor(callback, function() {
+                                throw new MslInternalException("Timeout while waiting for MessageOutputStream.isReady() despite no timeout being specified.");
+                            });
+                        },
+                        error: callback.error,
+                    });
+                } else {
+                    perform();
+                }
+            }, self);
+            
+            function perform() {
+                InterruptibleExecutor(callback, function() {
+                    // Check if already aborted, timedout, or errored.
+                    if (this._aborted)
+                        return false;
+                    if (this._timedout) {
+                        callback.timeout();
+                        return;
+                    }
+                    if (this._errored)
+                        throw this._errored;
+
+                    // Ready.
+                    return true;
+                }, self);
+            }
         },
 
         /**
@@ -387,36 +443,20 @@
          */
         flush: function flush(timeout, callback) {
             var self = this;
-
-            InterruptibleExecutor(callback, function() {
-                // If not ready wait until we are ready.
-                if (!this._ready) {
-                    this._readyQueue.poll(timeout, {
-                        result: function(elem) {
-                            // If aborted return false.
-                            if (elem === undefined) callback.result(false);
-                            else perform();
-                        },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
-                    });
-                } else {
-                    perform();
-                }
-            }, self);
+            
+            self.isReady({
+                result: function(ready) {
+                    InterruptibleExecutor(callback, function() {
+                        if (ready) perform();
+                        else return false;
+                    }, self);
+                },
+                timeout: callback.timeout,
+                error: callback.error,
+            });
 
             function perform() {
                 InterruptibleExecutor(callback, function() {
-                    // Check if already aborted, timedout, or errored.
-                    if (this._aborted)
-                        return false;
-                    if (this._timedout) {
-                        callback.timeout();
-                        return;
-                    }
-                    if (this._errored)
-                        throw this._errored;
-
                     // If the current payload is null, we are already closed.
                     if (!this._currentPayload) return true;
 
@@ -450,82 +490,82 @@
                                 if (this._caching) this._payloads.push(chunk);
                                 var encoder = this._ctx.getMslEncoderFactory();
                                 chunk.toMslEncoding(encoder, this._encoderFormat, {
-                                	result: function(encoding) {
-                                		InterruptibleExecutor(callback, function() {
-                                			this._destination.write(encoding, 0, encoding.length, timeout, {
-                                				result: function(numWritten) {
-                                					InterruptibleExecutor(callback, function() {
-                                						// If we were aborted then return false.
-                                						if (this._aborted) return false;
+                                    result: function(encoding) {
+                                        InterruptibleExecutor(callback, function() {
+                                            this._destination.write(encoding, 0, encoding.length, timeout, {
+                                                result: function(numWritten) {
+                                                    InterruptibleExecutor(callback, function() {
+                                                        // If we were aborted then return false.
+                                                        if (this._aborted) return false;
 
-                                						// If we timed out then notify the caller.
-                                						if (numWritten < chunk.length) {
-                                							callback.timeout();
-                                							return;
-                                						}
+                                                        // If we timed out then notify the caller.
+                                                        if (numWritten < chunk.length) {
+                                                            callback.timeout();
+                                                            return;
+                                                        }
 
-                                						this._destination.flush(timeout, {
-                                							result: function(success) {
-                                								InterruptibleExecutor(callback, function() {
-                                									// If we were aborted then return false.
-                                									if (this._aborted) return false;
+                                                        this._destination.flush(timeout, {
+                                                            result: function(success) {
+                                                                InterruptibleExecutor(callback, function() {
+                                                                    // If we were aborted then return false.
+                                                                    if (this._aborted) return false;
 
-                                									// If we timed out then return false.
-                                									if (!success) {
-                                										callback.timeout();
-                                										return;
-                                									}
+                                                                    // If we timed out then return false.
+                                                                    if (!success) {
+                                                                        callback.timeout();
+                                                                        return;
+                                                                    }
 
-                                									// Increment the payload number.
-                                									++this._payloadSequenceNumber;
+                                                                    // Increment the payload number.
+                                                                    ++this._payloadSequenceNumber;
 
-                                									// If we are closed, get rid of the current payload. This prevents
-                                									// us from sending any more payloads. Otherwise reset it for reuse.
-                                									if (this._closed)
-                                										this._currentPayload = null;
-                                									else
-                                										this._currentPayload = [];
-                                									return true;
-                                								}, self);
-                                							},
-                                							timeout: function() { callback.timeout(); },
-                                							error: function(e) {
-                                            					InterruptibleExecutor(callback, function() {
-	                                								if (e instanceof MslException)
-	                                									e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
-	                                								throw e;
-                                            					}, self);
-                                							}
-                                						});
-                                					}, self);
-                                				},
-                                				timeout: function(numWritten) { callback.timeout(); },
-                                				error: function(e) {
-                                					InterruptibleExecutor(callback, function() {
-                                						if (e instanceof MslException)
-                                							e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
-                                						throw e;
-                                					}, self);
-                                				}
-                                			});
-                                		}, self);
-                                	},
-                                	error: function(e) {
-                                		InterruptibleExecutor(callback, function() {
-                                			if (e instanceof MslEncoderException)
-                                				throw new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
-                                			throw e;
-                                		}, self);
-                                	}
+                                                                    // If we are closed, get rid of the current payload. This prevents
+                                                                    // us from sending any more payloads. Otherwise reset it for reuse.
+                                                                    if (this._closed)
+                                                                        this._currentPayload = null;
+                                                                    else
+                                                                        this._currentPayload = [];
+                                                                    return true;
+                                                                }, self);
+                                                            },
+                                                            timeout: function() { callback.timeout(); },
+                                                            error: function(e) {
+                                                                InterruptibleExecutor(callback, function() {
+                                                                    if (e instanceof MslException)
+                                                                        e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
+                                                                    throw e;
+                                                                }, self);
+                                                            }
+                                                        });
+                                                    }, self);
+                                                },
+                                                timeout: function(numWritten) { callback.timeout(); },
+                                                error: function(e) {
+                                                    InterruptibleExecutor(callback, function() {
+                                                        if (e instanceof MslException)
+                                                            e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
+                                                        throw e;
+                                                    }, self);
+                                                }
+                                            });
+                                        }, self);
+                                    },
+                                    error: function(e) {
+                                        InterruptibleExecutor(callback, function() {
+                                            if (e instanceof MslEncoderException)
+                                                throw new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
+                                            throw e;
+                                        }, self);
+                                    }
                                 });
                             }, self);
                         },
                         error: function(e) {
-                        	InterruptibleExecutor(callback, function() {
-	                            if (e instanceof MslException)
-	                                e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
-	                            throw e;
-                        	}, self);
+                            InterruptibleExecutor(callback, function() {
+                                if (e instanceof MslException)
+                                    e = new MslIoException("Error encoding payload chunk [sequence number " + self._payloadSequenceNumber + "].", e);
+                                throw e;
+                            }, self);
                         }
                     });
                 }, self);
