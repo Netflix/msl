@@ -45,7 +45,7 @@
     var MslError = require('../MslError.js');
     var X509 = require('../crypto/X509.js');
     
-    var hex2b64 = require('jsrsasign').hex2b64;
+    var hex2b64 = require('../lib/jsrsasign.js').hex2b64;
     
     /**
      * Key entity X.509 certificate.

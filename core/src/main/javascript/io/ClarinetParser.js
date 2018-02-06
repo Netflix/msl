@@ -24,7 +24,7 @@
 	"use strict";
 	
 	var Class = require('../util/Class.js');
-	var clarinet = require('clarinet');
+	var clarinet = require('../lib/clarinet.js');
 		
 	var ClarinetParser = module.exports = Class.create({
 	    /**

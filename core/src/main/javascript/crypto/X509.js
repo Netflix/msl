@@ -22,5 +22,5 @@
 (function(require, module) {
     "use strict";
     
-    var X509 = module.exports = require('jsrsasign').X509;
+    var X509 = module.exports = require('../lib/jsrsasign.js').X509;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('X509'));
