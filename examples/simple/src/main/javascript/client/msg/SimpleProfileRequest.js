@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 (function(require, module) {
     "use strict";
 
-    // simpleclient requires
-    var SimpleRequest = require('./SimpleRequest.js').SimpleRequest;
-    var Type = require('./SimpleRequest.js').Type;
+    var SimpleRequest = require('../msg/SimpleRequest.js');
 
     /**
      * <p>Request to return a user profile.</p>
@@ -33,7 +31,7 @@
          * <p>Create a new user profile request.</p>
          */
         init: function init() {
-            init.base.call(this, Type.USER_PROFILE);
+            init.base.call(this, SimpleRequest.Type.USER_PROFILE);
         },
 
         /** @inheritDoc */

@@ -17,14 +17,13 @@
 (function(require, module) {
     "use strict";
 
-    // msl requires
-    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var FilterStreamFactory = require('../../../../../../../core/src/main/javascript/msg/FilterStreamFactory.js');
-    var InputStream = require('../../../../../../../core/src/main/javascript/io/InputStream.js');
-    var MslConstants = require('../../../../../../../core/src/main/javascript/MslConstants.js');
-    var MslIoException = require('../../../../../../../core/src/main/javascript/MslIoException.js');
-    var OutputStream = require('../../../../../../../core/src/main/javascript/io/OutputStream.js');
-    var TextEncoding = require('../../../../../../../core/src/main/javascript/util/TextEncoding.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var FilterStreamFactory = require('msl-core/msg/FilterStreamFactory.js');
+    var InputStream = require('msl-core/io/InputStream.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MslIoException = require('msl-core/MslIoException.js');
+    var OutputStream = require('msl-core/io/OutputStream.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     /**
      * <p>A filter input stream that appends read data to a text HTML DOM

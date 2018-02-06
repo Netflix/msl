@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 (function(require, module) {
     "use strict";
 
-    // simpleclient requires
-    var SimpleRequest = require('./SimpleRequest.js').SimpleRequest;
-    var Type = require('./SimpleRequest.js').Type;
+    var SimpleRequest = require('../msg/SimpleRequest.js');
 
     /** JSON key timestamp. */
     var KEY_TIMESTAMP = "timestamp";
@@ -54,7 +51,7 @@
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var SimpleLogRequest = module.exports.SimpleLogRequest = SimpleRequest.extend({
+    var SimpleLogRequest = module.exports = SimpleRequest.extend({
         /**
          * <p>Create a new log request.</p>
          *
@@ -64,7 +61,7 @@
          * @param {string} message the log message text.
          */
         init: function init(timestamp, severity, message) {
-            init.base.call(this, Type.LOG);
+            init.base.call(this, SimpleRequest.Type.LOG);
 
             // Set properties.
             var props = {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,22 +17,21 @@
 (function(require, module) {
     "use strict";
 
-    // msl requires
-    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var Class = require('../../../../../../../core/src/main/javascript/util/Class.js');
-    var MslCrypto = require('../../../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    var PrivateKey = require('../../../../../../../core/src/main/javascript/crypto/PrivateKey.js');
-    var PublicKey = require('../../../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    var WebCryptoAlgorithm = require('../../../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var Class = require('msl-core/util/Class.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var PrivateKey = require('msl-core/crypto/PrivateKey.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
 
     /**
      * <p>A key pair holds a public and private key pair.</p>
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var KeyPair = module.exports.SimpleKeyxManager$KeyPair = Class.create({
+    var KeyPair = Class.create({
         /**
          * <p>Create a new key pair.</p>
          *
@@ -57,7 +56,7 @@
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var SimpleKeyxManager = module.exports.SimpleKeyxManager = Class.create({
+    var SimpleKeyxManager = module.exports = Class.create({
         /**
          * <p>Create a new asymmetric wrapped key exchange manager. A pair of
          * initial keys will be generated.</p>
@@ -164,7 +163,11 @@
      *        callback the callback that will receive the key manager or
      *        any thrown exceptions.
      */
-    var SimpleKeyxManager$create = module.exports.create = function SimpleKeyxManager$create(mechanism, callback) {
+    var SimpleKeyxManager$create = function SimpleKeyxManager$create(mechanism, callback) {
         new SimpleKeyxManager(mechanism, callback);
     };
+    
+    // Exports.
+    module.exports.KeyPair = KeyPair;
+    module.exports.create = SimpleKeyxManager$create;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleKeyxManager'));

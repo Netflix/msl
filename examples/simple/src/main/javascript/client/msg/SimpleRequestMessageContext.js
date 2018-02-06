@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,20 +17,19 @@
 (function(require, module) {
     "use strict";
 
-    // msl requires
-    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var MessageContext = require('../../../../../../../core/src/main/javascript/msg/MessageContext.js');
-    var MslConstants = require('../../../../../../../core/src/main/javascript/MslConstants.js');
-    var TextEncoding = require('../../../../../../../core/src/main/javascript/util/TextEncoding.js');
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var MessageContext = require('msl-core/msg/MessageContext.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
-    // simpleclient requires
-    var Type = require('./SimpleRequest.js').Type;
+    var SimpleRequest = require('../msg/SimpleRequest.js');
     var SimpleConstants = require('../SimpleConstants.js');
 
     // Shortcuts.
     var Mechanism = AsymmetricWrappedExchange.Mechanism;
     var RequestData = AsymmetricWrappedExchange.RequestData;
+    var Type = SimpleRequest.Type;
 
     /**
      * <p>Example client message context for sending request messages.</p>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,25 @@
 (function(require, module) {
     "use strict";
 
-    // msl requires
-    var Class = require('../../../../../../core/src/main/javascript/util/Class.js');
-    var AsyncExecutor = require('../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var EmailPasswordAuthenticationData = require('../../../../../../core/src/main/javascript/userauth/EmailPasswordAuthenticationData.js');
-    var KeyFormat = require('../../../../../../core/src/main/javascript/crypto/KeyFormat.js');
-    var MslCrypto = require('../../../../../../core/src/main/javascript/crypto/MslCrypto.js');
-    var MslIoException = require('../../../../../../core/src/main/javascript/MslIoException.js');
-    var Url = require('../../../../../../core/src/main/javascript/io/Url.js');
-    var WebCryptoAlgorithm = require('../../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
-    var WebCryptoUsage = require('../../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
-    var Xhr = require('../../../../../../core/src/main/javascript/io/Xhr.js');
-    var AsymmetricWrappedExchange = require('../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    var MslControl = require('../../../../../../core/src/main/javascript/msg/MslControl.js');
-    var PublicKey = require('../../../../../../core/src/main/javascript/crypto/PublicKey.js');
-    var RsaStore = require('../../../../../../core/src/main/javascript/entityauth/RsaStore.js');
+    var Class = require('msl-core/util/Class.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var EmailPasswordAuthenticationData = require('msl-core/userauth/EmailPasswordAuthenticationData.js');
+    var KeyFormat = require('msl-core/crypto/KeyFormat.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var MslIoException = require('msl-core/MslIoException.js');
+    var Url = require('msl-core/io/Url.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var Xhr = require('msl-core/io/Xhr.js');
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var MslControl = require('msl-core/msg/MslControl.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var RsaStore = require('msl-core/entityauth/RsaStore.js');
 
-    // simpleclient requires
-    var SimpleKeyxManager$create = require('./keyx/SimpleKeyxManager.js').create;
+    var SimpleKeyxManager = require('./keyx/SimpleKeyxManager.js');
     var AdvancedRequestMessageContext = require('./msg/AdvancedRequestMessageContext.js');
     var SimpleRequestMessageContext = require('./msg/SimpleRequestMessageContext.js');
-    var SimpleRequest = require('./msg/SimpleRequest.js').SimpleRequest;
+    var SimpleRequest = require('./msg/SimpleRequest.js');
     var SimpleMslContext = require('./util/SimpleMslContext.js')
     var SimpleConstants = require('./SimpleConstants.js');
 
@@ -47,7 +45,7 @@
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    var SimpleClient = module.exports.SimpleClient = Class.create({
+    var SimpleClient = module.exports = Class.create({
         /**
          * <p>Create a new client.</p>
          *
@@ -69,7 +67,7 @@
 	                	var mechanism = (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY)
 	                		? AsymmetricWrappedExchange.Mechanism.JWE_RSA
 	                		: AsymmetricWrappedExchange.Mechanism.JWK_RSA;
-	                    SimpleKeyxManager$create(mechanism, {
+	                    SimpleKeyxManager.create(mechanism, {
 	                        result: function(keyxMgr) {
 	                            AsyncExecutor(callback, function() {
 	                                // Create the RSA key store.
@@ -247,7 +245,10 @@
      *        callback the callback that will receive the created client or
      *        any thrown exceptions.
      */
-    var SimpleClient$create = module.exports.create = function SimpleClient$create(identity, factory, callback) {
+    var SimpleClient$create = function SimpleClient$create(identity, factory, callback) {
         new SimpleClient(identity, factory, callback);
     };
+    
+    // Exports.
+    module.exports.create = SimpleClient$create;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleClient'));

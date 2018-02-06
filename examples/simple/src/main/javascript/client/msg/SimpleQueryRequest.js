@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,7 @@
 (function(require, module) {
     "use strict";
 
-    // simpleclient requires
-    var SimpleRequest = require('./SimpleRequest.js').SimpleRequest;
-    var Type = require('./SimpleRequest.js').Type;
+    var SimpleRequest = require('../msg/SimpleRequest.js');
 
     /** JSON key key. */
     var KEY_KEY = "key";
@@ -48,7 +46,7 @@
          * @param {string} key the data key.
          */
         init: function init(key) {
-            init.base.call(this, Type.QUERY);
+            init.base.call(this, SimpleRequest.Type.QUERY);
 
             // Set properties.
             var props = {

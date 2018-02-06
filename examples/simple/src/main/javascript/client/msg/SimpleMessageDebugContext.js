@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,7 @@
 (function(require, module) {
     "use strict";
 
-    // msl requires
-    var MessageDebugContext = require('../../../../../../../core/src/main/javascript/msg/MessageDebugContext.js');
+    var MessageDebugContext = require('msl-core/msg/MessageDebugContext.js');
 
     var SimpleMessageDebugContext = module.exports = MessageDebugContext.extend({
         /**

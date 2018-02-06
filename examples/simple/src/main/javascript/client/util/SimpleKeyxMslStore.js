@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 (function(require, module) {
     "use strict";
 
-    var SimpleMslStore = require('../../../../../../../core/src/main/javascript/util/SimpleMslStore.js');
+    var SimpleMslStore = require('msl-core/util/SimpleMslStore.js');
 
     /**
      * <p>An in-memory MSL store that manages state and is integrated with the

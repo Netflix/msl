@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@
     "use strict";
 
     // msl requires
-    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
-    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
-    var MessageContext = require('../../../../../../../core/src/main/javascript/msg/MessageContext.js');
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var MessageContext = require('msl-core/msg/MessageContext.js');
 
     // Shortcuts.
     var Mechanism = AsymmetricWrappedExchange.Mechanism;
