@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,24 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var AdvancedRequestMessageContext;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    // msl requires
+    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var MessageContext = require('../../../../../../../core/src/main/javascript/msg/MessageContext.js');
+
     // Shortcuts.
     var Mechanism = AsymmetricWrappedExchange.Mechanism;
     var RequestData = AsymmetricWrappedExchange.RequestData;
 
     /**
      * <p>Example client message context for sending advanced requests.</p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    AdvancedRequestMessageContext = MessageContext.extend({
+    var AdvancedRequestMessageContext = module.exports = MessageContext.extend({
         /**
          * <p>Create a new simple request message context.</p>
-         * 
+         *
          * @param {?string} requesting user ID. May be {@code null}.
          * @param {?UserAuthenticationData} requesting user authentication data.
          *        May be {@code null}.
@@ -52,55 +56,55 @@ var AdvancedRequestMessageContext;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         getCryptoContexts: function getCryptoContexts() {
             return {};
         },
-        
+
         /** @inheritDoc */
         getRecipient: function() {
             return this._request.recipient;
         },
-    
+
         /** @inheritDoc */
         isEncrypted: function() {
             return this._request.isEncrypted;
         },
-        
+
         /** @inheritDoc */
         isIntegrityProtected: function isIntegrityProtected() {
             return this._request.isIntegrityProtected;
         },
-    
+
         /** @inheritDoc */
         isNonReplayable: function isNonReplayable() {
             return this._request.isNonReplayable;
         },
-        
+
         /** @inheritDoc */
         isRequestingTokens: function() {
             return this._request.isRequestingTokens;
         },
-    
+
         /** @inheritDoc */
         getUserId: function() {
             return this._userId;
         },
-    
+
         /** @inheritDoc */
         getUserAuthData: function(reauthCode, renewable, required, callback) {
             AsyncExecutor(callback, function() {
                 if (!this._userId)
                     return null;
-                
+
                 // If new user authentication data is required then fail and
                 // return null. Notify the application.
                 if (reauthCode) {
                     this._errorCallback("New user authentication data is required: " + reauthCode + ".");
                     return null;
                 }
-                
+
                 // Ignore the renewable flag. We never perform user
                 // verification.
                 //
@@ -108,12 +112,12 @@ var AdvancedRequestMessageContext;
                 return this._userAuthData;
             }, this);
         },
-    
+
         /** @inheritDoc */
         getUser: function getUser() {
             return null;
         },
-    
+
         /** @inheritDoc */
         getKeyRequestData: function(callback) {
             AsyncExecutor(callback, function() {
@@ -123,12 +127,12 @@ var AdvancedRequestMessageContext;
                 return [ request ];
             }, this);
         },
-    
+
         /** @inheritDoc */
         updateServiceTokens: function updateServiceTokens(builder, handshake, callback) {
             callback.result(true);
         },
-    
+
         /** @inheritDoc */
         write: function(output, timeout, callback) {
             AsyncExecutor(callback, function() {
@@ -146,10 +150,10 @@ var AdvancedRequestMessageContext;
                 });
             }, this);
         },
-        
+
         /** @inheritDoc */
         getDebugContext: function getDebugContext() {
             return this._dbgCtx;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('AdvancedRequestMessageContext'));

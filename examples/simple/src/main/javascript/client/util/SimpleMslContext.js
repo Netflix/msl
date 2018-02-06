@@ -13,11 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleMslContext;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    var AuthenticationUtils = require('../../../../../../../core/src/main/javascript/util/AuthenticationUtils.js');
+    var ClientMslCryptoContext = require('../../../../../../../core/src/main/javascript/crypto/ClientMslCryptoContext.js');
+    var ClientTokenFactory = require('../../../../../../../core/src/main/javascript/tokens/ClientTokenFactory.js');
+    var DefaultMslEncoderFactory = require('../../../../../../../core/src/main/javascript/io/DefaultMslEncoderFactory.js');
+    var EntityAuthenticationScheme = require('../../../../../../../core/src/main/javascript/entityauth/EntityAuthenticationScheme.js');
+    var KeyExchangeScheme = require('../../../../../../../core/src/main/javascript/keyx/KeyExchangeScheme.js');
+    var MessageCapabilities = require('../../../../../../../core/src/main/javascript/msg/MessageCapabilities.js');
+    var MslConstants = require('../../../../../../../core/src/main/javascript/MslConstants.js');
+    var MslContext = require('../../../../../../../core/src/main/javascript/util/MslContext.js');
+    var MslEncoderFormat = require('../../../../../../../core/src/main/javascript/io/MslEncoderFormat.js');
+    var MslUser = require('../../../../../../../core/src/main/javascript/tokens/MslUser.js');
+    var Random = require('../../../../../../../core/src/main/javascript/util/Random.js');
+    var RsaAuthenticationFactory = require('../../../../../../../core/src/main/javascript/entityauth/RsaAuthenticationFactory.js');
+    var UnauthenticatedAuthenticationData = require('../../../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationData.js');
+    var UnauthenticatedAuthenticationFactory = require('../../../../../../../core/src/main/javascript/entityauth/UnauthenticatedAuthenticationFactory.js');
+    var UserAuthenticationScheme = require('../../../../../../../core/src/main/javascript/userauth/UserAuthenticationScheme.js');
+
+    var SimpleKeyxMslStore = require('./SimpleKeyxMslStore.js');
+
     /**
      * Local authentication utils that only permits the unauthenticated entity
      * authentication scheme to be used by the local entity identity.
@@ -84,7 +103,7 @@ var SimpleMslContext;
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleMslContext = MslContext.extend({
+    var SimpleMslContext = module.exports =  MslContext.extend({
         /**
          * <p>Create a new client MSL context.</p>
          *
@@ -222,4 +241,4 @@ var SimpleMslContext;
             return this._encoder;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleMslContext'));

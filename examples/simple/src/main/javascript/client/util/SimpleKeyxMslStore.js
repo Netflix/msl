@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleKeyxMslStore;
 
-(function() {
+(function(require, module) {
     "use strict";
+
+    var SimpleMslStore = require('../../../../../../../core/src/main/javascript/util/SimpleMslStore.js');
 
     /**
      * <p>An in-memory MSL store that manages state and is integrated with the
@@ -25,7 +26,7 @@ var SimpleKeyxMslStore;
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleKeyxMslStore = SimpleMslStore.extend({
+    var SimpleKeyxMslStore = module.exports = SimpleMslStore.extend({
         /**
          * <p>Create a new key exchange-aware MSL store.</p>
          *
@@ -59,4 +60,4 @@ var SimpleKeyxMslStore;
             });
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleKeyxMslStore'));

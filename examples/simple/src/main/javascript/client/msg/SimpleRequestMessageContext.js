@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,25 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleRequestMessageContext;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    // msl requires
+    var AsymmetricWrappedExchange = require('../../../../../../../core/src/main/javascript/keyx/AsymmetricWrappedExchange.js');
+    var AsyncExecutor = require('../../../../../../../core/src/main/javascript/util/AsyncExecutor.js');
+    var MessageContext = require('../../../../../../../core/src/main/javascript/msg/MessageContext.js');
+    var MslConstants = require('../../../../../../../core/src/main/javascript/MslConstants.js');
+    var TextEncoding = require('../../../../../../../core/src/main/javascript/util/TextEncoding.js');
+
+    // simpleclient requires
+    var Type = require('./SimpleRequest.js').Type;
+    var SimpleConstants = require('../SimpleConstants.js');
+
     // Shortcuts.
-    var Type = SimpleRequest$Type;
     var Mechanism = AsymmetricWrappedExchange.Mechanism;
     var RequestData = AsymmetricWrappedExchange.RequestData;
 
     /**
      * <p>Example client message context for sending request messages.</p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleRequestMessageContext = MessageContext.extend({
+    var SimpleRequestMessageContext = module.exports = MessageContext.extend({
         /**
          * <p>Create a new simple request message context.</p>
-         * 
+         *
          * @param {?string} requesting user ID. May be {@code null}.
          * @param {?UserAuthenticationData} requesting user authentication data.
          *        May be {@code null}.
@@ -53,17 +62,17 @@ var SimpleRequestMessageContext;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         getCryptoContexts: function getCryptoContexts() {
             return {};
         },
-        
+
         /** @inheritDoc */
         getRecipient: function() {
             return SimpleConstants.SERVER_ID;
         },
-    
+
         /** @inheritDoc */
         isEncrypted: function() {
             switch (this._request.type) {
@@ -77,42 +86,42 @@ var SimpleRequestMessageContext;
                     return true;
             }
         },
-        
+
         /** @inheritDoc */
         isIntegrityProtected: function isIntegrityProtected() {
             return true;
         },
-    
+
         /** @inheritDoc */
         isNonReplayable: function isNonReplayable() {
             return false;
         },
-        
+
         /** @inheritDoc */
         isRequestingTokens: function() {
             if (this._request.type == Type.LOG)
                 return true;
             return false;
         },
-    
+
         /** @inheritDoc */
         getUserId: function() {
             return this._userId;
         },
-    
+
         /** @inheritDoc */
         getUserAuthData: function(reauthCode, renewable, required, callback) {
             AsyncExecutor(callback, function() {
                 if (!this._userId)
                     return null;
-                
+
                 // If new user authentication data is required then fail and
                 // return null. Notify the application.
                 if (reauthCode) {
                     this._errorCallback("New user authentication data is required: " + reauthCode + ".");
                     return null;
                 }
-                
+
                 // Ignore the renewable flag. We never perform user
                 // verification.
                 //
@@ -120,12 +129,12 @@ var SimpleRequestMessageContext;
                 return this._userAuthData;
             }, this);
         },
-    
+
         /** @inheritDoc */
         getUser: function getUser() {
             return null;
         },
-    
+
         /** @inheritDoc */
         getKeyRequestData: function(callback) {
             AsyncExecutor(callback, function() {
@@ -135,12 +144,12 @@ var SimpleRequestMessageContext;
                 return [ request ];
             }, this);
         },
-    
+
         /** @inheritDoc */
         updateServiceTokens: function updateServiceTokens(builder, handshake, callback) {
             callback.result(true);
         },
-    
+
         /** @inheritDoc */
         write: function(output, timeout, callback) {
             AsyncExecutor(callback, function() {
@@ -159,10 +168,10 @@ var SimpleRequestMessageContext;
                 });
             }, this);
         },
-        
+
         /** @inheritDoc */
         getDebugContext: function getDebugContext() {
             return this._dbgCtx;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleRequestMessageContext'));

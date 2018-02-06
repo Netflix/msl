@@ -14,6 +14,26 @@
  * limitations under the License.
  */
 
+// msl requires
+var KeyFormat = require('../../../../../../core/src/main/javascript/crypto/KeyFormat.js');
+var MslConstants = require('../../../../../../core/src/main/javascript/MslConstants.js');
+var PublicKey = require('../../../../../../core/src/main/javascript/crypto/PublicKey.js');
+var TextEncoding = require('../../../../../../core/src/main/javascript/util/TextEncoding.js');
+var WebCryptoAlgorithm = require('../../../../../../core/src/main/javascript/crypto/WebCryptoAlgorithm.js');
+var WebCryptoUsage = require('../../../../../../core/src/main/javascript/crypto/WebCryptoUsage.js');
+
+// simple client requires
+var AdvancedRequest = require('./msg/AdvancedRequest.js');
+var SimpleClient$create = require('./SimpleClient.js').create;
+var SimpleConstants = require('./SimpleConstants.js');
+var SimpleEchoRequest = require('./msg/SimpleEchoRequest.js');
+var SimpleFilterStreamFactory = require('./msg/SimpleFilterStreamFactory.js');
+var SimpleLogRequest = require('./msg/SimpleLogRequest.js').SimpleLogRequest;
+var SimpleMessageDebugContext = require('./msg/SimpleMessageDebugContext.js');
+var SimpleProfileRequest = require('./msg/SimpleProfileRequest.js');
+var SimpleQueryRequest = require('./msg/SimpleQueryRequest.js');
+var SimpleQuitRequest = require('./msg/SimpleQuitRequest.js');
+
 function getQueryParam(key, defaultValue) {
     var queryString = window.location.search;
     var regex = new RegExp(key + '=([^&?]*)');

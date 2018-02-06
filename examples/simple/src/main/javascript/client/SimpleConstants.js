@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleConstants = {
-    /** Default server port. */
-    SERVER_PORT: 8080,
-    /** MSL control timeout in milliseconds. */
-    TIMEOUT_MS: 120 * 1000,
-    
-    /** Server entity ID. */
-    SERVER_ID: "SimpleMslServer",
-    /** Server 2048-bit RSA public key. */
-    RSA_PUBKEY_B64:
+
+(function(require, module) {
+    var SimpleConstants = module.exports = {
+        /** Default server port. */
+        SERVER_PORT: 8080,
+        /** MSL control timeout in milliseconds. */
+        TIMEOUT_MS: 120 * 1000,
+
+        /** Server entity ID. */
+        SERVER_ID: "SimpleMslServer",
+        /** Server 2048-bit RSA public key. */
+        RSA_PUBKEY_B64:
         "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4feorj/FWQi8AhbvjK3G" +
         "L31ct6N+Ad/3FwqNsa4vAsfPmilLRx0DWhkxRycetmQEAa+1THyNCzobIduQE3UY" +
         "8NtdOiy1S3BtHDoiSNEITFPAs0l2OAZ2ZUv0KIr9sLWAznlXMclLOBXtLOQMCs2e" +
@@ -30,35 +32,36 @@ var SimpleConstants = {
         "4tuu0ENsO/ebgMx2ltZ4b9dkzA65DM6XxEC60jK1AW+/wvFb4+iPQqrA7mdiZWsp" +
         "zqMRTaAUDHKJo2LFBc6N0/wuTsXczHx6TYz5b2hrI6N+O7EEuxirAaU+xU7XEqv2" +
         "dQIDAQAB",
-        
-    
-    /** Client entity ID. */
-    CLIENT_ID: "SimpleMslClient",
-    
-    /** Email/Password set. */
-    EMAIL_PASSWORDS: [
-        [ "kirito", "asuna" ],
-        [ "chie", "shuhei" ],
-        [ "hideki", "chi" ]
-    ],
-    /** Server administrator. */
-    ADMIN_USERNAME: "kirito",
-    
-    /**
-     * Query data: user, key.
-     *
-     * If the first value is not null, only the listed user has permission to
-     * access the data value.
-     */
-    QUERY_DATA: [
-        [ null, "cat" ],
-        [ "chie", "alien" ],
-        [ "kirito", "sword" ],
-        [ null, "dog" ],
-        [ null, "bird" ],
-        [ null, "turtle" ],
-        [ null, "fish" ],
-        [ "chie", "bathhouse" ],
-        [ "hideki", "computer" ],
-    ],
-};
+
+
+        /** Client entity ID. */
+        CLIENT_ID: "SimpleMslClient",
+
+        /** Email/Password set. */
+        EMAIL_PASSWORDS: [
+            [ "kirito", "asuna" ],
+            [ "chie", "shuhei" ],
+            [ "hideki", "chi" ]
+        ],
+        /** Server administrator. */
+        ADMIN_USERNAME: "kirito",
+
+        /**
+         * Query data: user, key.
+         *
+         * If the first value is not null, only the listed user has permission to
+         * access the data value.
+         */
+        QUERY_DATA: [
+            [ null, "cat" ],
+            [ "chie", "alien" ],
+            [ "kirito", "sword" ],
+            [ null, "dog" ],
+            [ null, "bird" ],
+            [ null, "turtle" ],
+            [ null, "fish" ],
+            [ "chie", "bathhouse" ],
+            [ "hideki", "computer" ],
+        ],
+    };
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleConstants'));
