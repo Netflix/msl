@@ -14,6 +14,24 @@
  * limitations under the License.
  */
 
+var KeyFormat = require('msl-core/crypto/KeyFormat.js');
+var MslConstants = require('msl-core/MslConstants.js');
+var PublicKey = require('msl-core/crypto/PublicKey.js');
+var TextEncoding = require('msl-core/util/TextEncoding.js');
+var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+
+var AdvancedRequest = require('./msg/AdvancedRequest.js');
+var SimpleClient$create = require('./SimpleClient.js').create;
+var SimpleConstants = require('./SimpleConstants.js');
+var SimpleEchoRequest = require('./msg/SimpleEchoRequest.js');
+var SimpleFilterStreamFactory = require('./msg/SimpleFilterStreamFactory.js');
+var SimpleLogRequest = require('./msg/SimpleLogRequest.js');
+var SimpleMessageDebugContext = require('./msg/SimpleMessageDebugContext.js');
+var SimpleProfileRequest = require('./msg/SimpleProfileRequest.js');
+var SimpleQueryRequest = require('./msg/SimpleQueryRequest.js');
+var SimpleQuitRequest = require('./msg/SimpleQuitRequest.js');
+
 function getQueryParam(key, defaultValue) {
     var queryString = window.location.search;
     var regex = new RegExp(key + '=([^&?]*)');
@@ -174,9 +192,11 @@ function logoutUser() {
 }
 
 function setRequestType(type) {
+    var i;
+    
     // Unselect the request tabs.
     var tabs = document.getElementsByClassName('tab');
-    for (var i = 0; i < tabs.length; ++i)
+    for (i = 0; i < tabs.length; ++i)
         tabs[i].className = "";
 
     // Select the request tab.
@@ -185,19 +205,19 @@ function setRequestType(type) {
 
     // Disable all fields.
     var fieldElements = document.getElementsByClassName('field');
-    for (var i = 0; i < fieldElements.length; ++i) {
+    for (i = 0; i < fieldElements.length; ++i) {
         var field = fieldElements[i];
         field.style.visibility = 'hidden';
         field.style.position = 'absolute';
-    };
+    }
 
     // Enable the selected field.
     var enabledElements = document.getElementsByClassName(type);
-    for (var i = 0; i < enabledElements.length; ++i) {
-        var field = enabledElements[i];
-        field.style.position = 'relative';
-        field.style.visibility = 'visible';
-    };
+    for (i = 0; i < enabledElements.length; ++i) {
+        var enabled = enabledElements[i];
+        enabled.style.position = 'relative';
+        enabled.style.visibility = 'visible';
+    }
 
     // Set the request type.
     var typeField = document.getElementById('type');

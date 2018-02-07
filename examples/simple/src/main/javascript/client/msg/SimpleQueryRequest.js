@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,21 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleQueryRequest;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    var SimpleRequest = require('../msg/SimpleRequest.js');
+
     /** JSON key key. */
     var KEY_KEY = "key";
-    
-    // Shortcuts.
-    var Type = SimpleRequest$Type;
 
     /**
      * <p>Query for a data value. Some data values require a user identity for
      * access.</p>
-     * 
+     *
      * <p>The request data object is defined as:
      * {@code
      * data = {
@@ -37,26 +35,26 @@ var SimpleQueryRequest;
      * <ul>
      * <li>{@code key} is the data key identifying the value.</li>
      * </ul></p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleQueryRequest = SimpleRequest.extend({
-        
+    var SimpleQueryRequest = module.exports = SimpleRequest.extend({
+
         /**
          * <p>Create a new query request.</p>
-         * 
+         *
          * @param {string} key the data key.
          */
         init: function init(key) {
-            init.base.call(this, Type.QUERY);
-            
+            init.base.call(this, SimpleRequest.Type.QUERY);
+
             // Set properties.
             var props = {
                 key: { value: key, writable: false, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
-    
+
         /** @inheritDoc */
         getData: function getData() {
             var jo = {};
@@ -64,4 +62,4 @@ var SimpleQueryRequest;
             return jo;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleQueryRequest'));
