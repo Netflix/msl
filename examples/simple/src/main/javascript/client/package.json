@@ -1,0 +1,26 @@
+{
+  "name": "msl-example-client",
+  "version": "1.1220.0",
+  "description": "Message Security Layer Simple Example Client",
+  "keywords": [
+    "msl",
+    "message security layer",
+    "netflix"
+  ],
+  "homepage": "https://github.com/Netflix/msl",
+  "bugs": {
+    "url": "https://github.com/Netflix/msl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "ssh://git@github.com:Netflix/msl.git"
+  },
+  "license": "Apache-2.0",
+  "scripts": {
+    "lint": "find -E ../.. -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose",
+    "version": "echo `git describe --dirty`"
+  },
+  "dependencies": {
+    "msl-core": "^1.1220.0"
+  }
+}
