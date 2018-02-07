@@ -204,7 +204,7 @@ bool MessageOutputStream::flush(int timeout)
 	// last payload. If there is no buffered data, we still need to send a
 	// payload with the end of message flag set.
 	try {
-		shared_ptr<ByteArray> data = (currentPayload_) ? currentPayload_->toByteArray() : make_shared<ByteArray>();
+		shared_ptr<ByteArray> data = currentPayload_->toByteArray();
 		shared_ptr<PayloadChunk> chunk = make_shared<PayloadChunk>(ctx_, payloadSequenceNumber_, messageHeader->getMessageId(), closed_, compressionAlgo_, data, cryptoContext_);
 		if (caching_) payloads_.push_back(chunk);
 		shared_ptr<MslEncoderFactory> encoder = ctx_->getMslEncoderFactory();
