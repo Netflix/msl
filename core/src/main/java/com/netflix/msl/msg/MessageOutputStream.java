@@ -275,7 +275,7 @@ public class MessageOutputStream extends OutputStream {
         // last payload. If there is no buffered data, we still need to send a
         // payload with the end of message flag set.
         try {
-            final byte[] data = (currentPayload != null) ? currentPayload.toByteArray() : new byte[0];
+            final byte[] data = currentPayload.toByteArray();
             final PayloadChunk chunk = new PayloadChunk(ctx, payloadSequenceNumber, messageHeader.getMessageId(), closed, compressionAlgo, data, this.cryptoContext);
             if (caching) payloads.add(chunk);
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
