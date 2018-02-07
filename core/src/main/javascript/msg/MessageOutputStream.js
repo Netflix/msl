@@ -474,10 +474,9 @@
                     //
                     // Convert the current payload to a single Uint8Array.
                     var length = 0;
-                    if (this._currentPayload)
-                        this._currentPayload.forEach(function(segment) { length += segment.length; });
+                    this._currentPayload.forEach(function(segment) { length += segment.length; });
                     var data = new Uint8Array(length);
-                    for (var offset = 0, i = 0; this._currentPayload && i < this._currentPayload.length; ++i) {
+                    for (var offset = 0, i = 0; i < this._currentPayload.length; ++i) {
                         var segment = this._currentPayload[i];
                         data.set(segment, offset);
                         offset += segment.length;
