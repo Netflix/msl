@@ -81,6 +81,7 @@
                 case Type.ECHO:
                 case Type.LOG:
                 case Type.USER_PROFILE:
+                    /* falls through */
                 default:
                     return true;
             }

@@ -192,9 +192,11 @@ function logoutUser() {
 }
 
 function setRequestType(type) {
+    var i;
+    
     // Unselect the request tabs.
     var tabs = document.getElementsByClassName('tab');
-    for (var i = 0; i < tabs.length; ++i)
+    for (i = 0; i < tabs.length; ++i)
         tabs[i].className = "";
 
     // Select the request tab.
@@ -203,19 +205,19 @@ function setRequestType(type) {
 
     // Disable all fields.
     var fieldElements = document.getElementsByClassName('field');
-    for (var i = 0; i < fieldElements.length; ++i) {
+    for (i = 0; i < fieldElements.length; ++i) {
         var field = fieldElements[i];
         field.style.visibility = 'hidden';
         field.style.position = 'absolute';
-    };
+    }
 
     // Enable the selected field.
     var enabledElements = document.getElementsByClassName(type);
-    for (var i = 0; i < enabledElements.length; ++i) {
-        var field = enabledElements[i];
-        field.style.position = 'relative';
-        field.style.visibility = 'visible';
-    };
+    for (i = 0; i < enabledElements.length; ++i) {
+        var enabled = enabledElements[i];
+        enabled.style.position = 'relative';
+        enabled.style.visibility = 'visible';
+    }
 
     // Set the request type.
     var typeField = document.getElementById('type');

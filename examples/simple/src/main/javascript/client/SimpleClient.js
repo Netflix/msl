@@ -36,7 +36,7 @@
     var AdvancedRequestMessageContext = require('./msg/AdvancedRequestMessageContext.js');
     var SimpleRequestMessageContext = require('./msg/SimpleRequestMessageContext.js');
     var SimpleRequest = require('./msg/SimpleRequest.js');
-    var SimpleMslContext = require('./util/SimpleMslContext.js')
+    var SimpleMslContext = require('./util/SimpleMslContext.js');
     var SimpleConstants = require('./SimpleConstants.js');
 
     /**

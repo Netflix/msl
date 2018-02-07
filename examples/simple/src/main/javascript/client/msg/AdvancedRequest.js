@@ -56,5 +56,5 @@
             };
             Object.defineProperties(this, props);
         },
-    })
+    });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('AdvancedRequest'));
