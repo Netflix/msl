@@ -28,6 +28,7 @@ import com.netflix.msl.MslError;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslMessageException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.crypto.IErrorCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
@@ -309,7 +310,12 @@ public class ErrorHeader extends Header {
         }
         final byte[] signature;
         try {
-            signature = cryptoContext.sign(ciphertext, encoder, format);
+            if (cryptoContext instanceof IErrorCryptoContext) {
+                IErrorCryptoContext errorCryptoContext = (IErrorCryptoContext) cryptoContext;
+                signature = errorCryptoContext.sign(ciphertext, encoder, format, internalCode, errorCode, recipient);
+            } else{
+                signature = cryptoContext.sign(ciphertext, encoder, format);
+            }
         } catch (final MslCryptoException e) {
             throw new MslEncoderException("Error signing the error data.", e);
         }
