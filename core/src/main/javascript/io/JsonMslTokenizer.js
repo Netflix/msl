@@ -38,7 +38,7 @@
      * @const
      * @type {number}
      */
-    var READ_DELAY = 10;
+//    var READ_DELAY = 0;
 
     /**
      * Maximum JSON value size in characters (10MB).
@@ -47,6 +47,14 @@
      * @type {number}
      */
     var MAX_CHARACTERS = 10 * 1024 * 1024;
+    
+    /**
+     * Closing curly brace character code.
+     * 
+     * @const
+     * @type {number}
+     */
+    var CLOSING_BRACE = 125;
     
     var JsonMslTokenizer = module.exports = MslTokenizer.extend({
         /**
@@ -61,14 +69,14 @@
             
             // The properties.
             var props = {
-            	/** @type {MslEncoderFactory} */
-            	_encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
+                /** @type {MslEncoderFactory} */
+                _encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
                 _charset: { value: TextEncoding.Encoding.UTF_8, writable: false, enumerable: false, configurable: false },
-                /** @type {string} */
-                _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
+                /** @type {Array<Uint8Array>} */
+                _remainingData: { value: [], writable: true, enumerable: false, configurable: false },
                 /** @type {ClarinetParser} */
                 _parser: { value: undefined, writable: true, enumerable: false, configurable: false },
             };
@@ -83,7 +91,7 @@
         
         /**
          * @param {number} read timeout in milliseconds.
-         * @param {{result: function(ClarinetParser), error: function(Error)}}
+         * @param {{result: function(ClarinetParser), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the new Clarinet JSON
          *        parser or any thrown exceptions.
          * @throws MslEncoderException if a JSON object exceeds the maximum
@@ -93,7 +101,9 @@
         nextParser: function nextParser(timeout, callback) {
             var self = this;
             
-            this._source.read(-1, timeout, {
+            // Read one character at a time to avoid consuming data from the
+            // input stream that may not be part of this MSL message.
+            this._source.read(1, timeout, {
                 result: function(data) {
                     AsyncExecutor(callback, function() {
                         // On end of stream return null for the parser.
@@ -102,68 +112,49 @@
                         // Aborted responses send valid but empty data, treat
                         // it as end of stream.
                         if (!data.length) return null;
+
+                        // Append the new data to the previous data.
+                        this._remainingData.push(data[0]);
                         
-                        // Append the new data to the previous data and attempt
-                        // to parse the JSON.
+                        // If the new data is not a closing brace, read the
+                        // next character.
+                        if (data[0] != CLOSING_BRACE) {
+                            self.nextParser(timeout, callback);
+                            return;
+                        }
+                        
+                        // Otherwise convert the collected bytes to a string.
+                        // It should be safe to do so irrespective of the
+                        // charset since the last byte was a closing brace.
                         var json;
                         try {
-                        	json = this._remainingData.concat(TextEncoding.getString(data, this._charset));
+                            var bytes = new Uint8Array(this._remainingData);
+                            json = TextEncoding.getString(bytes, this._charset);
                         } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.", e);
-                        }
-                        var parser = new ClarinetParser(json);
-    
-                        // If we got something then return the parser and
-                        // remaining data.
-                        var lastIndex = parser.lastIndex();
-                        if (lastIndex > 0) {
-                            this._remainingData = json.substring(lastIndex);
-                            return parser;
+                            throw new MslEncoderException("Invalid JSON text encoding.", e);
                         }
     
                         // If the new data size exceeds the maximum allowed
                         // then error.
                         if (json.length > MAX_CHARACTERS)
                             throw new MslEncoderException("No JSON parsed after receiving " + json.length + " characters.");
-    
-                        // Otherwise schedule a retry.
-                        this._remainingData = json;
-                        setTimeout(function() {
-                            self.nextParser(timeout, callback);
-                        }, READ_DELAY);
-                    }, self);
-                },
-                timeout: function(data) {
-                    AsyncExecutor(callback, function() {
-                        // If we didn't get any data notify the caller and stop.
-                        if (!data || data.length == 0) {
-                            callback.timeout(this._remainingData);
-                            return;
-                        }
-    
-                        // Append the new data to the previous data and attempt
-                        // to parse the JSON.
-                        var json;
-                        try {
-                        	json = this._remainingData.concat(TextEncoding.getString(data, this._charset));
-                        } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.");
-                        }
+                        
+                        // Attempt to parse the JSON.
                         var parser = new ClarinetParser(json);
-    
+
                         // If we got something then return the parser and
-                        // remaining data.
+                        // update the remaining data.
                         var lastIndex = parser.lastIndex();
                         if (lastIndex > 0) {
-                            this._remainingData = json.substring(lastIndex);
+                            this._remainingData = Array.from(TextEncoding.getBytes(json.substring(lastIndex), this._charset));
                             return parser;
                         }
     
-                        // Otherwise notify the caller of the timeout and stop.
-                        this._remainingData = json;
-                        callback.timeout(this._remainingData);
+                        // Otherwise retry.
+                        self.nextParser(timeout, callback);
                     }, self);
                 },
+                timeout: callback.timeout,
                 error: function(e) {
                     callback.error(new MslEncoderException("Error reading from the source input stream.", e));
                 },
@@ -200,10 +191,7 @@
                             return new JsonMslObject(this._encoder, value);
                         }, self);
                     },
-                    timeout: function(remainingData) {
-                        self._remainingData = remainingData;
-                        callback.timeout();
-                    },
+                    timeout: callback.timeout,
                     error: callback.error,
                 });
             }, self);

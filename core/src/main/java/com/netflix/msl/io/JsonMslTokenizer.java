@@ -15,15 +15,17 @@
  */
 package com.netflix.msl.io;
 
+import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import com.netflix.msl.MslConstants;
+import com.netflix.msl.MslInternalException;
 
 /**
  * <p>Create a new {@link MslTokenizer} that parses JSON-encoded MSL
@@ -43,7 +45,23 @@ public class JsonMslTokenizer extends MslTokenizer {
      */
     public JsonMslTokenizer(final MslEncoderFactory encoder, final InputStream source) {
         this.encoder = encoder;
-        final Reader reader = new InputStreamReader(source, MslConstants.DEFAULT_CHARSET);
+        // We cannot use the standard InputStreamReader to support UTF-8 
+        // decoding because it makes use of StreamDecoder which will read
+        // {@code StreamDecoder.DEFAULT_BYTE_BUFFER_SIZE} bytes by default, and
+        // enforces a minimum of {@code StreamDecoder.MIN_BYTE_BUFFER_SIZE}.
+        // This will consume extra bytes and prevent the input stream from
+        // being used for future MSL messages.
+        //
+        // JSONTokenizer will consume one character at a time, but will default
+        // to a {@code BufferedReader} with the default buffer size, which will
+        // also consume extra bytes and prevent reuse of the input stream.
+        //
+        // Ensure only the minimum number of bytes are consumed by explicitly
+        // using the {@code ThriftyUtf8Reader} and a {@code BufferedReader}
+        // with a buffer size of 1.
+        if (StandardCharsets.UTF_8 != MslConstants.DEFAULT_CHARSET)
+            throw new MslInternalException("Charset " + MslConstants.DEFAULT_CHARSET + " unsupported.");
+        final Reader reader = new BufferedReader(new ThriftyUtf8Reader(source), 1);
         this.tokenizer = new JSONTokener(reader);
     }
     

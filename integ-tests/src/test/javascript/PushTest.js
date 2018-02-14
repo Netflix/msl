@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,11 @@
  */
 
 /**
- * <p>Tests of the {@link MslControl} send methods.</p>
+ * <p>Tests of the {@link MslControl} push methods.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("SendTest", function() {
+describe("PushTest", function() {
     var MslConstants = require('msl-core/MslConstants.js');
     var Url = require('msl-core/io/Url.js');
     var Xhr = require('msl-core/io/Xhr.js');
@@ -43,7 +43,7 @@ describe("SendTest", function() {
     
     var http = require('http');
     var url = require('url');
-    
+
     /**
      * A message context that will write data without requiring encryption or
      * integrity protection.
@@ -112,14 +112,12 @@ describe("SendTest", function() {
     };
     
     /** Local entity identity. */
-    var ENTITY_IDENTITY = "send-test";
+    var ENTITY_IDENTITY = "push-test";
 
     /** Server host. */
     var HOST = "localhost:8080";
-    /** Server path. */
-    var PATH = "/msl-integ-tests/log";
-    /** Report query string. */
-    var REPORT = "report";
+    /** Server base path. */
+    var BASE_PATH = "/msl-integ-tests";
     /** Network timeout in milliseconds. */
     var TIMEOUT = 2000;
 
@@ -152,69 +150,22 @@ describe("SendTest", function() {
         store.clearUserIdTokens();
         store.clearServiceTokens();
     });
-
-    /**
-     * <p>Query the server for the reported string.</p>
-     * 
-     * @param {{result: function(string), timeout: function(), error: function(Error)}}
-     *        callback the callback that will receive the response body, be
-     *        notified of timeout, or any thrown errors.
-     * @return the string returned by a report query.
-     */
-    function report(callback) {
-        // Prepare the request.
-        var options = url.parse("http://" + HOST + PATH + "?" + REPORT);
-        options.timeout = TIMEOUT;
-
-        // Buffer and then deliver the accumulated data. Only
-        // allow the callback to be triggered once, in case
-        // events keep arriving after the data has been
-        // delivered or after an error has occurred.
-        var buffer = "";
-        var delivered = false;
-        var request = http.get(options, function(message) {
-            message.on('data', function(chunk) {
-                try {
-                    if (typeof chunk === 'string')
-                        buffer += chunk;
-                    else
-                        buffer += chunk.toString();
-                } catch (e) {
-                    if (!delivered)
-                        callback.error(e);
-                    delivered = true;
-                }
-            });
-            message.on('end', function() {
-                if (!delivered)
-                    callback.result(buffer);
-                delivered = true;
-            });
-        });
-        request.on('timeout', function() {
-            if (!delivered)
-                callback.timeout();
-            delivered = true;
-        });
-        request.on('error', function(e) {
-            if (!delivered)
-                callback.error(e);
-            delivered = true;
-        });
-    }
     
-    it("send", function() {
+    it("public push", function() {
         // Prepare.
-        var message = "handshake";
-        var messageBytes = TextEncoding.getBytes(message);
-        var uri = "http://" + HOST + PATH;
+        var uri = "http://" + HOST + BASE_PATH + "/public-push";
         var location = new NodeHttpLocation(uri);
         var remoteEntity = new Url(location, TIMEOUT);
+        var output = new Uint8Array(16);
+        ctx.getRandom().nextBytes(output);
+
+        // Open connection.
+        var conn = remoteEntity.openConnection();
         
         // Create message context.
         var msgCtx;
         runs(function() {
-            WriteMessageContext.create(ctx, null, null, messageBytes, {
+            WriteMessageContext.create(ctx, null, null, output, {
                 result: function(x) { msgCtx = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -231,7 +182,7 @@ describe("SendTest", function() {
             // Clear the key request data.
             msgCtx.setKeyRequestData([]);
             
-            ctrl.send(ctx, msgCtx, remoteEntity, TIMEOUT, {
+            ctrl.send(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -265,34 +216,50 @@ describe("SendTest", function() {
         });
         waitsFor(function() { return closed; }, "closed", TIMEOUT);
         
-        // Query receipt.
-        var result;
+        // Receive message.
+        var mis;
         runs(function() {
-            report({
-                result: function(x) { result = x; },
+            ctrl.receive(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return result; }, "report", TIMEOUT);
+        waitsFor(function() { return mis; }, "mis", TIMEOUT);
         
+        // We expect to receive the output data back.
+        var input;
         runs(function() {
-            expect(result).toEqual(message);
+            expect(mis.getMessageHeader()).not.toBeNull();
+            mis.read(output.length, TIMEOUT, {
+                result: function(x) { input = x; },
+                timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return input; }, "input", TIMEOUT);
+
+        runs(function() {
+            // Confirm data.
+            expect(input).toEqual(output); 
         });
     });
     
-    it("send handshake", function() {
+    it("secret push", function() {
         // Prepare.
-        var message = "handshake";
-        var messageBytes = TextEncoding.getBytes(message);
-        var uri = "http://" + HOST + PATH;
+        var uri = "http://" + HOST + BASE_PATH + "/secret-push";
         var location = new NodeHttpLocation(uri);
         var remoteEntity = new Url(location, TIMEOUT);
+        var output = new Uint8Array(16);
+        ctx.getRandom().nextBytes(output);
+        
+        // Open connection.
+        var conn = remoteEntity.openConnection();
         
         // Create message context.
         var msgCtx;
         runs(function() {
-            WriteMessageContext.create(ctx, null, null, messageBytes, {
+            WriteMessageContext.create(ctx, null, null, output, {
                 result: function(x) { msgCtx = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -302,18 +269,14 @@ describe("SendTest", function() {
         // Send message.
         var mos;
         runs(function() {
-            // Require encryption and integrity protection.
-            msgCtx.setEncrypted(true);
-            msgCtx.setIntegrityProtected(true);
+            // Do not require encryption or integrity protection.
+            msgCtx.setEncrypted(false);
+            msgCtx.setIntegrityProtected(false);
+
+            // Clear the key request data.
+            msgCtx.setKeyRequestData([]);
             
-            // Set the key request data.
-            var publicKey = MockRsaAuthenticationFactory.RSA_PUBKEY;
-            var privateKey = MockRsaAuthenticationFactory.RSA_PRIVKEY;
-            var requestData = new AsymmetricWrappedExchange.RequestData("rsaKeypairId", AsymmetricWrappedExchange.Mechanism.JWE_RSA, publicKey, privateKey);
-            var keyxRequestData = [ requestData ];
-            msgCtx.setKeyRequestData(keyxRequestData);
-            
-            ctrl.send(ctx, msgCtx, remoteEntity, TIMEOUT, {
+            ctrl.send(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
                 result: function(x) { mos = x; },
                 timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
@@ -337,7 +300,7 @@ describe("SendTest", function() {
         runs(function() {
             var messageHeader = mos.getMessageHeader();
             expect(messageHeader).not.toBeNull();
-            expect(messageHeader.masterToken).not.toBeNull();
+            expect(messageHeader.masterToken).toBeNull();
             
             mos.close(TIMEOUT, {
                 result: function(x) { closed = x; },
@@ -347,19 +310,122 @@ describe("SendTest", function() {
         });
         waitsFor(function() { return closed; }, "closed", TIMEOUT);
         
-        // Query receipt.
-        var result;
+        // Receive message.
+        var mis;
         runs(function() {
-            report({
-                result: function(x) { result = x; },
+            ctrl.receive(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
+                result: function(x) { mis = x; },
                 timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
-        waitsFor(function() { return result; }, "report", TIMEOUT);
+        waitsFor(function() { return mis; }, "mis", TIMEOUT);
         
+        // We expect to receive an error indicating key exchange is required.
         runs(function() {
-            expect(result).toEqual(message);
+            var errorHeader = mis.getErrorHeader();
+            expect(errorHeader).not.toBeNull();
+            var responseCode = errorHeader.errorCode;
+            expect(responseCode).toEqual(MslConstants.ResponseCode.KEYX_REQUIRED);
         });
+    });
+
+    it("multi push", function() {
+        // Prepare.
+        var uri = "http://" + HOST + BASE_PATH + "/multi-push";
+        var location = new NodeHttpLocation(uri);
+        var remoteEntity = new Url(location, TIMEOUT);
+        var output = new Uint8Array(16);
+        ctx.getRandom().nextBytes(output);
+        
+        // Open connection.
+        var conn = remoteEntity.openConnection();
+        
+        // Create message context.
+        var msgCtx;
+        runs(function() {
+            WriteMessageContext.create(ctx, null, null, output, {
+                result: function(x) { msgCtx = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgCtx; }, "msgCtx", MslTestConstants.TIMEOUT);
+        
+        // Send message.
+        var mos;
+        runs(function() {
+            // Do not require encryption or integrity protection.
+            msgCtx.setEncrypted(false);
+            msgCtx.setIntegrityProtected(false);
+
+            // Clear the key request data.
+            msgCtx.setKeyRequestData([]);
+            
+            ctrl.send(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
+                result: function(x) { mos = x; },
+                timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mos; }, "mos", TIMEOUT);
+        
+        // Wait until ready.
+        var ready;
+        runs(function() {
+            mos.isReady({
+                result: function(x) { ready = x; },
+                timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "ready", TIMEOUT);
+        
+        // Close message output stream.
+        var closed;
+        runs(function() {
+            var messageHeader = mos.getMessageHeader();
+            expect(messageHeader).not.toBeNull();
+            expect(messageHeader.masterToken).toBeNull();
+            
+            mos.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", TIMEOUT);
+        
+        // Receive message.
+        //
+        // We expect to receive the output data back three times.
+        var count = 3;
+        runs(function() {
+            function recv() {
+                // Exit if done.
+                if (count == 0)
+                    return;
+                
+                // Receive message.
+                ctrl.receive(ctx, msgCtx, conn.input, conn.output, TIMEOUT, {
+                    result: function(mis) {
+                        expect(mis.getMessageHeader()).not.toBeNull();
+                        mis.read(output.length, TIMEOUT, {
+                            result: function(input) {
+                                // Confirm data.
+                                expect(input).toEqual(output);
+                                --count;
+                                recv();
+                            },
+                            timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e.requestCause; throw e; }).not.toThrow(); }
+                        });
+                    },
+                    timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                    error: function(e) { expect(function() { throw e.requestCause; throw e; }).not.toThrow(); }
+                });
+            }
+            recv();
+        });
+        waitsFor(function() { return count == 0; }, "recv", 3 * TIMEOUT);
     });
 });

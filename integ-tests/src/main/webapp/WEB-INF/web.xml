@@ -40,4 +40,31 @@
         <servlet-name>LogServlet</servlet-name>
         <url-pattern>/log</url-pattern>
     </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>SecretPushServlet</servlet-name>
+        <servlet-class>com.netflix.msl.server.servlet.SecretPushServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>SecretPushServlet</servlet-name>
+        <url-pattern>/secret-push</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>PublicPushServlet</servlet-name>
+        <servlet-class>com.netflix.msl.server.servlet.PublicPushServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>PublicPushServlet</servlet-name>
+        <url-pattern>/public-push</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>MultiPushServlet</servlet-name>
+        <servlet-class>com.netflix.msl.server.servlet.MultiPushServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>MultiPushServlet</servlet-name>
+        <url-pattern>/multi-push</url-pattern>
+    </servlet-mapping>
 </web-app>

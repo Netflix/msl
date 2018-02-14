@@ -90,6 +90,7 @@ import com.netflix.msl.userauth.UserAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslStore;
+import com.netflix.msl.util.MslUtils;
 import com.netflix.msl.util.NullMslStore;
 
 /**
@@ -1144,10 +1145,9 @@ public class MslControl {
      * request or after sending the message if no response is expected.</p>
      * 
      * <p>In peer-to-peer mode if a master token is being used to build the new
-     * message but there is no user ID token set or the user ID token is not
-     * bound to the and a user ID is provided by the message context the user
-     * ID token for that user ID will be used to build the message if the user
-     * ID token is bound to the master token.</p>
+     * message and a user ID is provided by the message context, the user ID
+     * token for that user ID will be used to build the message if the user ID
+     * token is bound to the master token.</p>
      * 
      * @param ctx MSL context.
      * @param msgCtx message context.
@@ -1207,6 +1207,29 @@ public class MslControl {
 
         // Set the authentication tokens.
         builder.setAuthTokens(masterToken, userIdToken);
+        return builder;
+    }
+    
+    /**
+     * <p>Create a new message builder that will craft a new message based on
+     * another message. The constructed message will have a randomly assigned
+     * message ID, thus detaching it from the message being responded to, and
+     * may be used as a request.</p>
+     * 
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param request message header to respond to.
+     * @return the message builder.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    private MessageBuilder buildDetachedResponse(final MslContext ctx, final MessageContext msgCtx, final MessageHeader request) throws MslCryptoException, MslException {
+        // Create an idempotent response. Assign a random message ID.
+        final MessageBuilder builder = MessageBuilder.createIdempotentResponse(ctx, request);
+        builder.setNonReplayable(msgCtx.isNonReplayable());
+        builder.setMessageId(MslUtils.getRandomLong(ctx));
         return builder;
     }
     
@@ -2275,53 +2298,6 @@ public class MslControl {
     }
     
     /**
-     * <p>This service sends a message to a remote entity.</p>
-     *
-     * <p>This class is only used from trusted network clients and peer-to-peer
-     * entities.</p>
-     */
-    private class SendService implements Callable<MessageOutputStream> {
-        /** The request service. */
-        private final RequestService requestService;
-        
-        /**
-         * Create a new message send service.
-         * 
-         * @param ctx MSL context.
-         * @param msgCtx message context.
-         * @param remoteEntity remote entity URL.
-         * @param timeout connect, read, and renewal lock acquisition timeout
-         *        in milliseconds.
-         */
-        public SendService(final MslContext ctx, final MessageContext msgCtx, final Url remoteEntity, final int timeout) {
-            this.requestService = new RequestService(ctx, msgCtx, remoteEntity, Receive.NEVER, timeout);
-        }
-        
-        /**
-         * Create a new message send service.
-         * 
-         * @param ctx MSL context.
-         * @param msgCtx message context.
-         * @param in remote entity input stream.
-         * @param out remote entity output stream.
-         * @param timeout read and renewal lock acquisition timeout in
-         *        milliseconds.
-         */
-        public SendService(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final int timeout) {
-            this.requestService = new RequestService(ctx, msgCtx, in, out, Receive.NEVER, timeout);
-        }
-
-        /* (non-Javadoc)
-         * @see java.util.concurrent.Callable#call()
-         */
-        @Override
-        public MessageOutputStream call() throws MslException, IOException, TimeoutException {
-            final MslChannel channel = this.requestService.call();
-            return (channel != null) ? channel.output : null;
-        }
-    }
-    
-    /**
      * <p>This service receives a request from a remote entity, and either
      * returns the received message or automatically generates a reply (and
      * returns null).</p>
@@ -2625,17 +2601,17 @@ public class MslControl {
      */
     private class RespondService implements Callable<MslChannel> {
         /** MSL context. */
-        private final MslContext ctx;
+        protected final MslContext ctx;
         /** Message context. */
-        private final MessageContext msgCtx;
+        protected final MessageContext msgCtx;
         /** Request message input stream. */
-        private final MessageInputStream request;
+        protected final MessageInputStream request;
         /** Remote entity input stream. */
-        private final InputStream in;
+        protected final InputStream in;
         /** Remote entity output stream. */
-        private final OutputStream out;
+        protected final OutputStream out;
         /** Read timeout in milliseconds. */
-        private final int timeout;
+        protected final int timeout;
         
         /**
          * Create a new message respond service.
@@ -2677,7 +2653,7 @@ public class MslControl {
          *         trying to delete an old master token the sent message is
          *         replacing.
          */
-        private MslChannel trustedNetworkExecute(final MessageBuilder builder, final int msgCount) throws MslException, MslErrorResponseException, IOException, InterruptedException {
+        protected MslChannel trustedNetworkExecute(final MessageBuilder builder, final int msgCount) throws MslException, MslErrorResponseException, IOException, InterruptedException {
             try {
                 final MessageDebugContext debugCtx = msgCtx.getDebugContext();
                 final MessageHeader requestHeader = request.getMessageHeader();
@@ -2760,7 +2736,7 @@ public class MslControl {
          * @throws TimeoutException if the thread timed out while trying to
          *         acquire the renewal lock.
          */
-        private MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException, TimeoutException {
+        protected MslChannel peerToPeerExecute(final MessageContext msgCtx, final MessageBuilder builder, int msgCount) throws MslException, IOException, InterruptedException, MslErrorResponseException, TimeoutException {
             final MessageDebugContext debugCtx = msgCtx.getDebugContext();
             final MessageHeader requestHeader = request.getMessageHeader();
             
@@ -2990,7 +2966,6 @@ public class MslControl {
                 throw new MslInternalException("Error sending the response.", t);
             }
         }
-        
     }
     
     /**
@@ -3583,6 +3558,190 @@ public class MslControl {
     }
     
     /**
+     * <p>This service sends a message to a remote entity.</p>
+     *
+     * <p>This class is only used from trusted network clients and peer-to-peer
+     * entities.</p>
+     */
+    private class SendService implements Callable<MessageOutputStream> {
+        /** The request service. */
+        private final RequestService requestService;
+        
+        /**
+         * Create a new message send service.
+         * 
+         * @param ctx MSL context.
+         * @param msgCtx message context.
+         * @param remoteEntity remote entity URL.
+         * @param timeout connect, read, and renewal lock acquisition timeout
+         *        in milliseconds.
+         */
+        public SendService(final MslContext ctx, final MessageContext msgCtx, final Url remoteEntity, final int timeout) {
+            this.requestService = new RequestService(ctx, msgCtx, remoteEntity, Receive.NEVER, timeout);
+        }
+        
+        /**
+         * Create a new message send service.
+         * 
+         * @param ctx MSL context.
+         * @param msgCtx message context.
+         * @param in remote entity input stream.
+         * @param out remote entity output stream.
+         * @param timeout read and renewal lock acquisition timeout in
+         *        milliseconds.
+         */
+        public SendService(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final int timeout) {
+            this.requestService = new RequestService(ctx, msgCtx, in, out, Receive.NEVER, timeout);
+        }
+
+        /* (non-Javadoc)
+         * @see java.util.concurrent.Callable#call()
+         */
+        @Override
+        public MessageOutputStream call() throws MslException, IOException, TimeoutException {
+            final MslChannel channel = this.requestService.call();
+            return (channel != null) ? channel.output : null;
+        }
+    }
+
+    /**
+     * <p>This service sends a message to the remote entity using a request as
+     * the basis for the response.</p>
+     * 
+     * <p>This class will only be used trusted network servers.</p>
+     */
+    public class PushService extends RespondService {    
+        /**
+         * Create a new message push service.
+         * 
+         * @param ctx MSL context.
+         * @param msgCtx message context.
+         * @param in remote entity input stream.
+         * @param out remote entity output stream.
+         * @param request request message input stream.
+         * @param timeout renewal lock acquisition timeout in milliseconds.
+         */
+        public PushService(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final MessageInputStream request, final int timeout) {
+            super(ctx, msgCtx, in, out, request, timeout);
+        }
+        
+        /**
+         * @return a {@link MslChannel} on success or {@code null} if cancelled,
+         *         interrupted, if the response could not be sent encrypted or
+         *         integrity protected when required, or if the maximum number
+         *         of messages is hit.
+         * @throws MslException if there was an error creating the response.
+         * @throws MslErrorResponseException if there was an error sending an
+         *         automatically generated error response.
+         * @throws IOException if there was an error writing the message.
+         * @see java.util.concurrent.Callable#call()
+         */
+        @Override
+        public MslChannel call() throws MslException, MslErrorResponseException, IOException {
+            final MessageDebugContext debugCtx = msgCtx.getDebugContext();
+            
+            final MessageHeader requestHeader = request.getMessageHeader();
+            final MessageBuilder builder;
+            try {
+                builder = buildDetachedResponse(ctx, msgCtx, requestHeader);
+            } catch (final MslException e) {
+                // If we were cancelled then return null.
+                if (cancelled(e)) return null;
+                
+                try {
+                    final String recipient = MslControl.getIdentity(request);
+                    final MslError error = e.getError();
+                    final MessageCapabilities caps = requestHeader.getMessageCapabilities();
+                    final List<String> languages = (caps != null) ? caps.getLanguages() : null;
+                    final String userMessage = messageRegistry.getUserMessage(error, languages);
+                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                } catch (final Throwable rt) {
+                    throw new MslErrorResponseException("Error building the message.", rt, e);
+                }
+                throw e;
+            } catch (final Throwable t) {
+                // If we were cancelled then return null.
+                if (cancelled(t)) return null;
+                
+                try {
+                    final String recipient = MslControl.getIdentity(request);
+                    sendError(ctx, debugCtx, requestHeader, recipient, null, MslError.INTERNAL_EXCEPTION, null, out);
+                } catch (final Throwable rt) {
+                    throw new MslErrorResponseException("Error building the message.", rt, t);
+                }
+                throw new MslInternalException("Error building the message.", t);
+            }
+            
+            try {
+                // Send the message. This will release the master token lock.
+                final MslChannel channel = trustedNetworkExecute(builder, 0);
+                
+                // Clear any cached payloads.
+                if (channel != null)
+                    channel.output.stopCaching();
+                
+                // Return the established channel.
+                return channel;
+            } catch (final InterruptedException e) {
+                // We were cancelled so return null.
+                return null;
+            } catch (final IOException e) {
+                // If we were cancelled then return null.
+                if (cancelled(e)) return null;
+
+                // Maybe we can send an error response.
+                try {
+                    final String recipient = MslControl.getIdentity(request);
+                    final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
+                } catch (final Throwable rt) {
+                    // If we were cancelled then return null.
+                    if (cancelled(rt)) return null;
+                    
+                    throw new MslErrorResponseException("Error pushing the message.", rt, e);
+                }
+                throw e;
+            } catch (final MslException e) {
+                // If we were cancelled then return null.
+                if (cancelled(e)) return null;
+
+                // Maybe we can send an error response.
+                try {
+                    final String recipient = MslControl.getIdentity(request);
+                    final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                    final MslError error = e.getError();
+                    final MessageCapabilities caps = requestHeader.getMessageCapabilities();
+                    final List<String> languages = (caps != null) ? caps.getLanguages() : null;
+                    final String userMessage = messageRegistry.getUserMessage(error, languages);
+                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                } catch (final Throwable rt) {
+                    // If we were cancelled then return null.
+                    if (cancelled(rt)) return null;
+
+                    throw new MslErrorResponseException("Error pushing the message.", rt, e);
+                }
+                throw e;
+            } catch (final Throwable t) {
+                // If we were cancelled then return null.
+                if (cancelled(t)) return null;
+
+                // Maybe we can send an error response.
+                try {
+                    final String recipient = MslControl.getIdentity(request);
+                    final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                } catch (final Throwable rt) {
+                    // If we were cancelled then return null.
+                    if (cancelled(rt)) return null;
+
+                    throw new MslErrorResponseException("Error pushing the message.", rt, t);
+                }
+                throw new MslInternalException("Error pushing the message.", t);
+            }
+        }
+    }
+    
+    /**
      * <p>Send a message to the entity at the provided URL.</p>
      * 
      * <p>Use of this method is not recommended as it does not confirm delivery
@@ -3676,8 +3835,72 @@ public class MslControl {
         final SendService service = new SendService(ctx, sendMsgCtx, in, out, timeout);
         return executor.submit(service);
     }
-    
-    // FIXME: need a push method for use by trusted network servers.
+
+    /**
+     * <p>Push a message over the provided output stream based on a message
+     * received from the remote entity.</p>
+     * 
+     * <p>Use of this method is not recommended as it does not perform master
+     * token or user ID token issuance or renewal which the remote entity may
+     * be attempting to perform. Only use this method if there is some other
+     * means by which the client will be able to acquire and renew its master
+     * token or user ID token on a regular basis.</p>
+     * 
+     * <p>This method should only be used by trusted network servers that wish
+     * to send multiple responses to a trusted network client. The remote
+     * entity should be using
+     * {@link #send(MslContext, MessageContext, Url, int)} or
+     * {@link #send(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * and
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
+     * 
+     * <p>This method must not be used if
+     * {@link MslControl#respond(MslContext, MessageContext, InputStream, OutputStream, MessageInputStream, int)}
+     * has already been used with the same {@code MessageInputStream}.</p>
+     * 
+     * <p>The returned {@code Future} will return a {@code MslChannel}
+     * containing the same {@code MessageInputStream} that was provided and the
+     * final {@code MessageOutputStream} that should be used to send any
+     * additional application data not already sent via
+     * {@link MessageContext#write(MessageOutputStream)} to the remote
+     * entity.</p>
+     * 
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) canncelled or interrupted}, if the message
+     * could not be sent with encryption or integrity protection when required,
+     * if a user cannot be attached to the respond to the response due to lack
+     * of a master token, or if the maximum number of messages is hit without
+     * sending the message. In these cases the local entity should wait for a
+     * new message from the remote entity to be received by a call to
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * before attempting to push another message.</p>
+     * 
+     * <p>The {@code Future} may throw an {@code ExecutionException} whose
+     * cause is a {@code MslException}, {@code MslErrorResponseException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
+     * 
+     * <p>The remote entity input and output streams will not be closed in case
+     * the caller wishes to reuse them.</p>
+     * 
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param in remote entity input stream.
+     * @param out remote entity output stream.
+     * @param request message input stream used to create the message.
+     * @param timeout renewal lock acquisition timeout in milliseconds.
+     * @return a future for the communication channel.
+     * @throws IllegalStateException if used in peer-to-peer mode.
+     * @throws IllegalArgumentException if the request message input stream is
+     *         an error message.
+     */
+    public Future<MslChannel> push(final MslContext ctx, final MessageContext msgCtx, final InputStream in, final OutputStream out, final MessageInputStream request, final int timeout) {
+        if (ctx.isPeerToPeer())
+            throw new IllegalStateException("This method cannot be used in peer-to-peer mode.");
+        if (request.getErrorHeader() != null)
+            throw new IllegalArgumentException("Request message input stream cannot be for an error message.");
+        final PushService service = new PushService(ctx, msgCtx, in, out, request, timeout);
+        return executor.submit(service);
+    }
     
     /**
      * <p>Receive a request over the provided input stream.</p>

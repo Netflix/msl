@@ -41,6 +41,7 @@
 			    _source: { value: source, writable: false, enumerable: false, configurable: false },
 			    _buffer: { value: null, writable: true, enumerable: false, configurable: false },
 			    _markpos: { value: 0, writable: true, enumerable: false, configurable: false },
+			    _readlimit: { value: -1, writable: true, enumerable: false, configurable: false },
 			};
 			Object.defineProperties(this, props);
 		},
@@ -56,11 +57,12 @@
 		},
 		
 		/** @inheritDoc */
-		mark: function mark() {
+		mark: function mark(readlimit) {
 			// If there is no current mark, then start buffering.
 			if (!this._buffer) {
 				this._buffer = new ByteArrayOutputStream();
 				this._markpos = 0;
+				this._readlimit = readlimit;
 				return;
 			}
 			
@@ -159,18 +161,28 @@
 						return bufferedData;
 					
 					// Append to the buffer if we are buffering.
-					//
-					// ByteArrayOutputStream.write() is synchronous so
-					// we can get away with this.
 					if (self._buffer) {
-						self._buffer.write(sourceData, 0, sourceData.length, -1, {
-							result: function() {},
-							timeout: function() {},
-							error: function() {}
-						});
-						self._markpos += sourceData.length;
-						// The mark position should now be equal to the
-						// buffer length.
+					    // Stop buffering if a read limit is set and the
+					    // additional data would exceed it.
+					    if (self._readlimit != -1 && self._buffer.size() + sourceData.length > self._readlimit) {
+					        self._buffer = null;
+					        self._markpos = 0;
+					        self._readlimit = -1;
+					    }
+					    
+					    // Otherwise append.
+					    else {
+					        // ByteArrayOutputStream.write() is synchronous so
+					        // we can get away with this.
+					        self._buffer.write(sourceData, 0, sourceData.length, -1, {
+					            result: function() {},
+					            timeout: function() {},
+					            error: function() {}
+					        });
+					        self._markpos += sourceData.length;
+					        // The mark position should now be equal to the
+					        // buffer length.
+					    }
 					}
 					
 					// If we didn't have any buffered data, return the
