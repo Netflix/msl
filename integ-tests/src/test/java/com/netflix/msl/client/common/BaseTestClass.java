@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,7 +102,7 @@ public class BaseTestClass {
 
     public void loadProperties() throws IOException {
         final Properties prop = new Properties();
-        prop.load(BaseTestClass.class.getClassLoader().getResourceAsStream("test.properties"));
+        prop.load(BaseTestClass.class.getResourceAsStream("/test.properties"));
 
         final String grettyHttpPort = System.getProperty("gretty.httpPort");
         final String grettyContextPath = System.getProperty("gretty.contextPath");

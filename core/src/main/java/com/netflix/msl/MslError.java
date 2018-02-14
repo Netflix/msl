@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,6 +193,7 @@ public class MslError {
     public static final MslError USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY = new MslError(5040, ResponseCode.USERDATA_REAUTH, "The entity is not associated with the user.");
     public static final MslError USERAUTH_ENTITYUSER_INCORRECT_DATA = new MslError(5041, ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type.");
     public static final MslError USERAUTH_VERIFICATION_FAILED = new MslError(5042, ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed.");
+    public static final MslError USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR = new MslError(5043, ResponseCode.USERDATA_REAUTH, "User ID token could not be checked for revocation.");
 
     // 6 Message
     public static final MslError UNSUPPORTED_COMPRESSION = new MslError(6000, ResponseCode.FAIL, "Unsupported compression algorithm.");

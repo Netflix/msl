@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 	var MslObject = require('../io/MslObject.js');
 	var MslEncodable = require('../io/MslEncodable.js');
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	var textEncoding = require('../lib/textEncoding.js');
+	var TextEncoding = require('../util/TextEncoding.js');
 	var MslConstants = require('../MslConstants.js');
 	var MslEncoderException = require('../io/MslEncoderException.js');
 	var MslException = require('../MslException.js');
@@ -65,7 +65,7 @@
             		ja.push(source.opt(i));
             } else if (source instanceof Uint8Array) {
                 try {
-                    var json = textEncoding.getString(source, MslConstants.DEFAULT_CHARSET);
+                    var json = TextEncoding.getString(source, TextEncoding.Encoding.UTF_8);
                     var decoded = JSON.parse(json);
                     if (!(decoded instanceof Array))
                         throw new MslEncoderException("Invalid JSON array encoding.");

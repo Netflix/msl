@@ -1,7 +1,7 @@
 {
-  "name": "msl-tests-exec",
+  "name": "msl-example-client",
   "version": "1.1220.0",
-  "description": "Message Security Layer Tests Execution",
+  "description": "Message Security Layer Simple Example Client",
   "keywords": [
     "msl",
     "message security layer",
@@ -17,18 +17,15 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "test": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./node_modules/msl-tests/lib/jasmine/msl-helpers.js"
+    "lint": "find -E ../.. -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose",
+    "version": "echo `git describe --dirty`"
   },
   "dependencies": {
-    "msl-core": "^1.1220.0",
-    "msl-tests": "^1.1220.0"
+    "msl-core": "^1.1220.0"
   },
   "devDependencies": {
     "clarinet": "^0.11.0",
-    "ec-key": "0.0.2",
-    "elliptic": "^6.4.0",
-    "jshint": "^2.9.5",
     "jsrsasign": "^7.2.2",
-    "ursa": "^0.9.4"
+    "jshint": "^2.9.5"
   }
 }

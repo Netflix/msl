@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
     
     var MockMslUser = require('../tokens/MockMslUser.js');
     
-	/** Email. */
+    /** Email. */
     var EMAIL = "email1@domain.com";
     /** Password. */
     var PASSWORD = "password";
@@ -46,55 +46,57 @@
     var USER_2 = new MockMslUser("8422c679242f709891ef4699301abdb2");
 
     var MockEmailPasswordAuthenticationFactory = module.exports = UserAuthenticationFactory.extend({
-	    /**
-	     * Create a new test email/password authentication factory.
-	     */
-	    init: function init() {
-	        init.base.call(this);
-	    },
+        /**
+         * Create a new test email/password authentication factory.
+         */
+        init: function init() {
+            init.base.call(this);
+        },
 
-	    /** @inheritDoc */
-	    createData: function createData(ctx, masterToken, userAuthMo, callback) {
-	        AsyncExecutor(callback, function() {
-	            return EmailPasswordAuthenticationData.parse(userAuthMo);
-	        });
-	    },
+        /** @inheritDoc */
+        createData: function createData(ctx, masterToken, userAuthMo, callback) {
+            AsyncExecutor(callback, function() {
+                return EmailPasswordAuthenticationData.parse(userAuthMo);
+            }, this);
+        },
 
-	    /** @inheritDoc */
-	    authenticate: function authenticate(ctx, identity, data, userIdToken) {
-	        // Make sure we have the right kind of user authentication data.
-	        if (!(data instanceof EmailPasswordAuthenticationData))
-	            throw new MslInternalException("Incorrect authentication data type " + data + ".");
-	        var epad = data;
-	        
-	        // Extract and check email and password values.
-	        var email = data.email;
-	        var password = data.password;
-	        if (!email || email.trim().length == 0 ||
-	            !password || password.trim().length == 0)
-	        {
-	            throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
-	        }
-	        
-	        // Identify the user.
-	        var user;
-	        if (EMAIL == email && PASSWORD == password)
-	            user = USER;
-	        else if (EMAIL_2 == email && PASSWORD_2 == password)
-	            user = USER_2;
-	        else
-	            throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
-	        
-	        // If a user ID token was provided validate the user identities.
-	        if (userIdToken) {
-	            var uitUser = userIdToken.user;
-	            if (!user.equals(uitUser))
-	                throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser);
-	        }
-	        
-	        // Return the user.
-	        return user;
-	    },
+        /** @inheritDoc */
+        authenticate: function authenticate(ctx, identity, data, userIdToken, callback) {
+            AsyncExecutor(callback, function() {
+                // Make sure we have the right kind of user authentication data.
+                if (!(data instanceof EmailPasswordAuthenticationData))
+                    throw new MslInternalException("Incorrect authentication data type " + data + ".");
+                var epad = data;
+                
+                // Extract and check email and password values.
+                var email = data.email;
+                var password = data.password;
+                if (!email || email.trim().length == 0 ||
+                    !password || password.trim().length == 0)
+                {
+                    throw new MslUserAuthException(MslError.EMAILPASSWORD_BLANK).setUserAuthenticationData(epad);
+                }
+                
+                // Identify the user.
+                var user;
+                if (EMAIL == email && PASSWORD == password)
+                    user = USER;
+                else if (EMAIL_2 == email && PASSWORD_2 == password)
+                    user = USER_2;
+                else
+                    throw new MslUserAuthException(MslError.EMAILPASSWORD_INCORRECT).setUserAuthenticationData(epad);
+                
+                // If a user ID token was provided validate the user identities.
+                if (userIdToken) {
+                    var uitUser = userIdToken.user;
+                    if (!user.equals(uitUser))
+                        throw new MslUserAuthException(MslError.USERIDTOKEN_USERAUTH_DATA_MISMATCH, "uad user " + user + "; uit user " + uitUser);
+                }
+                
+                // Return the user.
+                return user;
+            }, this);
+        },
     });
     
     // Expose public static properties.

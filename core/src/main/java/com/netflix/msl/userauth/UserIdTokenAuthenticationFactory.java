@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.netflix.msl.userauth;
 
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.MslUserAuthException;
 import com.netflix.msl.io.MslObject;
@@ -81,7 +82,17 @@ public class UserIdTokenAuthenticationFactory extends UserAuthenticationFactory 
         // Verify the scheme is still permitted.
         if (!authutils.isSchemePermitted(identity, user, this.getScheme()))
             throw new MslUserAuthException(MslError.USERAUTH_ENTITYUSER_INCORRECT_DATA, "Authentication scheme " + this.getScheme() + " not permitted for entity " + identity + ".").setUserAuthenticationData(data);
-        
+
+        // Verify token has not been revoked.
+        final MslError revokeMslError;
+        try {
+            revokeMslError = ctx.getTokenFactory().isUserIdTokenRevoked(ctx, uitadMasterToken, uitadUserIdToken);
+        } catch (final MslException e) {
+            throw new MslUserAuthException(MslError.USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR, "Error while checking user ID token for revocation.", e).setUserAuthenticationData(uitad);
+        }
+        if (revokeMslError != null)
+            throw new MslUserAuthException(revokeMslError, "User ID token used to authenticate was revoked.").setUserAuthenticationData(uitad);
+
         // If a user ID token was provided validate the user identities.
         if (userIdToken != null) {
             final MslUser uitUser = userIdToken.getUser();

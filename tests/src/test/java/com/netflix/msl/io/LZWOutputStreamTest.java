@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,12 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.netflix.msl.util.IOUtils;
 
 /**
  * LZW output stream tests.
@@ -34,9 +35,9 @@ import org.junit.Test;
  */
 public class LZWOutputStreamTest {
     /** RAW data file. */
-    private static final String DATAFILE = "pg1112.txt";
+    private static final String DATAFILE = "/pg1112.txt";
     /** Compressed data file. */
-    private static final String LZWFILE = "pg1112.lzw";
+    private static final String LZWFILE = "/pg1112.lzw";
     
     /**
      * Return the byte value shifted to the right by the number of specified
@@ -78,36 +79,11 @@ public class LZWOutputStreamTest {
     
     @BeforeClass
     public static void setup() throws IOException {
-        final ClassLoader loader = LZWOutputStreamTest.class.getClassLoader();
-        final byte[] data = new byte[256 * 1024];
-        
         // Load the raw file.
-        final InputStream raw = loader.getResourceAsStream(DATAFILE);
-        final ByteArrayOutputStream rawos = new ByteArrayOutputStream();
-        try {
-            do {
-                final int read = raw.read(data);
-                if (read == -1) break;
-                rawos.write(data, 0, read);
-            } while (true);
-            rawdata = rawos.toByteArray();
-        } finally {
-            raw.close();
-        }
-        
+        rawdata = IOUtils.readResource(DATAFILE);
+
         // Load the compressed file.
-        final InputStream lzw = loader.getResourceAsStream(LZWFILE);
-        final ByteArrayOutputStream lzwos = new ByteArrayOutputStream();
-        try {
-            do {
-                final int read = lzw.read(data);
-                if (read == -1) break;
-                lzwos.write(data, 0, read);
-            } while (true);
-            lzwdata = lzwos.toByteArray();
-        } finally {
-            lzw.close();
-        }
+        lzwdata = IOUtils.readResource(LZWFILE);
     }
     
     @After

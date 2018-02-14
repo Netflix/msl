@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@
     var Base64 = require('msl-core/util/Base64.js');
     var MslCrypto = require('msl-core/crypto/MslCrypto.js');
     var MslUtils = require('msl-core/util/MslUtils.js');
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
     
     var NodeCryptoKey = require('../crypto/NodeCryptoKey.js');
     
@@ -732,7 +732,7 @@
                 
                 // Handle symmetric keys.
                 else if (format == KeyFormat.JWK) {
-                    var json = textEncoding.getString(keyData);
+                    var json = TextEncoding.getString(keyData);
                     var jwk = JSON.parse(json);
                     var k = Base64.decode(jwk['k'], true);
                     return new NodeCryptoKey(k, KeyType.SECRET, algorithm, ext, ku);
@@ -824,7 +824,7 @@
                         'k': Base64.encode(rawkey, true),
                     };
                     var json = JSON.stringify(jwk);
-                    return textEncoding.getBytes(json);
+                    return TextEncoding.getBytes(json);
                 } else if (format == KeyFormat.RAW) {
                     return key.rawkey;
                 }

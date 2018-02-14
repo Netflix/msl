@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,8 @@
 	var ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
 	var BlockingQueue = require('../util/BlockingQueue.js');
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	
-	var textEncoding = require('../lib/textEncoding.js');
-	
-    /**
-     * UTF-8 charset.
-     * @const
-     * @type {string}
-     */
-    var UTF_8 = 'utf-8';
+	var TextEncoding = require('../util/TextEncoding.js');
+	var MslConstants = require('../MslConstants.js');
 	
     /**
      * Interface for getting an HTTP response given a request.
@@ -248,9 +241,9 @@
         },
 
         /** @inheritDoc */
-        mark: function mark() {
+        mark: function mark(readlimit) {
             if (this._buffer)
-                this._buffer.mark();
+                this._buffer.mark(readlimit);
             // If the buffer doesn't exist yet, it is implicitly marked as that
             // is the behavior of ByteArrayInputStream.
         },
@@ -363,7 +356,7 @@
                                 else if (result.response.content instanceof Uint8Array)
                                     content = result.response.content;
                                 else if (typeof result.response.body === 'string')
-                                    content = textEncoding.getBytes(result.response.body, UTF_8);
+                                    content = TextEncoding.getBytes(result.response.body, MslConstants.DEFAULT_CHARSET);
                                 else
                                     throw new MslIoException("Missing HTTP response content.");
                                 

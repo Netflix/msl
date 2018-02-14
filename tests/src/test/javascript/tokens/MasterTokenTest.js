@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,8 +30,7 @@ describe("MasterToken", function() {
     var MslEncodingException = require('msl-core/MslEncodingException.js');
     var MslCryptoException = require('msl-core/MslCryptoException.js');
     var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
-
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockPresharedAuthenticationFactory = require('msl-tests/entityauth/MockPresharedAuthenticationFactory.js');
@@ -103,7 +102,7 @@ describe("MasterToken", function() {
             waitsFor(function() { return ctx; }, "ctx", MslTestConstants.TIMEOUT_CTX);
             runs(function() {
                 encoder = ctx.getMslEncoderFactory();
-                ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
+                ISSUER_DATA = encoder.parseObject(TextEncoding.getBytes("{ \"issuerid\" : 17 }"));
 
                 // These keys won't exist until after the factory is instantiated.
                 ENCRYPTION_KEY = MockPresharedAuthenticationFactory.KPE;

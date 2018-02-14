@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ var NodeCrypto = require('../crypto/NodeCrypto.js');
 var LzwCompression = require('msl-core/util/LzwCompression.js');
 var NodeGzipCompression = require('../util/NodeGzipCompression.js');
 var MslConstants = require('msl-core/MslConstants.js');
+var TextEncodingUtf8 = require('msl-core/util/TextEncodingUtf8.js');
 
 var MslSetup = require('msl-core/util/MslSetup.js');
 
@@ -38,11 +39,13 @@ var NodeMslSetup = module.exports = MslSetup.extend({
         var compressionImpls = {};
         compressionImpls[MslConstants.CompressionAlgorithm.LZW] = new LzwCompression();
         compressionImpls[MslConstants.CompressionAlgorithm.GZIP] = new NodeGzipCompression();
+        var textEncodingImpl = new TextEncodingUtf8();
         
         // The properties.
         var props = {
             _base64Impl: { value: base64Impl, writable: false, enumerable: false, configurable: false },
             _compressionImpls: { value: compressionImpls, writable: false, enumerable: false, configurable: false },
+            _textEncodingImpl: { value: textEncodingImpl, writable: false, enumerable: false, configurable: false },
             _randomInterface: { value: NodeRandom, writable: false, enumerable: false, configurable: false },
             _webCryptoVerson: { value: MslCrypto.WebCryptoVersion.LATEST, writable: false, enumerable: false, configurable: false },
             _webCryptoApi: { value: NodeCrypto, writable: false, enumerable: false, configurable: false },
@@ -58,6 +61,11 @@ var NodeMslSetup = module.exports = MslSetup.extend({
     /** @inheritDoc */
     getCompressionImpls: function getCompressionImpls() {
         return this._compressionImpls;
+    },
+    
+    /** @inheritDoc */
+    getTextEncodingImpl: function getTextEncodingImpl() {
+        return this._textEncodingImpl;
     },
     
     /** @inheritDoc */

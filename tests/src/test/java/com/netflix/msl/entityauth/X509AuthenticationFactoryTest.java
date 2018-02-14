@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.SignatureException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import org.junit.After;
@@ -46,6 +43,7 @@ import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
+import com.netflix.msl.util.IOUtils;
 import com.netflix.msl.util.MockAuthenticationUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -60,9 +58,9 @@ public class X509AuthenticationFactoryTest {
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** X.509 expired resource certificate. */
-    private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
+    private static final String X509_EXPIRED_CERT = "/entityauth/expired.pem";
     /** X.509 untrusted resource certificate. */
-    private static final String X509_UNTRUSTED_CERT = "entityauth/untrusted.pem";
+    private static final String X509_UNTRUSTED_CERT = "/entityauth/untrusted.pem";
 
     /** Key entity X.509 certificate. */
     private static final String KEY_X509_CERT = "x509certificate";
@@ -78,16 +76,9 @@ public class X509AuthenticationFactoryTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
         encoder = ctx.getMslEncoderFactory();
         
-        final CertificateFactory x509Factory = CertificateFactory.getInstance("X.509");
-        
-        final URL expiredUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_EXPIRED_CERT);
-        final InputStream expiredInputStream = expiredUrl.openStream();
-        expiredCert = (X509Certificate)x509Factory.generateCertificate(expiredInputStream);
+        expiredCert = IOUtils.readX509(X509_EXPIRED_CERT);
+        untrustedCert = IOUtils.readX509(X509_UNTRUSTED_CERT);
 
-        final URL untrustedUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_UNTRUSTED_CERT);
-        final InputStream untrustedInputStream = untrustedUrl.openStream();
-        untrustedCert = (X509Certificate)x509Factory.generateCertificate(untrustedInputStream);
-        
         final X509Store caStore = new X509Store();
         caStore.addTrusted(MockX509AuthenticationFactory.X509_CERT);
         authutils = new MockAuthenticationUtils();

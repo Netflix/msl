@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -236,6 +236,16 @@ public class MockTokenFactory implements TokenFactory {
         } catch (final IllegalArgumentException e) {
             throw new MslException(MslError.USERIDTOKEN_IDENTITY_INVALID, userdata, e);
         }
+    }
+
+    /**
+     * Reset the token factory state.
+     */
+    public void reset() {
+        sequenceNumber = -1;
+        revokedMasterToken = null;
+        largestNonReplayableId = 0;
+        revokedUserIdToken = null;
     }
 
     /** Newest master token sequence number. (-1 accepts all master tokens.) */
