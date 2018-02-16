@@ -1027,6 +1027,7 @@
                 // to reuse the connection.
                 if (this._closeSource) {
                     this._source.close(timeout, callback);
+                    closeTokenizer();
                 }
 
                 // Otherwise if this is not a handshake message or error message then
@@ -1035,7 +1036,7 @@
                     if (!this.getMessageHeader()) return true;
                     this.isHandshake(timeout, {
                         result: function(handshake) {
-                            if (handshake) callback.result(true);
+                            if (handshake) closeTokenizer();
                             else consume();
                         },
                         timeout: callback.timeout,
@@ -1048,11 +1049,23 @@
                     self.nextData(timeout, {
                         result: function(data) {
                             if (data) consume();
-                            else callback.result(true);
+                            else closeTokenizer();
                         },
                         timeout: callback.timeout,
                         // Ignore exceptions.
                         error: function() { callback.result(true); },
+                    });
+                }
+                
+                function closeTokenizer() {
+                    // Close the tokenizer.
+                    self._tokenizer.close(timeout, {
+                        result: callback.result,
+                        timeout: callback.timeout,
+                        error: function(e) {
+                            // Ignore exceptions.
+                            callback.result(true);
+                        },
                     });
                 }
             }, self);

@@ -38,6 +38,11 @@ public interface Url {
          * stream, but reading from the input stream may prevent further
          * writing to the output stream.</p>
          * 
+         * <p>The returned input stream must support
+         * {@link InputStream#mark(int)}, {@link InputStream#reset()}, and
+         * {@link InputStream#skip(long)} if you wish to use it for more than
+         * one MSL message.</p> 
+         * 
          * @return an input stream that reads from this connection.
          * @throws IOException if an I/O error occurs while creating the input
          *         stream.
