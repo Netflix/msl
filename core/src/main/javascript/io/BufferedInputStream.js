@@ -217,5 +217,29 @@
 				}
 			}, self);
 		},
+		
+		/** @inheritDoc */
+		skip: function skip(n, timeout, callback) {
+		    var self = this;
+		    
+		    InterruptibleExecutor(callback, function() {
+		        if (this._closed)
+		            throw new MslIoException("Stream is already closed.");
+		        
+		        // If we have any data in the buffer, skip it first.
+		        var skipcount = 0;
+		        if (this._buffer && this._buffer.size() > this._bufpos) {
+		            skipcount = Math.min(n, this._buffer.size() - this._bufpos);
+		            this._bufpos += skipcount;
+		            
+		            // If we skipped as much as requested return immediately.
+		            if (skipcount == n)
+		                return skipcount;
+		        }
+		        
+		        // We were not able to skip enough using just buffered data.
+		        this._source.skip(n - skipcount, timeout, callback);
+		    }, self);
+		},
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('BufferedInputStream'));

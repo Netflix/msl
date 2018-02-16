@@ -80,6 +80,11 @@
                 error: function(e) { callback.error(e); },
             });
         },
+        
+        /** @inheritDoc */
+        skip: function skip(n, timeout, callback) {
+            this._input.skip(n, timeout, callback);
+        },
     });
     
     /**

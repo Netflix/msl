@@ -110,5 +110,40 @@
 	     *         is closed.
 	     */
 	    read: function(len, timeout, callback) {},
+	    
+	    /**
+	     * <p>Skips over and discards <code>n</code> bytes of data from this
+	     * input stream. The <code>skip</code> method may, for a variety of
+	     * reasons, end up skipping over some smaller number of bytes, possibly
+	     * <code>0</code>.</p>
+	     * 
+	     * <p>The default implementation calls read() with the requested number
+	     * of bytes.</p>
+	     * 
+	     * @param {number} n the number of bytes to be skipped.
+	     * @param {number} timeout skip timeout in milliseconds or -1 for no
+	     *        timeout.
+	     * @param {{result: function(number), timeout: function(number), error: function(Error)}}
+	     *        callback the callback that will receive the actual number of
+	     *        bytes skipped, be notified of timeouts, or any thrown
+	     *        exceptions.
+	     * @throws IOException if skip is not supported, if there is an error
+	     *         skipping over the data, or if the stream is closed.
+	     */
+	    skip: function(n, timeout, callback) {
+            this.read(n, timeout, {
+                result: function(data) {
+                    InterruptibleExecutor(callback, function() {
+                        return (data) ? data.length : 0;
+                    });
+                },
+                timeout: function(data) {
+                    InterruptibleExecutor(callback, function() {
+                        return (data) ? data.length : 0;
+                    });
+                },
+                error: callback.error,
+            });
+	    },
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('InputStream'));

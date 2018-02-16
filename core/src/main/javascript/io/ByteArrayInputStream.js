@@ -117,5 +117,14 @@
                 return data;
             }, this);
         },
+        
+        /** @inheritDoc */
+        skip: function(n, timeout, callback) {
+            InterruptibleExecutor(callback, function() {
+                var originalPosition = this._currentPosition;
+                this._currentPosition = Math.min(this._currentPosition + n, this._data.length);
+                return this._currentPosition - originalPosition;
+            }, this);
+        },
     });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('ByteArrayInputStream'));

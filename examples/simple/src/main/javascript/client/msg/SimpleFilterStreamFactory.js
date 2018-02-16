@@ -97,6 +97,11 @@
                 error: callback.error,
             });
         },
+        
+        /** @inheritDoc */
+        skip: function skip(n, timeout, callback) {
+            this._input.skip(n, timeout, callback);
+        }
     });
 
     /**
