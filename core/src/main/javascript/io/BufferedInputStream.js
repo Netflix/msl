@@ -39,8 +39,26 @@
 			// The properties.
 			var props = {
 			    _source: { value: source, writable: false, enumerable: false, configurable: false },
+			    /**
+			     * Buffer of data read since the last call to mark(). Null if
+			     * mark() has not been called or if the read limit has been
+			     * exceeded.
+			     * 
+			     * @type {?ByteArrayOutputStream}
+			     */
 			    _buffer: { value: null, writable: true, enumerable: false, configurable: false },
-			    _markpos: { value: 0, writable: true, enumerable: false, configurable: false },
+			    /**
+			     * Current buffer read position.
+			     * 
+			     * @type {number}
+			     */
+			    _bufpos: { value: 0, writable: true, enumerable: false, configurable: false },
+			    /**
+			     * Requested maximum number of bytes to buffer. -1 for no
+			     * maximum.
+			     * 
+			     * @type {number}
+			     */
 			    _readlimit: { value: -1, writable: true, enumerable: false, configurable: false },
 			};
 			Object.defineProperties(this, props);
@@ -61,24 +79,24 @@
 			// If there is no current mark, then start buffering.
 			if (!this._buffer) {
 				this._buffer = new ByteArrayOutputStream();
-				this._markpos = 0;
+				this._bufpos = 0;
 				this._readlimit = readlimit;
 				return;
 			}
 			
 			// If there is data buffered and the current mark position is not
 			// zero (at the beginning) then truncate the the buffer.
-			if (this._markpos > 0) {
+			if (this._bufpos > 0) {
 				var data = this._buffer.toByteArray();
 				this._buffer = new ByteArrayOutputStream();
 				// ByteArrayOutputStream.write() is synchronous so we can get
 				// away with this.
-				this._buffer.write(data, this._markpos, data.length - this._markpos, -1, {
+				this._buffer.write(data, this._bufpos, data.length - this._bufpos, -1, {
 					result: function() {},
 					timeout: function() {},
 					error: function() {}
 				});
-				this._markpos = 0;
+				this._bufpos = 0;
 			}
 			
 			// Otherwise the existing buffer contains the correct data.
@@ -90,7 +108,7 @@
 				throw new MslIoException("Cannot reset before input stream has been marked.");
 			
 			// Start reading from the beginning of the buffer. 
-			this._markpos = 0;
+			this._bufpos = 0;
 		},
 		
 		/** @inheritDoc */
@@ -108,7 +126,7 @@
 	            
 				// If we have any data in the buffer, read it first.
 				var bufferedData;
-				if (this._buffer && this._buffer.size() > this._markpos) {
+				if (this._buffer && this._buffer.size() > this._bufpos) {
 					// If no length was specified, read everything remaining
 					// in the buffer.
 					var endpos;
@@ -118,12 +136,12 @@
 					// Otherwise read the amount requested but no more than
 					// what remains in the buffer. 
 					else {
-						endpos = Math.min(this._buffer.size(), this._markpos + len);
+						endpos = Math.min(this._buffer.size(), this._bufpos + len);
 					}
 					
 					// Extract the buffered data.
-					bufferedData = this._buffer.toByteArray().subarray(this._markpos, endpos);
-					this._markpos += bufferedData.length;
+					bufferedData = this._buffer.toByteArray().subarray(this._bufpos, endpos);
+					this._bufpos += bufferedData.length;
 					
 					// If the data is of sufficient size, return it.
 					if (bufferedData.length >= len)
@@ -166,7 +184,7 @@
 					    // additional data would exceed it.
 					    if (self._readlimit != -1 && self._buffer.size() + sourceData.length > self._readlimit) {
 					        self._buffer = null;
-					        self._markpos = 0;
+					        self._bufpos = 0;
 					        self._readlimit = -1;
 					    }
 					    
@@ -179,7 +197,7 @@
 					            timeout: function() {},
 					            error: function() {}
 					        });
-					        self._markpos += sourceData.length;
+					        self._bufpos += sourceData.length;
 					        // The mark position should now be equal to the
 					        // buffer length.
 					    }
