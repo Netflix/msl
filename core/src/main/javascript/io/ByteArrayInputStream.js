@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@
                 _data: { value: data, writable: false, enumerable: false, configurable: false },
                 _closed: { value: false, writable: true, enumerable: false, configurable: false },
                 _currentPosition: { value: 0, writable: true, enumerable: false, configurable: false },
-                _mark: { value: 0, writable: true, enumerable: false, configurable: false },
+                _mark: { value: -1, writable: true, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },
@@ -54,31 +54,19 @@
             });
         },
 
-        /**
-         * Marks the current position in this input stream. A subsequent call to
-         * the reset method repositions this stream at the last marked position so
-         * that subsequent reads re-read the same bytes.
-         *
-         * @see #reset()
-         */
-        mark: function mark() {
+        /** @inheritDoc */
+        mark: function mark(readlimit) {
             this._mark = this._currentPosition;
         },
     
-        /**
-         * Repositions this stream to the position at the time the mark method was
-         * last called on this input stream. If the mark method has never been
-         * called then the stream will be reset to the beginning.
-         *
-         * @see #mark()
-         */
+        /** @inheritDoc */
         reset: function reset() {
+            if (this._mark == -1)
+                throw new MslIoException("Cannot reset before input stream has been marked or if mark has been invalidated.");
             this._currentPosition = this._mark;
         },
     
-        /**
-         * @return {boolean} true if the mark and reset operations are supported.
-         */
+        /** @inheritDoc */
         markSupported: function markSupported() {
             return true;
         },

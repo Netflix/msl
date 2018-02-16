@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 	"use strict";
 	
 	var Class = require('../util/Class.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	
 	var InputStream = module.exports = Class.create({
 	    /**
@@ -73,7 +74,8 @@
 	     * Repositions this stream to the position at the time the mark method was
 	     * last called on this input stream.
 	     *
-	     * @throws IOException if this stream has not been marked.
+	     * @throws IOException if this stream has not been marked or if the
+	     *         read limit has been exceeded.
 	     * @see #mark()
 	     */
 	    reset: function() {},
@@ -116,6 +118,9 @@
 	     * input stream. The <code>skip</code> method may, for a variety of
 	     * reasons, end up skipping over some smaller number of bytes, possibly
 	     * <code>0</code>.</p>
+	     * 
+	     * <p>Skipped bytes must still be accounted for by mark() and
+	     * reset().</p>
 	     * 
 	     * <p>The default implementation calls read() with the requested number
 	     * of bytes.</p>

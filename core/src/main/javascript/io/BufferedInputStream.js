@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@
 		/** @inheritDoc */
 		reset: function reset() {
 			if (!this._buffer)
-				throw new MslIoException("Cannot reset before input stream has been marked.");
+				throw new MslIoException("Cannot reset before input stream has been marked or if mark has been invalidated.");
 			
 			// Start reading from the beginning of the buffer. 
 			this._bufpos = 0;
@@ -238,7 +238,21 @@
 		        }
 		        
 		        // We were not able to skip enough using just buffered data.
-		        this._source.skip(n - skipcount, timeout, callback);
+		        this._read(n - skipcount, timeout, {
+		            result: function(data) {
+		                InterruptibleExecutor(callback, function() {
+		                    if (!data) return skipcount;
+		                    return data.length + skipcount;
+		                }, self);
+		            },
+		            timeout: function(data) {
+                        InterruptibleExecutor(callback, function() {
+                            if (!data) return skipcount;
+                            return data.length + skipcount;
+                        }, self);
+		            },
+		            error: callback.error,
+		        });
 		    }, self);
 		},
 	});
