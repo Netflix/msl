@@ -255,7 +255,7 @@
                         return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
     };
@@ -541,7 +541,7 @@
                         ErrorHeader.create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
     };
@@ -1027,7 +1027,7 @@
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },

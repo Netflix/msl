@@ -103,10 +103,10 @@ function(encoding, compressionAlgo) {
                                 return cryptoContext;
                             });
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
     }

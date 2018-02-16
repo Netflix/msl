@@ -1116,7 +1116,7 @@
                             else initialChecks();
                         },
                         timeout: function() { callback.timeout(new Uint8Array(0)); },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 } else {
                     initialChecks();

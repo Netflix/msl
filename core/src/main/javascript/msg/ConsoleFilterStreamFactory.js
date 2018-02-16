@@ -77,7 +77,7 @@
                     console.log(data);
                     callback.timeout(data);
                 },
-                error: function(e) { callback.error(e); },
+                error: callback.error,,
             });
         },
         

@@ -1173,7 +1173,7 @@
                                 };
                             },self);
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 }, self);
             }
@@ -1239,7 +1239,7 @@
                                     entityReauth(requestHeader, payloads);
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1260,7 +1260,7 @@
                                     userReauth(requestHeader, payloads);
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1297,7 +1297,7 @@
                                     };
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -3191,7 +3191,7 @@
             InterruptibleExecutor(callback, function() {
                 this._ctrl.receive(this, this._ctx, this._msgCtx, this._input, null, this._timeout, {
                     result: function(request) { deliverMessage(request); },
-                    timeout: function() { callback.timeout(); },
+                    timeout: callback.timeout,
                     error: function(e) {
                         InterruptibleExecutor(callback, function() {
                             // If we were cancelled then return null.
@@ -3386,7 +3386,7 @@
                                 }
                                 sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
-                                    timeout: function() { callback.timeout(); },
+                                    timeout: callback.timeout,
                                     error: function(re) {
                                         InterruptibleExecutor(callback, function() {
                                             // If we were cancelled then return null.

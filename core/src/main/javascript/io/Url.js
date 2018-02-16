@@ -299,8 +299,8 @@
                 if (!this._buffer) {
                     this._out.close(timeout, {
                         result: function(success) { processResponse(success); },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
+                        timeout: callback.timeout,
+                        error: callback.error,
                     });
                 }
 
