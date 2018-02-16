@@ -21,12 +21,12 @@
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 (function(require, module) {
-	"use strict";
-	
-	var InputStream = require('../io/InputStream.js');
-	var OutputStream = require('../io/OutputStream.js');
-	var FilterStreamFactory = require('../msg/FilterStreamFactory.js');
-	
+    "use strict";
+    
+    var InputStream = require('../io/InputStream.js');
+    var OutputStream = require('../io/OutputStream.js');
+    var FilterStreamFactory = require('../msg/FilterStreamFactory.js');
+    
     /**
      * A filter input stream that outputs read data to stdout. A new line is
      * output when the stream is closed.
@@ -40,15 +40,15 @@
          */
         init: function init(input) {
             // The properties.
-        	var props = {
-        		_input: { value: input, writable: false, enumerable: false, configurable: false },
-        	};
-        	Object.defineProperties(this, props);
+            var props = {
+                _input: { value: input, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
     
         /** @inheritDoc */
         close: function close(timeout, callback) {
-        	this._input.close(timeout, callback);
+            this._input.close(timeout, callback);
         },
         
         /** @inheritDoc */
@@ -58,27 +58,27 @@
         
         /** @inheritDoc */
         reset: function reset() {
-        	this._input.reset();
+            this._input.reset();
         },
         
         /** @inheritDoc */
         markSupported: function markSupported() {
-        	return this._input.markSupported();
+            return this._input.markSupported();
         },
 
         /** @inheritDoc */
         read: function read(len, timeout, callback) {
-        	this._input.read(len, timeout, {
-        		result: function(data) {
-        			console.log(data);
-        			callback.result(data);
-        		},
-        		timeout: function(data) {
-        			console.log(data);
-        			callback.timeout(data);
-        		},
-        		error: function(e) { callback.error(e); },
-        	});
+            this._input.read(len, timeout, {
+                result: function(data) {
+                    console.log(data);
+                    callback.result(data);
+                },
+                timeout: function(data) {
+                    console.log(data);
+                    callback.timeout(data);
+                },
+                error: function(e) { callback.error(e); },
+            });
         },
     });
     
@@ -95,38 +95,38 @@
          */
         init: function init(output) {
             // The properties.
-        	var props = {
-        		_output: { value: output, writable: false, enumerable: false, configurable: false },
-        	};
-        	Object.defineProperties(this, props);
+            var props = {
+                _output: { value: output, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
         },
 
         /** @inheritDoc */
         close: function close(timeout, callback) {
-        	this._output.close(timeout, callback);
+            this._output.close(timeout, callback);
         },
 
         /** @inheritDoc */
         write: function write(data, off, len, timeout, callback) {
-        	console.log(data.subarray(off, off + len));
-        	this._output.write(data, off, len, timeout, callback);
+            console.log(data.subarray(off, off + len));
+            this._output.write(data, off, len, timeout, callback);
         },
 
         /** @inheritDoc */
         flush: function flush(timeout, callback) {
-        	this._output.flush(timeout, callback);
+            this._output.flush(timeout, callback);
         },
     });
     
     var ConsoleFilterStreamFactory = module.exports = FilterStreamFactory.extend({
-	    /** @inheritDoc */
-	    getInputStream: function getInputStream(input) {
-	        return new ConsoleInputStream(input);
-	    },
-	
-	    /** @inheritDoc */
-	    getOutputStream: function getOutputStream(output) {
-	        return new ConsoleOutputStream(output);
-	    },
+        /** @inheritDoc */
+        getInputStream: function getInputStream(input) {
+            return new ConsoleInputStream(input);
+        },
+    
+        /** @inheritDoc */
+        getOutputStream: function getOutputStream(output) {
+            return new ConsoleOutputStream(output);
+        },
     });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('ConsoleFilterStreamFactory'));
