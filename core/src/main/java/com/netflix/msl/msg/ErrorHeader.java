@@ -309,7 +309,7 @@ public class ErrorHeader extends Header {
         }
         final byte[] signature;
         try {
-            signature = cryptoContext.sign(ciphertext, encoder, format);
+            signature = cryptoContext.sign(ciphertext, encoder, format, this);
         } catch (final MslCryptoException e) {
             throw new MslEncoderException("Error signing the error data.", e);
         }

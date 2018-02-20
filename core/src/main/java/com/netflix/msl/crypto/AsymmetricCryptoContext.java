@@ -44,7 +44,7 @@ import com.netflix.msl.io.MslObject;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public abstract class AsymmetricCryptoContext implements ICryptoContext {
+public abstract class AsymmetricCryptoContext extends ICryptoContext {
     /** Null transform or algorithm. */
     protected static final String NULL_OP = "nullOp";
     

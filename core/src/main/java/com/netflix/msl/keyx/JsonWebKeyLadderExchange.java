@@ -402,7 +402,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
      * web key string representation's binary encoding for compatibility with
      * the wrapping algorithm used.</p> 
      */
-    public static abstract class JwkCryptoContext implements ICryptoContext {
+    public static abstract class JwkCryptoContext extends ICryptoContext {
         /* (non-Javadoc)
          * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */

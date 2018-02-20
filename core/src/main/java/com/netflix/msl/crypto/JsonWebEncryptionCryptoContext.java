@@ -58,7 +58,7 @@ import com.netflix.msl.util.MslContext;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class JsonWebEncryptionCryptoContext implements ICryptoContext {
+public class JsonWebEncryptionCryptoContext extends ICryptoContext {
     /** Encoding charset. */
     private static final Charset UTF_8 = Charset.forName("UTF-8");
     
@@ -137,7 +137,7 @@ public class JsonWebEncryptionCryptoContext implements ICryptoContext {
      * The Content Encryption Key crypto context is used to encrypt/decrypt the
      * randomly generated content encryption key.
      */
-    public static abstract class CekCryptoContext implements ICryptoContext {
+    public static abstract class CekCryptoContext extends ICryptoContext {
         /**
          * Create a new content encryption key crypto context with the
          * specified content encryption key encryption algorithm.

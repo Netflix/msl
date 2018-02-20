@@ -53,7 +53,7 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class SymmetricCryptoContext implements ICryptoContext {
+public class SymmetricCryptoContext extends ICryptoContext {
     /** AES encryption cipher algorithm. */
     private static final String AES_ALGO = "AES";
     /** AES encryption cipher algorithm. */

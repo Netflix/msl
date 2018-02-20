@@ -25,7 +25,7 @@ import com.netflix.msl.io.MslEncoderFormat;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class NullCryptoContext implements ICryptoContext {
+public class NullCryptoContext extends ICryptoContext {
     /* (non-Javadoc)
      * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
