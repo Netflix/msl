@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import com.netflix.msl.io.MslObject;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public abstract class AsymmetricCryptoContext implements ICryptoContext {
+public abstract class AsymmetricCryptoContext extends ICryptoContext {
     /** Null transform or algorithm. */
     protected static final String NULL_OP = "nullOp";
     
