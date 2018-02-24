@@ -461,7 +461,7 @@ xdescribe("DiffieHellmanExchangeSuite", function() {
         			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         		});
         	});
-        	waitsFor(function() { masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        	waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
         	
         	runs(function() {
         		expect(masterToken).toEqual(MASTER_TOKEN);

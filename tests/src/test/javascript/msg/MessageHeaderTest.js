@@ -7869,7 +7869,7 @@ describe("MessageHeader", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
 		});
-		waitsFor(function() { peerServiceTokensA && peerServiceTokensB; }, "service tokens not received", MslTestConstants.TIMEOUT);
+		waitsFor(function() { return peerServiceTokensA && peerServiceTokensB; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
         var builder;
         runs(function() {
