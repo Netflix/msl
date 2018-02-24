@@ -148,6 +148,15 @@
                 MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
+        
+        /** @inheritDoc */
+        isMasterTokenRenewable: function(ctx, masterToken, callback) {
+            AsyncExecutor(callback, function() {
+                if (!masterToken.isDecrypted())
+                    return MslError.MASTERTOKEN_UNTRUSTED;
+                return null;
+            }, this);
+        },
 
         /** @inheritDoc */
         renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
