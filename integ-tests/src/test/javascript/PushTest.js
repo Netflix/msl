@@ -414,13 +414,19 @@ describe("PushTest", function() {
                                 // Confirm data.
                                 expect(input).toEqual(output);
                                 --count;
-                                recv();
+                                mis.close(TIMEOUT, {
+                                    result: function(success) {
+                                        recv();
+                                    },
+                                    timeout: function() { expect(function() { throw new MslIoException("Close timed out."); }).not.toThrow(); },
+                                    error: function(e) { expect(function() { throw e.requestCause; throw e; }).not.toThrow(); }
+                                });
                             },
-                            timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                            timeout: function() { expect(function() { throw new MslIoException("Read timed out."); }).not.toThrow(); },
                             error: function(e) { expect(function() { throw e.requestCause; throw e; }).not.toThrow(); }
                         });
                     },
-                    timeout: function() { expect(function() { throw new MslIoException("Request timed out."); }).not.toThrow(); },
+                    timeout: function() { expect(function() { throw new MslIoException("Receive timed out."); }).not.toThrow(); },
                     error: function(e) { expect(function() { throw e.requestCause; throw e; }).not.toThrow(); }
                 });
             }

@@ -38,7 +38,6 @@
     ]
   },
   "devDependencies": {
-    "clarinet": "^0.11.0",
     "jsrsasign": "^7.2.2",
     "jshint": "^2.9.5"
   }

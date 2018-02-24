@@ -24,7 +24,6 @@
     "msl-tests": "^1.1220.0"
   },
   "devDependencies": {
-    "clarinet": "^0.11.0",
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
     "jshint": "^2.9.5",
