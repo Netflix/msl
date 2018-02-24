@@ -1224,6 +1224,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
             mis.read(MAX_READ_LEN, TIMEOUT, {
@@ -1299,6 +1309,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
@@ -1604,6 +1624,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1657,6 +1687,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1709,6 +1749,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var closed;
         runs(function() {
@@ -1905,6 +1955,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var closed;
         runs(function() {
@@ -2824,6 +2884,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
             mis.read(MAX_READ_LEN, TIMEOUT, {
@@ -2909,6 +2979,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
@@ -2999,6 +3079,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         // Read everything. Each bad payload should throw an exception.
         var buffer = new ByteArrayOutputStream();
@@ -3110,6 +3200,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         // Read everything. Each bad payload should throw an exception.
         var buffer = new ByteArrayOutputStream();
         var caughtExceptions = 0;
@@ -3206,6 +3306,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var firstdata;
         runs(function() {
             mis.read(-1, TIMEOUT, {
@@ -3282,6 +3392,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var appdata, buffer;
         var firstRead = 0;
@@ -3493,6 +3613,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var appdata, buffer;
         var firstRead = 0;
         var beginningOffset, beginningLength;
@@ -3645,6 +3775,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var appdata, buffer;
         var oneRead = 0;
         runs(function() {
@@ -3790,6 +3930,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var appdata, buffer;
         var beginningRead = 0;
@@ -3987,6 +4137,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
