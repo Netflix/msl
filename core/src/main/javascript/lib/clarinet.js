@@ -57,7 +57,10 @@
     , "ready"
     ];
 
-  var buffers     = [ "textNode", "numberNode" ]
+  var buffers     = {
+        textNode: undefined,
+        numberNode: ""
+  }
     , streamWraps = clarinet.EVENTS.filter(function (ev) {
           return ev !== "error" && ev !== "end";
         })
@@ -123,16 +126,16 @@
     var maxAllowed = Math.max(clarinet.MAX_BUFFER_LENGTH, 10)
       , maxActual = 0
       ;
-    for (var i = 0, l = buffers.length; i < l; i ++) {
-      var len = parser[buffers[i]].length;
+    for (var buffer in buffers) {
+      var len = parser[buffer] === undefined ? 0 : parser[buffer].length;
       if (len > maxAllowed) {
-        switch (buffers[i]) {
+        switch (buffer) {
           case "text":
             closeText(parser);
           break;
 
           default:
-            error(parser, "Max buffer length exceeded: "+ buffers[i]);
+            error(parser, "Max buffer length exceeded: "+ buffer);
         }
       }
       maxActual = Math.max(maxActual, len);
@@ -142,8 +145,8 @@
   }
 
   function clearBuffers (parser) {
-    for (var i = 0, l = buffers.length; i < l; i ++) {
-      parser[buffers[i]] = "";
+    for (var buffer in buffers) {
+      parser[buffer] = buffers[buffer];
     }
   }
 
@@ -156,7 +159,9 @@
     clearBuffers(parser);
     parser.bufferCheckPosition = clarinet.MAX_BUFFER_LENGTH;
     parser.q        = parser.c = parser.p = "";
+    parser.pending  = "";
     parser.opt      = opt || {};
+    parser.paused   = false;
     parser.closed   = parser.closedRoot = parser.sawRoot = false;
     parser.tag      = parser.error = null;
     parser.state    = S.BEGIN;
@@ -172,10 +177,12 @@
   }
 
   CParser.prototype =
-    { end    : function () { end(this); }
-    , write  : write
-    , resume : function () { this.error = null; return this; }
-    , close  : function () { return this.write(null); }
+    { end     : function () { end(this); }
+    , write   : write
+    , parse   : parse
+    , pause   : function () { this.paused = true; return this; }
+    , resume  : function () { this.paused = false; this.error = null; return this; }
+    , close   : function () { return this.write(null); }
     };
 
   try        { Stream = require("stream").Stream; }
@@ -322,10 +329,10 @@
 
   function closeValue(parser, event) {
     parser.textNode = textopts(parser.opt, parser.textNode);
-    if (parser.textNode) {
+    if (parser.textNode !== undefined) {
       emit(parser, (event ? event : "onvalue"), parser.textNode);
     }
-    parser.textNode = "";
+    parser.textNode = undefined;
   }
 
   function closeNumber(parser) {
@@ -335,6 +342,9 @@
   }
 
   function textopts (opt, text) {
+    if (text === undefined) {
+      return text;
+    }
     if (opt.trim) text = text.trim();
     if (opt.normalize) text = text.replace(/\s+/g, " ");
     return text;
@@ -351,7 +361,7 @@
     return parser;
   }
 
-  function end(parser) {
+  function end (parser) {
     if (parser.state !== S.VALUE || parser.depth !== 0)
       error(parser, "Unexpected end");
 
@@ -369,9 +379,19 @@
     if (parser.closed) return error(parser,
       "Cannot write after close. Assign an onready handler.");
     if (chunk === null) return end(parser);
-    var i = 0, c = chunk[0], p = parser.p;
+    parser.pending += chunk;
+    if (parser.paused) return parser;
     if (clarinet.DEBUG) console.log('write -> [' + chunk + ']');
+    return parser.parse();
+  }
+  
+  function parse () {
+    var parser = this;
+    var chunk = parser.pending;
+    var i = 0, c = chunk[0], p = parser.p;
     while (c) {
+      if (parser.paused) break;
+      
       p = c;
       parser.c = c = chunk.charAt(i++);
       // if chunk doesnt have next, like streaming char by char
@@ -424,7 +444,7 @@
             if(parser.state === S.CLOSE_OBJECT) {
               parser.stack.push(S.CLOSE_OBJECT);
               closeValue(parser, 'onopenobject');
-               this.depth++;
+              this.depth++;
             } else closeValue(parser, 'onkey');
             parser.state  = S.VALUE;
           } else if (c==='}') {
@@ -455,7 +475,7 @@
               parser.stack.push(S.CLOSE_ARRAY);
             }
           }
-               if(c === '"') parser.state = S.STRING;
+          if(c === '"') parser.state = S.STRING;
           else if(c === '{') parser.state = S.OPEN_OBJECT;
           else if(c === '[') parser.state = S.OPEN_ARRAY;
           else if(c === 't') parser.state = S.TRUE;
@@ -482,11 +502,15 @@
             this.depth--;
             parser.state = parser.stack.pop() || S.VALUE;
           } else if (c === '\r' || c === '\n' || c === ' ' || c === '\t')
-              continue;
+            continue;
           else error(parser, 'Bad array');
         continue;
 
         case S.STRING:
+          if (parser.textNode === undefined) {
+            parser.textNode = "";
+          }
+
           // thanks thejh, this is an about 50% performance improvement.
           var starti              = i-1
             , slashed = parser.slashed
@@ -516,9 +540,6 @@
               parser.state = parser.stack.pop() || S.VALUE;
               parser.textNode += chunk.substring(starti, i-1);
               parser.position += i - 1 - starti;
-              if(!parser.textNode) {
-                 emit(parser, "onvalue", "");
-              }
               break;
             }
             if (c === '\\' && !slashed) {
@@ -531,7 +552,7 @@
             }
             if (slashed) {
               slashed = false;
-                   if (c === 'n') { parser.textNode += '\n'; }
+              if (c === 'n') { parser.textNode += '\n'; }
               else if (c === 'r') { parser.textNode += '\r'; }
               else if (c === 't') { parser.textNode += '\t'; }
               else if (c === 'f') { parser.textNode += '\f'; }
@@ -651,8 +672,8 @@
             parser.numberNode += c;
           } else if (c==='e' || c==='E') {
             if(parser.numberNode.indexOf('e')!==-1 ||
-               parser.numberNode.indexOf('E')!==-1 )
-               error(parser, 'Invalid number has two exponential');
+              parser.numberNode.indexOf('E')!==-1 )
+              error(parser, 'Invalid number has two exponential');
             parser.numberNode += c;
           } else if (c==="+" || c==="-") {
             if(!(p==='e' || p==='E'))
@@ -671,6 +692,8 @@
     }
     if (parser.position >= parser.bufferCheckPosition)
       checkBufferLength(parser);
+    if (i > 0)
+        parser.pending = chunk.substring(i);
     return parser;
   }
 })(require, (typeof module !== 'undefined') ? module : mkmodule('clarinet'));

@@ -260,6 +260,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -267,7 +268,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("error header stream", function() {
@@ -357,13 +366,22 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more2 !== undefined; }, "more2", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more2).toBeFalsy();
 
             // Verify cached payloads.
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(0);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write with offsets", function() {
@@ -511,6 +529,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -518,7 +537,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write", function() {
@@ -662,6 +689,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -669,7 +697,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write with compression", function() {
@@ -822,6 +858,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var messageHeader;
         runs(function() {
@@ -1010,6 +1056,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var messageHeader;
         runs(function() {
@@ -1461,6 +1517,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -1468,7 +1525,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("stress write", function() {
@@ -1613,6 +1678,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var header;
         runs(function() {

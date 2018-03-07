@@ -36,7 +36,7 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
  */
 public class ServerConfiguration {
     private static class NameValuePair {
-        public NameValuePair(String name, String value) {
+        public NameValuePair(final String name, final String value) {
             try {
                 this.name = URLEncoder.encode(name, "UTF-8");
                 this.value = URLEncoder.encode(value, "UTF-8");
@@ -49,7 +49,7 @@ public class ServerConfiguration {
         private final String value;
     }
     
-    private String scheme = "http";
+    private final String scheme = "http";
     private String path;
     private String host;
     private int numThreads;
@@ -63,7 +63,7 @@ public class ServerConfiguration {
     private List<EntityAuthenticationScheme> unSupportedEntityAuthFactories;
     private List<UserAuthenticationScheme> unSupportedUserAuthFactories;
     private List<KeyExchangeScheme> unSupportedKeyxFactories;
-    private List<NameValuePair> nvps;
+    private final List<NameValuePair> nvps;
 
     private static final String NUM_THREADS = "numthreads";
     private static final String ENTITY_AUTH_SCHEME = "entityauthscheme";
@@ -108,89 +108,89 @@ public class ServerConfiguration {
         nvps.add(new NameValuePair(NULL_CRYPTO_CONTEXT, String.valueOf(isNullCryptoContext)));
         nvps.add(new NameValuePair(CONSOLE_FILTER_STREAM_FACTORY, String.valueOf(setConsoleFilterStreamFactory)));
         if(unSupportedEntityAuthFactories!=null) {
-            for(EntityAuthenticationScheme scheme : unSupportedEntityAuthFactories) {
+            for(final EntityAuthenticationScheme scheme : unSupportedEntityAuthFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
             }
         }
         if(unSupportedUserAuthFactories!=null) {
-            for(UserAuthenticationScheme scheme : unSupportedUserAuthFactories) {
+            for(final UserAuthenticationScheme scheme : unSupportedUserAuthFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
             }
         }
         if(unSupportedKeyxFactories!=null) {
-            for(KeyExchangeScheme scheme : unSupportedKeyxFactories) {
+            for(final KeyExchangeScheme scheme : unSupportedKeyxFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
             }
         }
     }
 
-    public ServerConfiguration isMessageEncrypted(boolean isMessageEncrypted) {
+    public ServerConfiguration isMessageEncrypted(final boolean isMessageEncrypted) {
         this.isMessageEncrypted = isMessageEncrypted;
         setParameter(ENCRYPTED, String.valueOf(this.isMessageEncrypted));
         return this;
     }
 
-    public ServerConfiguration isIntegrityProtected(boolean isIntegrityProtected) {
+    public ServerConfiguration isIntegrityProtected(final boolean isIntegrityProtected) {
         this.isIntegrityProtected = isIntegrityProtected;
         setParameter(INTEGRITY_PROTECTED, String.valueOf(this.isIntegrityProtected));
         return this;
     }
 
-    public ServerConfiguration setHost(String host) {
+    public ServerConfiguration setHost(final String host) {
         this.host = host;
         return this;
     }
 
-    public ServerConfiguration setPath(String path) {
+    public ServerConfiguration setPath(final String path) {
         this.path = path;
         return this;
     }
 
-    public ServerConfiguration setIsNullCryptoContext(boolean isNullCryptoContext) {
+    public ServerConfiguration setIsNullCryptoContext(final boolean isNullCryptoContext) {
         this.isNullCryptoContext = isNullCryptoContext;
         setParameter(NULL_CRYPTO_CONTEXT, String.valueOf(this.isNullCryptoContext));
         return this;
     }
 
-    public ServerConfiguration setInitialSequenceNumber(long initialSequenceNumber) {
+    public ServerConfiguration setInitialSequenceNumber(final long initialSequenceNumber) {
         this.initialSequenceNum = initialSequenceNumber;
         setParameter(INITIAL_SEQUENCE_NUM, String.valueOf(this.initialSequenceNum));
         return this;
     }
 
-    public ServerConfiguration setSetConsoleFilterStreamFactory(boolean setConsoleFilterStreamFactory) {
+    public ServerConfiguration setSetConsoleFilterStreamFactory(final boolean setConsoleFilterStreamFactory) {
         this.setConsoleFilterStreamFactory = setConsoleFilterStreamFactory;
         setParameter(CONSOLE_FILTER_STREAM_FACTORY, String.valueOf(this.setConsoleFilterStreamFactory));
         return this;
     }
 
-    public ServerConfiguration setUnsupportedEntityAuthenticationSchemes(List<EntityAuthenticationScheme> unSupportedEntityAuthFactories) {
+    public ServerConfiguration setUnsupportedEntityAuthenticationSchemes(final List<EntityAuthenticationScheme> unSupportedEntityAuthFactories) {
         this.unSupportedEntityAuthFactories = unSupportedEntityAuthFactories;
         clearParameter(UNSUPPORTED_ENTITY_SCHEMES);
         if(this.unSupportedEntityAuthFactories!=null) {
-            for(EntityAuthenticationScheme scheme : this.unSupportedEntityAuthFactories) {
+            for(final EntityAuthenticationScheme scheme : this.unSupportedEntityAuthFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_ENTITY_SCHEMES, String.valueOf(scheme)));
             }
         }
         return this;
     }
 
-    public ServerConfiguration setUnsupportedUserAuthenticationSchemes(List<UserAuthenticationScheme> unSupportedUserAuthFactories) {
+    public ServerConfiguration setUnsupportedUserAuthenticationSchemes(final List<UserAuthenticationScheme> unSupportedUserAuthFactories) {
         this.unSupportedUserAuthFactories = unSupportedUserAuthFactories;
         clearParameter(UNSUPPORTED_USER_SCHEMES);
         if(this.unSupportedUserAuthFactories!=null) {
-            for(UserAuthenticationScheme scheme : this.unSupportedUserAuthFactories) {
+            for(final UserAuthenticationScheme scheme : this.unSupportedUserAuthFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_USER_SCHEMES, String.valueOf(scheme)));
             }
         }
         return this;
     }
 
-    public ServerConfiguration setUnsupportedKeyExchangeSchemes(List<KeyExchangeScheme> unSupportedKeyxFactories) {
+    public ServerConfiguration setUnsupportedKeyExchangeSchemes(final List<KeyExchangeScheme> unSupportedKeyxFactories) {
         this.unSupportedKeyxFactories = unSupportedKeyxFactories;
         clearParameter(UNSUPPORTED_KEY_EXCHANGE_SCHEMES);
         if(this.unSupportedKeyxFactories != null) {
-            for(KeyExchangeScheme scheme : this.unSupportedKeyxFactories) {
+            for(final KeyExchangeScheme scheme : this.unSupportedKeyxFactories) {
                 nvps.add(new NameValuePair(UNSUPPORTED_KEY_EXCHANGE_SCHEMES, String.valueOf(scheme)));
             }
         }
@@ -202,7 +202,7 @@ public class ServerConfiguration {
         return this;
     }
 
-    public ServerConfiguration clearParameter(String name) {
+    public ServerConfiguration clearParameter(final String name) {
         if (!nvps.isEmpty()) {
             for (final Iterator<NameValuePair> it = nvps.iterator(); it.hasNext(); ) {
                 final NameValuePair nvp = it.next();
@@ -215,19 +215,19 @@ public class ServerConfiguration {
         return this;
     }
 
-    public ServerConfiguration setParameter(String name, String value) {
+    public ServerConfiguration setParameter(final String name, final String value) {
         clearParameter(name);
         nvps.add(new NameValuePair(name, value));
         return this;
     }
 
     public void commitToServer() throws URISyntaxException, IOException {
-        StringBuilder urlBuilder = new StringBuilder(scheme + "://" + host + path + "?");
-        for (NameValuePair pair : nvps)
+        final StringBuilder urlBuilder = new StringBuilder(scheme + "://" + host + path + "?");
+        for (final NameValuePair pair : nvps)
             urlBuilder.append(pair.name + "=" + pair.value + "&");
-        URL url = new URL(urlBuilder.toString());
+        final URL url = new URL(urlBuilder.toString());
         
-        HttpURLConnection conn = (HttpURLConnection)url.openConnection();
+        final HttpURLConnection conn = (HttpURLConnection)url.openConnection();
         conn.setRequestMethod("GET");
         conn.getResponseCode();
     }

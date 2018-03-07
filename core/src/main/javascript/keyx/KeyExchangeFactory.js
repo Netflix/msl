@@ -204,10 +204,10 @@
                         result: function(hmacKey) {
                             callback.result({ encryptionKey: encryptionKey, hmacKey: hmacKey });
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         },
     });

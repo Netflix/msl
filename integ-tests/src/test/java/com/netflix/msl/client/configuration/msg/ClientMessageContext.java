@@ -15,6 +15,21 @@
  */
 package com.netflix.msl.client.configuration.msg;
 
+import java.io.IOException;
+import java.math.BigInteger;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.crypto.interfaces.DHPrivateKey;
+import javax.crypto.interfaces.DHPublicKey;
+import javax.crypto.spec.DHParameterSpec;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.keyx.AsymmetricWrappedExchange;
@@ -31,20 +46,6 @@ import com.netflix.msl.userauth.MockEmailPasswordAuthenticationFactory;
 import com.netflix.msl.userauth.UserAuthenticationData;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MslContext;
-
-import javax.crypto.interfaces.DHPrivateKey;
-import javax.crypto.interfaces.DHPublicKey;
-import javax.crypto.spec.DHParameterSpec;
-import java.io.IOException;
-import java.math.BigInteger;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.NoSuchAlgorithmException;
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: skommidi
@@ -82,7 +83,7 @@ public class ClientMessageContext extends MockMessageContext {
      *                         if there is an error accessing Diffie-
      *                         Hellman parameters.
      */
-    public ClientMessageContext(MslContext ctx, String userId, UserAuthenticationScheme scheme, boolean isMessageEncrypted, boolean isIntegrityProtected) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslCryptoException, MslKeyExchangeException {
+    public ClientMessageContext(final MslContext ctx, final String userId, final UserAuthenticationScheme scheme, final boolean isMessageEncrypted, final boolean isIntegrityProtected) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslCryptoException, MslKeyExchangeException {
         super(ctx, userId, scheme);
         super.setEncrypted(isMessageEncrypted);
         super.setIntegrityProtected(isIntegrityProtected);
@@ -91,7 +92,7 @@ public class ClientMessageContext extends MockMessageContext {
         currentRetryCount = 0;
     }
 
-    public void setBuffer(byte[] dataToWrite) {
+    public void setBuffer(final byte[] dataToWrite) {
         buffer = dataToWrite;
     }
 
@@ -99,13 +100,12 @@ public class ClientMessageContext extends MockMessageContext {
      * @see com.netflix.msl.msg.MockMessageContext#write(com.netflix.msl.msg.MessageOutputStream)
      */
     @Override
-    public void write(MessageOutputStream output) throws IOException {
+    public void write(final MessageOutputStream output) throws IOException {
         output.write(buffer);
-        output.flush();
         output.close();
     }
 
-    public void setMaxRetryCount(int maxRetryCount) {
+    public void setMaxRetryCount(final int maxRetryCount) {
         this.maxRetryCount = maxRetryCount;
     }
 

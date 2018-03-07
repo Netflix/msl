@@ -527,7 +527,7 @@
                                                                     return true;
                                                                 }, self);
                                                             },
-                                                            timeout: function() { callback.timeout(); },
+                                                            timeout: callback.timeout,
                                                             error: function(e) {
                                                                 InterruptibleExecutor(callback, function() {
                                                                     if (e instanceof MslException)

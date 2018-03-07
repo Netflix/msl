@@ -53,23 +53,23 @@
     	    
         /** @inheritDoc */
         write: function(data, off, len, timeout, callback) {
-        	try {
+            try {
                 if (this._closed)
                     throw new MslIoException("Stream is already closed.");
-    
+
                 if (off < 0)
                     throw new RangeError("Offset cannot be negative.");
                 if (len < 0)
                     throw new RangeError("Length cannot be negative.");
                 if (off + len > data.length)
                     throw new RangeError("Offset plus length cannot be greater than the array length.");
-    
+
                 var endpos = Math.min(data.length, off + len);
                 var segment = data.subarray(off, endpos);
                 this._buffered.push(segment);
                 callback.result(segment.length);
             } catch (e) {
-            	callback.error(e);
+                callback.error(e);
             }
         },
     

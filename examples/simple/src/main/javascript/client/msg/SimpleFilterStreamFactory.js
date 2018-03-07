@@ -73,30 +73,35 @@
 
             this._input.read(len, timeout, {
                 result: function(data) {
-                	AsyncExecutor(callback, function() {
-                		try {
-		                    if (data)
-		                        self._target.innerHTML += TextEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
-		                    return data;
-                		} catch (e) {
-                			throw new MslIoException("Error encoding data into string.", e);
-                		}
-                	}, self);
+                    AsyncExecutor(callback, function() {
+                        try {
+                            if (data)
+                                self._target.innerHTML += TextEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
+                            return data;
+                        } catch (e) {
+                            throw new MslIoException("Error encoding data into string.", e);
+                        }
+                    }, self);
                 },
                 timeout: function(data) {
-                	AsyncExecutor(callback, function() {
-                		try {
-		                    if (data)
-		                        self._target.innerHTML += TextEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
-		                    return data;
-                		} catch (e) {
-                			throw new MslIoException("Error encoding data into string.", e);
-                		}
-                	}, self);
+                    AsyncExecutor(callback, function() {
+                        try {
+                            if (data)
+                                self._target.innerHTML += TextEncoding.getString(data, MslConstants.DEFAULT_CHARSET);
+                            return data;
+                        } catch (e) {
+                            throw new MslIoException("Error encoding data into string.", e);
+                        }
+                    }, self);
                 },
                 error: callback.error,
             });
         },
+        
+        /** @inheritDoc */
+        skip: function skip(n, timeout, callback) {
+            this._input.skip(n, timeout, callback);
+        }
     });
 
     /**
@@ -128,15 +133,15 @@
 
         /** @inheritDoc */
         write: function write(data, off, len, timeout, callback) {
-        	var self = this;
-        	AsyncExecutor(callback, function() {
-        		try {
-        			this._target.innerHTML += TextEncoding.getString(data.subarray(off, off + len), MslConstants.DEFAULT_CHARSET);
-        		} catch (e) {
-        			throw new MslIoException("Error encoding data into string.", e);
-        		}
-	            this._output.write(data, off, len, timeout, callback);
-        	}, self);
+            var self = this;
+            AsyncExecutor(callback, function() {
+                try {
+                    this._target.innerHTML += TextEncoding.getString(data.subarray(off, off + len), MslConstants.DEFAULT_CHARSET);
+                } catch (e) {
+                    throw new MslIoException("Error encoding data into string.", e);
+                }
+                this._output.write(data, off, len, timeout, callback);
+            }, self);
         },
 
         /** @inheritDoc */

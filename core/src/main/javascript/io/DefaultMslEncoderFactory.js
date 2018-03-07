@@ -66,16 +66,16 @@
 
 	    /** @inheritDoc */
         encodeObject: function encodeObject(object, format, callback) {
-        	AsyncExecutor(callback, function() {
-	            // JSON.
-	            if (MslEncoderFormat.JSON == format) {
-	                JsonMslObject.encode(this, object, callback);
-	                return;
-	            }
-	            
-	            // Unsupported encoder format.
-	            throw new MslEncoderException("Unsupported encoder format: " + format + ".");
-        	}, this);
+            AsyncExecutor(callback, function() {
+                // JSON.
+                if (MslEncoderFormat.JSON == format) {
+                    JsonMslObject.encode(this, object, callback);
+                    return;
+                }
+
+                // Unsupported encoder format.
+                throw new MslEncoderException("Unsupported encoder format: " + format + ".");
+            }, this);
         },
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('DefaultMslEncoderFactory'));
