@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,22 +16,23 @@
 
 /**
  * <p>Advanced request type.</p>
- * 
+ *
  * <p>Advanced requests have no defined message structure and instead contain
  * exactly the application data provided.</p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var AdvancedRequest;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
-    AdvancedRequest = Class.create({
+
+    var Class = require('msl-core/util/Class.js');
+
+    var AdvancedRequest = module.exports = Class.create({
         /**
          * <p>Create an advanced request with the specified message properties
          * and application data.</p>
-         * 
+         *
          * @param {string} recipient the intended recipient's entity identity.
          * @param {boolean} isEncrypted true if encryption is required.
          * @param {boolean} isIntegrityProtected true if integrity protection
@@ -55,5 +56,5 @@ var AdvancedRequest;
             };
             Object.defineProperties(this, props);
         },
-    })
-})();
+    });
+})(require, (typeof module !== 'undefined') ? module : mkmodule('AdvancedRequest'));

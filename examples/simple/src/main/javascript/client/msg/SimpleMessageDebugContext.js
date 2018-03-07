@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleMessageDebugContext;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
-    SimpleMessageDebugContext = MessageDebugContext.extend({
+
+    var MessageDebugContext = require('msl-core/msg/MessageDebugContext.js');
+
+    var SimpleMessageDebugContext = module.exports = MessageDebugContext.extend({
         /**
          * <p>Create a new message debug context that is tied to the provided
          * HTML text elements.</p>
-         * 
+         *
          * @param {Element} sentText sent text HTML DOM element.
          * @param {Element} receivedText received text HTML DOM element.
          */
@@ -34,7 +35,7 @@ var SimpleMessageDebugContext;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         sentHeader: function sentHeader(header) {
             // Append a pair of newlines. This should terminate the message
@@ -49,4 +50,4 @@ var SimpleMessageDebugContext;
             this._received.innerHTML += "\n\n";
         }
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleMessageDebugContext'));

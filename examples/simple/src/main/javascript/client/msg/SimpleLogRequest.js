@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,32 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleLogRequest;
-var SimpleLogRequest$Severity;
-
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    var SimpleRequest = require('../msg/SimpleRequest.js');
+
     /** JSON key timestamp. */
     var KEY_TIMESTAMP = "timestamp";
     /** JSON key severity. */
     var KEY_SEVERITY = "severity";
     /** JSON key message. */
     var KEY_MESSAGE = "message";
-    
+
     /** Log message severity. */
-    var Severity = SimpleLogRequest$Severity = {
+    var Severity = module.exports.Severity = {
         ERROR: "ERROR",
         WARN: "WARN",
         INFO: "INFO"
     };
-    
-    // Shortcuts.
-    var Type = SimpleRequest$Type;
-    
+
     /**
      * <p>Request to log a message.</p>
-     * 
+     *
      * <p>The request data object is defined as:
      * {@code
      * data = {
@@ -52,21 +48,21 @@ var SimpleLogRequest$Severity;
      * <li>{@code severity} is the log message severity.</li>
      * <li>{@code message} is the log message text.</li>
      * </ul></p>
-     * 
+     *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleLogRequest = SimpleRequest.extend({
+    var SimpleLogRequest = module.exports = SimpleRequest.extend({
         /**
          * <p>Create a new log request.</p>
-         * 
+         *
          * @param {number} timestamp the log message time in seconds since the UNIX
          *                 epoch.
          * @param {Severity} severity the log message severity.
          * @param {string} message the log message text.
          */
         init: function init(timestamp, severity, message) {
-            init.base.call(this, Type.LOG);
-            
+            init.base.call(this, SimpleRequest.Type.LOG);
+
             // Set properties.
             var props = {
                 timestamp: { value: timestamp, writable: false, enumerable: true, configurable: false },
@@ -75,7 +71,7 @@ var SimpleLogRequest$Severity;
             };
             Object.defineProperties(this, props);
         },
-        
+
         /** @inheritDoc */
         getData: function getData() {
             var jo = {};
@@ -85,4 +81,4 @@ var SimpleLogRequest$Severity;
             return jo;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleLogRequest'));

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import com.netflix.msl.io.MslEncoderFormat;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class NullCryptoContext implements ICryptoContext {
+public class NullCryptoContext extends ICryptoContext {
     /* (non-Javadoc)
      * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
      */
