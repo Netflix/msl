@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,12 @@
     var impls = {};
     
     /**
+     * Maximum deflate ratio.
+     * @type {number}
+     */
+    var maxDeflateRatio = 200;
+    
+    /**
      * <p>A data compression implementation. Implementations must be thread-
      * safe.</p>
      */
@@ -49,19 +55,26 @@
          * Compress the provided data.
          * 
          * @param {Uint8Array} data the data to compress.
-         * @return {Uint8Array} the compressed data.
+         * @return {?Uint8Array} the compressed data. May also return {@code null} if the
+         *         compressed data would exceed the original data size.
          * @throws IOException if there is an error compressing the data.
          */
         compress: function(data) {},
         
         /**
-         * Uncompress the provided data.
+         * <p>Uncompress the provided data.</p>
+         *
+         * <p>If the uncompressed data ever exceeds the maximum deflate ratio
+         * then uncompression must abort and an exception thrown.</p>
          * 
          * @param {Uint8Array} data the data to uncompress.
+         * @param {number} maxDeflateRatio the maximum deflate ratio.
          * @return {Uint8Array} the uncompressed data.
-         * @throws IOException if there is an error uncompressing the data.
+         * @throws IOException if there is an error uncompressing the data or
+         *         if the ratio of uncompressed data to the compressed data
+         *         ever exceeds the specified deflate ratio.
          */
-        uncompress: function(data) {},
+        uncompress: function(data, maxDeflateRatio) {},
     });
         
     /**
@@ -76,6 +89,19 @@
             delete impls[algo];
         else
             impls[algo] = impl;
+    }
+
+    /**
+     * <p>Sets the maximum deflate ratio used during uncompression. If the
+     * ratio is exceeded uncompression will abort.</p>
+     *
+     * @param {number} deflateRatio the maximum deflate ratio.
+     * @throws RangeError if the specified ratio is less than one.
+     */
+    function MslCompression$setMaxDeflateRatio(deflateRatio) {
+        if (deflateRatio < 1)
+            throw new RangeError("The maximum deflate ratio must be at least one.");
+        maxDeflateRatio = deflateRatio;
     }
 
     /**
@@ -125,6 +151,7 @@
     // Exports.
     module.exports.CompressionImpl = CompressionImpl;
     module.exports.register = MslCompression$register;
+    module.exports.setMaxDeflateRatio = MslCompression$setMaxDeflateRatio;
     module.exports.compress = MslCompression$compress;
     module.exports.uncompress = MslCompression$uncompress;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MslCompression'));
