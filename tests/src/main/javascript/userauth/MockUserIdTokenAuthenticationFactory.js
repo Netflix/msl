@@ -27,6 +27,7 @@
     var MslInternalException = require('msl-core/MslInternalException.js');
     var UserIdTokenAuthenticationData = require('msl-core/userauth/UserIdTokenAuthenticationData.js');
     var MslUserAuthException = require('msl-core/MslUserAuthException.js');
+    var MslException = require('msl-core/MslException.js');
     var MslError = require('msl-core/MslError.js');
     var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
     
