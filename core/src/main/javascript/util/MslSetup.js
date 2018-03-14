@@ -61,6 +61,15 @@
         getCompressionImpls: function() {},
         
         /**
+         * <p>Provides the maximum deflate ratio.</p>
+         * 
+         * <p><b>optional</b>: default maximum deflate ratio will be used</p>
+         *
+         * @return {?number} the maximum deflate ratio.
+         */
+        getMaxDeflateRatio: function() {},
+        
+        /**
          * <p>Provides the TextEncoding implementation.</p>
          * 
          * <p><b>required</b></p>
@@ -126,6 +135,9 @@
                 MslCompression.register(algo, impl);
             }
         }
+        var maxDeflateRatio = setup.getMaxDeflateRatio();
+        if (maxDeflateRatio)
+            MslCompression.setMaxDeflateRatio(maxDeflateRatio);
         
         // Text encoding.
         var textEncodingImpl = setup.getTextEncodingImpl();
