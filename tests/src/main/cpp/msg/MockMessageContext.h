@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,8 +60,9 @@ public:
      * The message will not be encrypted or non-replayable.
      *
      * @param ctx MSL context.
-     * @param userId user ID.
-     * @param scheme user authentication scheme.
+     * @param userId user ID. May be the empty string.
+     * @param scheme user authentication scheme. May be
+     *        {@code userauth::UserAuthenticationScheme::INVALID}.
      * @throws NoSuchAlgorithmException if a key generation algorithm is not
      *         found.
      * @throws InvalidAlgorithmParameterException if key generation parameters
