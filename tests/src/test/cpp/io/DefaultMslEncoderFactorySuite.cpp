@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,11 +221,13 @@ TEST_F(DefaultMslEncoderFactoryTest, CreateTokenizer)
 
     // explicit format
     shared_ptr<MslTokenizer> mt = mef->createTokenizer(is);
+    mt->close();
 
     // deduced format
     shared_ptr<InputStream> bad = make_shared<ByteArrayInputStream>("afkhadgfk");
     EXPECT_THROW(mef->createTokenizer(bad), MslEncoderException);
     mt = mef->createTokenizer(is);
+    mt->close();
 }
 
 } /* namespace io */

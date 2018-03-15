@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,15 @@ public:
     /**
      * <p>Create a new tokenizer.</p>
      */
-    MslTokenizer() : aborted_(false) {}
+    MslTokenizer() : closed_(false), aborted_(false) {}
+
+    /**
+     * <p>Closes the tokenizer, cleaning up any resources and preventing future
+     * use.</p>
+     *
+     * @throws MslEncoderException if there is an error closing the tokenizer.
+     */
+    virtual void close() { closed_ = true; }
 
     /**
      * <p>Aborts future reading off the tokenizer.</p>
@@ -49,7 +57,7 @@ public:
      *
      * @param timeout read timeout in milliseconds or -1 for no timeout (default).
      * @return true if more objects are available from the data source, false
-     *         if the tokenizer has been aborted.
+     *         if the tokenizer has been aborted or closed.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
@@ -78,13 +86,15 @@ public:
      *
      * @param timeout read timeout in milliseconds or -1 for no timeout (default).
      * @return the next object or an empty object if there are no more or the
-     *         tokenizer has been aborted.
+     *         tokenizer has been aborted or closed;
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
     virtual std::shared_ptr<MslObject> nextObject(int timeout = -1);
 
 private:
+    /** Closed. */
+    bool closed_;
     /** Aborted. */
     bool aborted_;
     /** Cached next object. */

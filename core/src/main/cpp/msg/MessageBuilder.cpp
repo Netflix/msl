@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -343,6 +343,50 @@ shared_ptr<MessageBuilder> MessageBuilder::createResponse(shared_ptr<MslContext>
 	}
 }
 
+shared_ptr<MessageBuilder> MessageBuilder::createIdempotentResponse(shared_ptr<MslContext> ctx,
+        shared_ptr<MessageHeader> requestHeader)
+{
+    shared_ptr<MasterToken> masterToken = requestHeader->getMasterToken();
+    shared_ptr<EntityAuthenticationData> entityAuthData = requestHeader->getEntityAuthenticationData();
+    shared_ptr<UserIdToken> userIdToken = requestHeader->getUserIdToken();
+    shared_ptr<UserAuthenticationData> userAuthData = requestHeader->getUserAuthenticationData();
+
+    // The response recipient is the requesting entity.
+    const string recipient = (masterToken) ? masterToken->getIdentity() : entityAuthData->getIdentity();
+
+    // The response message ID must be equal to the request message ID + 1.
+    const int64_t requestMessageId = requestHeader->getMessageId();
+    const int64_t messageId = incrementMessageId(requestMessageId);
+
+    // Compute the intersection of the request and response message
+    // capabilities.
+    shared_ptr<MessageCapabilities> capabilities = MessageCapabilities::intersection(requestHeader->getMessageCapabilities(), ctx->getMessageCapabilities());
+
+    // Create the message builder.
+    //
+    // Peer-to-peer responses swap the tokens.
+    try {
+        shared_ptr<KeyResponseData> keyResponseData = requestHeader->getKeyResponseData();
+        set<shared_ptr<ServiceToken>> serviceTokens = requestHeader->getServiceTokens();
+        if (ctx->isPeerToPeer()) {
+            shared_ptr<MasterToken> peerMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : requestHeader->getPeerMasterToken();
+            shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
+            set<shared_ptr<ServiceToken>> peerServiceTokens = requestHeader->getPeerServiceTokens();
+            return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, shared_ptr<KeyExchangeData>());
+        } else {
+            shared_ptr<MasterToken> localMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : masterToken;
+            return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
+        }
+    } catch (MslException& e) {
+        e.setMasterToken(masterToken);
+        e.setEntityAuthenticationData(entityAuthData);
+        e.setUserIdToken(userIdToken);
+        e.setUserAuthenticationData(userAuthData);
+        e.setMessageId(requestMessageId);
+        throw e;
+    }
+}
+
 shared_ptr<ErrorHeader> MessageBuilder::createErrorResponse(shared_ptr<MslContext> ctx,
 		string recipient,
 		int64_t requestMessageId,
@@ -506,6 +550,17 @@ shared_ptr<MessageHeader> MessageBuilder::getHeader()
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(peerMasterToken_, peerUserIdToken_, peerTokens);
 
 	return make_shared<MessageHeader>(ctx_, ctx_->getEntityAuthenticationData(), masterToken_, headerData, peerData);
+}
+
+shared_ptr<MessageBuilder> MessageBuilder::setMessageId(int64_t messageId)
+{
+    if (messageId < 0 || messageId > MslConstants::MAX_LONG_VALUE) {
+        stringstream ss;
+        ss << "Message ID " << messageId << " is out of range.";
+        throw MslInternalException(ss.str());
+    }
+    messageId_ = messageId;
+    return shared_from_this();
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::setNonReplayable(bool nonReplayable)

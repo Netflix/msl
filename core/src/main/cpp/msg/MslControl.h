@@ -1,3 +1,18 @@
+/**
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 #ifndef _SRC_MSG_MSLCONTROL_H_
 #define _SRC_MSG_MSLCONTROL_H_
 
@@ -193,15 +208,180 @@ public:
     void shutdown();
     
     /**
+     * <p>Send a message to the entity at the provided URL.</p>
+     *
+     * <p>Use of this method is not recommended as it does not confirm delivery
+     * or acceptance of the message. Establishing a MSL channel to send
+     * application data without requiring the remote entity to acknowledge
+     * receipt in the response application data is the recommended approach.
+     * Only use this method if guaranteed receipt is not required.</p>
+     *
+     * <p>This method should only be used by trusted network clients and per-
+     * to-peer entities when no response is expected from the remote entity.
+     * The remote entity should be using
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * and should not attempt to send a response.</p>
+     *
+     * <p>The returned {@code Future} will return a {@code MessageOutputStream}
+     * containing the final {@code MessageOutputStream} that should be used to
+     * send any additional application data not already sent via
+     * {@link MessageContext#write(MessageOutputStream)}.</p>
+     *
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) cancelled or interrupted}, if an error
+     * response was received resulting in a failure to send the message, or if
+     * the maximum number of messages is hit without sending the message.</p>
+     *
+     * <p>The {@code Future} may throw an {@code ExecutionException} whose
+     * cause is a {@code MslException}, {@code IOException}, or
+     * {@code TimeoutException}.</p>
+     *
+     * <p>The caller must close the returned message output stream.</p>
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param remoteEntity remote entity URL.
+     * @param timeout connect, read, and renewal lock acquisition timeout in
+     *        milliseconds.
+     * @return a future for the message output stream.
+     */
+    std::future<std::shared_ptr<MessageOutputStream>> send(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageContext> msgCtx,
+            std::shared_ptr<io::Url> remoteEntity,
+            int64_t timeout);
+
+    /**
+     * <p>Send a message over the provided output stream.</p>
+     *
+     * <p>Use of this method is not recommended as it does not confirm delivery
+     * or acceptance of the message. Establishing a MSL channel to send
+     * application data without requiring the remote entity to acknowledge
+     * receipt in the response application data is the recommended approach.
+     * Only use this method if guaranteed receipt is not required.</p>
+     *
+     * <p>This method should only be used by trusted network clients and peer-
+     * to-peer entities when no response is expected from the remote entity.
+     * The remote entity should be using
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * and should not attempt to send a response.</p>
+     *
+     * <p>The returned {@code Future} will return a {@code MessageOutputStream}
+     * containing the final {@code MessageOutputStream} that should be used to
+     * send any additional application data not already sent via
+     * {@link MessageContext#write(MessageOutputStream)}.</p>
+     *
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) cancelled or interrupted}, if an error
+     * response was received resulting in a failure to send the message, or if
+     * the maximum number of messages is hit without sending the message.</p>
+     *
+     * <p>The {@code Future} may throw an {@code ExecutionException} whose
+     * cause is a {@code MslException}, {@code IOException}, or
+     * {@code TimeoutException}.</p>
+     *
+     * <p>The caller must close the returned message output stream. The remote
+     * entity output stream will not be closed when the message output stream
+     * is closed, in case the caller wishes to reuse them.</p>
+     *
+     * TODO once Java supports the WebSocket protocol we can remove this method
+     * in favor of the one accepting a URL parameter. (Or is it the other way
+     * around?)
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param in remote entity input stream.
+     * @param out remote entity output stream.
+     * @param timeout connect, read, and renewal lock acquisition timeout in
+     *        milliseconds.
+     * @return a future for the message output stream.
+     */
+    std::future<std::shared_ptr<MessageOutputStream>> send(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageContext> msgCtx,
+            std::shared_ptr<io::InputStream> in,
+            std::shared_ptr<io::OutputStream> out,
+            int64_t timeout);
+
+    /**
+     * <p>Push a message over the provided output stream based on a message
+     * received from the remote entity.</p>
+     *
+     * <p>Use of this method is not recommended as it does not perform master
+     * token or user ID token issuance or renewal which the remote entity may
+     * be attempting to perform. Only use this method if there is some other
+     * means by which the client will be able to acquire and renew its master
+     * token or user ID token on a regular basis.</p>
+     *
+     * <p>This method should only be used by trusted network servers that wish
+     * to send multiple responses to a trusted network client. The remote
+     * entity should be using
+     * {@link #send(MslContext, MessageContext, Url, int)} or
+     * {@link #send(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * and
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
+     *
+     * <p>This method must not be used if
+     * {@link MslControl#respond(MslContext, MessageContext, InputStream, OutputStream, MessageInputStream, int)}
+     * has already been used with the same {@code MessageInputStream}.</p>
+     *
+     * <p>The returned {@code Future} will return a {@code MslChannel}
+     * containing the same {@code MessageInputStream} that was provided and the
+     * final {@code MessageOutputStream} that should be used to send any
+     * additional application data not already sent via
+     * {@link MessageContext#write(MessageOutputStream)} to the remote
+     * entity.</p>
+     *
+     * <p>The returned {@code Future} will return {@code null} if
+     * {@link #cancelled(Throwable) canncelled or interrupted}, if the message
+     * could not be sent with encryption or integrity protection when required,
+     * if a user cannot be attached to the respond to the response due to lack
+     * of a master token, or if the maximum number of messages is hit without
+     * sending the message. In these cases the local entity should wait for a
+     * new message from the remote entity to be received by a call to
+     * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * before attempting to push another message.</p>
+     *
+     * <p>The {@code Future} may throw an {@code ExecutionException} whose
+     * cause is a {@code MslException}, {@code MslErrorResponseException},
+     * {@code IOException}, or {@code TimeoutException}.</p>
+     *
+     * <p>The remote entity input and output streams will not be closed in case
+     * the caller wishes to reuse them.</p>
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param in remote entity input stream.
+     * @param out remote entity output stream.
+     * @param request message input stream used to create the message.
+     * @param timeout renewal lock acquisition timeout in milliseconds.
+     * @return a future for the communication channel.
+     * @throws IllegalStateException if used in peer-to-peer mode.
+     * @throws IllegalArgumentException if the request message input stream is
+     *         an error message.
+     */
+    std::future<std::shared_ptr<MslChannel>> push(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageContext> msgCtx,
+            std::shared_ptr<io::InputStream> in,
+            std::shared_ptr<io::OutputStream> out,
+            std::shared_ptr<MessageInputStream> request,
+            int64_t timeout);
+
+    /**
      * <p>Receive a request over the provided input stream.</p>
      *
      * <p>If there is an error with the message an error response will be sent
      * over the provided output stream.</p>
      *
-     * <p>This method should only be used by trusted network servers and peer-
-     * to-peer entities to receive a request initiated by the remote entity.
-     * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, Url, int)}.<p>
+     * <p>This method should only be used to receive a request initiated by the
+     * remote entity. The remote entity should have used one of the request
+     * methods
+     * {@link #request(MslContext, MessageContext, Url, int)} or
+     * {@link #request(MslContext, MessageContext, InputStream, OutputStream, int)}
+     * or one of the send methods
+     * {@link #send(MslContext, MessageContext, Url, int)} or
+     * {@link #send(MslContext, MessageContext, InputStream, OutputStream, int)}.<p>
      *
      * <p>The returned {@code Future} will return the received
      * {@code MessageInputStream} on completion or {@code null} if a reply was
@@ -237,8 +417,9 @@ public:
      * <p>This method should only be used by trusted network servers and peer-
      * to-peer entities after receiving a request via
      * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
-     * The remote entity should have used
-     * {@link #request(MslContext, MessageContext, Url, int)}.</p>
+     * The remote entity should have used one of the request methods
+     * {@link #request(MslContext, MessageContext, Url, int)} or
+     * {@link #request(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
      *
      * <p>The returned {@code Future} will return a {@code MslChannel}
      * containing the final {@code MessageOutputStream} that should be used to
@@ -440,6 +621,20 @@ private: // types
     class RespondService;
     class ErrorService;
     class RequestService;
+    class SendService;
+    class PushService;
+
+    /**
+     * Indicates response expectations for a specific request.
+     */
+    enum Receive {
+        /** A response is always expected. */
+        ALWAYS,
+        /** A response is only expected if tokens are being renewed. */
+        RENEWING,
+        /** A response is never expected. */
+        NEVER
+    };
 
 private: // methods
 
@@ -542,10 +737,9 @@ private: // methods
      * request or after sending the message if no response is expected.</p>
      *
      * <p>In peer-to-peer mode if a master token is being used to build the new
-     * message but there is no user ID token set or the user ID token is not
-     * bound to the and a user ID is provided by the message context the user
-     * ID token for that user ID will be used to build the message if the user
-     * ID token is bound to the master token.</p>
+     * message and a user ID is provided by the message context, the user ID
+     * token for that user ID will be used to build the message if the user ID
+     * token is bound to the master token.</p>
      *
      * @param ctx MSL context.
      * @param msgCtx message context.
@@ -569,6 +763,25 @@ private: // methods
             std::shared_ptr<MessageContext> msgCtx, std::shared_ptr<msg::MessageHeader> request);
 
     /**
+     * <p>Create a new message builder that will craft a new message based on
+     * another message. The constructed message will have a randomly assigned
+     * message ID, thus detaching it from the message being responded to, and
+     * may be used as a request.</p>
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param request message header to respond to.
+     * @return the message builder.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    std::shared_ptr<MessageBuilder> buildDetachedResponse(std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageContext> msgCtx,
+            std::shared_ptr<MessageHeader> request);
+
+    /**
      * Creates a message builder and message context appropriate for re-sending
      * the original message in response to the received error.
      *
@@ -588,7 +801,21 @@ private: // methods
             std::shared_ptr<MessageContext> msgCtx, std::shared_ptr<SendResult> sent,
             std::shared_ptr<ErrorHeader> errorHeader);
 
-    void cleanupContext(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<msg::MessageHeader> requestHeader,
+    /**
+     * Called after successfully handling an error message to delete the old
+     * invalid crypto contexts and bound service tokens associated with the
+     * invalid master token or user ID token.
+     *
+     * @param ctx MSL context.
+     * @param requestHeader initial request that generated the error.
+     * @param errorHeader error response received and successfully handled.
+     * @throws MslException if the user ID token is not bound to the master
+     *         token. (This should not happen.)
+     * @throws InterruptedException if the thread is interrupted while trying
+     *         to delete the old master token.
+     */
+    void cleanupContext(std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<msg::MessageHeader> requestHeader,
             std::shared_ptr<ErrorHeader> errorHeader);
 
     /**
@@ -695,7 +922,9 @@ private: // methods
      * @param in remote entity input stream.
      * @param out remote entity output stream.
      * @param builder request message builder->
-     * @param receive if a response is expected.
+     * @param receive indicates if a response should always be expected, should
+     *        only be expected if the master token or user ID token will be
+     *        renewed, or should never be expected.
      * @param closeStreams true if the remote entity input and output streams
      *        must be closed when the constructed message input and output
      *        streams are closed.
@@ -736,7 +965,7 @@ private: // methods
     std::shared_ptr<SendReceiveResult> sendReceive(std::shared_ptr<util::MslContext> ctx,
             std::shared_ptr<MessageContext> msgCtx, std::shared_ptr<io::InputStream> in,
             std::shared_ptr<io::OutputStream> out, std::shared_ptr<MessageBuilder> builder,
-            bool receive, bool closeStreams, int64_t timeout);
+            Receive receive, bool closeStreams, int64_t timeout);
 
     /**
      * <p>Attempt to acquire the renewal lock if the message will need it using

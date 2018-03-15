@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ namespace io {
 
 bool MslTokenizer::more(int timeout)
 {
-    if (aborted_)
+    if (aborted_ || closed_)
         return false;
     if (next_)
         return true;
@@ -35,7 +35,7 @@ bool MslTokenizer::more(int timeout)
 
 shared_ptr<MslObject> MslTokenizer::nextObject(int timeout)
 {
-    if (aborted_)
+    if (aborted_ || closed_)
         return shared_ptr<MslObject>();
     if (next_)
     {
