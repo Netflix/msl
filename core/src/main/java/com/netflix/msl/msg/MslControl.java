@@ -3594,7 +3594,15 @@ public class MslControl {
             this.requestService = new RequestService(ctx, msgCtx, in, out, Receive.NEVER, timeout);
         }
 
-        /* (non-Javadoc)
+        /**
+         * @return the established MSL channel or {@code null} if cancelled or
+         *         interrupted.
+         * @throws MslException if there was an error creating or processing
+         *         a message.
+         * @throws IOException if there was an error reading or writing a
+         *         message.
+         * @throws TimeoutException if the thread timed out while trying to
+         *         acquire the renewal lock.
          * @see java.util.concurrent.Callable#call()
          */
         @Override
