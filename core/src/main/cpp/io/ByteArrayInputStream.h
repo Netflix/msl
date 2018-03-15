@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,13 +65,13 @@ public:
     virtual void abort() {};
 
     /** @inheritDoc */
-    virtual bool close(int timeout = -1) { (void)timeout; closed_ = true; return true; }
+    virtual bool close(int timeout = -1);
 
     /** @inheritDoc */
-    virtual void mark(size_t /*readlimit*/) { mark_ = currentPosition_; }
+    virtual void mark(size_t readlimit);
 
     /** @inheritDoc */
-    virtual void reset() { currentPosition_ = mark_; }
+    virtual void reset();
 
     /** @inheritDoc */
     virtual bool markSupported() { return true; }
@@ -81,6 +81,9 @@ public:
 
     /** @inheritDoc */
     virtual int read(ByteArray& out, size_t offset, size_t len, int timeout = -1);
+
+    /** @inheritDoc */
+    virtual int skip(size_t n, int timeout = -1);
 
 private:
 	/** Backing data. */

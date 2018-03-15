@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,18 +74,24 @@ public:
 
     /** @inheritDoc */
     virtual int read(ByteArray& out, int timeout = -1) {
-    	return read(out, 0, out.size(), timeout);
+        return read(out, 0, out.size(), timeout);
     }
 
     /** @inheritDoc */
     virtual int read(ByteArray& out, size_t offset, size_t len, int timeout) {
         int r = in_->read(out, offset, len, timeout);
         if (r > 0) {
-        	cout.write(reinterpret_cast<const char*>(&out[0]), r);
-        	cout.flush();
+            cout.write(reinterpret_cast<const char*>(&out[0]), r);
+            cout.flush();
         }
         return r;
     }
+
+    /** @inheritDoc */
+    virtual int skip(size_t n, int timeout = -1) {
+        return in_->skip(n, timeout);
+    }
+
 private:
     /** Backing input stream. */
     shared_ptr<InputStream> in_;
@@ -114,9 +120,9 @@ public:
 
     /** @inheritDoc */
     virtual bool close() {
-    	cout << endl;
-    	cout.flush();
-    	return out_->close();
+        cout << endl;
+        cout.flush();
+        return out_->close();
     }
 
     /** @inheritDoc */
@@ -124,19 +130,19 @@ public:
 
     /** @inheritDoc */
     virtual size_t write(const ByteArray& data, size_t off, size_t len, int timeout) {
-    	if (off + len > data.size()) {
-    		stringstream ss;
-    		ss << "offset " << off << " plus length " << len << " exceeds data size " << data.size();
-    		throw RangeException(ss.str());
-    	}
-    	cout.write(reinterpret_cast<const char*>(&data[off]), static_cast<streamsize>(len));
-    	cout.flush();
-    	return out_->write(data, off, len, timeout);
+        if (off + len > data.size()) {
+            stringstream ss;
+            ss << "offset " << off << " plus length " << len << " exceeds data size " << data.size();
+            throw RangeException(ss.str());
+        }
+        cout.write(reinterpret_cast<const char*>(&data[off]), static_cast<streamsize>(len));
+        cout.flush();
+        return out_->write(data, off, len, timeout);
     }
 
     /** @inheritDoc */
     virtual bool flush(int timeout) {
-    	return out_->flush(timeout);
+        return out_->flush(timeout);
     }
 
 private:

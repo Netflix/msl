@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,25 @@ namespace netflix {
 namespace msl {
 namespace io {
 
+bool ByteArrayInputStream::close(int /*timeout*/)
+{
+    closed_ = true;
+    return true;
+}
+
+void ByteArrayInputStream::mark(size_t /*readlimit*/)
+{
+    mark_ = currentPosition_;
+}
+
+void ByteArrayInputStream::reset()
+{
+    if (closed_)
+        throw IOException("Stream is already closed.");
+
+    currentPosition_ = mark_;
+}
+
 int ByteArrayInputStream::read(ByteArray& out, size_t offset, size_t len, int /* timeout */)
 {
 	if (closed_)
@@ -39,6 +58,16 @@ int ByteArrayInputStream::read(ByteArray& out, size_t offset, size_t len, int /*
 	copy(data_->begin() + static_cast<ptrdiff_t>(currentPosition_), data_->begin() + static_cast<ptrdiff_t>(currentPosition_) + static_cast<ptrdiff_t>(len), out.begin() + static_cast<ptrdiff_t>(offset));
 	currentPosition_ += len;
 	return static_cast<int>(len);
+}
+
+int ByteArrayInputStream::skip(size_t n, int /*timeout*/)
+{
+    if (closed_)
+        throw IOException("Stream is already closed.");
+
+    const size_t originalPosition = currentPosition_;
+    currentPosition_ = std::min(currentPosition_ + n, data_->size());
+    return currentPosition_ - originalPosition;
 }
 
 }}} // namespace netflix::msl::io
