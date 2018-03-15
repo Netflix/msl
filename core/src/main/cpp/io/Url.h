@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,25 +26,73 @@ namespace io {
 
 class Connection;
 
+/**
+ * The URL interface provides access to an input stream and output stream tied
+ * to a specific URL.
+ */
 class Url
 {
 public:
     virtual ~Url() {};
-    
-    virtual std::shared_ptr<Connection> openConnection() = 0;
 
+    /**
+     * Open a new connection to the target location.
+     *
+     * @return a {@link #Connection} linking to the URL.
+     * @throws IOException if an I/O exception occurs.
+     */
     virtual void setTimeout(int64_t timeout) = 0;
+
+    /**
+     * Open a new connection to the target location.
+     *
+     * @return a {@link #Connection} linking to the URL.
+     * @throws IOException if an I/O exception occurs.
+     */
+    virtual std::shared_ptr<Connection> openConnection() = 0;
 };
 
+/**
+ * The Connection interface represents a communication link between the
+ * application and a URL.
+ */
 class Connection
 {
 public:
     virtual ~Connection() {};
-    
+
+    /**
+     * <p>Returns an input stream that reads from this connection.</p>
+     *
+     * <p>Asking for the input stream must not prevent use of the output
+     * stream, but reading from the input stream may prevent further
+     * writing to the output stream.</p>
+     *
+     * <p>The returned input stream must support
+     * {@link InputStream#mark(int)}, {@link InputStream#reset()}, and
+     * {@link InputStream#skip(long)} if you wish to use it for more than
+     * one MSL message.</p>
+     *
+     * @return an input stream that reads from this connection.
+     * @throws IOException if an I/O error occurs while creating the input
+     *         stream.
+     */
     virtual std::shared_ptr<InputStream> getInputStream() = 0;
+
+    /**
+     * <p>Returns an output stream that writes to this connection.</p>
+     *
+     * <p>Asking for the output stream must not prevent use of the input
+     * stream, but writing to the output stream may prevent further reading
+     * from the input stream.</p>
+     *
+     * @return an output stream that writes to this connection.
+     * @throws IOException if an I/O error occurs while creating the output
+     *         stream.
+     */
     virtual std::shared_ptr<OutputStream> getOutputStream() = 0;
 };
-    
+
 }}} // namespace netflix::msl::io
 
 #endif /* SRC_IO_URL_H_ */
