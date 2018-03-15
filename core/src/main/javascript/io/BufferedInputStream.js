@@ -60,6 +60,12 @@
 			     * @type {number}
 			     */
 			    _readlimit: { value: -1, writable: true, enumerable: false, configurable: false },
+			    /**
+			     * True if stream is closed.
+			     * 
+			     * @type {boolean}
+			     */
+			    _closed: { value: false, writable: true, enumerable: false, configurable: false },
 			};
 			Object.defineProperties(this, props);
 		},
@@ -71,7 +77,8 @@
 		
 		/** @inheritDoc */
 		close: function close(timeout, callback) {
-			this._source.close(timeout, callback);
+            this._closed = true;
+            this._source.close(timeout, callback);
 		},
 		
 		/** @inheritDoc */
@@ -85,7 +92,7 @@
 			}
 			
 			// If there is data buffered and the current mark position is not
-			// zero (at the beginning) then truncate the the buffer.
+			// zero (at the beginning) then truncate the buffer.
 			if (this._bufpos > 0) {
 				var data = this._buffer.toByteArray();
 				this._buffer = new ByteArrayOutputStream();
@@ -100,6 +107,9 @@
 			}
 			
 			// Otherwise the existing buffer contains the correct data.
+			//
+			// Set the new read limit.
+			this._readlimit = readlimit;
 		},
 		
 		/** @inheritDoc */
