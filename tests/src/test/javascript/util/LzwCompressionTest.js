@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-var lzw = require('msl-core/lib/lzw.js');
+var LzwCompression = require('msl-core/util/LzwCompression.js');
     
 /**
  * LZW output stream tests.
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-describe("lzw.compress", function () {
+describe("LzwCompression", function () {
+    var MAX_DEFLATE_RATIO = 200;
     
-    it("one byte", function () {
+    var lzw = new LzwCompression();
+    
+    it("compress one byte", function () {
         var data = new Uint8Array([0x1f]);
 
         var compressed = lzw.compress(data);
@@ -33,7 +36,7 @@ describe("lzw.compress", function () {
         expect(compressed[0]).toEqual(data[0]);
     });
 
-    it("two bytes", function () {
+    it("compress two bytes", function () {
         var data = new Uint8Array([0x66, 0x67]);
         // This compresses to 3 bytes: [ 0x66, 0x33, 0x80 ]
 
@@ -42,7 +45,7 @@ describe("lzw.compress", function () {
         expect(compressed).toBeNull();
     });
 
-    it("three bytes", function () {
+    it("compress three bytes", function () {
         var data = new Uint8Array([0x61, 0xd7, 0xb1]);
         // This compresses to 4 bytes: [ 0x61, 0x6b, 0xac, 0x40 ]
 
@@ -50,40 +53,53 @@ describe("lzw.compress", function () {
 
         expect(compressed).toBeNull();
     });
-});
 
-describe("lzw.extend", function () {
-    it("one byte", function () {
+    it("uncompress one byte", function () {
         var codes = new Uint8Array([0xf1]);
 
-        var uncompressed = lzw.extend(codes);
+        var uncompressed = lzw.uncompress(codes, MAX_DEFLATE_RATIO);
 
         expect(uncompressed[0]).toEqual(codes[0]);
     });
 
-    it("two bytes", function () {
+    it("uncompress two bytes", function () {
         var codes = new Uint8Array([0x66, 0x33, 0x80]);
         var data = new Uint8Array([0x66, 0x67]);
 
-        var uncompressed = lzw.extend(codes);
+        var uncompressed = lzw.uncompress(codes, MAX_DEFLATE_RATIO);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
     });
 
-    it("three bytes", function () {
+    it("uncompress three bytes", function () {
         var codes = new Uint8Array([0x61, 0x6b, 0xac, 0x40]);
         var data = new Uint8Array([0x61, 0xd7, 0xb1]);
 
-        var uncompressed = lzw.extend(codes);
+        var uncompressed = lzw.uncompress(codes, MAX_DEFLATE_RATIO);
 
         expect(uncompressed.length).toEqual(data.length);
         expect(new Uint8Array(uncompressed)).toEqual(data);
     });
-});
-
-
-describe("lzw", function () {
+    
+    it("uncompress ratio exceeded", function() {
+        var codes = new Uint8Array([
+            0x00, 0x80, 0x40, 0x60, 0x50, 0x38, 0x24, 0x16, 0x0d, 0x07, 0x84, 0x42, 0x61, 0x50, 0xb8, 0x64,
+            0x36, 0x1d, 0x0f, 0x88, 0x44, 0x62, 0x51, 0x38, 0xa4, 0x56, 0x2d, 0x17, 0x8c, 0x46, 0x63, 0x51,
+            0xb8, 0xe4, 0x76, 0x3d, 0x1f, 0x90, 0x48, 0x64, 0x52, 0x39, 0x24, 0x96, 0x4d, 0x27, 0x94, 0x4a,
+            0x65, 0x52, 0x00 ]);
+        var data = new Uint8Array(1024);
+        
+        var compressed = lzw.compress(data);
+        expect(compressed).toEqual(codes);
+        
+        var uncompressed = lzw.uncompress(codes, MAX_DEFLATE_RATIO);
+        expect(uncompressed.length).toEqual(data.length);
+        expect(new Uint8Array(uncompressed)).toEqual(data);
+        
+        expect(function() { lzw.uncompress(codes, 10); }).toThrow(new MslIoException());
+    });
+    
     it("compress then uncompress", function () {
         var data = new Uint8Array([
             0x3c, 0x72, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x3e, 0x3c, 0x68, 0x65, 0x61, 0x64, 0x65, 0x72,
@@ -108,7 +124,7 @@ describe("lzw", function () {
         ]);
 
         var compressed = lzw.compress(data);
-        var uncompressed = lzw.extend(compressed);
+        var uncompressed = lzw.uncompress(compressed, MAX_DEFLATE_RATIO);
 
         expect(new Uint8Array(uncompressed)).toEqual(data);
     });

@@ -36,8 +36,7 @@ describe("PayloadChunk", function() {
     var MslEncodingException = require('msl-core/MslEncodingException.js');
     var MslMessageException = require('msl-core/MslMessageException.js');
     var TextEncoding = require('msl-core/util/TextEncoding.js');
-
-    var lzw = require('msl-core/lib/lzw.js');
+    var LzwCompression = require('msl-core/util/LzwCompression.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -69,29 +68,14 @@ describe("PayloadChunk", function() {
     // Shortcuts.
     var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
 
-    /**
-     * Uncompress the provided data using the specified compression algorithm.
-     * 
-     * @param {CompressionAlgorithm} compressionAlgo the compression algorithm.
-     * @param {Uint8Array} data the data to uncompress.
-     * @return {Uint8Array} the uncompressed data.
-     * @throws MslException if there is an error uncompressing the data.
-     */
-    function uncompress(compressionAlgo, data) {
-        switch (compressionAlgo) {
-            case CompressionAlgorithm.LZW:
-                return lzw.extend(data);
-            default:
-                throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
-        }
-    }
-
     /** MSL context. */
     var ctx;
     /** MSL encoder factory. */
     var encoder;
     /** Random. */
     var random = new Random();
+    /** LZW instance. */
+    var lzw = new LzwCompression();
 
     var CRYPTO_CONTEXT_ID = "cryptoContextId";
 
@@ -109,6 +93,23 @@ describe("PayloadChunk", function() {
     /** Large data. */
     var largedata = new Uint8Array(100 * 1024);
     random.nextBytes(largedata);
+
+    /**
+     * Uncompress the provided data using the specified compression algorithm.
+     * 
+     * @param {CompressionAlgorithm} compressionAlgo the compression algorithm.
+     * @param {Uint8Array} data the data to uncompress.
+     * @return {Uint8Array} the uncompressed data.
+     * @throws MslException if there is an error uncompressing the data.
+     */
+    function uncompress(compressionAlgo, data) {
+        switch (compressionAlgo) {
+            case CompressionAlgorithm.LZW:
+                return lzw.uncompress(data, MslConstants.MAX_LONG_VALUE);
+            default:
+                throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
+        }
+    }
 
     var initialized = false;
     beforeEach(function () {
