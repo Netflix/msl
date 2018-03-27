@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,15 @@
  */
 
 #include <util/GzipCompression.h>
+#include <IOException.h>
+
 #include <cstring>
 #include <memory>
 #include <vector>
 #include <zlib.h>
 
 using namespace std;
+using namespace netflix::msl;
 
 namespace {
 
@@ -83,10 +86,10 @@ void compress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out,
         throw(runtime_error(oss.str()));
     }
 
-    out.swap(tmpOut);;
+    out.swap(tmpOut);
 }
 
-void decompress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out)
+void decompress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out, uint32_t maxDeflateRatio)
 {
 	vector<uint8_t> tmpBuf(BUFSIZE);
     z_stream zs;                        // z_stream is zlib's control structure
@@ -103,12 +106,21 @@ void decompress_gzip(const vector<uint8_t>& in, vector<uint8_t>& out)
 
     // get the decompressed bytes blockwise using repeated calls to inflate
     do {
+        // Uncompress.
         zs.next_out = reinterpret_cast<Bytef*>(&tmpBuf[0]);
         zs.avail_out = (uInt)(sizeof(uint8_t) * tmpBuf.size());
 
         ret = inflate(&zs, 0);
 
         if (tmpOut.size() < zs.total_out) {
+            // Check if the deflate ratio has been exceeded.
+            if (zs.total_out > maxDeflateRatio * in.size()) {
+                ostringstream oss;
+                oss << "Deflate ratio " << maxDeflateRatio << " exceeded. Aborting uncompression.";
+                throw IOException(oss.str());
+            }
+
+            // Save the uncompressed data for return.
             tmpOut.insert(tmpOut.end(), &tmpBuf[0], &tmpBuf[0] + zs.total_out - tmpOut.size());
         }
 
@@ -139,10 +151,10 @@ shared_ptr<ByteArray> GzipCompression::compress(const ByteArray& data)
 	return compressed;
 }
 
-shared_ptr<ByteArray> GzipCompression::uncompress(const ByteArray& data)
+shared_ptr<ByteArray> GzipCompression::uncompress(const ByteArray& data, uint32_t maxDeflateRatio)
 {
 	shared_ptr<ByteArray> decompressed = make_shared<ByteArray>();
-	decompress_gzip(data, *decompressed);
+	decompress_gzip(data, *decompressed, maxDeflateRatio);
 	return decompressed;
 }
 

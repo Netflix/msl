@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include <MslConstants.h>
 #include <MslError.h>
 #include <MslException.h>
+
+#include <initializer_list>
+#include <memory>
 #include <stdint.h>
 #include <vector>
 
@@ -86,6 +89,31 @@ TEST_F(MslCompressionTest, gzipRoundtrip)
     EXPECT_NE(*compressed, *uncompressed2);
     EXPECT_GE(uncompressed2->size(), compressed->size());
     EXPECT_EQ(*uncompressed, *uncompressed2);
+}
+
+TEST_F(MslCompressionTest, compressRatioExceeded)
+{
+    shared_ptr<ByteArray> codes = make_shared<ByteArray>(initializer_list<uint8_t>({
+        0x1f, 0x8b, 0x08, 0x08, 0xd3, 0x5f, 0xa8, 0x5a, 0x02, 0x03, 0x6d, 0x6f, 0x6e, 0x67, 0x6f, 0x00,
+        0x63, 0x60, 0x18, 0x05, 0xa3, 0x60, 0x14, 0x8c, 0x54, 0x00, 0x00, 0x2e, 0xaf, 0xb5, 0xef, 0x00,
+        0x04, 0x00, 0x00 }));
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(1024);
+
+    // The compression parameters may be different in which case a direct
+    // comparison will fail.
+//    shared_ptr<ByteArray> compressed = MslCompression::compress(MslConstants::CompressionAlgorithm::GZIP, *data);
+//    EXPECT_EQ(*codes, *compressed);
+
+    shared_ptr<ByteArray> uncompressed = MslCompression::uncompress(MslConstants::CompressionAlgorithm::GZIP, *codes);
+    EXPECT_EQ(*data, *uncompressed);
+
+    try {
+        MslCompression::setMaxDeflateRatio(10);
+        MslCompression::uncompress(MslConstants::CompressionAlgorithm::GZIP, *codes);
+        ADD_FAILURE() << "Should have thrown.";
+    } catch (const MslException& e) {
+        EXPECT_EQ(MslError::UNCOMPRESSION_ERROR, e.getError());
+    }
 }
 
 }}} // namespace netflix::msl::util

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public:
 	virtual std::shared_ptr<ByteArray> compress(const ByteArray& data);
 
     /** @inheritDoc */
-	virtual std::shared_ptr<ByteArray> uncompress(const ByteArray& data);
+	virtual std::shared_ptr<ByteArray> uncompress(const ByteArray& data, uint32_t maxDeflateRatio);
 };
 
 }}} // namespace netflix::msl::util

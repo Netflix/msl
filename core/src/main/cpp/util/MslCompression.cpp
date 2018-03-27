@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,13 @@ namespace MslCompression {
 
 namespace {
 
+/** Registered compression implementations. */
 map<MslConstants::CompressionAlgorithm,shared_ptr<CompressionImpl>>& impls() {
 	static map<MslConstants::CompressionAlgorithm,shared_ptr<CompressionImpl>> impls;
 	return impls;
 }
+/** Maximum deflate ratio. Volatile should be good enough. */
+volatile uint32_t maxDeflateRatio = 200;
 
 } // namespace anonymous
 
@@ -46,6 +49,13 @@ void registerImpl(const MslConstants::CompressionAlgorithm& algo, shared_ptr<Com
 		impls().insert(make_pair(algo, impl));
 }
 
+void setMaxDeflateRatio(uint32_t deflateRatio)
+{
+    if (deflateRatio < 1)
+        throw IllegalArgumentException("The maximum deflate ratio must be at least one.");
+    maxDeflateRatio = deflateRatio;
+}
+
 shared_ptr<ByteArray> compress(const MslConstants::CompressionAlgorithm& compressionAlgo,
         const ByteArray& data)
 {
@@ -54,7 +64,7 @@ shared_ptr<ByteArray> compress(const MslConstants::CompressionAlgorithm& compres
 		throw MslException(MslError::UNSUPPORTED_COMPRESSION, compressionAlgo.toString());
 	try {
 		shared_ptr<ByteArray> compressed = impl->second->compress(data);
-		return (compressed->size() < data.size()) ? compressed : NULL;
+		return (compressed && compressed->size() < data.size()) ? compressed : NULL;
 	} catch (const Exception& e) {
         throw MslException(MslError::COMPRESSION_ERROR, string("algo ") + compressionAlgo.toString(), e);
 	}
@@ -67,7 +77,7 @@ shared_ptr<ByteArray> uncompress(const MslConstants::CompressionAlgorithm& compr
 	if (impl == impls().end())
 		throw MslException(MslError::UNSUPPORTED_COMPRESSION, compressionAlgo.toString());
 	try {
-		return impl->second->uncompress(data);
+		return impl->second->uncompress(data, maxDeflateRatio);
 	} catch (const Exception& e) {
         throw MslException(MslError::UNCOMPRESSION_ERROR, string("algo ") + compressionAlgo.toString(), e);
 	}

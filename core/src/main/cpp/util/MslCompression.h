@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,22 +52,29 @@ public:
 	virtual ~CompressionImpl() {}
 
     /**
-     * Compress the provided data.
+     * <p>Compress the provided data.</p>
      *
      * @param data the data to compress.
-     * @return the compressed data.
+     * @return the compressed data. May also return {@code null} if the
+     *         compressed data would exceed the original data size.
      * @throws IOException if there is an error compressing the data.
      */
 	virtual std::shared_ptr<ByteArray> compress(const ByteArray& data) = 0;
 
-    /**
-     * Uncompress the provided data.
-     *
-     * @param data the data to uncompress.
-     * @return the uncompressed data.
-     * @throws IOException if there is an error uncompressing the data.
-     */
-	virtual std::shared_ptr<ByteArray> uncompress(const ByteArray& data) = 0;
+	/**
+	 * <p>Uncompress the provided data.</p>
+	 *
+	 * <p>If the uncompressed data ever exceeds the maximum deflate ratio
+	 * then uncompression must abort and an exception thrown.</p>
+	 *
+	 * @param data the data to uncompress.
+	 * @param maxDeflateRatio the maximum deflate ratio.
+	 * @return the uncompressed data.
+	 * @throws IOException if there is an error uncompressing the data or
+	 *         if the ratio of uncompressed data to the compressed data
+	 *         ever exceeds the specified deflate ratio.
+	 */
+	virtual std::shared_ptr<ByteArray> uncompress(const ByteArray& data, uint32_t maxDeflateRatio) = 0;
 };
 
 /**
@@ -78,6 +85,16 @@ public:
  * @param impl the data compression implementation. May be {@code null}.
  */
 void registerImpl(const MslConstants::CompressionAlgorithm& algo, std::shared_ptr<CompressionImpl> impl);
+
+/**
+ * <p>Sets the maximum deflate ratio used during uncompression. If the
+ * ratio is exceeded uncompression will abort.</p>
+ *
+ * @param deflateRatio the maximum deflate ratio.
+ * @throws IllegalArgumentException if the specified ratio is less than
+ *         one.
+ */
+void setMaxDeflateRatio(uint32_t deflateRatio);
 
 /**
  * Compress the provided data using the specified compression algorithm.
