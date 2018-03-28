@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -203,6 +203,9 @@ TEST_F(MessageOutputStreamTest, messageHeader)
 	vector<shared_ptr<PayloadChunk>> payloads = mos->getPayloads();
 	EXPECT_EQ(static_cast<size_t>(1), payloads.size());
 	EXPECT_EQ(*payload, *payloads[0]);
+
+	// Close tokenizer.
+	tokenizer->close();
 }
 
 TEST_F(MessageOutputStreamTest, errorHeader)
@@ -230,6 +233,9 @@ TEST_F(MessageOutputStreamTest, errorHeader)
 	// Verify cached payloads.
 	vector<shared_ptr<PayloadChunk>> payloads = mos->getPayloads();
 	EXPECT_EQ(static_cast<size_t>(0), payloads.size());
+
+    // Close tokenizer.
+    tokenizer->close();
 }
 
 TEST_F(MessageOutputStreamTest, writeOffsets)
@@ -279,6 +285,9 @@ TEST_F(MessageOutputStreamTest, writeOffsets)
 	vector<shared_ptr<PayloadChunk>> payloads = mos->getPayloads();
 	EXPECT_EQ(static_cast<size_t>(1), payloads.size());
 	EXPECT_EQ(*payload, *payloads[0]);
+
+    // Close tokenizer.
+    tokenizer->close();
 }
 
 TEST_F(MessageOutputStreamTest, writeBytes)
@@ -325,6 +334,9 @@ TEST_F(MessageOutputStreamTest, writeBytes)
 	vector<shared_ptr<PayloadChunk>> payloads = mos->getPayloads();
 	EXPECT_EQ(static_cast<size_t>(1), payloads.size());
 	EXPECT_EQ(*payload, *payloads[0]);
+
+    // Close tokenizer.
+    tokenizer->close();
 }
 
 TEST_F(MessageOutputStreamTest, compressed)
@@ -366,6 +378,7 @@ TEST_F(MessageOutputStreamTest, compressed)
 	vector<shared_ptr<MslObject>> payloadMos;
 	while (tokenizer->more(TIMEOUT))
 		payloadMos.push_back(tokenizer->nextObject(TIMEOUT));
+	tokenizer->close();
 
 	// Verify the number and contents of the payloads.
 	shared_ptr<MessageHeader> messageHeader = dynamic_pointer_cast<MessageHeader>(Header::parseHeader(ctx, headerMo, cryptoContexts));
@@ -422,6 +435,7 @@ TEST_F(MessageOutputStreamTest, flush)
 	vector<shared_ptr<MslObject>> payloadMos;
 	while (tokenizer->more(TIMEOUT))
 		payloadMos.push_back(tokenizer->nextObject(TIMEOUT));
+	tokenizer->close();
 
 	// Verify the number and contents of the payloads.
 	shared_ptr<MessageHeader> messageHeader = dynamic_pointer_cast<MessageHeader>(Header::parseHeader(ctx, headerMo, cryptoContexts));
@@ -564,6 +578,9 @@ TEST_F(MessageOutputStreamTest, multiClose)
 	vector<shared_ptr<PayloadChunk>> payloads = mos->getPayloads();
 	EXPECT_EQ(static_cast<size_t>(1), payloads.size());
 	EXPECT_EQ(*payload, *payloads[0]);
+
+    // Close tokenizer.
+    tokenizer->close();
 }
 
 TEST_F(MessageOutputStreamTest, stressWrite)
@@ -593,6 +610,7 @@ TEST_F(MessageOutputStreamTest, stressWrite)
 	vector<shared_ptr<MslObject>> payloadMos;
 	while (tokenizer->more(TIMEOUT))
 		payloadMos.push_back(tokenizer->nextObject(TIMEOUT));
+	tokenizer->close();
 
 	shared_ptr<Header> header = Header::parseHeader(ctx, headerMo, cryptoContexts);
 	EXPECT_TRUE(instanceof<MessageHeader>(header));

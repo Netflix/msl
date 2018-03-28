@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 
 #include <io/InputStream.h>
+#include <io/BufferedInputStream.h>
 #include <io/MslArray.h>
 #include <io/MslEncoderFactory.h>
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
+
 #include <iomanip>
 #include <iosfwd>
 #include <sstream>
@@ -120,11 +122,12 @@ MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
 
 shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStream> source)
 {
-    // Read the byte stream identifier.
+    // Read the byte stream identifier (and only the identifier).
+    shared_ptr<InputStream> bufferedSource = source->markSupported() ? source : make_shared<BufferedInputStream>(source, 1);
     const int WIDTH = 1;
     ByteArray buffer(WIDTH);
-    source->mark(1);
-    const int count = source->read(buffer, 0, WIDTH, TIMEOUT); // TODO: Someone has to tell me this timeout.
+    bufferedSource->mark(1);
+    const int count = bufferedSource->read(buffer, 0, WIDTH, TIMEOUT); // TODO: Someone has to tell me this timeout.
     if (count == -1)
         throw new MslEncoderException("End of stream reached when attempting to read the byte stream identifier.");
     if (count == 0)
@@ -140,8 +143,8 @@ shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStre
     }
 
     // Reset the input stream and return the tokenizer.
-    source->reset();
-    return generateTokenizer(source, format);
+    bufferedSource->reset();
+    return generateTokenizer(bufferedSource, format);
 }
 
 }}} // namespace netflix::msl::io

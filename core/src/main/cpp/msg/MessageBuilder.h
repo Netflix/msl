@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,23 @@ public:
      */
     static std::shared_ptr<MessageBuilder> createResponse(std::shared_ptr<util::MslContext> ctx,
                                                           std::shared_ptr<MessageHeader> requestHeader);
+
+    /**
+     * Create a new message builder that will craft a new message in response
+     * to another message without issuing or renewing any master tokens or user
+     * ID tokens. The constructed message may be used as a request.
+     *
+     * @param ctx MSL context.
+     * @param requestHeader message header to respond to.
+     * @return the message builder.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    static std::shared_ptr<MessageBuilder> createIdempotentResponse(std::shared_ptr<util::MslContext> ctx,
+                                                                    std::shared_ptr<MessageHeader> requestHeader);
+
     /**
      * <p>Create a new message builder that will craft a new error message in
      * response to another message. If the message ID of the request is not
@@ -240,6 +257,19 @@ public:
      * @throws MslException should not happen.
      */
     std::shared_ptr<MessageHeader> getHeader();
+
+    /**
+     * <p>Set the message ID.</p>
+     *
+     * <p>This method will override the message ID that was computed when the
+     * message builder was created, and should not need to be called in most
+     * cases.</p>
+     *
+     * @param messageId the message ID.
+     * @return this.
+     * @throws MslInternalException if the message ID is out of range.
+     */
+    std::shared_ptr<MessageBuilder> setMessageId(int64_t messageId);
 
     /**
      * @return true if the message will be marked non-replayable.
@@ -506,7 +536,7 @@ private:
     /** Message recipient. */
     const std::string recipient_;
     /** Header data message ID. */
-    const int64_t messageId_;
+    int64_t messageId_;
     /** Key exchange data. */
     std::shared_ptr<keyx::KeyExchangeFactory::KeyExchangeData> keyExchangeData_;
     /** Message non-replayable. */

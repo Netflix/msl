@@ -15,6 +15,8 @@
  */
 package com.netflix.msl.server.configuration.util;
 
+import java.util.List;
+
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.crypto.NullCryptoContext;
@@ -26,8 +28,6 @@ import com.netflix.msl.tokens.MockTokenFactory;
 import com.netflix.msl.userauth.UserAuthenticationScheme;
 import com.netflix.msl.util.MockMslContext;
 
-import java.util.List;
-
 /**
  * User: skommidi
  * Date: 7/21/14
@@ -35,6 +35,11 @@ import java.util.List;
 public class ServerMslContext extends MockMslContext {
     /**
      * Create a new Server MSL context.
+     * 
+     * @throws MslCryptoException if there is an error signing or creating the
+     *         entity authentication data.
+     * @throws MslEncodingException if there is an error creating the entity
+     *         authentication data.
      */
     public ServerMslContext(final EntityAuthenticationScheme entityAuthScheme, final boolean peerToPeer,
                             final TokenFactoryType tokenFactoryType, final long initialSequenceNum,
@@ -44,7 +49,7 @@ public class ServerMslContext extends MockMslContext {
                             final boolean isNullCryptoContext) throws MslEncodingException, MslCryptoException {
         super(entityAuthScheme, peerToPeer);
         //Set Server TokenFactory with initialSequenceNumber
-        MockTokenFactory tokenFactory = new ServerTokenFactory(tokenFactoryType);
+        final MockTokenFactory tokenFactory = new ServerTokenFactory(tokenFactoryType);
         tokenFactory.setNewestMasterToken(initialSequenceNum);
         super.setTokenFactory(tokenFactory);
 
@@ -53,17 +58,17 @@ public class ServerMslContext extends MockMslContext {
         }
 
         if (unSupportedEntityAuthFactories != null) {
-            for (EntityAuthenticationScheme scheme : unSupportedEntityAuthFactories) {
+            for (final EntityAuthenticationScheme scheme : unSupportedEntityAuthFactories) {
                 super.removeEntityAuthenticationFactory(scheme);
             }
         }
         if (unSupportedUserAuthFactories != null) {
-            for (UserAuthenticationScheme scheme : unSupportedUserAuthFactories) {
+            for (final UserAuthenticationScheme scheme : unSupportedUserAuthFactories) {
                 super.removeUserAuthenticationFactory(scheme);
             }
         }
         if (unSupportedKeyxFactories != null) {
-            for (KeyExchangeScheme scheme : unSupportedKeyxFactories) {
+            for (final KeyExchangeScheme scheme : unSupportedKeyxFactories) {
                 super.removeKeyExchangeFactories(scheme);
             }
         }

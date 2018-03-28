@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,11 +23,13 @@ package com.netflix.msl.io;
  */
 public abstract class MslTokenizer {
     /**
-     * <p>Create a new tokenizer.</p>
+     * <p>Closes the tokenizer, cleaning up any resources and preventing future
+     * use.</p>
+     * 
+     * @throws MslEncoderException if there is an error closing the tokenizer.
      */
-    protected MslTokenizer() {
-        this.aborted = false;
-        this.next = null;
+    public void close() throws MslEncoderException {
+        closed = true;
     }
     
     /**
@@ -43,12 +45,12 @@ public abstract class MslTokenizer {
      * 
      * @param timeout read timeout in milliseconds or -1 for no timeout.
      * @return true if more objects are available from the data source, false
-     *         if the tokenizer has been aborted.
+     *         if the tokenizer has been aborted or closed.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
     public boolean more(final int timeout) throws MslEncoderException {
-        if (aborted) return false;
+        if (aborted || closed) return false;
         if (next != null) return true;
         next = nextObject(timeout);
         return (next != null);
@@ -77,12 +79,12 @@ public abstract class MslTokenizer {
      * 
      * @param timeout read timeout in milliseconds or -1 for no timeout.
      * @return the next object or {@code null} if there are no more or the
-     *         tokenizer has been aborted.
+     *         tokenizer has been aborted or closed.
      * @throws MslEncoderException if the next object cannot be read or the
      *         source data at the current position is invalid.
      */
     public MslObject nextObject(final int timeout) throws MslEncoderException {
-        if (aborted) return null;
+        if (aborted || closed) return null;
         if (next != null) {
             final MslObject mo = next;
             next = null;
@@ -91,8 +93,10 @@ public abstract class MslTokenizer {
         return next(timeout);
     }
     
+    /** Closed. */
+    private boolean closed = false;
     /** Aborted. */
-    private boolean aborted;
+    private boolean aborted = false;
     /** Cached next object. */
-    private MslObject next;
+    private MslObject next = null;
 }

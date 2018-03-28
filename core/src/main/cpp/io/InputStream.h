@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,30 @@ public:
      *         is closed.
      */
     virtual int read(ByteArray& out, size_t offset, size_t len, int timeout = -1) = 0;
+
+    /**
+     * <p>Skips over and discards <code>n</code> bytes of data from this
+     * input stream. The <code>skip</code> method may, for a variety of
+     * reasons, end up skipping over some smaller number of bytes, possibly
+     * <code>0</code>.</p>
+     *
+     * <p>Skipped bytes must still be accounted for by mark() and
+     * reset().</p>
+     *
+     * <p>The default implementation calls read() with the requested number
+     * of bytes.</p>
+     *
+     * @param the number of bytes to be skipped.
+     * @param timeout skip timeout in milliseconds or -1 for no timeout.
+     * @return the actual number of bytes skipped.
+     * @throws IOException if skip is not supported, if there is an error
+     *         skipping over the data, or if the stream is closed.
+     */
+    virtual int skip(size_t n, int timeout = -1)
+    {
+        ByteArray data(n);
+        return read(data, timeout);
+    }
 };
 
 }}} // namespace netflix::msl::io

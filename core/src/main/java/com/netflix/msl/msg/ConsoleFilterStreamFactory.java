@@ -59,7 +59,7 @@ public class ConsoleFilterStreamFactory implements FilterStreamFactory {
          */
         @Override
         public int read() throws IOException {
-            int c = super.read();
+            final int c = in.read();
             System.out.write(c);
             System.out.flush();
             return c;
@@ -70,8 +70,8 @@ public class ConsoleFilterStreamFactory implements FilterStreamFactory {
          */
         @Override
         public int read(final byte[] b, final int off, final int len) throws IOException {
-            int r = super.read(b, off, len);
-            System.out.write(b, off,len);
+            final int r = in.read(b, off, len);
+            System.out.write(b, off, len);
             System.out.flush();
             return r;
         }
@@ -109,7 +109,7 @@ public class ConsoleFilterStreamFactory implements FilterStreamFactory {
         public void write(final byte[] b, final int off, final int len) throws IOException {
             System.out.write(b, off, len);
             System.out.flush();
-            super.write(b, off, len);
+            out.write(b, off, len);
         }
 
         /* (non-Javadoc)
@@ -119,7 +119,7 @@ public class ConsoleFilterStreamFactory implements FilterStreamFactory {
         public void write(final int b) throws IOException {
             System.out.write(b);
             System.out.flush();
-            super.write(b);
+            out.write(b);
         }
     }
     

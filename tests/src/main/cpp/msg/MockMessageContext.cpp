@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ MockMessageContext::MockMessageContext(shared_ptr<MslContext> ctx, const string&
 {
 	if (UserAuthenticationScheme::EMAIL_PASSWORD == scheme) {
 		userAuthData_ = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL, MockEmailPasswordAuthenticationFactory::PASSWORD);
-	} else {
+	} else if (UserAuthenticationScheme::INVALID != scheme) {
 		throw IllegalArgumentException("Unsupported authentication type: " + scheme.name());
 	}
 

@@ -217,6 +217,7 @@
             var props = {
                 _out: { value: out, writable: false, enumerable: false, configurable: false },
                 _buffer: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _readlimit: { value: -1, writable: true, enumerable: false, configurable: false },
                 _exception: { value: undefined, writable: true, enumerable: false, configurable: false },
                 _timedout: { value: false, writable: true, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
@@ -244,8 +245,10 @@
         mark: function mark(readlimit) {
             if (this._buffer)
                 this._buffer.mark(readlimit);
-            // If the buffer doesn't exist yet, it is implicitly marked as that
-            // is the behavior of ByteArrayInputStream.
+            // If the buffer doesn't exist yet, we must remember to mark it
+            // after it is created.
+            else
+                this._readlimit = readlimit;
         },
 
         /** @inheritDoc */
@@ -299,8 +302,8 @@
                 if (!this._buffer) {
                     this._out.close(timeout, {
                         result: function(success) { processResponse(success); },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
+                        timeout: callback.timeout,
+                        error: callback.error,
                     });
                 }
 
@@ -362,6 +365,8 @@
                                 
                                 // Read from the response.
                                 this._buffer = new ByteArrayInputStream(content);
+                                if (this._readlimit != -1)
+                                    this._buffer.mark(this._readlimit);
                                 this._buffer.read(len, timeout, callback);
                             }, self);
                         },
@@ -401,7 +406,12 @@
         },
 
         /**
-         * Open a new connection to the target location.
+         * <p>Open a new connection to the target location.</p>
+         * 
+         * <p>The returned input stream must support
+         * {@link InputStream#mark(int)}, {@link InputStream#reset()}, and
+         * {@link InputStream#skip(long)} if you wish to use it for more than
+         * one MSL message.</p>
          *
          * @return {{input: InputStream, output: OutputStream}} the input and
          *         output streams.

@@ -15,8 +15,8 @@
  */
 package com.netflix.msl.client.common;
 
-import java.io.FilterInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashSet;
@@ -43,7 +43,6 @@ import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
-import com.netflix.msl.io.Url.Connection;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageBuilder;
 import com.netflix.msl.msg.MessageHeader;
@@ -241,7 +240,7 @@ public class BaseTestClass {
         return null;
     }
 
-    public MessageInputStream sendReceive(final OutputStream out, final DelayedInputStream in,
+    public MessageInputStream sendReceive(final OutputStream out, final InputStream in,
                                           final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens,
                                           final boolean isRenewable, final boolean addKeyRequestData) throws MslException, IOException {
         final MessageBuilder builder = MessageBuilder.createRequest(clientConfig.getMslContext(), masterToken, userIdToken, null);
@@ -279,84 +278,5 @@ public class BaseTestClass {
         MASTER_BOUND,
         BOTH,
         NONE
-    }
-
-    /**
-     * A delayed input stream does not open the real input stream until
-     * one of its methods is called.
-     */
-    protected static class DelayedInputStream extends FilterInputStream {
-        /**
-         * Create a new delayed input stream that will not attempt to
-         * construct the input stream from the URL connection until it is
-         * actually needed (i.e. read from).
-         *
-         * @param conn backing URL connection.
-         */
-        public DelayedInputStream(final Connection conn) {
-            super(null);
-            this.conn = conn;
-        }
-
-        @Override
-        public int available() throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            return super.available();
-        }
-
-        @Override
-        public void close() throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            super.close();
-        }
-
-        @Override
-        public synchronized void mark(final int readlimit) {
-        }
-
-        @Override
-        public boolean markSupported() {
-            return false;
-        }
-
-        @Override
-        public int read() throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            return in.read();
-        }
-
-        @Override
-        public int read(final byte[] b, final int off, final int len) throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            return super.read(b, off, len);
-        }
-
-        @Override
-        public int read(final byte[] b) throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            return super.read(b);
-        }
-
-        @Override
-        public synchronized void reset() throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            super.reset();
-        }
-
-        @Override
-        public long skip(final long n) throws IOException {
-            if (in == null)
-                in = conn.getInputStream();
-            return super.skip(n);
-        }
-
-        /** URL connection providing the input stream. */
-        private final Connection conn;
     }
 }

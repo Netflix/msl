@@ -25,19 +25,19 @@ import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslKeyExchangeException;
+import com.netflix.msl.client.configuration.entityauth.TestEccAuthenticationFactory;
 import com.netflix.msl.client.configuration.entityauth.TestPresharedAuthenticationFactory;
 import com.netflix.msl.client.configuration.entityauth.TestRsaAuthenticationFactory;
-import com.netflix.msl.client.configuration.entityauth.TestEccAuthenticationFactory;
 import com.netflix.msl.client.configuration.entityauth.TestX509AuthenticationFactory;
 import com.netflix.msl.client.configuration.msg.ClientMessageContext;
 import com.netflix.msl.client.configuration.msg.InvalidUserAuthScheme;
 import com.netflix.msl.client.configuration.util.ClientMslContext;
+import com.netflix.msl.entityauth.EccAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.PresharedAuthenticationData;
 import com.netflix.msl.entityauth.RsaAuthenticationData;
-import com.netflix.msl.entityauth.EccAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.entityauth.X509AuthenticationData;
@@ -68,7 +68,7 @@ public class ClientConfiguration {
     private String scheme = "http";
     private String remoteHost = "localhost";
     private String path = "";
-    private static final String USER_ID = "userid";
+    private String userId = null;
     private boolean isPeerToPeer = false;
     private EntityAuthenticationScheme entityAuthenticationScheme = EntityAuthenticationScheme.PSK;
     private UserAuthenticationScheme userAuthenticationScheme = UserAuthenticationScheme.EMAIL_PASSWORD;
@@ -86,31 +86,36 @@ public class ClientConfiguration {
     private boolean isIntegrityProtected = true;
     private boolean clearKeyRequestData = false;
 
-    public ClientConfiguration setEntityAuthenticationScheme(EntityAuthenticationScheme scheme) {
+    public ClientConfiguration setEntityAuthenticationScheme(final EntityAuthenticationScheme scheme) {
         entityAuthenticationScheme = scheme;
         return this;
     }
 
 
 
-    public ClientConfiguration setUserAuthenticationScheme(UserAuthenticationScheme scheme) {
+    public ClientConfiguration setUserAuthenticationScheme(final UserAuthenticationScheme scheme) {
         userAuthenticationScheme = scheme;
+        return this;
+    }
+    
+    public ClientConfiguration setUserId(final String userId) {
+        this.userId = userId;
         return this;
     }
 
 
-    public ClientConfiguration setIsMessageEncrypted(boolean messageEncrypted) {
+    public ClientConfiguration setIsMessageEncrypted(final boolean messageEncrypted) {
         this.isMessageEncrypted = messageEncrypted;
         return this;
     }
 
 
-    public ClientConfiguration setIsIntegrityProtected(boolean integrityProtected) {
+    public ClientConfiguration setIsIntegrityProtected(final boolean integrityProtected) {
         this.isIntegrityProtected = integrityProtected;
         return this;
     }
 
-    public ClientConfiguration setKeyRequestData(KeyExchangeScheme scheme) {
+    public ClientConfiguration setKeyRequestData(final KeyExchangeScheme scheme) {
         keyExchangeScheme = scheme;
         return this;
     }
@@ -123,12 +128,12 @@ public class ClientConfiguration {
         return this;
     }
 
-    public ClientConfiguration setInvalidUserAuthData(InvalidUserAuthScheme scheme) {
+    public ClientConfiguration setInvalidUserAuthData(final InvalidUserAuthScheme scheme) {
         setInvalidUserAuthData = scheme;
         return this;
     }
 
-    public ClientConfiguration setMaxEntityAuthRetryCount(int value) {
+    public ClientConfiguration setMaxEntityAuthRetryCount(final int value) {
         this.entityAuthRetryCount = value;
         return this;
     }
@@ -139,7 +144,7 @@ public class ClientConfiguration {
         return this;
     }
 
-    public ClientConfiguration setMaxUserAuthRetryCount(int value) {
+    public ClientConfiguration setMaxUserAuthRetryCount(final int value) {
         this.userAuthRetryCount = value;
         return this;
     }
@@ -149,32 +154,32 @@ public class ClientConfiguration {
         return this;
     }
 
-    public ClientConfiguration setScheme(String scheme) {
+    public ClientConfiguration setScheme(final String scheme) {
         this.scheme = scheme;
         return this;
     }
 
-    public ClientConfiguration setHost(String remoteHost) {
+    public ClientConfiguration setHost(final String remoteHost) {
         this.remoteHost = remoteHost;
         return this;
     }
 
-    public ClientConfiguration setPath(String path) {
+    public ClientConfiguration setPath(final String path) {
         this.path = path;
         return this;
     }
 
-    public ClientConfiguration setIsPeerToPeer(boolean isPeerToPeer) {
+    public ClientConfiguration setIsPeerToPeer(final boolean isPeerToPeer) {
         this.isPeerToPeer = isPeerToPeer;
         return this;
     }
 
-    public ClientConfiguration setMessageNonReplayable(boolean nonReplayable) {
+    public ClientConfiguration setMessageNonReplayable(final boolean nonReplayable) {
         this.nonReplayable = nonReplayable;
         return this;
     }
 
-    public ClientConfiguration setIsNullCryptoContext(boolean isNullCryptoContext) {
+    public ClientConfiguration setIsNullCryptoContext(final boolean isNullCryptoContext) {
         this.isNullCryptoContext = isNullCryptoContext;
         return this;
     }
@@ -230,7 +235,7 @@ public class ClientConfiguration {
         }
 
         /** create message context and configure */
-        messageContext = new ClientMessageContext(mslContext, USER_ID, userAuthenticationScheme, isMessageEncrypted, isIntegrityProtected);
+        messageContext = new ClientMessageContext(mslContext, userId, userAuthenticationScheme, isMessageEncrypted, isIntegrityProtected);
         messageContext.resetKeyRequestData(keyExchangeScheme);
         if(this.clearKeyRequestData) {
             messageContext.clearKeyRequestData();
@@ -273,7 +278,7 @@ public class ClientConfiguration {
         }
     }
 
-    public ClientConfiguration setNumThreads(int numThreads) {
+    public ClientConfiguration setNumThreads(final int numThreads) {
         mslControl = new MslControl(numThreads);
         //mslControl.setFilterFactory(new TestConsoleFilterStreamFactory());
         return this;

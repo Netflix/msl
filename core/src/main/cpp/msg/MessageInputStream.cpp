@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -457,8 +457,9 @@ bool MessageInputStream::close(int timeout)
 {
 	// Only close the source if instructed to do so because we might want
 	// to reuse the connection.
-	if (closeSource_)
+	if (closeSource_) {
 		source_->close(timeout);
+	}
 
 	// Otherwise if this is not a handshake message or error message then
 	// consume all payloads that may still be on the source input stream.
@@ -473,6 +474,13 @@ bool MessageInputStream::close(int timeout)
 		} catch (const MslException& e) {
 			// Ignore exceptions.
 		}
+	}
+
+	// Close the tokenizer.
+	try {
+	    tokenizer_->close();
+	} catch (const MslEncoderException& e) {
+	    // Ignore exceptions.
 	}
 
 	// Success.

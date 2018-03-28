@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@
 #include <userauth/UserAuthenticationScheme.h>
 #include <util/Executor.h>
 #include <util/MslContext.h>
+#include <util/MslUtils.h>
 #include <util/SimpleMslStore.h>
 #include <MslConstants.h>
 #include <MslCryptoException.h>
@@ -109,18 +110,18 @@ private:
 	protected:
 		/** @inheritDoc */
 		virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> /*source*/, const MslEncoderFormat& /*format*/) {
-			throw new MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
+			throw MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
 		}
 
 	public:
 		/** @inheritDoc */
 		virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> /*encoding*/) {
-            throw new MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
+            throw MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
 		}
 
 		/** @inheritDoc */
 		virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> /*object*/, const MslEncoderFormat& /*format*/) {
-            throw new MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
+            throw MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
 		}
 	};
 
@@ -327,12 +328,37 @@ private:
 };
 
 /**
- * This message context is used to send a handshake response->
+ * This message context is used to send messages that will not expect a
+ * response.
+ */
+class SendMessageContext : public FilterMessageContext
+{
+public:
+    virtual ~SendMessageContext() {}
+
+    /**
+     * Creates a message context used to send messages that do not expect a
+     * response by ensuring that the message context conforms to those
+     * expectations.
+     *
+     * @param appCtx the application's message context.
+     */
+    SendMessageContext(shared_ptr<MessageContext> appCtx)
+        : FilterMessageContext(appCtx)
+    {}
+
+    /** @inheritDoc */
+    virtual bool isRequestingTokens() override { return false; }
+};
+
+/**
+ * This message context is used to send a handshake response.
  */
 class KeyxResponseMessageContext : public FilterMessageContext
 {
 public:
     virtual ~KeyxResponseMessageContext() {}
+
     /**
      * Creates a message context used for automatically generated handshake
      * responses.
@@ -340,26 +366,31 @@ public:
      * @param appCtx the application's message context.
      */
     KeyxResponseMessageContext(shared_ptr<MessageContext> appCtx)
-    : FilterMessageContext(appCtx)
+        : FilterMessageContext(appCtx)
     {}
+
     /** @inheritDoc */
     virtual bool isEncrypted() override {
         // Key exchange responses cannot require encryption otherwise key
         // exchange could never succeed in some cases.
         return false;
     }
+
     /** @inheritDoc */
     virtual bool isIntegrityProtected() override {
         // Key exchange responses cannot require integrity protection
         // otherwise key exchange could never succeed in some cases.
         return false;
     }
+
     /** @inheritDoc */
     virtual bool isNonReplayable() override { return false; }
+
     /** @inheritDoc */
     virtual void write(shared_ptr<MessageOutputStream>) override {
         // No application data.
     }
+
 private:
     KeyxResponseMessageContext() = delete;
 };
@@ -799,6 +830,17 @@ shared_ptr<MessageBuilder> MslControl::buildResponse(shared_ptr<MslContext> ctx,
 
     // Set the authentication tokens.
     builder->setAuthTokens(masterToken, userIdToken);
+    return builder;
+}
+
+shared_ptr<MessageBuilder> MslControl::buildDetachedResponse(shared_ptr<MslContext> ctx,
+        shared_ptr<MessageContext> msgCtx,
+        shared_ptr<MessageHeader> request)
+{
+    // Create an idempotent response. Assign a random message ID.
+    shared_ptr<MessageBuilder> builder = MessageBuilder::createIdempotentResponse(ctx, request);
+    builder->setNonReplayable(msgCtx->isNonReplayable());
+    builder->setMessageId(MslUtils::getRandomLong(ctx));
     return builder;
 }
 
@@ -1287,7 +1329,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
 shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<MslContext> ctx,
         shared_ptr<MessageContext> msgCtx, shared_ptr<InputStream> in,
         shared_ptr<OutputStream> out, shared_ptr<MessageBuilder> builder,
-        bool recv, bool closeStreams, int64_t timeout)
+        Receive recv, bool closeStreams, int64_t timeout)
 {
     // Attempt to acquire the renewal lock.
     shared_ptr<BlockingQueue<MasterToken>> renewalQueue = make_shared<BlockingQueue<MasterToken>>();
@@ -1343,12 +1385,15 @@ shared_ptr<MslControl::SendReceiveResult> MslControl::sendReceive(shared_ptr<Msl
     sent = send(ctx, msgCtx, out, builder, closeStreams);
 
     // Receive the response if expected, if we sent a handshake request,
-    // if key request data was included, or if a master token and user
+    // or if we expect a response when renewing tokens and either key
+    // request data was included or a master token and user
     // authentication data was included in a renewable message.
     shared_ptr<MessageHeader> requestHeader = sent->request->getMessageHeader();
     set<shared_ptr<KeyRequestData>> keyRequestData = requestHeader->getKeyRequestData();
-    if (recv || sent->handshake || !keyRequestData.empty() ||
-        (requestHeader->isRenewable() && requestHeader->getMasterToken() && requestHeader->getUserAuthenticationData()))
+    if (recv == Receive::ALWAYS || sent->handshake ||
+        (recv == Receive::RENEWING &&
+         (!keyRequestData.empty() ||
+          (requestHeader->isRenewable() && requestHeader->getMasterToken() && requestHeader->getUserAuthenticationData()))))
     {
         response = receive(ctx, msgCtx, in, requestHeader);
         response->closeSource(closeStreams);
@@ -1593,7 +1638,7 @@ void MslControl::sendError(shared_ptr<MslContext> ctx, shared_ptr<MessageDebugCo
  * clients, and peer-to-peer servers.</p>
  */
 // FIXME: These methods should not be inline.
-class MslControl::RequestService : Callable<shared_ptr<MslChannel>>
+class MslControl::RequestService : protected Callable<shared_ptr<MslChannel>>
 {
 public:
     virtual ~RequestService() {}
@@ -1604,17 +1649,19 @@ public:
      * @param ctx MSL context.
      * @param msgCtx message context.
      * @param remoteEntity remote entity URL.
+     * @param expectResponse response expectation.
      * @param timeout connect, read, and renewal lock acquisition timeout
      *        in milliseconds.
      */
     RequestService(MslControl *mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
-            shared_ptr<Url> remoteEntity, int64_t timeout)
+            shared_ptr<Url> remoteEntity, Receive expectResponse, int64_t timeout)
     : Callable(mslControl, ctx, msgCtx)
     , remoteEntity(remoteEntity)
     , in(nullptr)
     , out(nullptr)
     , openedStreams(false)
     , builder(nullptr)
+    , expectResponse(expectResponse)
     , timeout(timeout)
     , msgCount(0)
     {}
@@ -1626,16 +1673,19 @@ public:
      * @param msgCtx message context.
      * @param in remote entity input stream.
      * @param out remote entity output stream.
-     * @param timeout read acquisition timeout in milliseconds.
+     * @param expectResponse response expectation.
+     * @param timeout read and renewal lock acquisition timeout in
+     *        milliseconds.
      */
     RequestService(MslControl *mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
-            shared_ptr<InputStream> in, shared_ptr<OutputStream> out, int64_t timeout)
+            shared_ptr<InputStream> in, shared_ptr<OutputStream> out, Receive expectResponse, int64_t timeout)
     : Callable(mslControl, ctx, msgCtx)
     , remoteEntity(nullptr)
     , in(in)
     , out(out)
     , openedStreams(false)
     , builder(nullptr)
+    , expectResponse(expectResponse)
     , timeout(timeout)
     , msgCount(0)
     {}
@@ -1646,14 +1696,15 @@ public:
      * @param ctx MSL context.
      * @param msgCtx message context.
      * @param remoteEntity remote entity URL.
-     * @param builder request message builder->
+     * @param builder request message builder.
+     * @param expectResponse response expectation.
      * @param timeout connect, read, and renewal lock acquisition timeout
      *        in milliseconds.
      * @param msgCount number of messages that have already been sent or
      *        received.
      */
     RequestService(MslControl *mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
-            shared_ptr<Url> remoteEntity, shared_ptr<MessageBuilder> builder,
+            shared_ptr<Url> remoteEntity, shared_ptr<MessageBuilder> builder, Receive expectResponse,
             int64_t timeout, int32_t msgCount)
     : Callable(mslControl, ctx, msgCtx)
     , remoteEntity(remoteEntity)
@@ -1661,6 +1712,7 @@ public:
     , out(nullptr)
     , openedStreams(false)
     , builder(builder)
+    , expectResponse(expectResponse)
     , timeout(timeout)
     , msgCount(msgCount)
     {}
@@ -1686,6 +1738,7 @@ public:
     , out(out)
     , openedStreams(false)
     , builder(builder)
+    , expectResponse(Receive::ALWAYS)
     , timeout(timeout)
     , msgCount(msgCount)
     {}
@@ -1776,6 +1829,15 @@ public:
             if (channel && channel->output())
                 channel->output()->stopCaching();
 
+            // Close the input stream if we opened it and there is no
+            // response. This may be necessary to transmit data
+            // buffered in the output stream, and the caller will not
+            // be given a message input stream by which to close it.
+            //
+            // We don't care about an I/O exception on close.
+            if (openedStreams && (!channel || !channel->input()))
+                try { in->close(); } catch (const IOException& ioe) { }
+
             // Return the established channel.
             return channel;
           // FIXME: How to handle cancellation?
@@ -1843,10 +1905,15 @@ private:
         // message count.
         //
         // This will release the master token lock.
-        shared_ptr<SendReceiveResult> result = mslControl->sendReceive(ctx, msgCtx, in, out, builder, true, openedStreams, timeout);
+        shared_ptr<SendReceiveResult> result = mslControl->sendReceive(ctx, msgCtx, in, out, builder, expectResponse, openedStreams, timeout);
         shared_ptr<MessageOutputStream> request = result->request;
         shared_ptr<MessageInputStream> response = result->response;
         msgCount += 2;
+
+        // If we did not receive a response then we're done. Return the
+        // new message output stream.
+        if (!response)
+            return make_shared<MslChannel>(response, request);
 
         // If the response is an error see if we can handle the error and
         // retry.
@@ -1886,7 +1953,7 @@ private:
             if (!ctx->isPeerToPeer()) {
                 // The master token lock acquired from buildErrorResponse()
                 // will be released when the service executes.
-                RequestService service(mslControl, ctx, resendMsgCtx, remoteEntity, requestBuilder, timeout, msgCount);
+                RequestService service(mslControl, ctx, resendMsgCtx, remoteEntity, requestBuilder, expectResponse, timeout, msgCount);
                 newChannel = service();
                 maxMessagesHit = service.maxMessagesHit;
             } else {
@@ -1940,7 +2007,7 @@ private:
             // released when the service executes.
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(vector<shared_ptr<PayloadChunk>>(), msgCtx);
             shared_ptr<MessageBuilder> requestBuilder = mslControl->buildResponse(ctx, msgCtx, responseHeader);
-            RequestService service(mslControl, ctx, resendMsgCtx, remoteEntity, requestBuilder, timeout, msgCount);
+            RequestService service(mslControl, ctx, resendMsgCtx, remoteEntity, requestBuilder, expectResponse, timeout, msgCount);
             return service();
         }
 
@@ -2074,6 +2141,8 @@ private:
     bool openedStreams;
     /** Request message builder-> */
     shared_ptr<MessageBuilder> builder;
+    /** Response expectation. */
+    Receive expectResponse;
     /** Connect and read timeout in milliseconds. */
     int64_t timeout;
     /** Number of messages sent or received so far. */
@@ -2093,7 +2162,7 @@ private:
  * peer servers.</p>
  */
 // FIXME: These methods should not be inline.
-class MslControl::ReceiveService : Callable<shared_ptr<MessageInputStream>>
+class MslControl::ReceiveService : protected Callable<shared_ptr<MessageInputStream>>
 {
 public:
     virtual ~ReceiveService() {}
@@ -2390,9 +2459,9 @@ private:
  * servers.</p>
  */
 // FIXME: These methods should not be inline.
-class MslControl::RespondService : Callable<shared_ptr<MslChannel>>
+class MslControl::RespondService : protected Callable<shared_ptr<MslChannel>>
 {
-private:
+protected:
     /** Request message input stream. */
     shared_ptr<MessageInputStream> request;
     /** Remote entity input stream. */
@@ -2403,6 +2472,8 @@ private:
     int64_t timeout;
 
 public:
+    virtual ~RespondService() {}
+
     /**
      * Create a new message respond service.
      *
@@ -2426,7 +2497,7 @@ public:
             throw MslInternalException("Respond service created for an error message.");
     }
 
-private:
+protected:
     /**
      * Send the response as a trusted network server.
      *
@@ -2578,7 +2649,7 @@ private:
         // This adds two to our message count.
         //
         // This will release the master token lock.
-        shared_ptr<SendReceiveResult> result = mslControl->sendReceive(ctx, msgCtx, in, out, builder, false, false, timeout);
+        shared_ptr<SendReceiveResult> result = mslControl->sendReceive(ctx, msgCtx, in, out, builder, Receive::RENEWING, false, timeout);
         shared_ptr<MessageInputStream> response = result->response;
         msgCount += 2;
 
@@ -2777,14 +2848,13 @@ public:
 
 }; // class MslControl::RespondService
 
-
 /**
  * <p>This service sends an error response to the remote entity.</p>
  *
  * <p>This class will only be used trusted network servers and peer-to-peer
  * entities.</p>
  */
-class MslControl::ErrorService : Callable<bool>
+class MslControl::ErrorService : protected Callable<bool>
 {
 private:
     MslControl * const mslControl;
@@ -2796,6 +2866,8 @@ private:
     shared_ptr<OutputStream> out;
 
 public:
+    virtual ~ErrorService() {}
+
     /**
      * Create a new error service.
      *
@@ -2878,11 +2950,255 @@ public:
 
 }; // class MslControl::ErrorService
 
+/**
+ * <p>This service sends a message to a remote entity.</p>
+ *
+ * <p>This class is only used from trusted network clients and peer-to-peer
+ * entities.</p>
+ */
+class MslControl::SendService : protected Callable<shared_ptr<MessageOutputStream>>
+{
+private:
+    /** The request service. */
+    shared_ptr<RequestService> requestService;
+
+public:
+    virtual ~SendService() {}
+
+    /**
+     * Create a new message send service.
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param remoteEntity remote entity URL.
+     * @param timeout connect, read, and renewal lock acquisition timeout
+     *        in milliseconds.
+     */
+    SendService(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
+            shared_ptr<Url> remoteEntity, int64_t timeout)
+        : Callable(mslControl, ctx, msgCtx)
+        , requestService(make_shared<RequestService>(mslControl, ctx, msgCtx, remoteEntity, Receive::NEVER, timeout))
+    {
+    }
+
+    /**
+     * Create a new message send service.
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param in remote entity input stream.
+     * @param out remote entity output stream.
+     * @param timeout read and renewal lock acquisition timeout in
+     *        milliseconds.
+     */
+    SendService(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
+            shared_ptr<InputStream> in, shared_ptr<OutputStream> out, int64_t timeout)
+        : Callable(mslControl, ctx, msgCtx)
+        , requestService(make_shared<RequestService>(mslControl, ctx, msgCtx, in, out, Receive::NEVER, timeout))
+    {
+    }
+
+    /**
+     * @return the established MSL channel or {@code null} if cancelled or
+     *         interrupted.
+     * @throws MslException if there was an error creating or processing
+     *         a message.
+     * @throws IOException if there was an error reading or writing a
+     *         message.
+     * @throws TimeoutException if the thread timed out while trying to
+     *         acquire the renewal lock.
+     * @see java.util.concurrent.Callable#call()
+     */
+    virtual shared_ptr<MessageOutputStream> operator()() override
+    {
+        shared_ptr<MslChannel> channel = (*requestService)();
+        return (channel) ? channel->output() : shared_ptr<MessageOutputStream>();
+    }
+}; // class MslControl::SendService
+
+/**
+ * <p>This service sends a message to the remote entity using a request as
+ * the basis for the response.</p>
+ *
+ * <p>This class will only be used trusted network servers.</p>
+ */
+class MslControl::PushService : public MslControl::RespondService
+{
+public:
+    virtual ~PushService() {}
+
+    /**
+     * Create a new message push service.
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param in remote entity input stream.
+     * @param out remote entity output stream.
+     * @param request request message input stream.
+     * @param timeout renewal lock acquisition timeout in milliseconds.
+     */
+    PushService(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MessageContext> msgCtx,
+            shared_ptr<InputStream> in, shared_ptr<OutputStream> out, shared_ptr<MessageInputStream> request, int64_t timeout)
+        : RespondService(mslControl, ctx, msgCtx, in, out, request, timeout)
+    {}
+
+    /**
+     * @return a {@link MslChannel} on success or {@code null} if cancelled,
+     *         interrupted, if the response could not be sent encrypted or
+     *         integrity protected when required, or if the maximum number
+     *         of messages is hit.
+     * @throws MslException if there was an error creating the response.
+     * @throws MslErrorResponseException if there was an error sending an
+     *         automatically generated error response.
+     * @throws IOException if there was an error writing the message.
+     * @see java.util.concurrent.Callable#call()
+     */
+    virtual shared_ptr<MslChannel> operator()() override
+    {
+        shared_ptr<MessageDebugContext> debugCtx = msgCtx->getDebugContext();
+
+        shared_ptr<MessageHeader> requestHeader = request->getMessageHeader();
+        shared_ptr<MessageBuilder> builder;
+        try {
+            builder = mslControl->buildDetachedResponse(ctx, msgCtx, requestHeader);
+        } catch (const MslException& e) {
+            // If we were cancelled then return null.
+//            if (cancelled(e)) return shared_ptr<MslChannel>();  // FIXME: How to handle cancellation?
+
+            try {
+                const string recipient = getIdentity(request);
+                const MslError error = e.getError();
+                shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
+                vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
+                const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
+                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+            } catch (const IException& rt) {
+                throw MslErrorResponseException("Error building the message.", rt, e);
+            }
+            throw e;
+        } catch (const IException& t) {
+            // If we were cancelled then return null.
+//            if (cancelled(t)) return null;  // FIXME: How to handle cancellation?
+
+            try {
+                const string recipient = getIdentity(request);
+                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, -1, MslError::INTERNAL_EXCEPTION, string(), out);
+            } catch (const IException& rt) {
+                throw MslErrorResponseException("Error building the message.", rt, t);
+            }
+            throw MslInternalException("Error building the message.", t);
+        }
+
+        try {
+            // Send the message. This will release the master token lock.
+            shared_ptr<MslChannel> channel = trustedNetworkExecute(builder, 0);
+
+            // Clear any cached payloads.
+            if (channel)
+                channel->output()->stopCaching();
+
+            // Return the established channel.
+            return channel;
+//        } catch (final InterruptedException e) {  // FIXME: How to handle cancellation?
+//            // We were cancelled so return null.
+//            return nullptr;
+        } catch (const IOException& e) {
+            // If we were cancelled then return null.
+//            if (cancelled(e)) return null;  // FIXME: How to handle cancellation?
+
+            // Maybe we can send an error response.
+            try {
+                const string recipient = getIdentity(request);
+                const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
+                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
+            } catch (const IException& rt) {
+                // If we were cancelled then return null.
+//                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?
+
+                throw MslErrorResponseException("Error pushing the message.", rt, e);
+            }
+            throw e;
+        } catch (const MslException& e) {
+            // If we were cancelled then return null.
+//            if (cancelled(e)) return null;  // FIXME: How to handle cancellation?
+
+            // Maybe we can send an error response.
+            try {
+                const string recipient = getIdentity(request);
+                const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
+                const MslError error = e.getError();
+                shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
+                vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
+                const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
+                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+            } catch (const IException& rt) {
+                // If we were cancelled then return null.
+//                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?
+
+                throw MslErrorResponseException("Error pushing the message.", rt, e);
+            }
+            throw e;
+        } catch (const IException& t) {
+            // If we were cancelled then return null.
+//            if (cancelled(t)) return null;  // FIXME: How to handle cancellation?
+
+            // Maybe we can send an error response.
+            try {
+                const string recipient = getIdentity(request);
+                const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
+                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+            } catch (const IException& rt) {
+                // If we were cancelled then return null.
+//                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?
+
+                throw MslErrorResponseException("Error pushing the message.", rt, t);
+            }
+            throw MslInternalException("Error pushing the message.", t);
+        }
+    }
+}; // class MslControl::PushService
+
+future<shared_ptr<MessageOutputStream>> MslControl::send(shared_ptr<MslContext> ctx,
+                                                         shared_ptr<MessageContext> msgCtx,
+                                                         shared_ptr<Url> remoteEntity,
+                                                         int64_t timeout)
+{
+    shared_ptr<MessageContext> sendMsgCtx = make_shared<SendMessageContext>(msgCtx);
+    SendService service(this, ctx, sendMsgCtx, remoteEntity, timeout);
+    return executor->submit(service);
+}
+
+future<shared_ptr<MessageOutputStream>> MslControl::send(shared_ptr<MslContext> ctx,
+                                                         shared_ptr<MessageContext> msgCtx,
+                                                         shared_ptr<InputStream> in,
+                                                         shared_ptr<OutputStream> out,
+                                                         int64_t timeout)
+{
+    shared_ptr<MessageContext> sendMsgCtx = make_shared<SendMessageContext>(msgCtx);
+    SendService service(this, ctx, sendMsgCtx, in, out, timeout);
+    return executor->submit(service);
+}
+
+future<shared_ptr<MslChannel>> MslControl::push(shared_ptr<MslContext> ctx,
+                                                shared_ptr<MessageContext> msgCtx,
+                                                shared_ptr<InputStream> in,
+                                                shared_ptr<OutputStream> out,
+                                                shared_ptr<MessageInputStream> request,
+                                                int64_t timeout)
+{
+    if (ctx->isPeerToPeer())
+        throw IllegalStateException("This method cannot be used in peer-to-peer mode.");
+    if (request->getErrorHeader())
+        throw IllegalArgumentException("Request message input stream cannot be for an error message.");
+    PushService service(this, ctx, msgCtx, in, out, request, timeout);
+    return executor->submit(service);
+}
+
 future<shared_ptr<MessageInputStream>> MslControl::receive(shared_ptr<MslContext> ctx,
-                                               shared_ptr<MessageContext> msgCtx,
-                                               shared_ptr<InputStream> in,
-                                               shared_ptr<OutputStream> out,
-                                               int64_t timeout)
+                                                           shared_ptr<MessageContext> msgCtx,
+                                                           shared_ptr<InputStream> in,
+                                                           shared_ptr<OutputStream> out,
+                                                           int64_t timeout)
 {
     ReceiveService service(this, ctx, msgCtx, in, out, timeout);
     return executor->submit(service);
@@ -2920,7 +3236,7 @@ future<shared_ptr<MslChannel>> MslControl::request(shared_ptr<MslContext> ctx,
 {
     if (ctx->isPeerToPeer())
         throw IllegalStateException("This method cannot be used in peer-to-peer mode.");
-    RequestService service(this, ctx, msgCtx, remoteEntity, timeout);
+    RequestService service(this, ctx, msgCtx, remoteEntity, Receive::ALWAYS, timeout);
     return executor->submit(service);
 }
                 
@@ -2932,7 +3248,7 @@ future<shared_ptr<MslChannel>> MslControl::request(shared_ptr<MslContext> ctx,
 {
     if (!ctx->isPeerToPeer())
         throw IllegalStateException("This method cannot be used in trusted network mode.");
-    RequestService service(this, ctx, msgCtx, in, out, timeout);
+    RequestService service(this, ctx, msgCtx, in, out, Receive::ALWAYS, timeout);
     return executor->submit(service);
 }
 

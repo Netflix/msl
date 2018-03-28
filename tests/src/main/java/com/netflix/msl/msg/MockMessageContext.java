@@ -92,8 +92,8 @@ public class MockMessageContext implements MessageContext {
      * The message will not be encrypted or non-replayable.
      * 
      * @param ctx MSL context.
-     * @param userId user ID.
-     * @param scheme user authentication scheme.
+     * @param userId user ID. May be {@code null}.
+     * @param scheme user authentication scheme. May be {@code null}.
      * @throws NoSuchAlgorithmException if a key generation algorithm is not
      *         found.
      * @throws InvalidAlgorithmParameterException if key generation parameters
@@ -113,7 +113,7 @@ public class MockMessageContext implements MessageContext {
         
         if (UserAuthenticationScheme.EMAIL_PASSWORD.equals(scheme)) {
             userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-        } else {
+        } else if (scheme != null) {
             throw new IllegalArgumentException("Unsupported authentication type: " + scheme.name());
         }
         

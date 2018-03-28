@@ -130,6 +130,7 @@
 	var MessageCapabilities = require('../msg/MessageCapabilities.js');
 	var MslErrorResponseException = require('../MslErrorResponseException.js');
 	var MslIoException = require('../MslIoException.js');
+	var MslUtils = require('../util/MslUtils.js');
 
     /**
      * Application level errors that may translate into MSL level errors.
@@ -406,6 +407,28 @@
             nextChunk(0);
         }
     });
+    
+    /**
+     * This message context is used to send messages that will not expect a
+     * response.
+     */
+    var SendMessageContext = FilterMessageContext.extend({
+        /**
+         * Creates a message context used to send messages that do not expect a
+         * response by ensuring that the message context conforms to those
+         * expectations.
+         * 
+         * @param {MessageContext} appCtx the application's message context.
+         */
+        init: function init(appCtx) {
+            init.base.call(this, appCtx);
+        },
+
+        /** @inheritDoc */
+        isRequestingTokens: function isRequestingTokens() {
+            return false;
+        },
+    });
 
     /**
      * This message context is used to send a handshake response.
@@ -503,6 +526,18 @@
         };
         Object.defineProperties(this, props);
     }
+    
+    /**
+     * Indicates response expectations for a specific request.
+     */
+    var Receive = {
+        /** A response is always expected. */
+        ALWAYS: 0,
+        /** A response is only expected if tokens are being renewed. */
+        RENEWING: 1,
+        /** A response is never expected. */
+        NEVER: 2
+    };
 
     /**
      * The result of sending and receiving messages.
@@ -966,10 +1001,9 @@
          * request or after sending the message if no response is expected.</p>
          *
          * <p>In peer-to-peer mode if a master token is being used to build the new
-         * message but there is no user ID token set or the user ID token is not
-         * bound to the and a user ID is provided by the message context the user
-         * ID token for that user ID will be used to build the message if the user
-         * ID token is bound to the master token.</p>
+         * message and a user ID is provided by the message context, the user ID
+         * token for that user ID will be used to build the message if the user ID
+         * token is bound to the master token.</p>
          *
          * @param {ReceiveService|RespondService|RequestService} service the calling service.
          * @param {MslContext} ctx MSL context.
@@ -1046,13 +1080,50 @@
                                     return { builder: builder, tokenTicket: tokenTicket };
                                 }, self);
                             },
-                            timeout: function() { callback.timeout(); },
-                            error: function(e) { callback.error(e); }
+                            timeout: callback.timeout,
+                            error: callback.error,
                         });
                     }, self);
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
+        },
+        
+        /**
+         * <p>Create a new message builder that will craft a new message based on
+         * another message. The constructed message will have a randomly assigned
+         * message ID, thus detaching it from the message being responded to, and
+         * may be used as a request.</p>
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {MessageHeader} request message header to respond to.
+         * @param {{result: function({builder: MessageBuilder, tokenTicket: ?TokenTicket}),
+         *         timeout: function(), error: function(Error)}} callback the
+         *        callback that will receive the message builder and null for
+         *        the master token / lock ticket, notification of a timeout,
+         *        and any thrown exceptions.
+         * @throws MslCryptoException if there is an error accessing the remote
+         *         entity identity.
+         * @throws MslException if any of the request's user ID tokens is not bound
+         *         to its master token.
+         */
+        buildDetachedResponse: function buildDetachedResponse(ctx, msgCtx, request, callback) {
+            var self = this;
+            
+            AsyncExecutor(callback, function() {
+                // Create an idempotent response. Assign a random message ID.
+                MessageBuilder.createIdempotentResponse(ctx, request, {
+                    result: function(builder) {
+                        AsyncExecutor(callback, function() {
+                            builder.setNonReplayable(msgCtx.isNonReplayable());
+                            builder.setMessageId(MslUtils.getRandomLong(ctx));
+                            return { builder: builder, tokenTicket: null };
+                        }, self);
+                    },
+                    error: callback.error,
+                });
+            }, self);
         },
 
         /**
@@ -1102,7 +1173,7 @@
                                 };
                             },self);
                         },
-                        error: function(e) { callback.error(e); }
+                        error: callback.error,
                     });
                 }, self);
             }
@@ -1168,7 +1239,7 @@
                                     entityReauth(requestHeader, payloads);
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1189,7 +1260,7 @@
                                     userReauth(requestHeader, payloads);
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1226,7 +1297,7 @@
                                     };
                                 }, self);
                             },
-                            error: function(e) { callback.error(e); }
+                            error: callback.error,
                         });
                         return;
                     }
@@ -1904,7 +1975,9 @@
          * @param {{builder: MessageBuilder, tokenTicket: ?TokenTicket}}
          *        builderTokenTicket request message builder and master token /
          *        lock ticket.
-         * @param {boolean} receive if a response is expected.
+         * @param {Receive} receive indicates if a response should always be expected, should
+         *        only be expected if the master token or user ID token will be
+         *        renewed, or should never be expected. 
          * @param {boolean} closeStreams true if the remote entity input and output streams
          *        must be closed when the constructed message input and output
          *        streams are closed.
@@ -1991,12 +2064,15 @@
                         result: function(sent) {
                             InterruptibleExecutor(callback, function sendrecv_receive() {
                                 // Receive the response if expected, if we sent a handshake request,
-                                // if key request data was included, or if a master token and user
+                                // or if we expect a response when renewing tokens and either key
+                                // request data was included or a master token and user
                                 // authentication data was included in a renewable message.
                                 var requestHeader = sent.request.getMessageHeader();
                                 var keyRequestData = requestHeader.keyRequestData;
-                                if (receive || sent.handshake || !keyRequestData.isEmpty() ||
-                                    (requestHeader.isRenewable() && requestHeader.masterToken && requestHeader.userAuthenticationData))
+                                if (receive == Receive.ALWAYS || sent.handshake ||
+                                    (receive == Receive.RENEWING &&
+                                     (!keyRequestData.isEmpty() ||
+                                      (requestHeader.isRenewable() && requestHeader.masterToken && requestHeader.userAuthenticationData))))
                                 {
                                     this.receive(service, ctx, msgCtx, input, requestHeader, timeout, {
                                         result: function(response) {
@@ -2496,17 +2572,207 @@
         shutdown: function shutdown() {
             this._shutdown = true;
         },
+        
+        /**
+         * <p>Use of this method is not recommended as it does not confirm delivery
+         * or acceptance of the message. Establishing a MSL channel to send
+         * application data without requiring the remote entity to acknowledge
+         * receipt in the response application data is the recommended approach.
+         * Only use this method if guaranteed receipt is not required.</p>
+         * 
+         * <p>This method has two acceptable parameter lists. Both forms should
+         * only be used by trusted network clients and peer-to-peer entities
+         * when no response is expected from the remote entity.</p>
+         * 
+         * <p>The first form accepts a remote entity URL and will send a
+         * message to the remote entity at the provided URL.</p>
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {Url} remoteEntity remote entity URL.
+         * @param {number} timeout connect, read, and renewal lock acquisition timeout in
+         *        milliseconds.
+         * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
+         *        callback the callback that will be used for the operation.
+         * @return {function()} a function which if called will cancel the
+         *         operation.
+         * 
+         * <p>The caller must close the returned message output stream.</p>
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts an InputStream and OutputStream and will
+         * send a message to the remote entity over the provided output
+         * stream.</p>
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {InputStream} in remote entity input stream.
+         * @param {OutputStream} out remote entity output stream.
+         * @param {number} timeout connect, read, and renewal lock acquisition timeout in
+         *        milliseconds.
+         * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
+         *        callback the callback that will be used for the operation.
+         * @return {function()} a function which if called will cancel the
+         *         operation.
+         *         
+         * <p>The caller must close the returned message output stream. The
+         * remote entity output stream will not be closed when the message
+         * output stream is closed, in case the caller wishes to reuse
+         * them.</p>
+         * 
+         * TODO once Java supports the WebSocket protocol we can remove this method
+         * in favor of the one accepting a URL parameter. (Or is it the other way
+         * around?)
+         * 
+         * <hr>
+         * 
+         * <p>In either case the remote entity should be using
+         * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+         * and should not attempt to send a response.</p>
+         * 
+         * <p>The returned {@code Future} will return a {@code MessageOutputStream}
+         * containing the final {@code MessageOutputStream} that should be used to
+         * send any additional application data not already sent via
+         * {@link MessageContext#write(MessageOutputStream)}.</p>
+         * 
+         * <p>The returned {@code Future} will return {@code null} if
+         * {@link #cancelled(Throwable) cancelled or interrupted}, if an error
+         * response was received resulting in a failure to send the message, or if
+         * the maximum number of messages is hit without sending the message.</p>
+         * 
+         * <p>The {@code Future} may throw an {@code ExecutionException} whose
+         * cause is a {@code MslException}, {@code IOException}, or
+         * {@code TimeoutException}.</p>
+         */
+        send: function send(ctx, msgCtx /* variable arguments */) {
+            if (this._shutdown)
+                throw new MslException('MslControl is shutdown.');
+            
+            var remoteEntity,
+                input,
+                output,
+                timeout,
+                callback;
+            
+            // Handle the first form.
+            if (arguments.length == 5) {
+                remoteEntity = arguments[2];
+                input = null;
+                output = null;
+                timeout = arguments[3];
+                callback = arguments[4];
+            }
+            
+            // Handle the second form.
+            else if (arguments.length == 6) {
+                remoteEntity = null;
+                input = arguments[2];
+                output = arguments[3];
+                timeout = arguments[4];
+                callback = arguments[5];
+            }
+            
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
+            var sendMsgCtx = new SendMessageContext(msgCtx);
+            var service = new SendService(this._impl, ctx, msgCtx, remoteEntity, input, output, timeout);
+            setTimeout(function() { service.call(callback); }, 0);
+            return CancellationFunction(service);
+        },
+
+        /**
+         * <p>Push a message over the provided output stream based on a message
+         * received from the remote entity.</p>
+         * 
+         * <p>Use of this method is not recommended as it does not perform master
+         * token or user ID token issuance or renewal which the remote entity may
+         * be attempting to perform. Only use this method if there is some other
+         * means by which the client will be able to acquire and renew its master
+         * token or user ID token on a regular basis.</p>
+         * 
+         * <p>This method should only be used by trusted network servers that wish
+         * to send multiple responses to a trusted network client. The remote
+         * entity should be using
+         * {@link #send(MslContext, MessageContext, Url, int)} or
+         * {@link #send(MslContext, MessageContext, InputStream, OutputStream, int)}
+         * and
+         * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
+         * 
+         * <p>This method must not be used if
+         * {@link MslControl#respond(MslContext, MessageContext, InputStream, OutputStream, MessageInputStream, int)}
+         * has already been used with the same {@code MessageInputStream}.</p>
+         * 
+         * <p>The returned {@code Future} will return a {@code MslChannel}
+         * containing the same {@code MessageInputStream} that was provided and the
+         * final {@code MessageOutputStream} that should be used to send any
+         * additional application data not already sent via
+         * {@link MessageContext#write(MessageOutputStream)} to the remote
+         * entity.</p>
+         * 
+         * <p>The returned {@code Future} will return {@code null} if
+         * {@link #cancelled(Throwable) canncelled or interrupted}, if the message
+         * could not be sent with encryption or integrity protection when required,
+         * if a user cannot be attached to the respond to the response due to lack
+         * of a master token, or if the maximum number of messages is hit without
+         * sending the message. In these cases the local entity should wait for a
+         * new message from the remote entity to be received by a call to
+         * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}
+         * before attempting to push another message.</p>
+         * 
+         * <p>The {@code Future} may throw an {@code ExecutionException} whose
+         * cause is a {@code MslException}, {@code MslErrorResponseException},
+         * {@code IOException}, or {@code TimeoutException}.</p>
+         * 
+         * <p>The remote entity input and output streams will not be closed in case
+         * the caller wishes to reuse them.</p>
+         * 
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {InputStream} input remote entity input stream.
+         * @param {OutputStream} output remote entity output stream.
+         * @param {MessageInputStream} request message input stream used to create the message.
+         * @param {number} timeout renewal lock acquisition timeout in milliseconds.
+         * @param {{result: function(MslChannel), timeout: function(), error: function(Error)}}
+         *        callback the callback that will be used for the operation.
+         * @return {function()} a function which if called will cancel the
+         *         operation.
+         * @throws MslInternalException if used in peer-to-peer mode or if the
+         *         request message input stream is an error message.
+         */
+        push: function push(ctx, msgCtx, input, output, request, timeout, callback) {
+            if (this._shutdown)
+                throw new MslException('MslControl is shutdown.');
+            
+            if (ctx.isPeerToPeer()) {
+                callback.error(new MslInternalException("This method cannot be used in peer-to-peer mode."));
+                return;
+            }
+            if (request.getErrorHeader()) {
+                callback.error(new MslInternalException("Request message input stream cannot be for an error message."));
+                return;
+            }
+            
+            var service = new PushService(this._impl, ctx, msgCtx, input, output, request, timeout);
+            setTimeout(function() { service.call(callback); }, 0);
+            return CancellationFunction(service);
+        },
 
         /**
          * <p>Receive a request over the provided input stream.</p>
          *
          * <p>If there is an error with the message an error response will be sent
          * over the provided output stream.</p>
-         *
-         * <p>This method should only be used by trusted network servers and peer-
-         * to-peer entities to receive a request initiated by the remote entity.
-         * The remote entity should have used
-         * {@link #request(MslContext, MessageContext, Url, int)}.<p>
+         * 
+         * <p>This method should only be used to receive a request initiated by the
+         * remote entity. The remote entity should have used one of the request
+         * methods
+         * {@link #request(MslContext, MessageContext, Url, int)} or
+         * {@link #request(MslContext, MessageContext, InputStream, OutputStream, int)}
+         * or one of the send methods
+         * {@link #send(MslContext, MessageContext, Url, int)} or
+         * {@link #send(MslContext, MessageContext, InputStream, OutputStream, int)}.<p>
          *
          * <p>The returned {@code Future} will return the received
          * {@code MessageInputStream} on completion or {@code null} if a reply was
@@ -2545,12 +2811,13 @@
 
         /**
          * <p>Send a response over the provided output stream.</p>
-         *
+         * 
          * <p>This method should only be used by trusted network servers and peer-
          * to-peer entities after receiving a request via
          * {@link #receive(MslContext, MessageContext, InputStream, OutputStream, int)}.
-         * The remote entity should have used
-         * {@link #request(MslContext, MessageContext, URL, int)}.</p>
+         * The remote entity should have used one of the request methods
+         * {@link #request(MslContext, MessageContext, Url, int)} or
+         * {@link #request(MslContext, MessageContext, InputStream, OutputStream, int)}.</p>
          *
          * <p>The returned {@code Future} will return a {@code MslChannel}
          * containing the final {@code MessageOutputStream} that should be used to
@@ -2669,7 +2936,7 @@
          *         down. This exception is not delivered to the callback.
          *
          * <p>The caller must close the returned message input stream and message
-         * outut stream.</p>
+         * output stream.</p>
          *
          * <hr>
          *
@@ -2764,7 +3031,7 @@
             // Malformed arguments are not explicitly handled, just as with any
             // other function.
 
-            var service = new RequestService(this._impl, ctx, msgCtx, remoteEntity, input, output, null, 0, timeout);
+            var service = new RequestService(this._impl, ctx, msgCtx, remoteEntity, input, output, null, Receive.ALWAYS, 0, timeout);
             setTimeout(function() { service.call(callback); }, 0);
             return CancellationFunction(service);
         }
@@ -2924,7 +3191,7 @@
             InterruptibleExecutor(callback, function() {
                 this._ctrl.receive(this, this._ctx, this._msgCtx, this._input, null, this._timeout, {
                     result: function(request) { deliverMessage(request); },
-                    timeout: function() { callback.timeout(); },
+                    timeout: callback.timeout,
                     error: function(e) {
                         InterruptibleExecutor(callback, function() {
                             // If we were cancelled then return null.
@@ -3119,7 +3386,7 @@
                                 }
                                 sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
-                                    timeout: function() { callback.timeout(); },
+                                    timeout: callback.timeout,
                                     error: function(re) {
                                         InterruptibleExecutor(callback, function() {
                                             // If we were cancelled then return null.
@@ -3470,7 +3737,7 @@
                 // This adds two to our message count.
                 //
                 // This will release the master token lock.
-                this._ctrl.sendReceive(this._ctx, msgCtx, this._input, this._output, builderTokenTicket, false, false, this._timeout, {
+                this._ctrl.sendReceive(this._ctx, msgCtx, this._input, this._output, builderTokenTicket, Receive.RENEWING, false, this._timeout, {
                     result: function(result) {
                         InterruptibleExecutor(callback, function() {
                             var response = result.response;
@@ -3932,12 +4199,13 @@
          * @param {?InputStream} input remote entity input stream.
          * @param {?OutputStream} output remote entity output stream.
          * @param {?{builder: MessageBuilder, tokenTicket: ?TokenTicket}} builderTokenTicket request message builder.
+         * @param {Receive} expectResponse response expectation.
          * @param {number} msgCount number of messages that have already been
          *        sent or received.
          * @param {number} timeout connect, read/write, and renewal lock
          *        acquisition timeout in milliseconds.
          */
-        init: function init(ctrl, ctx, msgCtx, remoteEntity, input, output, builderTokenTicket, msgCount, timeout) {
+        init: function init(ctrl, ctx, msgCtx, remoteEntity, input, output, builderTokenTicket, expectResponse, msgCount, timeout) {
             var builder, tokenTicket;
             if (builderTokenTicket) {
                 builder = builderTokenTicket.builder;
@@ -3958,6 +4226,7 @@
                 _openedStreams: { value: false, writable: true, enumerable: false, configurable: false },
                 _builder: { value: builder, writable: true, enumerable: false, configurable: false },
                 _tokenTicket: { value: tokenTicket, writable: true, enumerable: false, configurable: false },
+                _expectResponse: { value: expectResponse, writable: false, enumerable: false, configurable: false },
                 _timeout: { value: timeout, writable: false, enumerable: false, configurable: false },
                 _msgCount: { value: msgCount, writable: false, enumerable: false, configurable: false },
                 _maxMessagesHit: { value: false, writable: true, enumerable: false, configurable: false },
@@ -4018,7 +4287,7 @@
          */
         execute: function execute(msgCtx, builderTokenTicket, timeout, msgCount, callback) {
             var self = this;
-
+            
             InterruptibleExecutor(callback, function() {
                 // Do not do anything if cannot send and receive two more messages.
                 //
@@ -4034,26 +4303,31 @@
                 // message count.
                 //
                 // This will release the master token lock.
-                this._ctrl.sendReceive(this, this._ctx, msgCtx, this._input, this._output, builderTokenTicket, true, this._openedStreams, timeout, {
+                this._ctrl.sendReceive(this, this._ctx, msgCtx, this._input, this._output, builderTokenTicket, this._expectResponse, this._openedStreams, timeout, {
                     result: function(result) {
                         InterruptibleExecutor(callback, function() {
                             if (!result)
                                 return null;
+                            var request = result.request;
                             var response = result.response;
                             msgCount += 2;
 
+                            // If we did not receive a response then we're done. Return the
+                            // new message output stream.
+                            if (!response)
+                                return new MslChannel(response, request);
+                            
                             // If the response is an error see if we can handle the error and
                             // retry.
                             var responseHeader = response.getMessageHeader();
-                            if (!responseHeader) {
+                            if (!responseHeader)
                                 prepareError(result);
-                            } else {
+                            else
                                 processResponse(result);
-                            }
                         }, self);
                     },
-                    timeout: function() { callback.timeout(); },
-                    error: function(e) { callback.error(e); }
+                    timeout: callback.timeout,
+                    error: callback.error,
                 });
             }, self);
 
@@ -4158,7 +4432,7 @@
                                 if (!this._ctx.isPeerToPeer()) {
                                     // The master token lock acquired from buildErrorResponse()
                                     // will be released when the service executes.
-                                    var service = new RequestService(this._ctrl, this._ctx, resendMsgCtx, this._remoteEntity, null, null, builderTokenTicket, msgCount, this._timeout);
+                                    var service = new RequestService(this._ctrl, this._ctx, resendMsgCtx, this._remoteEntity, null, null, builderTokenTicket, this._expectResponse, msgCount, this._timeout);
                                     // Set the abort function to abort the new service before executing
                                     // the service.
                                     this.setAbort(function() { service.abort(); });
@@ -4256,7 +4530,7 @@
                                 this._ctrl.buildResponse(this, this._ctx, msgCtx, responseHeader, timeout, {
                                     result: function(builderTokenTicket) {
                                         InterruptibleExecutor(callback, function() {
-                                            var service = new RequestService(this._ctrl, this._ctx, resendMsgCtx, this._remoteEntity, null, null, builderTokenTicket, msgCount, this._timeout);
+                                            var service = new RequestService(this._ctrl, this._ctx, resendMsgCtx, this._remoteEntity, null, null, builderTokenTicket, this._expectResponse, msgCount, this._timeout);
                                             // Set the abort function to abort the new service before executing
                                             // the service.
                                             this.setAbort(function() { service.abort(); });
@@ -4431,7 +4705,7 @@
         },
 
         /**
-         * @param {{result: function(MessageInputStream), timeout: function(), error: function(Error)}}
+         * @param {{result: function(MslChannel), timeout: function(), error: function(Error)}}
          *        callback the callback will be given the established MSL
          *        channel or {@code null} if cancelled or interrupted; notified
          *        of timeout or any thrown exceptions.
@@ -4442,7 +4716,7 @@
          */
         call: function call(callback) {
             var self = this;
-
+            
             InterruptibleExecutor(callback, function() {
                 // If we do not already have a connection then establish one.
                 var lockTimeout = this._timeout;
@@ -4532,6 +4806,15 @@
                                 // If the channel was established clear the cached payloads.
                                 if (channel && channel.output)
                                     channel.output.stopCaching();
+                                
+                                // Close the input stream if we opened it and there is no
+                                // response. This may be necessary to transmit data
+                                // buffered in the output stream, and the caller will not
+                                // be given a message input stream by which to close it.
+                                //
+                                // We don't care about an I/O exception on close.
+                                if (this._openedStreams && (!channel || !channel.input))
+                                    this._input.close(lockTimeout, NULL_CLOSE_HANDLER);
 
                                 // Return the established channel.
                                 return channel;
@@ -4565,6 +4848,196 @@
                     });
                 }, self);
             }
+        }
+    });
+    
+    /**
+     * <p>This service sends a message to a remote entity.</p>
+     *
+     * <p>This class is only used from trusted network clients and peer-to-peer
+     * entities.</p>
+     */
+    var SendService = Class.create({
+        /**
+         * Create a new message send service.
+         *
+         * @param {MslControlImpl} ctrl parent MSL control.
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {?Url} remoteEntity remote entity URL.
+         * @param {?InputStream} input remote entity input stream.
+         * @param {?OutputStream} output remote entity output stream.
+         * @param {number} timeout connect, read/write, and renewal lock
+         *        acquisition timeout in milliseconds.
+         */
+        init: function init(ctrl, ctx, msgCtx, remoteEntity, input, output, timeout) {
+            var requestService = new RequestService(ctrl, ctx, msgCtx, remoteEntity, input, output, null, Receive.NEVER, 0, timeout);
+            
+            // The properties.
+            var props = {
+                _requestService: { value: requestService, writable: false, enumerable: false, configurable: false },
+            };
+            Object.defineProperties(this, props);
+        },
+
+        /**
+         * @param {{result: function(MessageOutputStream), timeout: function(), error: function(Error)}}
+         *        callback the callback will be given the established message
+         *        output stream or {@code null} if cancelled or interrupted;
+         *        notified of timeout or any thrown exceptions.
+         * @throws MslException if there was an error creating or processing
+         *         a message.
+         * @throws IOException if there was an error reading or writing a
+         *         message.
+         */
+        call: function call(callback){
+            this._requestService.call({
+                result: function(channel) {
+                    AsyncExecutor(callback, function() {
+                        return (channel) ? channel.output : null;
+                    });
+                },
+                timeout: callback.timeout,
+                error: callback.error,
+            });
+        },
+    });
+
+    /**
+     * <p>This service sends a message to the remote entity using a request as
+     * the basis for the response.</p>
+     * 
+     * <p>This class will only be used trusted network servers.</p>
+     */
+    var PushService = RespondService.extend({    
+        /**
+         * Create a new message push service.
+         * 
+         * @param {MslControlImpl} ctrl parent MSL control.
+         * @param {MslContext} ctx MSL context.
+         * @param {MessageContext} msgCtx message context.
+         * @param {InputStream} input remote entity input stream.
+         * @param {OutputStream} output remote entity output stream.
+         * @param {MessageInputStream} request request message input stream.
+         * @param {number} timeout renewal lock acquisition timeout in milliseconds.
+         */
+        init: function init(ctrl, ctx, msgCtx, input, output, request, timeout) {
+            init.base.call(ctrl, ctx, msgCtx, input, output, request, timeout);
+        },
+        
+        /**
+         * @param {{result: function(MslChannel), timeout: function(), error: function(Error)}}
+         *        callback the callback will be given the established
+         *        {@link MslChannel} on success or {@code null} if cancelled or
+         *        interrupted, if the response could not be sent encrypted or
+         *        integrity protected when required, or if the maximum number
+         *        of messages is hit.
+         * @throws MslException if there was an error creating the response.
+         * @throws MslErrorResponseException if there was an error sending an
+         *         automatically generated error response.
+         * @throws IOException if there was an error writing the message.
+         * @see java.util.concurrent.Callable#call()
+         */
+        call: function call(callback) {
+            var self = this;
+            
+            InterruptibleExecutor(callback, function() {
+                var debugCtx = this._msgCtx.getDebugContext();
+                
+                var requestHeader = this._request.getMessageHeader();
+                this._ctrl.buildDetachedResponse(this._ctx, this._msgCtx, requestHeader, {
+                    result: function(builderTokenTicket) {
+                        self.trustedNetworkExecute(builderTokenTicket, 0, {
+                            result: function(channel) {
+                                InterruptibleExecutor(callback, function() {
+                                    // Clear any cached payloads.
+                                    if (channel)
+                                        channel.output.stopCaching();
+
+                                    // Return the established channel.
+                                    return channel;
+                                }, self);
+                            },
+                            timeout: callback.timeout,
+                            error: function(e) {
+                                InterruptibleExecutor(callback, function() {
+                                    // If we were cancelled then return null.
+                                    if (cancelled(e)) return null;
+
+                                    // Maybe we can send an error response.
+                                    var builder = builderTokenTicket.builder;
+                                    var recipient = getIdentity(this._request);
+                                    var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
+                                    var mslError, userMessage, toThrow;
+                                    if (e instanceof MslException) {
+                                        mslError = e.error;
+                                        var caps = requestHeader.messageCapabilities;
+                                        var languages = (caps) ? caps.languages : null;
+                                        userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
+                                        toThrow = e;
+                                    } else if (e instanceof MslIoException) {
+                                        mslError = MslError.MSL_COMMS_FAILURE;
+                                        userMessage = null;
+                                        toThrow = e;
+                                    } else {
+                                        mslError = MslError.INTERNAL_EXCEPTION;
+                                        userMessage = null;
+                                        toThrow = new MslInternalException("Error pushing the message.", e);
+                                    }
+                                    sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                        result: function(success) { callback.error(toThrow); },
+                                        timeout: callback.timeout,
+                                        error: function(re) {
+                                            InterruptibleExecutor(callback, function() {
+                                                // If we were cancelled then return null.
+                                                if (cancelled(re)) return null;
+
+                                                throw new MslErrorResponseException("Error pushing the message.", re, null);
+                                            }, self);
+                                        }
+                                    });
+                                }, self);
+                            }
+                        });
+                    },
+                    timeout: callback.timeout,
+                    error: function(e) {
+                        InterruptibleExecutor(callback, function() {
+                            // If we were cancelled then return null.
+                            if (cancelled(e)) return null;
+
+                            // Try to send an error response.
+                            var recipient = getIdentity(this._request);
+                            var requestMessageId, mslError, userMessage, toThrow;
+                            if (e instanceof MslException) {
+                                requestMessageId = e.messageId;
+                                mslError = e.error;
+                                var caps = requestHeader.messageCapabilities;
+                                var languages = (caps) ? caps.languages : null;
+                                userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, languages);
+                                toThrow = e;
+                            } else {
+                                requestMessageId = null;
+                                mslError = MslError.INTERNAL_EXCEPTION;
+                                userMessage = null;
+                                toThrow = new MslInternalException("Error building the message.", e);
+                            }
+                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                result: function(success) { callback.error(toThrow); },
+                                timeout: callback.timeout,
+                                error: function(re) {
+                                    InterruptibleExecutor(callback, function() {
+                                        // If we were cancelled then return null.
+                                        if (cancelled(re)) return null;
+
+                                        throw new MslErrorResponseException("Error building the message.", re, e);
+                                    }, self);
+                                }
+                            });
+                        }, self);
+                    }
+                });
+            }, self);
         }
     });
     

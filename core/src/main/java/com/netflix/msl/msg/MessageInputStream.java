@@ -592,8 +592,9 @@ public class MessageInputStream extends InputStream {
     public void close() throws IOException {
         // Only close the source if instructed to do so because we might want
         // to reuse the connection.
-        if (closeSource)
+        if (closeSource) {
             source.close();
+        }
 
         // Otherwise if this is not a handshake message or error message then
         // consume all payloads that may still be on the source input stream.
@@ -608,6 +609,13 @@ public class MessageInputStream extends InputStream {
             } catch (final MslException e) {
                 // Ignore exceptions.
             }
+        }
+        
+        // Close the tokenizer.
+        try {
+            tokenizer.close();
+        } catch (final MslEncoderException e) {
+            // Ignore exceptions.
         }
     }
 
