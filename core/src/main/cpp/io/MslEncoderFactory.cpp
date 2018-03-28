@@ -123,7 +123,7 @@ MslEncoderFormat MslEncoderFactory::parseFormat(shared_ptr<ByteArray> encoding)
 shared_ptr<MslTokenizer> MslEncoderFactory::createTokenizer(shared_ptr<InputStream> source)
 {
     // Read the byte stream identifier (and only the identifier).
-    shared_ptr<InputStream> bufferedSource = source->markSupported() ? source : make_shared<BufferedInputStream>(source);
+    shared_ptr<InputStream> bufferedSource = source->markSupported() ? source : make_shared<BufferedInputStream>(source, 1);
     const int WIDTH = 1;
     ByteArray buffer(WIDTH);
     bufferedSource->mark(1);

@@ -25,16 +25,16 @@ namespace netflix {
 namespace msl {
 namespace io {
 
+const size_t BufferedInputStream::DEFAULT_READ_SIZE = 8192;
+
+BufferedInputStream::BufferedInputStream(shared_ptr<InputStream> source, size_t size)
+    : source_(source)
+    , readsize_(size)
+    , buffer_(make_shared<ByteArrayOutputStream>())
+{}
+
 void BufferedInputStream::mark(size_t readlimit)
 {
-    // If there is no current mark, then start buffering.
-    if (!buffer_) {
-        buffer_ = make_shared<ByteArrayOutputStream>();
-        bufpos_ = 0;
-        readlimit_ = readlimit;
-        return;
-    }
-
     // If there is data buffered and the current mark position is not
     // zero (at the beginning) then truncate the buffer.
     if (bufpos_ > 0) {
@@ -46,13 +46,13 @@ void BufferedInputStream::mark(size_t readlimit)
 
     // Otherwise the existing buffer contains the correct data.
     //
-    // Set the new read limit.
+    // Regardless set the new read limit.
     readlimit_ = readlimit;
 }
 
 void BufferedInputStream::reset()
 {
-    if (!buffer_)
+    if (readlimit_ == -1)
         throw IOException("Cannot reset before input stream has been marked or if mark has been invalidated.");
 
     // Start reading from the beginning of the buffer.
@@ -66,7 +66,7 @@ int BufferedInputStream::read(ByteArray& out, size_t offset, size_t len, int tim
 
     // If we have any data in the buffer, read it first.
     ByteArray bufferedData;
-    if (buffer_ && buffer_->size() > bufpos_) {
+    if (buffer_->size() > bufpos_) {
         // Otherwise read the amount requested but no more than
         // what remains in the buffer.
         size_t endpos = min(buffer_->size(), bufpos_ + len);
@@ -87,7 +87,8 @@ int BufferedInputStream::read(ByteArray& out, size_t offset, size_t len, int tim
     //
     // Read any remaining data off the backing source.
     const size_t remainingLength = len - bufferedData.size();
-    ByteArray sourceData(remainingLength);
+    const size_t readSize = max(readsize_, remainingLength);
+    ByteArray sourceData(readSize);
     int count = source_->read(sourceData, timeout);
 
     // On end of stream, return the buffered data.
@@ -96,27 +97,21 @@ int BufferedInputStream::read(ByteArray& out, size_t offset, size_t len, int tim
         return bufferedData.size();
     }
 
-    // Append to the buffer if we are buffering.
-    if (buffer_) {
-        // Stop buffering if the additional data would exceed the read limit.
-        if (buffer_->size() + count > readlimit_) {
-            buffer_.reset();
-            bufpos_ = 0;
-            readlimit_ = 0;
-        }
+    // Append to the buffer.
+    buffer_->write(sourceData, 0, count);
 
-        // Otherwise append.
-        else {
-            buffer_->write(sourceData, 0, count);
-            bufpos_ += count;
-            // The mark position should now be equal to the buffer length.
-        }
-    }
+    // Increment the buffer position by the amount of data we will return.
+    const size_t readCount = min(static_cast<size_t>(count), remainingLength);
+    bufpos_ += readCount;
+
+    // Invalidate the mark if the requested data size exceeds the read limit.
+    if (bufpos_ > readlimit_)
+        readlimit_ = -1;
 
     // Return the buffered data and the read data.
     copy(bufferedData.begin(), bufferedData.end(), out.begin() + offset);
-    copy(sourceData.begin(), sourceData.begin() + count, out.begin() + offset);
-    return bufferedData.size() + count;
+    copy(sourceData.begin(), sourceData.begin() + readCount, out.begin() + offset + bufferedData.size());
+    return bufferedData.size() + readCount;
 }
 
 int BufferedInputStream::skip(size_t n, int timeout)
@@ -126,7 +121,7 @@ int BufferedInputStream::skip(size_t n, int timeout)
 
     // If we have any data in the buffer, skip it first.
     size_t skipcount = 0;
-    if (buffer_ && buffer_->size() > bufpos_) {
+    if (buffer_->size() > bufpos_) {
         skipcount = min(n, buffer_->size() - bufpos_);
         bufpos_ += skipcount;
 

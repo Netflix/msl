@@ -85,7 +85,7 @@ public:
     /** @inheritDoc */
     virtual int skip(size_t n, int timeout = -1);
 
-private:
+protected:
 	/** Backing data. */
 	std::shared_ptr<ByteArray> data_;
 	/** Closed. */

@@ -36,14 +36,23 @@ class ByteArrayOutputStream;
 class BufferedInputStream : public InputStream
 {
 public:
+    /** Default read size: 8192 bytes. */
+    static const size_t DEFAULT_READ_SIZE;
+
     virtual ~BufferedInputStream() {}
 
-    BufferedInputStream(std::shared_ptr<InputStream> source)
-        : source_(source)
-    {}
+    /**
+     * Create a new buffered input stream that will read from the provided
+     * source input stream in byte chunks of the specified size.
+     *
+     * @param source the source input stream.
+     * @param size read size.
+     */
+    BufferedInputStream(std::shared_ptr<InputStream> source, size_t size = DEFAULT_READ_SIZE);
 
     /** @inheritDoc */
-    virtual void abort() {
+    virtual void abort()
+    {
         source_->abort();
     }
 
@@ -78,6 +87,8 @@ public:
 private:
     /** The backing input stream. */
     std::shared_ptr<InputStream> source_;
+    /** Read size in bytes. */
+    size_t readsize_;
     /**
      * Buffer of data read since the last call to mark(). Not set if
      * mark() has not been called or if the read limit has been
@@ -86,8 +97,11 @@ private:
     std::shared_ptr<ByteArrayOutputStream> buffer_;
     /** Current buffer read position. */
     size_t bufpos_ = 0;
-    /** Requested maximum number of bytes to buffer. */
-    size_t readlimit_ = 0;
+    /**
+     * Requested maximum number of bytes before the mark is invalidated. Will
+     * be -1 if the mark is not active.
+     */
+    size_t readlimit_ = -1;
     /** True if stream is closed. */
     bool closed_ = false;
 };
