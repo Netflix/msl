@@ -24,20 +24,29 @@
 	"use strict";
 	
 	var Class = require('../util/Class.js');
-	var clarinet = require('clarinet');
-		
+	var MslConstants = require('../MslConstants.js');
+	
+	var clarinet = require('../lib/clarinet.js');
+	
 	var ClarinetParser = module.exports = Class.create({
 	    /**
-	     * @param {string} json the sequence of JSON values.
+	     * Create a new clarinet parser that is ready to accept input.
 	     */
-	    init: function init(json) {
+	    init: function init() {
+	        // Create the parser.
+	        //
+	        // Override the buffer check position as we will be working with
+	        // large amounts of data.
 	        var parser = clarinet.parser();
-	        var values = [];
-	        var stack = [];
-	        var currentObject;
-	        var currentArray;
-	        var currentKey;
-	        var lastIndex = 0;
+	        parser.bufferCheckPosition = MslConstants.MAX_LONG_VALUE;
+	        
+            var state = {
+                values: [],
+                stack: [],
+                currentObject: undefined,
+                currentArray: undefined,
+                currentKey: undefined,
+            };
 	
 	        // Attach my methods to the parser.
 	
@@ -58,66 +67,66 @@
 	         * @param {string} key the first key in the object.
 	         */
 	        parser.onopenobject = function onOpenObject(key) {
-	            if (currentObject) {
-	                currentObject[currentKey] = {};
-	                stack.push(currentObject);
-	                currentObject = currentObject[currentKey];
-	            } else if (currentArray) {
+	            if (state.currentObject) {
+	                state.currentObject[state.currentKey] = {};
+	                state.stack.push(state.currentObject);
+	                state.currentObject = state.currentObject[state.currentKey];
+	            } else if (state.currentArray) {
 	                var newObj = {};
-	                stack.push(currentArray);
-	                currentArray.push(newObj);
-	                currentObject = newObj;
-	                currentArray = undefined;
+	                state.stack.push(state.currentArray);
+	                state.currentArray.push(newObj);
+	                state.currentObject = newObj;
+	                state.currentArray = undefined;
 	            } else {
-	                currentObject = {};
+	                state.currentObject = {};
 	            }
-	            currentKey = key;
+	            state.currentKey = key;
 	        };
 	
 	        parser.oncloseobject = function onCloseObject() {
-	            var prev = stack.pop();
+	            var prev = state.stack.pop();
 	            if (!prev) {
-	                values.push(currentObject);
-	                lastIndex = parser.position;
-	                currentObject = undefined;
+	                state.values.push(state.currentObject);
+	                state.currentObject = undefined;
+                    parser.pause();
 	            } else {
 	                if (typeof prev === 'object') {
-	                    currentObject = prev;
+	                    state.currentObject = prev;
 	                } else {
-	                    currentObject = undefined;
-	                    currentArray = prev;
+	                    state.currentObject = undefined;
+	                    state.currentArray = prev;
 	                }
 	            }
 	        };
 	
 	        parser.onopenarray = function onOpenArray() {
-	            if (currentObject) {
-	                currentObject[currentKey] = [];
-	                stack.push(currentObject);
-	                currentArray = currentObject[currentKey];
-	                currentObject = undefined;
-	            } else if (currentArray) {
+	            if (state.currentObject) {
+	                state.currentObject[state.currentKey] = [];
+	                state.stack.push(state.currentObject);
+	                state.currentArray = state.currentObject[state.currentKey];
+	                state.currentObject = undefined;
+	            } else if (state.currentArray) {
 	                var newArr = [];
-	                stack.push(currentArray);
-	                currentArray.push(newArr);
-	                currentArray = newArr;
+	                state.stack.push(state.currentArray);
+	                state.currentArray.push(newArr);
+	                state.currentArray = newArr;
 	            } else {
-	                currentArray = [];
+	                state.currentArray = [];
 	            }
 	        };
 	
 	        parser.onclosearray = function onCloseArray() {
-	            var prev = stack.pop();
+	            var prev = state.stack.pop();
 	            if (!prev) {
-	                values.push(currentArray);
-	                lastIndex = parser.position;
-	                currentArray = undefined;
+	                state.values.push(state.currentArray);
+	                state.currentArray = undefined;
+                    parser.pause();
 	            } else {
 	                if (typeof prev === 'object') {
-	                    currentObject = prev;
-	                    currentArray = undefined;
+	                    state.currentObject = prev;
+	                    state.currentArray = undefined;
 	                } else {
-	                    currentArray = prev;
+	                    state.currentArray = prev;
 	                }
 	            }
 	        };
@@ -126,39 +135,47 @@
 	         * @param {string} key the key.
 	         */
 	        parser.onkey = function onKey(key) {
-	            currentKey = key;
+	            state.currentKey = key;
 	        };
 	
 	        /**
 	         * @param {*} the value.
 	         */
 	        parser.onvalue = function onValue(value) {
-	            if (currentObject) {
-	                currentObject[currentKey] = value;
-	            } else if (currentArray) {
-	                currentArray.push(value);
+	            if (state.currentObject) {
+	                state.currentObject[state.currentKey] = value;
+	            } else if (state.currentArray) {
+	                state.currentArray.push(value);
 	            } else {
-	                values.push(value);
-	                lastIndex = parser.position;
+	                state.values.push(value);
+	                parser.pause();
 	            }
 	        };
 	
-	        // Parse.
-	        parser.write(json).close();
-	
 	        // The properties.
 	        var props = {
-	            _values: { value: values, writable: false, enumerable: false, configurable: false },
-	            _lastIndex: { value: lastIndex, writable: true, enumerable: false, configurable: false },
+	            _parser: { value: parser, writable: false, enumerable: false, configurable: false },
+	            _state: { value: state, writable: false, enumerable: false, configurable: false },
 	        };
 	        Object.defineProperties(this, props);
 	    },
-	
+	    
 	    /**
-	     * @return {boolean} true if there are more values available.
+	     * Write more JSON data into the parser and attempt to parse another
+	     * value. The provided string does not have to be fully-formed JSON--
+	     * the fully-formed JSON may be provided via multiple calls to this
+	     * function.
+	     * 
+	     * @param {string} s JSON string data.
 	     */
-	    more: function more() {
-	        return this._values.length > 0;
+	    write: function write(s) {
+	        // Increase the count of unparsed characters.
+	        var state = this._state;
+	        
+	        // Write the JSON into the parser which will hopefully result in a
+	        // value being extracted.
+	        this._parser.resume();
+	        this._parser.write(s);
 	    },
 	
 	    /**
@@ -166,17 +183,28 @@
 	     *         undefined if there is none.
 	     */
 	    nextValue: function nextValue() {
-	        if (this._values.length == 0)
-	            return undefined;
-	        return this._values.shift();
+	        var state = this._state;
+	        
+	        // If there aren't any values already parsed and there are unparsed
+	        // characters then resume processing.
+	        if (state.values.length == 0 && this._parser.pending.length > 0) {
+	            this._parser.resume();
+	            this._parser.parse();
+	        }
+	        
+	        // If there is an already parsed value return it.
+	        if (state.values.length > 0)
+	            return state.values.shift();
+	        
+	        // Otherwise return undefined.
+	        return undefined;
 	    },
-	
+	    
 	    /**
-	     * @return {number} the index of the last character successfully parsed
-	     *         into a value.
+	     * @return {number} the number of characters that remain unparsed.
 	     */
-	    lastIndex: function lastIndex() {
-	        return this._lastIndex;
+	    unparsedCount: function unparsedCount() {
+	        return this._parser.pending.length;
 	    },
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('ClarinetParser'));

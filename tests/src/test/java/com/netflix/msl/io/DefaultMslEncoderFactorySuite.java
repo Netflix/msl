@@ -532,6 +532,9 @@ public class DefaultMslEncoderFactorySuite {
                 final byte[] data = payload.getData();
                 assertArrayEquals(expectedPayload, data);
             }
+            
+            // Close tokenizer.
+            tokenizer.close();
         }
     }
     

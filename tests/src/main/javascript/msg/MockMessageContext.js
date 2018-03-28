@@ -82,8 +82,8 @@
 	     * The message will not be encrypted or non-replayable.
 	     * 
 	     * @param {MockMslContext} ctx MSL context.
-	     * @param {string} userId user ID.
-	     * @param {UserAuthenticationScheme} scheme user authentication scheme.
+	     * @param {?string} userId user ID. May be {@code null}.
+	     * @param {?UserAuthenticationScheme} scheme user authentication scheme. May be {@code null}.
 	     * @param {result: function(MockMessageContext), error: function(Error)}
 	     *        callback the callback that will receive the new message context
 	     *        or any thrown exceptions.
@@ -121,10 +121,10 @@
 	        
 	        function createContext(tokenEncryptionKeyA, tokenHmacKeyA, tokenEncryptionKeyB, tokenHmacKeyB) {
 	            AsyncExecutor(callback, function() {
-	                var userAuthData;
+	                var userAuthData = null;
 	                if (UserAuthenticationScheme.EMAIL_PASSWORD == scheme) {
 	                    userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-	                } else {
+	                } else if (scheme) {
 	                    throw new MslInternalException("Unsupported authentication type: " + scheme.name);
 	                }
 
@@ -332,7 +332,7 @@
      * The message will not be encrypted or non-replayable.
      * 
      * @param {MockMslContext} ctx MSL context.
-     * @param {string} userId user ID.
+     * @param {?string} userId user ID. May be {@code null}.
      * @param {UserAuthenticationScheme} scheme user authentication scheme.
      * @param {result: function(MockMessageContext), error: function(Error)}
      *        callback the callback that will receive the new message context

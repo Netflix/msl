@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 	"use strict";
 	
 	var Class = require('../util/Class.js');
+	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	
 	var InputStream = module.exports = Class.create({
 	    /**
@@ -73,7 +74,8 @@
 	     * Repositions this stream to the position at the time the mark method was
 	     * last called on this input stream.
 	     *
-	     * @throws IOException if this stream has not been marked.
+	     * @throws IOException if this stream has not been marked or if the
+	     *         read limit has been exceeded.
 	     * @see #mark()
 	     */
 	    reset: function() {},
@@ -110,5 +112,43 @@
 	     *         is closed.
 	     */
 	    read: function(len, timeout, callback) {},
+	    
+	    /**
+	     * <p>Skips over and discards <code>n</code> bytes of data from this
+	     * input stream. The <code>skip</code> method may, for a variety of
+	     * reasons, end up skipping over some smaller number of bytes, possibly
+	     * <code>0</code>.</p>
+	     * 
+	     * <p>Skipped bytes must still be accounted for by mark() and
+	     * reset().</p>
+	     * 
+	     * <p>The default implementation calls read() with the requested number
+	     * of bytes.</p>
+	     * 
+	     * @param {number} n the number of bytes to be skipped.
+	     * @param {number} timeout skip timeout in milliseconds or -1 for no
+	     *        timeout.
+	     * @param {{result: function(number), timeout: function(number), error: function(Error)}}
+	     *        callback the callback that will receive the actual number of
+	     *        bytes skipped, be notified of timeouts, or any thrown
+	     *        exceptions.
+	     * @throws IOException if skip is not supported, if there is an error
+	     *         skipping over the data, or if the stream is closed.
+	     */
+	    skip: function(n, timeout, callback) {
+            this.read(n, timeout, {
+                result: function(data) {
+                    InterruptibleExecutor(callback, function() {
+                        return (data) ? data.length : 0;
+                    });
+                },
+                timeout: function(data) {
+                    InterruptibleExecutor(callback, function() {
+                        return (data) ? data.length : 0;
+                    });
+                },
+                error: callback.error,
+            });
+	    },
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('InputStream'));

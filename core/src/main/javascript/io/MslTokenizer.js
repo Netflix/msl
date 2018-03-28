@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,8 +41,26 @@
                 _next: { value: null, writable: true, enumerable: false, configurable: false },
                 /** @type {boolean} */
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
+                /** @type {boolean} */
+                _closed: { value: false, writable: true, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
+        },
+        
+        /**
+         * <p>Closes the tokenizer, cleaning up any resources and preventing future
+         * use.</p>
+         * 
+         * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
+         *        callback the callback that will receive true after
+         *        successfully closed, be notified of timeouts, or any thrown
+         *        exceptions.
+         * @throws MslEncoderException if there is an error closing the
+         *         tokenizer.
+         */
+        close: function(timeout, callback) {
+            this._closed = true;
+            callback.result(true);
         },
         
         /**
@@ -60,7 +78,8 @@
          * @param {{result: function(boolean), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive true if more objects
          *        are available from the data source, false if the tokenizer
-         *        has been aborted, or any thrown exceptions.
+         *        has been aborted or closed, be notified of timeouts, or any
+         *        thrown exceptions.
          * @throws MslEncoderException if the next object cannot be read or the
          *         source data at the current position is invalid.
          */
@@ -68,7 +87,7 @@
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-                if (this._aborted) return false;
+                if (this._aborted || this._closed) return false;
                 if (this._next) return true;
                 this.nextObject(timeout, {
                     result: function(o) {
@@ -97,12 +116,15 @@
          * @param {number} timeout read timeout in milliseconds.
          * @param {{result: function(MslObject), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the next object or
-         *        {@code null} if there are no more, or any thrown exceptions.
+         *        {@code null} if there are no more, be notified of any
+         *        timeouts, or any thrown exceptions.
          * @throws MslEncoderException if the next object cannot be read or the
          *         source data at the current position is invalid.
          */
         next: function(timeout, callback) {
-            callback.error(new MslInternalException("MslTokenizer.next() must be implemented by a subclass."));
+            InterruptibleExecutor(callback, function() {
+                throw new MslInternalException("MslTokenizer.next() must be implemented by a subclass.");
+            }, this);
         },
         
         /**
@@ -112,7 +134,8 @@
          * @param {{result: function(MslObject), timeout: function(), error: function(Error)}}
          *        callback the callback that will receive the next object or
          *        {@code null} if there are no more or the tokenizer has been
-         *        aborted, or any thrown exceptions.
+         *        aborted or closed, be notified of any timeouts, or any thrown
+         *        exceptions.
          * @throws MslEncoderException if the next object cannot be read or the
          *         source data at the current position is invalid.
          */
@@ -120,7 +143,7 @@
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-                if (this._aborted)
+                if (this._aborted || this._closed)
                     return null;
                 if (this._next != null) {
                     var mo = this._next;

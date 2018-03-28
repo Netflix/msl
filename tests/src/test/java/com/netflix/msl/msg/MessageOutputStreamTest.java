@@ -177,6 +177,9 @@ public class MessageOutputStreamTest {
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
         assertEquals(payload, payloads.get(0));
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -204,6 +207,9 @@ public class MessageOutputStreamTest {
         // Verify cached payloads.
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(0, payloads.size());
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -253,6 +259,9 @@ public class MessageOutputStreamTest {
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
         assertEquals(payload, payloads.get(0));
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -299,6 +308,9 @@ public class MessageOutputStreamTest {
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
         assertEquals(payload, payloads.get(0));
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -344,6 +356,9 @@ public class MessageOutputStreamTest {
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
         assertEquals(payload, payloads.get(0));
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -385,6 +400,7 @@ public class MessageOutputStreamTest {
         final List<MslObject> payloadMos = new ArrayList<MslObject>();
         while (tokenizer.more(TIMEOUT))
             payloadMos.add(tokenizer.nextObject(TIMEOUT));
+        tokenizer.close();
         
         // Verify the number and contents of the payloads.
         final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
@@ -440,6 +456,7 @@ public class MessageOutputStreamTest {
         final List<MslObject> payloadMos = new ArrayList<MslObject>();
         while (tokenizer.more(TIMEOUT))
             payloadMos.add(tokenizer.nextObject(TIMEOUT));
+        tokenizer.close();
         
         // Verify the number and contents of the payloads.
         final MessageHeader messageHeader = (MessageHeader)Header.parseHeader(ctx, headerMo, cryptoContexts);
@@ -578,6 +595,9 @@ public class MessageOutputStreamTest {
         final List<PayloadChunk> payloads = mos.getPayloads();
         assertEquals(1, payloads.size());
         assertEquals(payload, payloads.get(0));
+        
+        // Close the tokenizer.
+        tokenizer.close();
     }
     
     @Test
@@ -607,6 +627,7 @@ public class MessageOutputStreamTest {
         final List<MslObject> payloadMos = new ArrayList<MslObject>();
         while (tokenizer.more(TIMEOUT))
             payloadMos.add(tokenizer.nextObject(TIMEOUT));
+        tokenizer.close();
         
         final Header header = Header.parseHeader(ctx, headerMo, cryptoContexts);
         assertTrue(header instanceof MessageHeader);

@@ -1,7 +1,7 @@
 {
-  "name": "msl-tests-exec",
+  "name": "msl-integ-tests-exec",
   "version": "1.1220.0",
-  "description": "Message Security Layer Tests Execution",
+  "description": "Message Security Layer Integration Tests Execution",
   "keywords": [
     "msl",
     "message security layer",
@@ -17,7 +17,8 @@
   },
   "license": "Apache-2.0",
   "scripts": {
-    "test": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./node_modules/msl-tests/lib/jasmine/msl-helpers.js"
+    "test": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs -n1 jasmine-node --matchall --forceexit --captureExceptions ./node_modules/msl-tests/lib/jasmine/msl-helpers.js",
+    "lint": "find . -type f -name '*.js' ! -regex '.*/node_modules/.*' | xargs jshint --verbose"
   },
   "dependencies": {
     "msl-core": "^1.1220.0",

@@ -19,15 +19,10 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.Future;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -37,11 +32,9 @@ import javax.servlet.http.HttpServletResponse;
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
-import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
-import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
 import com.netflix.msl.server.configuration.msg.ServerMessageContext;
 import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
@@ -53,38 +46,48 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
  * Date: 7/21/14
  */
 public class BaseServlet extends HttpServlet {
-
-    private static final long serialVersionUID = 1L;
-    private static final boolean debug = false;
-    protected static final String payload = "Hello";
-    protected static final String error = "Error";
-    private static final int TIMEOUT = 25000;
+    private static final long serialVersionUID = -325218339823577479L;
+    
+    protected static final boolean debug = false;
+    protected static final int TIMEOUT = 25000;
     private boolean isNullCryptoContext;
     private boolean setConsoleFilterStreamFactory;
     private EntityAuthenticationScheme entityAuthScheme;
     private int numThreads;
     private TokenFactoryType tokenFactoryType;
     private long initialSequenceNum;
-    private boolean isMessageEncrypted;
-    private boolean isIntegrityProtected;
     private final List<EntityAuthenticationScheme> unSupportedEntityAuthFactories;
     private final List<UserAuthenticationScheme> unSupportedUserAuthFactories;
     private final List<KeyExchangeScheme> unSupportedKeyxFactories;
     protected ServerMslContext mslCtx;
     protected ServerMessageContext msgCtx;
-    private MslControl mslCtrl;
+    protected MslControl mslCtrl;
 
+    /**
+     * @param numThreads
+     * @param entityAuthScheme
+     * @param tokenFactoryType
+     * @param initialSequenceNum
+     * @param unSupportedEntityAuthFactories
+     * @param unSupportedUserAuthFactories
+     * @param unSupportedKeyxFactories
+     * @param isNullCryptoContext
+     * @param setConsoleFilterStreamFactory
+     * @throws MslCryptoException if there is an error signing or creating the
+     *         entity authentication data.
+     * @throws MslEncodingException if there is an error creating the entity
+     *         authentication data.
+     * @throws Exception if there is an error configuring the servlet.
+     */
     public BaseServlet(final int numThreads, final EntityAuthenticationScheme entityAuthScheme, final TokenFactoryType tokenFactoryType,
-                       final long initialSequenceNum, final boolean isMessageEncrypted, final boolean isIntegrityProtected,
+                       final long initialSequenceNum,
                        final List<EntityAuthenticationScheme> unSupportedEntityAuthFactories,
                        final List<UserAuthenticationScheme> unSupportedUserAuthFactories, final List<KeyExchangeScheme> unSupportedKeyxFactories,
-                       final boolean isNullCryptoContext, final boolean setConsoleFilterStreamFactory) throws MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException {
+                       final boolean isNullCryptoContext, final boolean setConsoleFilterStreamFactory) throws Exception {
         this.numThreads = numThreads;
         this.entityAuthScheme = entityAuthScheme;
         this.tokenFactoryType = tokenFactoryType;
         this.initialSequenceNum = initialSequenceNum;
-        this.isMessageEncrypted = isMessageEncrypted;
-        this.isIntegrityProtected = isIntegrityProtected;
         this.unSupportedEntityAuthFactories = unSupportedEntityAuthFactories;
         this.unSupportedUserAuthFactories = unSupportedUserAuthFactories;
         this.unSupportedKeyxFactories = unSupportedKeyxFactories;
@@ -93,22 +96,23 @@ public class BaseServlet extends HttpServlet {
         configure();
     }
 
-    private void configure() throws MslCryptoException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException, MslEncodingException {
+    /**
+     * @throws MslCryptoException if there is an error signing or creating the
+     *         entity authentication data.
+     * @throws MslEncodingException if there is an error creating the entity
+     *         authentication data.
+     * @throws Exception if there is an error configuring the servlet.
+     */
+    protected void configure() throws Exception {
+        /** MSL control configuration. */
         mslCtrl = new MslControl(numThreads);
         if(setConsoleFilterStreamFactory) {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
-        /**
-         * Msl Context Configuration
-         */
+        
+        /** MSL context configuration. */
         mslCtx = new ServerMslContext(entityAuthScheme, false, tokenFactoryType, initialSequenceNum, unSupportedEntityAuthFactories,
                 unSupportedUserAuthFactories, unSupportedKeyxFactories, isNullCryptoContext);
-
-        /**
-         * Message Context Configuration
-         */
-        msgCtx = new ServerMessageContext(mslCtx, payload.getBytes(MslConstants.DEFAULT_CHARSET), isMessageEncrypted);
-        msgCtx.setIntegrityProtected(isIntegrityProtected);
     }
 
     @Override
@@ -121,6 +125,7 @@ public class BaseServlet extends HttpServlet {
 
     @Override
     protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
+        response.setContentType("text/plain");
         final PrintWriter out = response.getWriter();
 
         @SuppressWarnings("unchecked")
@@ -148,46 +153,7 @@ public class BaseServlet extends HttpServlet {
         out.close();
     }
 
-    @Override
-    protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-        final InputStream inStream = request.getInputStream();
-        final OutputStream outStream = response.getOutputStream();
-        InputStream mslInputStream = null;
-
-
-        final byte[] buffer = new byte[5];
-
-        try {
-            final Future<MessageInputStream> msgInputStream = mslCtrl.receive(mslCtx, msgCtx, inStream, outStream, TIMEOUT);
-
-            mslInputStream = msgInputStream.get();
-            if (mslInputStream == null) return;
-
-            do {
-                final int bytesRead = mslInputStream.read(buffer);
-                if (bytesRead == -1) break;
-            } while (true);
-
-            //Checking the the received payload is the same as the one the client sent
-            if (!Arrays.equals(payload.getBytes(MslConstants.DEFAULT_CHARSET), buffer)) {
-                msgCtx.setBuffer(error.getBytes(MslConstants.DEFAULT_CHARSET));
-                mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
-                throw new IllegalStateException("PayloadBytes is not as expected: " + Arrays.toString(buffer));
-            }
-            msgCtx.setBuffer(buffer);
-            mslCtrl.respond(mslCtx, msgCtx, inStream, outStream, msgInputStream.get(), TIMEOUT);
-
-        } catch (final Exception ex) {
-            if (debug)
-                ex.printStackTrace(System.out);
-        } finally {
-            if (mslInputStream != null) {
-                mslInputStream.close();
-            }
-        }
-    }
-
-    private void setPrivateVariable(final PrintWriter out, final String key, final String[] values) throws Exception {
+    protected void setPrivateVariable(final PrintWriter out, final String key, final String[] values) throws Exception {
         if (key.equals("numthreads")) {
             this.numThreads = Integer.parseInt(values[0]);
             out.println(key + ": " + values[0]);
@@ -199,12 +165,6 @@ public class BaseServlet extends HttpServlet {
             out.println(key + ": " + values[0]);
         } else if (key.equals("initialseqnum")) {
             this.initialSequenceNum = Long.parseLong(values[0]);
-            out.println(key + ": " + values[0]);
-        } else if (key.equals("encrypted")) {
-            this.isMessageEncrypted = Boolean.parseBoolean(values[0]);
-            out.println(key + ": " + values[0]);
-        } else if (key.equals("intProtected")) {
-            this.isIntegrityProtected = Boolean.parseBoolean(values[0]);
             out.println(key + ": " + values[0]);
         } else if(key.equals("consoleFilterStreamFactory")) {
             this.setConsoleFilterStreamFactory = Boolean.parseBoolean(values[0]);
@@ -237,7 +197,6 @@ public class BaseServlet extends HttpServlet {
 
 
     protected String getBody(final HttpServletRequest request) throws IOException {
-
         String body = null;
         final StringBuilder stringBuilder = new StringBuilder();
         BufferedReader bufferedReader = null;
