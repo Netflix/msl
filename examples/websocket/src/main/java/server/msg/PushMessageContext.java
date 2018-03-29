@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public class PushMessageContext implements MessageContext {
      */
     @Override
     public boolean isEncrypted() {
-        return false;
+        return true;
     }
 
     /* (non-Javadoc)
@@ -74,7 +74,7 @@ public class PushMessageContext implements MessageContext {
      */
     @Override
     public boolean isIntegrityProtected() {
-        return false;
+        return true;
     }
 
     /* (non-Javadoc)
