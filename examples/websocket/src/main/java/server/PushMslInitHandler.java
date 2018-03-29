@@ -24,7 +24,6 @@ import java.util.concurrent.Future;
 import com.netflix.msl.msg.MessageContext;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MslControl;
-import com.netflix.msl.msg.MslControl.MslChannel;
 import com.netflix.msl.util.MslContext;
 
 import io.netty.buffer.ByteBuf;
@@ -76,14 +75,12 @@ public class PushMslInitHandler extends SimpleChannelInboundHandler<WebSocketFra
             return;
         }
 
-        // Send the initial response.
-        final Future<MslChannel> resp = mslCtrl.respond(mslCtx, msgCtx, in, out, mis, PushConstants.TIMEOUT_MS);
-        try {
-            resp.get();
-        } catch (final ExecutionException | InterruptedException e) {
-            e.printStackTrace(System.err);
+        // If the message input stream is null, a response was probably
+        // automatically sent (i.e. a handshake is being performed). That
+        // should not occur, since we're not set up to perform authentication
+        // or token issuance, but regardless we are done.
+        if (mis == null)
             return;
-        }
 
         // Save the message input stream for this channel.
         final Attribute<MessageInputStream> misAttr = ctx.attr(PushConstants.ATTR_KEY_MIS);
