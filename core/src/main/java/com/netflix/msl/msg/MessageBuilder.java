@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 
 import com.netflix.msl.MslConstants;
@@ -360,6 +359,61 @@ public class MessageBuilder {
     }
     
     /**
+     * Create a new message builder that will craft a new message in response
+     * to another message without issuing or renewing any master tokens or user
+     * ID tokens. The constructed message may be used as a request.
+     * 
+     * @param ctx MSL context.
+     * @param requestHeader message header to respond to.
+     * @return the message builder.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    public static MessageBuilder createIdempotentResponse(final MslContext ctx, final MessageHeader requestHeader) throws MslCryptoException, MslException {
+        final MasterToken masterToken = requestHeader.getMasterToken();
+        final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
+        final UserIdToken userIdToken = requestHeader.getUserIdToken();
+        final UserAuthenticationData userAuthData = requestHeader.getUserAuthenticationData();
+        
+        // The response recipient is the requesting entity.
+        final String recipient = (masterToken != null) ? masterToken.getIdentity() : entityAuthData.getIdentity();
+        
+        // The response message ID must be equal to the request message ID + 1.
+        final long requestMessageId = requestHeader.getMessageId();
+        final long messageId = incrementMessageId(requestMessageId);
+        
+        // Compute the intersection of the request and response message
+        // capabilities.
+        final MessageCapabilities capabilities = MessageCapabilities.intersection(requestHeader.getMessageCapabilities(), ctx.getMessageCapabilities());
+
+        // Create the message builder.
+        //
+        // Peer-to-peer responses swap the tokens.
+        try {
+            final KeyResponseData keyResponseData = requestHeader.getKeyResponseData();
+            final Set<ServiceToken> serviceTokens = requestHeader.getServiceTokens();
+            if (ctx.isPeerToPeer()) {
+                final MasterToken peerMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : requestHeader.getPeerMasterToken();
+                final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
+                final Set<ServiceToken> peerServiceTokens = requestHeader.getPeerServiceTokens();
+                return new MessageBuilder(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+            } else {
+                final MasterToken localMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : masterToken;
+                return new MessageBuilder(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+            }
+        } catch (final MslException e) {
+            e.setMasterToken(masterToken);
+            e.setEntityAuthenticationData(entityAuthData);
+            e.setUserIdToken(userIdToken);
+            e.setUserAuthenticationData(userAuthData);
+            e.setMessageId(requestMessageId);
+            throw e;
+        }
+    }
+    
+    /**
      * <p>Create a new message builder that will craft a new error message in
      * response to another message. If the message ID of the request is not
      * specified (i.e. unknown) then a random message ID will be generated.</p>
@@ -576,6 +630,24 @@ public class MessageBuilder {
         final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerTokens);
         
         return new MessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
+    }
+    
+    /**
+     * <p>Set the message ID.</p>
+     * 
+     * <p>This method will override the message ID that was computed when the
+     * message builder was created, and should not need to be called in most
+     * cases.</p>
+     * 
+     * @param messageId the message ID.
+     * @return this.
+     * @throws MslInternalException if the message ID is out of range.
+     */
+    public MessageBuilder setMessageId(final long messageId) {
+        if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
+            throw new MslInternalException("Message ID " + messageId + " is out of range.");
+        this.messageId = messageId;
+        return this;
     }
     
     /**
@@ -1071,7 +1143,7 @@ public class MessageBuilder {
     /** Message recipient. */
     private final String recipient;
     /** Header data message ID. */
-    private final long messageId;
+    private long messageId;
     /** Key exchange data. */
     private final KeyExchangeData keyExchangeData;
     /** Message non-replayable. */

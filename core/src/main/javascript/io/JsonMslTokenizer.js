@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,23 +30,32 @@
 	var ClarinetParser = require('../io/ClarinetParser.js');
 	var JsonMslObject = require('../io/JsonMslObject.js');
 	var MslConstants = require('../MslConstants.js');
-	var textEncoding = require('../lib/textEncoding.js');
+	var TextEncoding = require('../util/TextEncoding.js');
+	
+	/**
+	 * Source input stream read size in bytes (64KiB). The larger the read
+	 * size, the shorter the recursive call stack.
+	 * 
+	 * @const
+	 * @type {number}
+	 */
+	var READ_SIZE = 64 * 1024;
 
     /**
-     * Delay time between read attempts in milliseconds.
-     *
-     * @const
-     * @type {number}
-     */
-    var READ_DELAY = 10;
-
-    /**
-     * Maximum JSON value size in characters (10MB).
+     * Maximum JSON value size in characters (10MiB).
      *
      * @const
      * @type {number}
      */
     var MAX_CHARACTERS = 10 * 1024 * 1024;
+    
+    /**
+     * Closing curly brace character code.
+     * 
+     * @const
+     * @type {number}
+     */
+    var CLOSING_BRACE = 125;
     
     var JsonMslTokenizer = module.exports = MslTokenizer.extend({
         /**
@@ -61,18 +70,59 @@
             
             // The properties.
             var props = {
-            	/** @type {MslEncoderFactory} */
-            	_encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
+                /** @type {MslEncoderFactory} */
+                _encoder: { value: encoder, writable: false, enumerable: false, configurable: false },
                 /** @type {InputStream} */
                 _source: { value: source, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
-                _charset: { value: MslConstants.DEFAULT_CHARSET, writable: false, enumerable: false, configurable: false },
+                _charset: { value: TextEncoding.Encoding.UTF_8, writable: false, enumerable: false, configurable: false },
                 /** @type {string} */
-                _remainingData: { value: '', writable: true, enumerable: false, configurable: false },
+                _lastJson: { value: 0, writable: true, enumerable: false, configurable: false },
                 /** @type {ClarinetParser} */
-                _parser: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _parser: { value: new ClarinetParser(), writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
+        },
+        
+        /** @inheritDoc */
+        close: function close(timeout, callback) {
+            var self = this;
+            
+            InterruptibleExecutor(callback, function() {
+                // If there is no unparsed data then there is nothing to clean
+                // up.
+                if (this._parser.unparsedCount() == 0)
+                    return true;
+                
+                // Otherwise reset the source input stream and skip bytes equal
+                // to the parsed data length in encoded bytes. This will allow
+                // the input stream to be used again by a different MSL
+                // tokenizer.
+                //
+                // If we did the right thing in this class' other functions,
+                // calling reset() should not throw an exception.
+                var parsedCount = this._lastJson.length - this._parser.unparsedCount();
+                var parsedJson = this._lastJson.substring(0, parsedCount);
+                var encodedData = TextEncoding.getBytes(parsedJson, this._charset);
+                this._source.reset();
+                this._source.skip(encodedData.length, timeout, {
+                    result: function(count) {
+                        AsyncExecutor(callback, function() {
+                            if (count != encodedData.length)
+                                throw new MslEncoderException("Only skipped " + count + " of " + encodedData.length + " bytes. Source input stream may not be reusable for additional MSL messages.");
+                            return true;
+                        }, self);
+                    },
+                    timeout: function(count) {
+                        AsyncExecutor(callback, function() {
+                            if (count != encodedData.length)
+                                throw new MslEncoderException("Only skipped " + count + " of " + encodedData.length + " bytes. Source input stream may not be reusable for additional MSL messages.");
+                            return true;
+                        }, self);
+                    },
+                    error: callback.error,
+                });
+            }, self);
         },
         
         /** @inheritDoc */
@@ -82,92 +132,72 @@
         },
         
         /**
+         * <p>Feed more data from the source input stream into the parser until
+         * another value has been found. This value is returned.</p>
+         * 
          * @param {number} read timeout in milliseconds.
-         * @param {{result: function(ClarinetParser), error: function(Error)}}
-         *        callback the callback that will receive the new Clarinet JSON
-         *        parser or any thrown exceptions.
+         * @param {{result: function(*), timeout: function(), error: function(Error)}}
+         *        callback the callback that will receive the next parsed
+         *        value, be notified of timeout, or any thrown exceptions.
          * @throws MslEncoderException if a JSON object exceeds the maximum
          *         permitted size or there is an error reading from the source
          *         input stream.
          */
-        nextParser: function nextParser(timeout, callback) {
+        parseData: function parseData(timeout, callback) {
             var self = this;
             
-            this._source.read(-1, timeout, {
-                result: function(data) {
-                    AsyncExecutor(callback, function() {
-                        // On end of stream return null for the parser.
-                        if (!data) return null;
+            InterruptibleExecutor(callback, function() {
+                // Mark the source input stream. We will need to return to this
+                // position when we suceed in parsing the JSON.
+                this._source.mark(READ_SIZE);
+                
+                // Read the next chunk of data.
+                this._source.read(READ_SIZE, timeout, {
+                    result: function(data) {
+                        InterruptibleExecutor(callback, function() {
+                            // On end of stream return null for the value.
+                            if (!data) return null;
+        
+                            // Aborted responses send valid but empty data, treat
+                            // it as end of stream.
+                            if (!data.length) return null;
+                            
+                            // Convert the collected bytes to a string.
+                            this._lastJson = TextEncoding.getString(data, this._charset);
+                            
+                            // If the new unparsed data size exceeds the maximum
+                            // allowed then error.
+                            var unparsedCount = this._parser.unparsedCount() + this._lastJson.length;
+                            if (unparsedCount > MAX_CHARACTERS)
+                                throw new MslEncoderException("JSON parsing stopped after reaching " + unparsedCount + " unparsed characters.");
+                            
+                            // Attempt to parse the JSON.
+                            this._parser.write(this._lastJson);
     
-                        // Aborted responses send valid but empty data, treat
-                        // it as end of stream.
-                        if (!data.length) return null;
-                        
-                        // Append the new data to the previous data and attempt
-                        // to parse the JSON.
-                        var json;
-                        try {
-                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
-                        } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.", e);
-                        }
-                        var parser = new ClarinetParser(json);
-    
-                        // If we got something then return the parser and
-                        // remaining data.
-                        var lastIndex = parser.lastIndex();
-                        if (lastIndex > 0) {
-                            this._remainingData = json.substring(lastIndex);
-                            return parser;
-                        }
-    
-                        // If the new data size exceeds the maximum allowed
-                        // then error.
-                        if (json.length > MAX_CHARACTERS)
-                            throw new MslEncoderException("No JSON parsed after receiving " + json.length + " characters.");
-    
-                        // Otherwise schedule a retry.
-                        this._remainingData = json;
-                        setTimeout(function() {
-                            self.nextParser(timeout, callback);
-                        }, READ_DELAY);
-                    }, self);
-                },
-                timeout: function(data) {
-                    AsyncExecutor(callback, function() {
-                        // If we didn't get any data notify the caller and stop.
-                        if (!data || data.length == 0) {
-                            callback.timeout(this._remainingData);
-                            return;
-                        }
-    
-                        // Append the new data to the previous data and attempt
-                        // to parse the JSON.
-                        var json;
-                        try {
-                        	json = this._remainingData.concat(textEncoding.getString(data, this._charset));
-                        } catch (e) {
-                        	throw new MslEncoderException("Invalid JSON text encoding.");
-                        }
-                        var parser = new ClarinetParser(json);
-    
-                        // If we got something then return the parser and
-                        // remaining data.
-                        var lastIndex = parser.lastIndex();
-                        if (lastIndex > 0) {
-                            this._remainingData = json.substring(lastIndex);
-                            return parser;
-                        }
-    
-                        // Otherwise notify the caller of the timeout and stop.
-                        this._remainingData = json;
-                        callback.timeout(this._remainingData);
-                    }, self);
-                },
-                error: function(e) {
-                    callback.error(new MslEncoderException("Error reading from the source input stream.", e));
-                },
-            });
+                            // If we got something then return the value.
+                            var value = this._parser.nextValue();
+                            if (value !== undefined)
+                                return value;
+        
+                            // Otherwise retry. This will discard the current
+                            // mark position which is okay as we definitely
+                            // need to read past the read limit.
+                            //
+                            // Use setTimeout to avoid blowing the stack, which
+                            // is also faster.
+                            setTimeout(function() {
+                                self.parseData(timeout, callback);
+                            }, 0);
+                        }, self);
+                    },
+                    timeout: callback.timeout,
+                    error: function(e) {
+                        AsyncExecutor(callback, function() {
+                            throw new MslEncoderException("Error reading from the source input stream.", e);
+                        }, self);
+                    },
+                });
+            }, self);
         },
         
         /** @inheritDoc */
@@ -175,38 +205,45 @@
             var self = this;
             
             InterruptibleExecutor(callback, function() {
-                var value = (this._parser) ? this._parser.nextValue() : undefined;
-                if (value !== undefined)
-                    return new JsonMslObject(this._encoder, value);
+                // Ask the parser for the next value.
+                var value = this._parser.nextValue();
+                
+                // If we received a value, wrap it.
+                if (value !== undefined) {
+                    wrapValue(value);
+                    return;
+                }
 
-                this.nextParser(this._timeout, {
-                    result: function(parser) {
+                // Otherwise try to parse more data.
+                this.parseData(this._timeout, {
+                    result: function(value) {
                         InterruptibleExecutor(callback, function() {
                             // If aborted then return null.
                             if (this._aborted)
                                 return null;
 
-                            this._parser = parser;
-
                             // If we've reached the end of the stream then
                             // return null.
-                            if (!this._parser)
+                            if (!value)
                                 return null;
 
-                            // Grab the next value.
-                            var value = this._parser.nextValue();
-                            if (typeof value !== 'object')
-                                throw new MslEncoderException("Malformed MSL message. Parsed " + typeof value + " instead of object.");
-                            return new JsonMslObject(this._encoder, value);
+                            // Wrap the value.
+                            wrapValue(value);
                         }, self);
                     },
-                    timeout: function(remainingData) {
-                        self._remainingData = remainingData;
-                        callback.timeout();
-                    },
+                    timeout: callback.timeout,
                     error: callback.error,
                 });
             }, self);
+            
+            function wrapValue(value) {
+                InterruptibleExecutor(callback, function() {
+                    // Error if the value is not an object.
+                    if (typeof value !== 'object')
+                        throw new MslEncoderException("Malformed MSL message. Parsed " + typeof value + " instead of object.");
+                    return new JsonMslObject(this._encoder, value);
+                }, self);
+            }
         },
     });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('JsonMslTokenizer'));

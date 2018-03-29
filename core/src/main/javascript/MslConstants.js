@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,11 @@
 (function(require, module) {
 	"use strict";
 	
+	var TextEncoding = require('./util/TextEncoding.js');
 	var WebCryptoAlgorithm = require('./crypto/WebCryptoAlgorithm.js');
 
     /** RFC-4327 defines UTF-8 as the default encoding. */
-    var MslConstants$DEFAULT_CHARSET = "utf-8";
+    var MslConstants$DEFAULT_CHARSET = TextEncoding.Encoding.UTF_8;
 
     /** Maximum long integer value (2^53 limited by JavaScript). */
     var MslConstants$MAX_LONG_VALUE = 9007199254740992;

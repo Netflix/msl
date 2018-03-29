@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -13,44 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleClient;
-var SimpleClient$create;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
-    /**
-     * <p>An HTTP location that is implemented using XMLHttpRequest.</p>
-     */
-    var Xhr = Url.IHttpLocation.extend({
-        /**
-         * <p>Create a new XHR pointing at the specified endpoint.
-         * 
-         * @param {string} endpoint the url to send the request to.
-         */
-        init: function(endpoint) {
-            // Set properties.
-            var props = {
-                _endpoint: { value: endpoint, writable: false, enumerable: false, configurable: false },
-            };
-            Object.defineProperties(this, props);
-        },
-        
-        /** @inheritDoc */
-        getResponse: function getResponse(request, timeout, callback) {
-            var self = this;
-            
-            InterruptibleExecutor(callback, function() {
-                var xhr = new XMLHttpRequest();
-                xhr.onload = function onload() {
-                    callback.result({body: this.responseText});
-                };
-                xhr.open("POST", this._endpoint);
-                xhr.timeout = timeout;
-                xhr.send(request.body);
-            }, self);
-        },
-    });
+
+    var Class = require('msl-core/util/Class.js');
+    var AsyncExecutor = require('msl-core/util/AsyncExecutor.js');
+    var EmailPasswordAuthenticationData = require('msl-core/userauth/EmailPasswordAuthenticationData.js');
+    var KeyFormat = require('msl-core/crypto/KeyFormat.js');
+    var MslCrypto = require('msl-core/crypto/MslCrypto.js');
+    var MslIoException = require('msl-core/MslIoException.js');
+    var Url = require('msl-core/io/Url.js');
+    var WebCryptoAlgorithm = require('msl-core/crypto/WebCryptoAlgorithm.js');
+    var WebCryptoUsage = require('msl-core/crypto/WebCryptoUsage.js');
+    var Xhr = require('msl-core/io/Xhr.js');
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var MslControl = require('msl-core/msg/MslControl.js');
+    var PublicKey = require('msl-core/crypto/PublicKey.js');
+    var RsaStore = require('msl-core/entityauth/RsaStore.js');
+
+    var SimpleKeyxManager = require('./keyx/SimpleKeyxManager.js');
+    var AdvancedRequestMessageContext = require('./msg/AdvancedRequestMessageContext.js');
+    var SimpleRequestMessageContext = require('./msg/SimpleRequestMessageContext.js');
+    var SimpleRequest = require('./msg/SimpleRequest.js');
+    var SimpleMslContext = require('./util/SimpleMslContext.js');
+    var SimpleConstants = require('./SimpleConstants.js');
 
     /**
      * <p>An example JavaScript MSL client that sends requests to the example
@@ -58,7 +45,7 @@ var SimpleClient$create;
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleClient = Class.create({
+    var SimpleClient = module.exports = Class.create({
         /**
          * <p>Create a new client.</p>
          *
@@ -71,7 +58,7 @@ var SimpleClient$create;
          */
         init: function init(identity, factory, callback) {
             var self = this;
-            
+
             // Import the server RSA public key.
             PublicKey.import(SimpleConstants.RSA_PUBKEY_B64, WebCryptoAlgorithm.RSASSA_SHA256, WebCryptoUsage.VERIFY, KeyFormat.SPKI, {
                 result: function(publicKey) {
@@ -80,20 +67,20 @@ var SimpleClient$create;
 	                	var mechanism = (MslCrypto.getWebCryptoVersion() == MslCrypto.WebCryptoVersion.LEGACY)
 	                		? AsymmetricWrappedExchange.Mechanism.JWE_RSA
 	                		: AsymmetricWrappedExchange.Mechanism.JWK_RSA;
-	                    SimpleKeyxManager$create(mechanism, {
+	                    SimpleKeyxManager.create(mechanism, {
 	                        result: function(keyxMgr) {
 	                            AsyncExecutor(callback, function() {
 	                                // Create the RSA key store.
 	                                var rsaStore = new RsaStore();
 	                                rsaStore.addPublicKey(SimpleConstants.SERVER_ID, publicKey);
-	
+
 	                                // Set up the MSL context.
 	                                var ctx = new SimpleMslContext(identity, rsaStore, keyxMgr, callback.error);
-	
+
 	                                // Create the MSL control.
 	                                var ctrl = new MslControl();
 	                                ctrl.setFilterFactory(factory);
-	
+
 	                                // Set properties.
 	                                var props = {
 	                                    _keyxMgr: { value: keyxMgr, writable: false, enumerable: false, configurable: false },
@@ -104,7 +91,7 @@ var SimpleClient$create;
 	                                    _cancelFunc: { value: null, writable: true, enumerable: false, configurable: false },
 	                                };
 	                                Object.defineProperties(this, props);
-	
+
 	                                // Return the client.
 	                                return this;
 	                            }, self);
@@ -116,10 +103,10 @@ var SimpleClient$create;
                 error: callback.error,
             });
         },
-        
+
         /**
          * <p>Add an RSA public key to the RSA key store.</p>
-         * 
+         *
          * @param {string} identity the remote entity's identity (i.e. RSA key
          *        pair identity).
          * @param {PublicKey} key the RSA public key.
@@ -127,7 +114,7 @@ var SimpleClient$create;
         addRsaPublicKey: function addRsaPublicKey(identity, key) {
             this._rsaStore.addPublicKey(identity, key);
         },
-        
+
         /**
          * <p>Reset all state data.</p>
          */
@@ -137,12 +124,12 @@ var SimpleClient$create;
             store.clearUserIdTokens();
             store.clearServiceTokens();
         },
-        
+
         /**
          * <p>Set the entity identity. If the identity has not changed then
          * this method does nothing. If the identity has changed then all data
          * is reset and the new entity identity will be used.</p>
-         * 
+         *
          * @param {string} identity the new entity identity.
          * @param {function(msgOrError)}
          *        callback the callback that will any thrown exceptions.
@@ -176,10 +163,10 @@ var SimpleClient$create;
             if (userIdToken)
                 store.removeUserIdToken(userIdToken);
         },
-        
+
         /**
          * <p>Send a request and receive the response.</p>
-         * 
+         *
          * @param {string} endpoint the HTTP endpoint to send the request to.
          * @param {?string} username username or {@code null} if the request is
          *        not associated with a user.
@@ -195,7 +182,7 @@ var SimpleClient$create;
          */
         send: function send(endpoint, username, password, request, dbgCtx, callback) {
             var self = this;
-            
+
             AsyncExecutor(callback, function() {
                 // Build the message context.
                 var userAuthData = (username && password)
@@ -207,7 +194,7 @@ var SimpleClient$create;
                     else
                         callback.error(msgOrError);
                 };
-                
+
                 // Simple or advanced request?
                 var msgCtx;
                 if (request instanceof SimpleRequest) {
@@ -215,11 +202,11 @@ var SimpleClient$create;
                 } else {
                     msgCtx = new AdvancedRequestMessageContext(username, userAuthData, request, this._keyxMgr, dbgCtx, errorCallback);
                 }
-                
+
                 // Create the URL instance.
                 var xhr = new Xhr(endpoint);
                 var url = new Url(xhr, SimpleConstants.TIMEOUT_MS);
-            
+
                 // Send the request.
                 this._cancelFunc = this._ctrl.request(this._ctx, msgCtx, url, SimpleConstants.TIMEOUT_MS, {
                     result: function(channel) {
@@ -238,7 +225,7 @@ var SimpleClient$create;
                 });
             }, self);
         },
-        
+
         /**
          * <p>Cancel any outstanding request. This method does nothing if there
          * is no such request.</p>
@@ -258,7 +245,10 @@ var SimpleClient$create;
      *        callback the callback that will receive the created client or
      *        any thrown exceptions.
      */
-    SimpleClient$create = function SimpleClient$create(identity, factory, callback) {
+    var SimpleClient$create = function SimpleClient$create(identity, factory, callback) {
         new SimpleClient(identity, factory, callback);
     };
-})();
+    
+    // Exports.
+    module.exports.create = SimpleClient$create;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleClient'));

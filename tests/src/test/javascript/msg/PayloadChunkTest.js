@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,8 @@ describe("PayloadChunk", function() {
     var MslCryptoException = require('msl-core/MslCryptoException.js');
     var MslEncodingException = require('msl-core/MslEncodingException.js');
     var MslMessageException = require('msl-core/MslMessageException.js');
-
-    var lzw = require('msl-core/lib/lzw.js');
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
+    var LzwCompression = require('msl-core/util/LzwCompression.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -69,6 +68,32 @@ describe("PayloadChunk", function() {
     // Shortcuts.
     var CompressionAlgorithm = MslConstants.CompressionAlgorithm;
 
+    /** MSL context. */
+    var ctx;
+    /** MSL encoder factory. */
+    var encoder;
+    /** Random. */
+    var random = new Random();
+    /** LZW instance. */
+    var lzw = new LzwCompression();
+
+    var CRYPTO_CONTEXT_ID = "cryptoContextId";
+
+    var ENCRYPTION_KEY;
+    var HMAC_KEY;
+
+    var SEQ_NO = 1;
+    var MSG_ID = 42;
+    var END_OF_MSG = false;
+    var DATA = TextEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", TextEncoding.Encoding.UTF_8);
+    var CRYPTO_CONTEXT;
+
+    /** Raw data. */
+    var rawdata;
+    /** Large data. */
+    var largedata = new Uint8Array(100 * 1024);
+    random.nextBytes(largedata);
+
     /**
      * Uncompress the provided data using the specified compression algorithm.
      * 
@@ -80,35 +105,11 @@ describe("PayloadChunk", function() {
     function uncompress(compressionAlgo, data) {
         switch (compressionAlgo) {
             case CompressionAlgorithm.LZW:
-                return lzw.extend(data);
+                return lzw.uncompress(data, MslConstants.MAX_LONG_VALUE);
             default:
                 throw new MslException(MslError.UNSUPPORTED_COMPRESSION, compressionAlgo.name());
         }
     }
-
-    /** MSL context. */
-    var ctx;
-    /** MSL encoder factory. */
-    var encoder;
-    /** Random. */
-    var random = new Random();
-
-    var CRYPTO_CONTEXT_ID = "cryptoContextId";
-
-    var ENCRYPTION_KEY;
-    var HMAC_KEY;
-
-    var SEQ_NO = 1;
-    var MSG_ID = 42;
-    var END_OF_MSG = false;
-    var DATA = textEncoding.getBytes("We have to use some data that is compressible, otherwise payloads will not always use the compression we request.", MslConstants.DEFAULT_CHARSET);
-    var CRYPTO_CONTEXT;
-
-    /** Raw data. */
-    var rawdata;
-    /** Large data. */
-    var largedata = new Uint8Array(100 * 1024);
-    random.nextBytes(largedata);
 
     var initialized = false;
     beforeEach(function () {

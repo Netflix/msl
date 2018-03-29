@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
     var Class = require('../util/Class.js');
     var Base64 = require('../util/Base64.js');
     var MslCompression = require('../util/MslCompression.js');
+    var TextEncoding = require('../util/TextEncoding.js');
     var Random = require('../util/Random.js');
     var MslCrypto = require('../crypto/MslCrypto.js');
     var MslInternalException = require('../MslInternalException.js');
@@ -58,6 +59,24 @@
          *         compression algorithm implementations to register or remove.
          */
         getCompressionImpls: function() {},
+        
+        /**
+         * <p>Provides the maximum deflate ratio.</p>
+         * 
+         * <p><b>optional</b>: default maximum deflate ratio will be used</p>
+         *
+         * @return {?number} the maximum deflate ratio.
+         */
+        getMaxDeflateRatio: function() {},
+        
+        /**
+         * <p>Provides the TextEncoding implementation.</p>
+         * 
+         * <p><b>required</b></p>
+         * 
+         * @return {?TextEncodingImpl} a TextEncoding implementation.
+         */
+        getTextEncodingImpl: function() {},
         
         /**
          * <p>Provides the object used to access the {@code getRandomValues()}
@@ -115,7 +134,15 @@
                 var impl = compressionImpls[algo];
                 MslCompression.register(algo, impl);
             }
-        }   
+        }
+        var maxDeflateRatio = setup.getMaxDeflateRatio();
+        if (maxDeflateRatio)
+            MslCompression.setMaxDeflateRatio(maxDeflateRatio);
+        
+        // Text encoding.
+        var textEncodingImpl = setup.getTextEncodingImpl();
+        if (textEncodingImpl)
+            TextEncoding.setImpl(textEncodingImpl);
         
         // Random.
         var randomInterface = setup.getRandomInterface();

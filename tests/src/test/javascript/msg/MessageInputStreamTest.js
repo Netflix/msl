@@ -1224,6 +1224,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
             mis.read(MAX_READ_LEN, TIMEOUT, {
@@ -1299,6 +1309,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
@@ -1604,6 +1624,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1657,6 +1687,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var closed;
         runs(function() {
             mis.close(TIMEOUT, {
@@ -1709,6 +1749,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var closed;
         runs(function() {
@@ -1905,6 +1955,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var closed;
         runs(function() {
@@ -2824,6 +2884,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var buffer;
         runs(function() {
             mis.read(MAX_READ_LEN, TIMEOUT, {
@@ -2909,6 +2979,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {
@@ -2999,6 +3079,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         // Read everything. Each bad payload should throw an exception.
         var buffer = new ByteArrayOutputStream();
@@ -3110,6 +3200,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         // Read everything. Each bad payload should throw an exception.
         var buffer = new ByteArrayOutputStream();
         var caughtExceptions = 0;
@@ -3206,6 +3306,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var firstdata;
         runs(function() {
             mis.read(-1, TIMEOUT, {
@@ -3282,6 +3392,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var appdata, buffer;
         var firstRead = 0;
@@ -3493,6 +3613,16 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
 
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
         var appdata, buffer;
         var firstRead = 0;
         var beginningOffset, beginningLength;
@@ -3594,6 +3724,385 @@ describe("MessageInputStream", function() {
         });
         waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
     });
+    
+    it("mark/reset with read limit of 1", function() {
+        var baos;
+        var i = 0;
+        runs(function() {
+            baos = new ByteArrayOutputStream();
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                    result: function(chunk) {
+                        payloads.push(chunk);
+                        baos.write(data, 0, data.length, TIMEOUT, {
+                            result: function(success) {
+                                ++i;
+                                writePayload();
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
+        var appdata, buffer;
+        var oneRead = 0;
+        runs(function() {
+            buffer = new Uint8Array(MAX_READ_LEN);
+            appdata = baos.toByteArray();
+            
+            // Mark one byte and reset to the beginning.
+            mis.mark(1);
+            mis.read(1, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, 0);
+                    oneRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return oneRead > 0; }, "one read", TIMEOUT);
+        
+        var beginningRead = 0;
+        var beginningOffset, beginningLength;
+        runs(function() {
+            var expectedOne = appdata[0];
+            expect(buffer[0]).toEqual(expectedOne);
+            mis.reset();
+            
+            // Read a little bit and reset (which should not work).
+            beginningOffset = 0;
+            beginningLength = Math.floor(appdata.length / 2);
+            mis.read(beginningLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, beginningOffset);
+                    beginningRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return beginningRead > 0; }, "beginning read", TIMEOUT);
+        
+        var endingRead = 0;
+        var endingOffset, endingLength;
+        runs(function() {
+            var expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
+            expect(beginningRead).toEqual(expectedBeginning.length);
+            var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
+            expect(actualBeginning).toEqual(expectedBeginning);
+            mis.reset();
+            
+            // Read the remainder.
+            endingOffset = beginningLength;
+            endingLength = appdata.length - endingOffset;
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    endingRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return endingRead > 0; }, "ending read", TIMEOUT);
+
+        var eos;
+        runs(function() {
+            var expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
+            expect(endingRead).toEqual(expectedEnding.length);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+            
+            // Confirm equality.
+            var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
+            expect(actualdata).toEqual(appdata);
+            
+            // Confirm end-of-stream.
+            mis.read(-1, TIMEOUT, {
+                result: function(x) {
+                    eos = x;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return eos == null; }, "end-of-stream", TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("mark/reset with read limit", function() {
+        var baos;
+        var i = 0;
+        runs(function() {
+            baos = new ByteArrayOutputStream();
+            var cryptoContext = MESSAGE_HEADER.cryptoContext;
+            function writePayload() {
+                if (i == MAX_PAYLOAD_CHUNKS)
+                    return;
+
+                var data = new Uint8Array(random.nextInt(MAX_DATA_SIZE) + 1);
+                random.nextBytes(data);
+                PayloadChunk.create(trustedNetCtx, SEQ_NO + i, MSG_ID, (i == MAX_PAYLOAD_CHUNKS - 1), null, data, cryptoContext, {
+                    result: function(chunk) {
+                        payloads.push(chunk);
+                        baos.write(data, 0, data.length, TIMEOUT, {
+                            result: function(success) {
+                                ++i;
+                                writePayload();
+                            },
+                            timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                        });
+                    },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            }
+            writePayload();
+        });
+        waitsFor(function() { return i == MAX_PAYLOAD_CHUNKS; }, "payloads to be written", TIMEOUT);
+
+        var is;
+        runs(function() {
+            generateInputStream(MESSAGE_HEADER, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+
+        var appdata, buffer;
+        var beginningRead = 0;
+        var beginningOffset, beginningLength;
+        runs(function() {
+            buffer = new Uint8Array(MAX_READ_LEN);
+            appdata = baos.toByteArray();
+            
+            // Read a little bit and mark with a short read limit.
+            beginningOffset = 0;
+            beginningLength = Math.floor(appdata.length / 4);
+            mis.read(beginningLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, beginningOffset);
+                    beginningRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return beginningRead > 0; }, "beginning read", TIMEOUT);
+        
+        var readlimit;
+        var readRead = 0;
+        var readOffset, readLength;
+        runs(function() {
+            var expectedBeginning = Arrays.copyOf(appdata, beginningOffset, beginningLength);
+            expect(beginningRead).toEqual(expectedBeginning.length);
+            var actualBeginning = Arrays.copyOf(buffer, beginningOffset, beginningLength);
+            expect(actualBeginning).toEqual(expectedBeginning);
+            readlimit = Math.floor(appdata.length / 8);
+            mis.mark(readlimit);
+            
+            // Read up to the read limit.
+            readOffset = beginningLength;
+            readLength = readlimit;
+            mis.read(readLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, readOffset);
+                    readRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return readRead > 0; }, "read read", TIMEOUT);
+        
+        var expectedRead;
+        runs(function() {
+            expectedRead = Arrays.copyOf(appdata, readOffset, readLength);
+            expect(readRead).toEqual(expectedRead.length);
+            var actualRead = Arrays.copyOf(buffer, readOffset, readLength);
+            expect(actualRead).toEqual(expectedRead);
+            
+            // Reset and re-read.
+            readRead = 0;
+            mis.reset();
+            mis.read(readLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, readOffset);
+                    readRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return readRead > 0; }, "re-read read", TIMEOUT);
+        
+        runs(function() {
+            expect(readRead).toEqual(expectedRead.length);
+            var actualRead = Arrays.copyOf(buffer, readOffset, readLength);
+            expect(actualRead).toEqual(expectedRead);
+            
+            // Reset and re-read.
+            readRead = 0;
+            mis.reset();
+            mis.read(readLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, readOffset);
+                    readRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return readRead > 0; }, "re-re-read read", TIMEOUT);
+        
+        var readPastRead = 0;
+        var readPastOffset, readPastLength;
+        runs(function() {
+            expect(readRead).toEqual(expectedRead.length);
+            var actualRead = Arrays.copyOf(buffer, readOffset, readLength);
+            expect(actualRead).toEqual(expectedRead);
+
+            // Reset and read past the read limit.
+            mis.reset();
+            readPastOffset = beginningLength;
+            readPastLength = readlimit + 1;
+            mis.read(readPastLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, readPastOffset);
+                    readPastRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return readPastRead > 0; }, "read past read", TIMEOUT);
+        
+        var endingRead;
+        var endingOffset, endingLength;
+        runs(function() {
+            var expectedReadPast = Arrays.copyOf(appdata, readPastOffset, readPastLength);
+            expect(readPastRead).toEqual(expectedReadPast.length);
+            var actualReadPast = Arrays.copyOf(buffer, readPastOffset, readPastLength);
+            expect(actualReadPast).toEqual(expectedReadPast);
+
+            // Reset and confirm it did not work.
+            mis.reset();
+            endingOffset = readPastOffset + readPastLength;
+            endingLength = appdata.length - endingOffset;
+            mis.read(endingLength, TIMEOUT, {
+                result: function(x) {
+                    buffer.set(x, endingOffset);
+                    endingRead = x.length;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return endingRead > 0; }, "ending read", TIMEOUT);
+        
+        runs(function() {
+            var expectedEnding = Arrays.copyOf(appdata, endingOffset, endingLength);
+            expect(endingRead).toEqual(expectedEnding.length);
+            var actualEnding = Arrays.copyOf(buffer, endingOffset, endingLength);
+            expect(actualEnding).toEqual(expectedEnding);
+
+            // Confirm equality.
+            var actualdata = Arrays.copyOf(buffer, 0, appdata.length);
+            expect(actualdata).toEqual(appdata);
+            
+            // Confirm end-of-stream.
+            mis.read(-1, TIMEOUT, {
+                result: function(x) {
+                    eos = x;
+                },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return eos == null; }, "end-of-stream", TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
 
     it("large payload", function() {
         var data = new Uint8Array(250 * 1024);
@@ -3628,6 +4137,16 @@ describe("MessageInputStream", function() {
             });
         });
         waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
 
         var buffer;
         runs(function() {

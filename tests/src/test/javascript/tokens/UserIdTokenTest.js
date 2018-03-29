@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ describe("UserIdToken", function() {
     var MslError = require('msl-core/MslError.js');
     var MslEncodingException = require('msl-core/MslEncodingException.js');
     var MslCryptoException = require('msl-core/MslCryptoException.js');
-
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
@@ -93,7 +92,7 @@ describe("UserIdToken", function() {
                     result: function(token) { MASTER_TOKEN = token; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); },
                 });
-                ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
+                ISSUER_DATA = encoder.parseObject(TextEncoding.getBytes("{ \"issuerid\" : 17 }"));
             });
             waitsFor(function() { return MASTER_TOKEN; }, "master token", MslTestConstants.TIMEOUT);
             runs(function() { initialized = true; });

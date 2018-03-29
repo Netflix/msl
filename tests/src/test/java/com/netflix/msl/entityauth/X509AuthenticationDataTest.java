@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,9 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
 import org.junit.AfterClass;
@@ -46,6 +43,7 @@ import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.test.ExpectedMslException;
 import com.netflix.msl.util.Base64;
+import com.netflix.msl.util.IOUtils;
 import com.netflix.msl.util.MockMslContext;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslTestUtils;
@@ -60,7 +58,7 @@ public class X509AuthenticationDataTest {
 	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
 
     /** X.509 expired resource certificate. */
-    private static final String X509_EXPIRED_CERT = "entityauth/expired.pem";
+    private static final String X509_EXPIRED_CERT = "/entityauth/expired.pem";
     
     /** Key entity authentication scheme. */
     private static final String KEY_SCHEME = "scheme";
@@ -76,11 +74,7 @@ public class X509AuthenticationDataTest {
     public static void setup() throws IOException, MslEncodingException, MslCryptoException, CertificateException {
         ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
         encoder = ctx.getMslEncoderFactory();
-        
-        final URL expiredUrl = X509AuthenticationDataTest.class.getClassLoader().getResource(X509_EXPIRED_CERT);
-        final InputStream expiredInputStream = expiredUrl.openStream();
-        final CertificateFactory factory = CertificateFactory.getInstance("X.509");
-        expiredCert = (X509Certificate)factory.generateCertificate(expiredInputStream);
+        expiredCert = IOUtils.readX509(X509_EXPIRED_CERT);
     }
     
     @AfterClass

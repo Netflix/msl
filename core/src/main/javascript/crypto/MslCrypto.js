@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,9 +27,9 @@
     var MslInternalException = require('../MslInternalException.js');
     var KeyFormat = require('../crypto/KeyFormat.js');
     var PromiseFactory = require('../util/PromiseFactory.js');
+    var TextEncoding = require('../util/TextEncoding.js');
     
     var ASN1 = require('../lib/asnjwk.js');
-    var textEncoding = require('../lib/textEncoding.js');
 
     /**
      * Web Crypto API version.
@@ -298,7 +298,7 @@
                             throw new Error("Could not make valid JWK from DER input");
                         }
                         var jwk = JSON.stringify(jwkObj);
-                        op = nfCryptoSubtle.importKey(KeyFormat.JWK, textEncoding.getBytes(jwk), algorithm, ext, ku);
+                        op = nfCryptoSubtle.importKey(KeyFormat.JWK, TextEncoding.getBytes(jwk), algorithm, ext, ku);
                         return promisedOperation(op);
                     } else {
                         op = nfCryptoSubtle.importKey(format, keyData, algorithm, ext, ku);
@@ -322,7 +322,7 @@
                     if (format == KeyFormat.SPKI || format == KeyFormat.PKCS8) {
                         op = nfCryptoSubtle.exportKey(KeyFormat.JWK, key);
                         return promisedOperation(op).then(function (result) {
-                            var jwkObj = JSON.parse(textEncoding.getString(new Uint8Array(result)));
+                            var jwkObj = JSON.parse(TextEncoding.getString(new Uint8Array(result)));
                             var rsaKey = ASN1.jwkToRsaDer(jwkObj);
                             if (!rsaKey) {
                                 throw new Error("Could not make valid DER from JWK input");

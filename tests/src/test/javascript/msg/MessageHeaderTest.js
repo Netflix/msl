@@ -1637,6 +1637,7 @@ describe("MessageHeader", function() {
         
 		var messageHeader;
 		runs(function() {
+	        builder.set(KEY_USER_AUTHENTICATION_DATA, null);
 			var headerData = builder.build();
 			var peerData = new HeaderPeerData(null, null, null);
 			MessageHeader.create(rsaCtx, entityAuthData, null, headerData, peerData, {
@@ -1673,7 +1674,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1701,7 +1702,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1738,7 +1739,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1766,7 +1767,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1792,9 +1793,11 @@ describe("MessageHeader", function() {
                 error: function(err) { exception = err; },
             });
         });
+		waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+		
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1821,9 +1824,10 @@ describe("MessageHeader", function() {
             });
         });
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
+        
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1858,7 +1862,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1883,9 +1887,11 @@ describe("MessageHeader", function() {
                 error: function(err) { exception = err; },
             });
         });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+        
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1922,7 +1928,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1959,7 +1965,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -1996,7 +2002,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -2033,7 +2039,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -2076,7 +2082,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -2113,7 +2119,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED, MESSAGE_ID));
+			expect(f).toThrow(new MslMasterTokenException(MslError.MASTERTOKEN_UNTRUSTED), MESSAGE_ID);
 		});
 	});
 
@@ -2152,7 +2158,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND, MESSAGE_ID));
+			expect(f).toThrow(new MslEntityAuthException(MslError.ENTITYAUTH_FACTORY_NOT_FOUND), MESSAGE_ID);
 		});
 	});
 
@@ -2841,7 +2847,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, MESSAGE_ID));
+			expect(f).toThrow(new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND), MESSAGE_ID);
 		});
 	});
 
@@ -4643,7 +4649,7 @@ describe("MessageHeader", function() {
 		});
 		waitsFor(function() { return messageHeaderMo; }, "messageHeaderMo", MslTestConstants.TIMEOUT);
         
-        var exception;
+        var header;
         runs(function() {
             // Before modifying the header data we need to decrypt it.
             var cryptoContext = new SessionCryptoContext(trustedNetCtx, MASTER_TOKEN);
@@ -4665,7 +4671,7 @@ describe("MessageHeader", function() {
 		                                result: function(signature) {
 		                                    messageHeaderMo.put(KEY_SIGNATURE, signature);
 		                                    Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
-		                                        result: function() {},
+		                                        result: function(h) { header = h; },
 		                                        error: function(err) { exception = err; },
 		                                    });
 		                                },
@@ -4681,13 +4687,94 @@ describe("MessageHeader", function() {
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
         });
+        waitsFor(function() { return header; }, "header", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(header instanceof MessageHeader).toBeTruthy();
+            
+            var moMessageHeader = header;
+            expect(moMessageHeader.sender).toEqual(null);
+        });
+	});
+	
+    it("invalid sender", function() {
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(trustedNetCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", MslTestConstants.TIMEOUT);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_KEY_REQUEST_DATA, null);
+            builder.set(KEY_KEY_RESPONSE_DATA, null);
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader.create(p2pCtx, null, MASTER_TOKEN, headerData, peerData, {
+                result: function(token) { messageHeader = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+        
+        var messageHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, messageHeader, {
+                result: function(x) { messageHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderMo; }, "messageHeaderMo", MslTestConstants.TIMEOUT);
+        
+        var exception;
+        runs(function() {
+            // Before modifying the header data we need to decrypt it.
+            var cryptoContext = new SessionCryptoContext(p2pCtx, MASTER_TOKEN);
+            var ciphertext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+            cryptoContext.decrypt(ciphertext, encoder, {
+                result: function(plaintext) {
+                    var headerdataMo = encoder.parseObject(plaintext);
+        
+                    // After modifying the header data we need to encrypt it.
+                    headerdataMo.put(KEY_SENDER, 1234);
+                    encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                        result: function(plaintext) {
+                            cryptoContext.encrypt(plaintext, encoder, ENCODER_FORMAT, {
+                                result: function(headerdata) {
+                                    messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+                            
+                                    // The header data must be signed or it will not be processed.
+                                    cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+                                        result: function(signature) {
+                                            messageHeaderMo.put(KEY_SIGNATURE, signature);
+                                            Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+                                                result: function() {},
+                                                error: function(e) { exception = e; },
+                                            });
+                                        },
+                                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                                    });
+                                },
+                                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                            });
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+                    });
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
         waitsFor(function() { return exception; }, "exception not received", 300);
         runs(function() {
             var f = function() { throw exception; };
             expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR));
         });
-	});
-	
+    });
+
 	it("missing timestamp", function() {
         var builder;
         runs(function() {
@@ -5027,7 +5114,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -5056,7 +5143,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", MslTestConstants.TIMEOUT);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslInternalException(MslError.NONE));
+			expect(f).toThrow(new MslInternalException());
 		});
 	});
 
@@ -5299,7 +5386,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 300);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
 		});
 	});
 
@@ -5380,7 +5467,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 300);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
 		});
 	});
 
@@ -5461,7 +5548,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 300);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
 		});
 	});
 
@@ -5546,7 +5633,7 @@ describe("MessageHeader", function() {
         
         runs(function() {
             //var f = function() { throw exception; };
-            //expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+            //expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
             expect(header.isHandshake()).toBeFalsy();
         });
 	});
@@ -5628,7 +5715,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 300);
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+            expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
         });
 	});
 	
@@ -5709,7 +5796,7 @@ describe("MessageHeader", function() {
         waitsFor(function() { return exception; }, "exception not received", 300);
 		runs(function() {
 			var f = function() { throw exception; };
-			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR, MESSAGE_ID));
+			expect(f).toThrow(new MslEncodingException(MslError.MSL_PARSE_ERROR), MESSAGE_ID);
 		});
 	});
 
@@ -6445,6 +6532,144 @@ describe("MessageHeader", function() {
 			var f = function() { throw exception; };
 			expect(f).toThrow(new MslEncodingException(MslError.NONE), MESSAGE_ID);
 		});
+	});
+	
+	it("ctor with unencrypted user authentication data", function() {
+	    var rsaCtx;
+        runs(function() {
+            MockMslContext.create(EntityAuthenticationScheme.RSA, false, {
+                result: function(c) { rsaCtx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return rsaCtx; }, "rsaCtx", MslTestConstants.TIMEOUT);
+	    
+        var entityAuthData;
+        runs(function() {
+            rsaCtx.getEntityAuthenticationData(null, {
+                result: function(x) { entityAuthData = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthData; }, "entityAuthData", MslTestConstants.TIMEOUT);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(rsaCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", MslTestConstants.TIMEOUT);
+        
+        var exception;
+        runs(function() {
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader.create(rsaCtx, entityAuthData, null, headerData, peerData, {
+                result: function() {},
+                error: function(e) { exception = e; }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslInternalException());
+        });
+	});
+
+	it("parseHeader with unencrypted user authentication data", function() {
+        var rsaCtx;
+        runs(function() {
+            MockMslContext.create(EntityAuthenticationScheme.RSA, false, {
+                result: function(c) { rsaCtx = c; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return rsaCtx; }, "rsaCtx", MslTestConstants.TIMEOUT);
+        
+        var entityAuthData;
+        runs(function() {
+            rsaCtx.getEntityAuthenticationData(null, {
+                result: function(x) { entityAuthData = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return entityAuthData; }, "entityAuthData", MslTestConstants.TIMEOUT);
+        
+        var builder;
+        runs(function() {
+            HeaderDataBuilder$create(rsaCtx, null, null, false, {
+                result: function(x) { builder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return builder; }, "builder", MslTestConstants.TIMEOUT);
+        
+        var messageHeader;
+        runs(function() {
+            builder.set(KEY_USER_AUTHENTICATION_DATA, null);
+            var headerData = builder.build();
+            var peerData = new HeaderPeerData(null, null, null);
+            MessageHeader.create(rsaCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "messageHeader", MslTestConstants.TIMEOUT);
+        
+        var messageHeaderMo;
+        runs(function() {
+            MslTestUtils.toMslObject(encoder, messageHeader, {
+                result: function(x) { messageHeaderMo = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeaderMo; }, "messageHeaderMo", MslTestConstants.TIMEOUT);
+        
+        var headerdata;
+        runs(function() {
+            // The header data is not encrypted.
+            var plaintext = messageHeaderMo.getBytes(KEY_HEADERDATA);
+            var headerdataMo = encoder.parseObject(plaintext);
+            headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, USER_AUTH_DATA);
+            encoder.encodeObject(headerdataMo, ENCODER_FORMAT, {
+                result: function(x) { headerdata = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return headerdata; }, "headerdata", MslTestConstants.TIMEOUT);
+        
+        var signature;
+        runs(function() {
+            messageHeaderMo.put(KEY_HEADERDATA, headerdata);
+
+            // The header data must be signed or it will not be processed.
+            var factory = rsaCtx.getEntityAuthenticationFactory(entityAuthData.scheme);
+            var cryptoContext = factory.getCryptoContext(rsaCtx, entityAuthData);
+            cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT, {
+                result: function(x) { signature = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return signature; }, "signature", MslTestConstants.TIMEOUT);
+        
+        var exception;
+        runs(function() {
+            messageHeaderMo.put(KEY_SIGNATURE, signature);
+            
+            Header.parseHeader(rsaCtx, messageHeaderMo, CRYPTO_CONTEXTS, {
+                result: function() {},
+                error: function(e) { exception = e; }
+            });
+        });
+        waitsFor(function() { return exception; }, "exception", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            var f = function() { throw exception; };
+            expect(f).toThrow(new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA), MESSAGE_ID);
+        });
 	});
 
 	xit("equals master token", function() {
@@ -7644,7 +7869,7 @@ describe("MessageHeader", function() {
 				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
 		});
-		waitsFor(function() { peerServiceTokensA && peerServiceTokensB; }, "service tokens not received", MslTestConstants.TIMEOUT);
+		waitsFor(function() { return peerServiceTokensA && peerServiceTokensB; }, "service tokens not received", MslTestConstants.TIMEOUT);
 
         var builder;
         runs(function() {

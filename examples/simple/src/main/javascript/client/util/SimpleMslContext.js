@@ -13,11 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var SimpleMslContext;
 
-(function() {
+(function(require, module) {
     "use strict";
-    
+
+    var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
+    var AuthenticationUtils = require('msl-core/util/AuthenticationUtils.js');
+    var ClientMslCryptoContext = require('msl-core/crypto/ClientMslCryptoContext.js');
+    var ClientTokenFactory = require('msl-core/tokens/ClientTokenFactory.js');
+    var DefaultMslEncoderFactory = require('msl-core/io/DefaultMslEncoderFactory.js');
+    var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var KeyExchangeScheme = require('msl-core/keyx/KeyExchangeScheme.js');
+    var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
+    var MslConstants = require('msl-core/MslConstants.js');
+    var MslContext = require('msl-core/util/MslContext.js');
+    var MslEncoderFormat = require('msl-core/io/MslEncoderFormat.js');
+    var MslUser = require('msl-core/tokens/MslUser.js');
+    var Random = require('msl-core/util/Random.js');
+    var RsaAuthenticationFactory = require('msl-core/entityauth/RsaAuthenticationFactory.js');
+    var UnauthenticatedAuthenticationData = require('msl-core/entityauth/UnauthenticatedAuthenticationData.js');
+    var UnauthenticatedAuthenticationFactory = require('msl-core/entityauth/UnauthenticatedAuthenticationFactory.js');
+    var UserAuthenticationScheme = require('msl-core/userauth/UserAuthenticationScheme.js');
+
+    var SimpleKeyxMslStore = require('../util/SimpleKeyxMslStore.js');
+
     /**
      * Local authentication utils that only permits the unauthenticated entity
      * authentication scheme to be used by the local entity identity.
@@ -84,7 +103,7 @@ var SimpleMslContext;
      *
      * @author Wesley Miaw <wmiaw@netflix.com>
      */
-    SimpleMslContext = MslContext.extend({
+    var SimpleMslContext = module.exports =  MslContext.extend({
         /**
          * <p>Create a new client MSL context.</p>
          *
@@ -222,4 +241,4 @@ var SimpleMslContext;
             return this._encoder;
         },
     });
-})();
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleMslContext'));

@@ -41,10 +41,11 @@ import com.netflix.msl.userauth.UserAuthenticationScheme;
  * Date: 7/25/14
  */
 public class EntityAuthTests extends BaseTestClass {
-    private int numThreads = 0;
+    private final int numThreads = 0;
     private ServerConfiguration serverConfig = null;
     private static final int TIME_OUT = 60000; //60 seconds
     private static final String PATH = "/test";
+    private static final String USER_ID = "userId";
 
     @BeforeMethod
     public void setup() throws IOException, URISyntaxException {
@@ -79,6 +80,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
@@ -126,7 +128,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -156,6 +158,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.RSA)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
@@ -202,7 +205,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -235,11 +238,12 @@ public class EntityAuthTests extends BaseTestClass {
                 .setMaxEntityAuthRetryCount(2)
                 .resetCurrentEntityAuthRetryCount()
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenThe(message)
                 .shouldBe().validFirstEntityAuthRSAMsg()
@@ -268,6 +272,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.ECC)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
@@ -310,11 +315,12 @@ public class EntityAuthTests extends BaseTestClass {
                 .setMaxEntityAuthRetryCount(5)
                 .resetCurrentEntityAuthRetryCount()
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -344,6 +350,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.X509)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.DIFFIE_HELLMAN);
         clientConfig.commitConfiguration();
@@ -387,11 +394,12 @@ public class EntityAuthTests extends BaseTestClass {
                 .setMaxEntityAuthRetryCount(5)
                 .resetCurrentEntityAuthRetryCount()
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()
@@ -422,6 +430,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.NONE)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.ASYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
@@ -449,6 +458,7 @@ public class EntityAuthTests extends BaseTestClass {
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
                 .setIsPeerToPeer(false)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .clearKeyRequestData();
         clientConfig.commitConfiguration();
@@ -456,7 +466,7 @@ public class EntityAuthTests extends BaseTestClass {
         serverConfig.isMessageEncrypted(true)
                 .commitToServer();
 
-        MessageInputStream message = sendReceive(TIME_OUT);
+        final MessageInputStream message = sendReceive(TIME_OUT);
 
         thenTheErr(message)
                 .shouldBe().validateHdr()

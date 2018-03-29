@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,8 +43,7 @@ describe("MessageOutputStream", function() {
     var MslInternalException = require('msl-core/MslInternalException.js');
     var MslError = require('msl-core/MslError.js');
     var MslIoException = require('msl-core/MslIoException.js');
-
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -57,7 +56,7 @@ describe("MessageOutputStream", function() {
     /** Maximum payload chunk data size in bytes. */
     var MAX_DATA_SIZE = 10 * 1024;
     /** Compressible data. */
-    var COMPRESSIBLE_DATA = textEncoding.getBytes(
+    var COMPRESSIBLE_DATA = TextEncoding.getBytes(
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me." +
             "Kiba and Nami immortalized in code. I will never forget you. I'm sorry and I love you. Forgive me."
@@ -141,6 +140,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var tokenizer;
         runs(function() {
@@ -251,6 +260,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -258,7 +268,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("error header stream", function() {
@@ -271,6 +289,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var tokenizer;
         runs(function() {
@@ -338,13 +366,22 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more2 !== undefined; }, "more2", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more2).toBeFalsy();
 
             // Verify cached payloads.
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(0);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write with offsets", function() {
@@ -357,6 +394,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var data = new Uint8Array(32);
         random.nextBytes(data);
@@ -482,6 +529,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -489,7 +537,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write", function() {
@@ -502,6 +558,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var data = new Uint8Array(32);
         random.nextBytes(data);
@@ -623,6 +689,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -630,7 +697,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("write with compression", function() {
@@ -643,6 +718,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var first = Arrays.copyOf(COMPRESSIBLE_DATA, 0, COMPRESSIBLE_DATA.length);
         var secondA = Arrays.copyOf(first, 0, 2 * first.length);
@@ -773,6 +858,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var messageHeader;
         runs(function() {
@@ -829,6 +924,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var first = new Uint8Array(10);
         random.nextBytes(first);
@@ -951,6 +1056,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var messageHeader;
         runs(function() {
@@ -1008,6 +1123,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1052,6 +1177,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1085,6 +1220,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var exception;
         runs(function() {
@@ -1119,6 +1264,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var flushed = false;
         runs(function() {
@@ -1149,6 +1304,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var first = new Uint8Array(10);
         random.nextBytes(first);
@@ -1222,6 +1387,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var closed = false;
         runs(function() {
@@ -1342,6 +1517,7 @@ describe("MessageOutputStream", function() {
         });
         waitsFor(function() { return more3 !== undefined; }, "more3", MslTestConstants.TIMEOUT);
 
+        var tokenizerClosed = false;
         runs(function() {
             expect(more3).toBeFalsy();
 
@@ -1349,7 +1525,15 @@ describe("MessageOutputStream", function() {
             var payloads = mos.getPayloads();
             expect(payloads.length).toEqual(1);
             expect(payloads[0]).toEqual(payload);
+
+            // Close tokenizer.
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
         });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
     });
 
     it("stress write", function() {
@@ -1362,6 +1546,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var noCompression = false;
         runs(function() {
@@ -1484,6 +1678,16 @@ describe("MessageOutputStream", function() {
             loop();
         });
         waitsFor(function() { return noMore; }, "no more", MslTestConstants.TIMEOUT);
+        
+        var tokenizerClosed = false;
+        runs(function() {
+            tokenizer.close(-1, {
+                result: function(x) { tokenizerClosed = x; },
+                timeout: function() { expect(function() { throw new Error("timeout"); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); },
+            });
+        });
+        waitsFor(function() { return tokenizerClosed; }, "tokenizer closed", MslTestConstants.TIMEOUT);
 
         var header;
         runs(function() {
@@ -1588,6 +1792,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var lzw;
         runs(function() {
@@ -1643,6 +1857,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var lzw;
         runs(function() {
@@ -1687,6 +1911,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var written = false;
         runs(function() {
@@ -1725,6 +1959,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var lzw;
         runs(function() {
@@ -1789,6 +2033,16 @@ describe("MessageOutputStream", function() {
             });
         });
         waitsFor(function() { return mos; }, "mos", MslTestConstants.TIMEOUT);
+        
+        var ready = false;
+        runs(function() {
+            mos.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mos ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mos ready", MslTestConstants.TIMEOUT);
 
         var gzip;
         runs(function() {

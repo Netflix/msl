@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ import com.netflix.msl.util.MslUtils;
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class SymmetricCryptoContext implements ICryptoContext {
+public class SymmetricCryptoContext extends ICryptoContext {
     /** AES encryption cipher algorithm. */
     private static final String AES_ALGO = "AES";
     /** AES encryption cipher algorithm. */

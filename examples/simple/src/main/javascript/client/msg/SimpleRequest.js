@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -16,7 +16,7 @@
 
 /**
  * <p>Example request type and parser.</p>
- * 
+ *
  * <p>Requests are represented as JSON as follows:
  * {@code {
  * request = {
@@ -29,14 +29,13 @@
  * <li>{@code type} is the request type.</li>
  * <li>{@code data} is the request data.</li>
  * </ul></p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-var SimpleRequest;
-var SimpleRequest$Type;
-
-(function() {
+(function(require, module) {
     "use strict";
+
+    var Class = require('msl-core/util/Class.js');
 
     /** JSON key type. */
     var KEY_TYPE = "type";
@@ -44,7 +43,7 @@ var SimpleRequest$Type;
     var KEY_DATA = "data";
 
     /** Request type. */
-    var Type = SimpleRequest$Type = {
+    var Type = {
         /** Echo request data. */
         ECHO: "ECHO",
         /** Query for data. */
@@ -56,11 +55,11 @@ var SimpleRequest$Type;
         /** Terminate server execution. */
         QUIT: "QUIT",
     };
-    
-    SimpleRequest = Class.create({
+
+    var SimpleRequest = module.exports = Class.create({
         /**
          * <p>Create a simple request.</p>
-         * 
+         *
          * @param {Type} type request type.
          */
         init: function init(type) {
@@ -70,12 +69,12 @@ var SimpleRequest$Type;
             };
             Object.defineProperties(this, props);
         },
-    
+
         /**
          * @return {object} the request data object.
          */
         getData: function() {},
-    
+
         /** @inheritDoc */
         toJSON: function toJSON() {
             var jo = {};
@@ -84,4 +83,7 @@ var SimpleRequest$Type;
             return jo;
         },
     });
-})();
+    
+    // Exports.
+    module.exports.Type = Type;
+})(require, (typeof module !== 'undefined') ? module : mkmodule('SimpleRequest'));

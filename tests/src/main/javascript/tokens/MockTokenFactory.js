@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -148,6 +148,15 @@
                 MasterToken.create(ctx, renewalWindow, expiration, sequenceNumber, serialNumber, issuerData, identity, encryptionKey, hmacKey, callback);
             }, this);
         },
+        
+        /** @inheritDoc */
+        isMasterTokenRenewable: function(ctx, masterToken, callback) {
+            AsyncExecutor(callback, function() {
+                if (!masterToken.isDecrypted())
+                    return MslError.MASTERTOKEN_UNTRUSTED;
+                return null;
+            }, this);
+        },
 
         /** @inheritDoc */
         renewMasterToken: function(ctx, masterToken, encryptionKey, hmacKey, issuerData, callback) {
@@ -231,6 +240,16 @@
             AsyncExecutor(callback, function() {
                 return MockMslUser.parse(userdata);
             }, this);
-        }
+        },
+        
+        /**
+         * Reset the token factory state.
+         */
+        reset: function reset() {
+            this._sequenceNumber = -1;
+            this._revokedMasterToken = null;
+            this._largestNonReplayableId = 0;
+            this._revokedUserIdToken = null;
+        },
     });
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MockTokenFactory'));

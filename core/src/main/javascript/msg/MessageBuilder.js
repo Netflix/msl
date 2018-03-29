@@ -255,7 +255,7 @@
                         return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
     };
@@ -316,9 +316,15 @@
 	                        .setUserAuthenticationData(userAuthData)
 	                        .setMessageId(requestMessageId);
                     }
-                    user = factory.authenticate(ctx, masterToken.identity, userAuthData, null);
+                    factory.authenticate(ctx, masterToken.identity, userAuthData, null, {
+                        result: function(user) {
+                            tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
+                        },
+                        error: callback.error,
+                    });
+                } else {
+                    tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 }
-                tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
                 return;
             }
 
@@ -434,6 +440,67 @@
     };
 
     /**
+     * Create a new message builder that will craft a new message in response
+     * to another message without issuing or renewing any master tokens or user
+     * ID tokens. The constructed message may be used as a request.
+     * 
+     * @param {MslContext} ctx MSL context.
+     * @param {MessageHeader} requestHeader message header to respond to.
+     * @param {{result: function(MessageBuilder), error: function(Error)}}
+     *        callback the callback that will receive the message builder or
+     *        any thrown exceptions.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    var MessageBuilder$createIdempotentResponse = function MessageBuilder$createIdempotentResponse(ctx, requestHeader, callback) {
+        AsyncExecutor(callback, function() {
+            var masterToken = requestHeader.masterToken;
+            var entityAuthData = requestHeader.entityAuthenticationData;
+            var userIdToken = requestHeader.userIdToken;
+            var userAuthData = requestHeader.userAuthenticationData;
+            
+            // The response recipient is the requesting entity.
+            var recipient = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
+            
+            // The response message ID must be equal to the request message ID + 1.
+            var requestMessageId = requestHeader.messageId;
+            var messageId = MessageBuilder$incrementMessageId(requestMessageId);
+            
+            // Compute the intersection of the request and response message
+            // capabilities.
+            var capabilities = MessageCapabilities.intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
+            
+            // Create the message builder.
+            //
+            // Peer-to-peer responses swap the tokens.
+            try {
+                var keyResponseData = requestHeader.keyResponseData;
+                var serviceTokens = requestHeader.serviceTokens;
+                if (ctx.isPeerToPeer()) {
+                    var peerMasterToken = (keyResponseData) ? keyResponseData.masterToken : requestHeader.peerMasterToken;
+                    var peerUserIdToken = requestHeader.peerUserIdToken;
+                    var peerServiceTokens = requestHeader.peerServiceTokens;
+                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+                } else {
+                    var localMasterToken = (keyResponseData) ? keyResponseData.masterToken : masterToken;
+                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+                }
+            } catch (e) {
+                if (e instanceof MslException) {
+                    e.setMasterToken(masterToken);
+                    e.setEntityAuthenticationData(entityAuthData);
+                    e.setUserIdToken(userIdToken);
+                    e.setUserAuthenticationData(userAuthData);
+                    e.setMessageId(requestMessageId);
+                }
+                throw e;
+            }
+        });
+    };
+
+    /**
      * <p>Create a new message builder that will craft a new error message in
      * response to another message. If the message ID of the request is not
      * specified (i.e. unknown) then a random message ID will be generated.</p>
@@ -474,7 +541,7 @@
                         ErrorHeader.create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
                     });
                 },
-                error: function(e) { callback.error(e); }
+                error: callback.error,
             });
         });
     };
@@ -633,6 +700,24 @@
         getMessageId: function getMessageId() {
             return this._messageId;
         },
+        
+        /**
+         * <p>Set the message ID.</p>
+         * 
+         * <p>This method will override the message ID that was computed when the
+         * message builder was created, and should not need to be called in most
+         * cases.</p>
+         * 
+         * @param {number} messageId the message ID.
+         * @return {MessageBuilder} this.
+         * @throws MslInternalException if the message ID is out of range.
+         */
+        setMessageId: function setMessageId(messageId) {
+            if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
+                throw new MslInternalException("Message ID " + messageId + " is out of range.");
+            this._messageId = messageId;
+            return this;
+        },
 
         /**
          * @return {MasterToken} the primary master token or null if the message will use entity
@@ -748,7 +833,7 @@
          * handshake flag to false.
          *
          * @param {boolean} nonReplayable true if the message should be non-replayable.
-         * @return this.
+         * @return {MessageBuilder} this.
          * @see #setHandshake(boolean)
          */
         setNonReplayable: function setNonReplayable(nonReplayable) {
@@ -942,7 +1027,7 @@
                             return true;
                         }, self);
                     },
-                    error: function(e) { callback.error(e); }
+                    error: callback.error,
                 });
             }, self);
         },
@@ -1277,5 +1362,6 @@
     module.exports.decrementMessageId = MessageBuilder$decrementMessageId;
     module.exports.createRequest = MessageBuilder$createRequest;
     module.exports.createResponse = MessageBuilder$createResponse;
+    module.exports.createIdempotentResponse = MessageBuilder$createIdempotentResponse;
     module.exports.createErrorResponse = MessageBuilder$createErrorResponse;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MessageBuilder'));

@@ -580,8 +580,7 @@
                     if (!entityAuthData && !masterToken)
                         throw new MslInternalException("Message entity authentication data or master token must be provided.");
                     
-                    // Only include the sender and recipient if the message will be
-                    // encrypted.
+                    // Only include the recipient if the message will be encrypted.
                     var encrypted;
                     if (masterToken) {
                         encrypted = true;
@@ -589,6 +588,11 @@
                         var scheme = entityAuthData.scheme;
                         encrypted = scheme.encrypts;
                     }
+
+                    // Do not allow user authentication data to be included if the message
+                    // will not be encrypted.
+                    if (!encrypted && headerData.userAuthData)
+                        throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
                     
                     entityAuthData = (!masterToken) ? entityAuthData : null;
                     var nonReplayableId = headerData.nonReplayableId;
@@ -1174,8 +1178,9 @@
      * @throws MslMasterTokenException if the header master token is not
      *         trusted and needs to be to accept this message header.
      * @throws MslMessageException if the message does not contain an entity
-     *         authentication data or a master token or the header data is
-     *         missing or the message ID is negative.
+     *         authentication data or a master token, the header data is
+     *         missing or invalid, or the message ID is negative, or the
+     *         message is not encrypted and contains user authentication data.
      * @throws MslException if a token is improperly bound to another token.
      */
     var MessageHeader$parse = function MessageHeader$parse(ctx, headerdataBytes, entityAuthData, masterToken, signature, cryptoContexts, callback) {
@@ -1259,7 +1264,7 @@
                 var keyResponseDataMo, userIdTokenMo, userAuthDataMo, tokensMa;
                 try {
                     // If the message was sent with a master token pull the sender.
-                    sender = (masterToken) ? headerdata.getString(KEY_SENDER) : null;
+                    sender = (masterToken && headerdata.has(KEY_SENDER)) ? headerdata.getString(KEY_SENDER) : null;
                     recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
                     timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
                 
@@ -1325,15 +1330,34 @@
                                         getUserAuthData(ctx, tokenVerificationMasterToken, userAuthDataMo, {
                                             result: function(userAuthData) {
                                                 AsyncExecutor(callback, function() {
-                                                    // Verify the user authentication data.
+                                                    // Identify the user if any.
                                                     var user;
                                                     if (userAuthData) {
+                                                        // Reject unencrypted messages containing user authentication data.
+                                                        var encrypted = (masterToken) ? true : entityAuthData.scheme.encrypts;
+                                                        if (!encrypted)
+                                                            throw new MslMessageException(MslError.UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
+                                                        
+                                                        // Verify the user authentication data.
                                                         var scheme = userAuthData.scheme;
                                                         var factory = ctx.getUserAuthenticationFactory(scheme);
                                                         if (!factory)
                                                             throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme).setUserIdToken(userIdToken).setUserAuthenticationData(userAuthData);
                                                         var identity = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
-                                                        user = factory.authenticate(ctx, identity, userAuthData, userIdToken);
+                                                        factory.authenticate(ctx, identity, userAuthData, userIdToken, {
+                                                            result: function(user) {
+                                                                // Service tokens are authenticated by the master token if it
+                                                                // exists or by the application crypto context.
+                                                                getServiceTokens(ctx, tokensMa, tokenVerificationMasterToken, userIdToken, cryptoContexts, headerdata, {
+                                                                    result: function(serviceTokens) {
+                                                                        buildHeader(messageCryptoContext, headerdata, messageId, sender, recipient, timestamp, keyResponseData, userIdToken, userAuthData, user, serviceTokens, callback);
+                                                                    },
+                                                                    error: callback.error,
+                                                                });
+                                                            },
+                                                            error: callback.error,
+                                                        });
+                                                        return;
                                                     } else if (userIdToken) {
                                                         user = userIdToken.user;
                                                     } else {

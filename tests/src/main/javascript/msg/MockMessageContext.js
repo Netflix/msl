@@ -75,15 +75,15 @@
         });
     }
     
-    var MockMessageContext = MessageContext.extend({
+    var MockMessageContext = module.exports = MessageContext.extend({
 	    /**
 	     * Create a new test message context.
 	     * 
 	     * The message will not be encrypted or non-replayable.
 	     * 
 	     * @param {MockMslContext} ctx MSL context.
-	     * @param {string} userId user ID.
-	     * @param {UserAuthenticationScheme} scheme user authentication scheme.
+	     * @param {?string} userId user ID. May be {@code null}.
+	     * @param {?UserAuthenticationScheme} scheme user authentication scheme. May be {@code null}.
 	     * @param {result: function(MockMessageContext), error: function(Error)}
 	     *        callback the callback that will receive the new message context
 	     *        or any thrown exceptions.
@@ -121,10 +121,10 @@
 	        
 	        function createContext(tokenEncryptionKeyA, tokenHmacKeyA, tokenEncryptionKeyB, tokenHmacKeyB) {
 	            AsyncExecutor(callback, function() {
-	                var userAuthData;
+	                var userAuthData = null;
 	                if (UserAuthenticationScheme.EMAIL_PASSWORD == scheme) {
 	                    userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL, MockEmailPasswordAuthenticationFactory.PASSWORD);
-	                } else {
+	                } else if (scheme) {
 	                    throw new MslInternalException("Unsupported authentication type: " + scheme.name);
 	                }
 
@@ -265,14 +265,14 @@
 	     * @param {UserAuthenticationData} userAuthData the new user authentication data.
 	     */
 	    setUserAuthData: function setUserAuthData(userAuthData) {
-	    	this.userAuthData = userAuthData;
+            this.userAuthData = userAuthData;
 	    },
 	
 	    /** @inheritDoc */
 	    getUserAuthData: function getUserAuthData(reauthCode, renewable, required, callback) {
-	    	// Default implementation just returns the existing user authentication
-	    	// data. Override to implement specific behavior.
-	    	callback.result(this.userAuthData);
+            // Default implementation just returns the existing user authentication
+            // data. Override to implement specific behavior.
+            callback.result(this.userAuthData);
 	    },
 	    
 	    /**
@@ -296,21 +296,21 @@
 	
 	    /** @inheritDoc */
 	    getKeyRequestData: function getKeyRequestData(callback) {
-	    	callback.result(this.keyRequestData);
+            callback.result(this.keyRequestData);
 	    },
 	
 	    /** @inheritDoc */
 	    updateServiceTokens: function updateServiceTokens(builder, handshake, callback) {
-	        // Default implementation does nothing. Override to implement specific
-	        // behavior.
-	    	callback.result(true);
+            // Default implementation does nothing. Override to implement specific
+            // behavior.
+            callback.result(true);
 	    },
 	
 	    /** @inheritDoc */
 	    write: function write(output, timeout, callback) {
-	        // Default implementation does nothing. Override to implement specific
-	        // behavior.
-	    	callback.result(true);
+            // Default implementation does nothing. Override to implement specific
+            // behavior.
+            callback.result(true);
 	    },
 	    
 	    /**
@@ -332,7 +332,7 @@
      * The message will not be encrypted or non-replayable.
      * 
      * @param {MockMslContext} ctx MSL context.
-     * @param {string} userId user ID.
+     * @param {?string} userId user ID. May be {@code null}.
      * @param {UserAuthenticationScheme} scheme user authentication scheme.
      * @param {result: function(MockMessageContext), error: function(Error)}
      *        callback the callback that will receive the new message context

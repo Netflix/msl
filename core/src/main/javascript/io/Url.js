@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,15 +37,8 @@
 	var ByteArrayOutputStream = require('../io/ByteArrayOutputStream.js');
 	var BlockingQueue = require('../util/BlockingQueue.js');
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
-	
-	var textEncoding = require('../lib/textEncoding.js');
-	
-    /**
-     * UTF-8 charset.
-     * @const
-     * @type {string}
-     */
-    var UTF_8 = 'utf-8';
+	var TextEncoding = require('../util/TextEncoding.js');
+	var MslConstants = require('../MslConstants.js');
 	
     /**
      * Interface for getting an HTTP response given a request.
@@ -224,6 +217,7 @@
             var props = {
                 _out: { value: out, writable: false, enumerable: false, configurable: false },
                 _buffer: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _readlimit: { value: -1, writable: true, enumerable: false, configurable: false },
                 _exception: { value: undefined, writable: true, enumerable: false, configurable: false },
                 _timedout: { value: false, writable: true, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
@@ -248,11 +242,13 @@
         },
 
         /** @inheritDoc */
-        mark: function mark() {
+        mark: function mark(readlimit) {
             if (this._buffer)
-                this._buffer.mark();
-            // If the buffer doesn't exist yet, it is implicitly marked as that
-            // is the behavior of ByteArrayInputStream.
+                this._buffer.mark(readlimit);
+            // If the buffer doesn't exist yet, we must remember to mark it
+            // after it is created.
+            else
+                this._readlimit = readlimit;
         },
 
         /** @inheritDoc */
@@ -306,8 +302,8 @@
                 if (!this._buffer) {
                     this._out.close(timeout, {
                         result: function(success) { processResponse(success); },
-                        timeout: function() { callback.timeout(); },
-                        error: function(e) { callback.error(e); }
+                        timeout: callback.timeout,
+                        error: callback.error,
                     });
                 }
 
@@ -363,12 +359,14 @@
                                 else if (result.response.content instanceof Uint8Array)
                                     content = result.response.content;
                                 else if (typeof result.response.body === 'string')
-                                    content = textEncoding.getBytes(result.response.body, UTF_8);
+                                    content = TextEncoding.getBytes(result.response.body, MslConstants.DEFAULT_CHARSET);
                                 else
                                     throw new MslIoException("Missing HTTP response content.");
                                 
                                 // Read from the response.
                                 this._buffer = new ByteArrayInputStream(content);
+                                if (this._readlimit != -1)
+                                    this._buffer.mark(this._readlimit);
                                 this._buffer.read(len, timeout, callback);
                             }, self);
                         },
@@ -408,7 +406,12 @@
         },
 
         /**
-         * Open a new connection to the target location.
+         * <p>Open a new connection to the target location.</p>
+         * 
+         * <p>The returned input stream must support
+         * {@link InputStream#mark(int)}, {@link InputStream#reset()}, and
+         * {@link InputStream#skip(long)} if you wish to use it for more than
+         * one MSL message.</p>
          *
          * @return {{input: InputStream, output: OutputStream}} the input and
          *         output streams.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,8 +165,8 @@
 	    USERIDTOKEN_USERDATA_PARSE_ERROR : new MslError(2018, MslConstants.ResponseCode.USER_REAUTH, "Error parsing user ID token user data."),
 	    USERIDTOKEN_REVOKED : new MslError(2019, MslConstants.ResponseCode.USER_REAUTH, "User ID token is revoked."),
 	    USERIDTOKEN_REJECTED_BY_APP : new MslError(2020, MslConstants.ResponseCode.USERDATA_REAUTH, "User ID token is rejected by the application."),
-	
-	    // 3 Service Token
+
+        // 3 Service Token
 	    SERVICETOKEN_MASTERTOKEN_MISMATCH : new MslError(3000, MslConstants.ResponseCode.FAIL, "Service token master token serial number does not match master token serial number."),
 	    SERVICETOKEN_USERIDTOKEN_MISMATCH : new MslError(3001, MslConstants.ResponseCode.FAIL, "Service token user ID token serial number does not match user ID token serial number."),
 	    SERVICETOKEN_SERVICEDATA_INVALID : new MslError(3002, MslConstants.ResponseCode.FAIL, "Service token data invalid."),
@@ -222,8 +222,9 @@
 	    USERIDTOKEN_IDENTITY_NOT_ASSOCIATED_WITH_ENTITY : new MslError(5040, MslConstants.ResponseCode.USER_REAUTH, "The entity is not associated with the user."),
 	    USERAUTH_ENTITYUSER_INCORRECT_DATA : new MslError(5041, MslConstants.ResponseCode.USERDATA_REAUTH, "Entity and user combination used incorrect user authentication data type."),
 	    USERAUTH_VERIFICATION_FAILED : new MslError(5042, MslConstants.ResponseCode.USERDATA_REAUTH, "User authentication data signature verification failed."),
-	    
-	    // 6 Message
+        USERAUTH_USERIDTOKEN_REVOKE_CHECK_ERROR : new MslError(5043, MslConstants.ResponseCode.USERDATA_REAUTH, "User ID token could not be checked for revocation."),
+
+        // 6 Message
 	    UNSUPPORTED_COMPRESSION : new MslError(6000, MslConstants.ResponseCode.FAIL, "Unsupported compression algorithm."),
 	    COMPRESSION_ERROR : new MslError(6001, MslConstants.ResponseCode.FAIL, "Error compressing data."),
 	    UNCOMPRESSION_ERROR : new MslError(6002, MslConstants.ResponseCode.FAIL, "Error uncompressing data."),
@@ -266,6 +267,7 @@
 	    MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED : new MslError(6039, MslConstants.ResponseCode.ENTITY_REAUTH, "Message header master token-based signature verification failed."),
 	    MESSAGE_REPLAYED_UNRECOVERABLE : new MslError(6040, MslConstants.ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover."),
 	    UNEXPECTED_LOCAL_MESSAGE_SENDER : new MslError(6041, MslConstants.ResponseCode.FAIL, "Message sender is equal to the local entity."),
+	    UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA : new MslError(6042, MslConstants.ResponseCode.FAIL, "User authentication data included in unencrypted message header."),
 
 	    // 7 Key Exchange
 	    UNIDENTIFIED_KEYX_SCHEME : new MslError(7000, MslConstants.ResponseCode.FAIL, "Unable to identify key exchange scheme."),

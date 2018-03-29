@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,7 @@ describe("MessageBuilder", function() {
     var AsymmetricWrappedExchange = require('msl-core/keyx/AsymmetricWrappedExchange.js');
     var UserIdToken = require('msl-core/tokens/UserIdToken.js');
     var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
-    
-    var textEncoding = require('msl-core/lib/textEncoding.js');
+    var TextEncoding = require('msl-core/util/TextEncoding.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -2356,7 +2355,7 @@ describe("MessageBuilder", function() {
             
 		    if (!initialized) {
 		        runs(function() {
-		        	ISSUER_DATA = encoder.parseObject(textEncoding.getBytes("{ \"issuerid\" : 17 }"));
+		        	ISSUER_DATA = encoder.parseObject(TextEncoding.getBytes("{ \"issuerid\" : 17 }"));
 		        	
 		            MslTestUtils.generateRsaKeys(WebCryptoAlgorithm.RSA_OAEP, WebCryptoUsage.WRAP_UNWRAP, 2048, {
 		                result: function(publicKey, privateKey) {

@@ -18,6 +18,7 @@ package com.netflix.msl.client.tests;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URISyntaxException;
 import java.security.InvalidAlgorithmParameterException;
@@ -55,6 +56,7 @@ public class MasterTokenTests extends BaseTestClass {
 
     private static final String PATH = "/test";
     private static final int TIME_OUT = 60000; // 60 Seconds
+    private static final String USER_ID = "userId";
 
     @BeforeClass
     public void setup() throws IOException, URISyntaxException, MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException {
@@ -71,6 +73,7 @@ public class MasterTokenTests extends BaseTestClass {
                 .setPath(PATH)
                 .setNumThreads(numThreads)
                 .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
+                .setUserId(USER_ID)
                 .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
                 .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
         clientConfig.commitConfiguration();
@@ -93,7 +96,7 @@ public class MasterTokenTests extends BaseTestClass {
             final Connection connection = remoteEntity.openConnection();
 
             out = connection.getOutputStream();
-            in = new DelayedInputStream(connection);
+            in = connection.getInputStream();
         } catch (final IOException e) {
             if(out != null) out.close();
             if(in != null) in.close();
@@ -231,5 +234,5 @@ public class MasterTokenTests extends BaseTestClass {
     private final int numThreads = 0;
     private ServerConfiguration serverConfig;
     private OutputStream out;
-    private DelayedInputStream in;
+    private InputStream in;
 }

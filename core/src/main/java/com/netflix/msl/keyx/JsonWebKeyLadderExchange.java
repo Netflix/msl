@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2013-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2013-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,7 +402,7 @@ public class JsonWebKeyLadderExchange extends KeyExchangeFactory {
      * web key string representation's binary encoding for compatibility with
      * the wrapping algorithm used.</p> 
      */
-    public static abstract class JwkCryptoContext implements ICryptoContext {
+    public static abstract class JwkCryptoContext extends ICryptoContext {
         /* (non-Javadoc)
          * @see com.netflix.msl.crypto.ICryptoContext#encrypt(byte[], com.netflix.msl.io.MslEncoderFactory, com.netflix.msl.io.MslEncoderFormat)
          */

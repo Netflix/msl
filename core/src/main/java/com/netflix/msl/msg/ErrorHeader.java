@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -309,7 +309,7 @@ public class ErrorHeader extends Header {
         }
         final byte[] signature;
         try {
-            signature = cryptoContext.sign(ciphertext, encoder, format);
+            signature = cryptoContext.sign(ciphertext, encoder, format, this);
         } catch (final MslCryptoException e) {
             throw new MslEncoderException("Error signing the error data.", e);
         }
