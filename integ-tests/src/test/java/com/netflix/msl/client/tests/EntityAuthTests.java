@@ -15,6 +15,9 @@
  */
 package com.netflix.msl.client.tests;
 
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.security.InvalidAlgorithmParameterException;
@@ -27,6 +30,8 @@ import org.testng.annotations.Test;
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
+import com.netflix.msl.MslError;
+import com.netflix.msl.MslException;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.client.common.BaseTestClass;
 import com.netflix.msl.client.configuration.ClientConfiguration;
@@ -46,6 +51,7 @@ public class EntityAuthTests extends BaseTestClass {
     private static final int TIME_OUT = 60000; //60 seconds
     private static final String PATH = "/test";
     private static final String USER_ID = "userId";
+    private static final String INVALID_ENTITY_IDENTITY = "invalidEntityIdentity";
 
     @BeforeMethod
     public void setup() throws IOException, URISyntaxException {
@@ -55,6 +61,60 @@ public class EntityAuthTests extends BaseTestClass {
                     .setHost(getRemoteEntityUrl())
                     .setPath(PATH);
             serverConfig.commitToServer();
+        }
+    }
+    
+    @Test(testName = "Correct Remote Entity Identity")
+    public void correctRemoteEntityIdentity() throws MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException, URISyntaxException, IOException, ExecutionException, InterruptedException {
+        clientConfig = new ClientConfiguration()
+            .setScheme("http")
+            .setHost(getRemoteEntityUrl())
+            .setPath(PATH)
+            .setNumThreads(numThreads)
+            .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
+            .setIsPeerToPeer(false)
+            // FIXME There should be a better way to know the remote entity identity for this test.
+            .setRemoteEntityIdentity("MOCKUNAUTH-ESN")
+            .setUserId(USER_ID)
+            .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
+            .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        clientConfig.commitConfiguration();
+
+        MessageInputStream message = sendReceive(TIME_OUT);
+
+        thenThe(message)
+                .shouldBe().validFirstEntityAuthPSKMsg()
+                .shouldHave().validBuffer();
+
+        message = sendReceive(TIME_OUT);
+
+        thenThe(message)
+                .shouldBe().validateSecondMsg()
+                .shouldHave().validBuffer();
+    }
+    
+    @Test(testName = "Incorrect Remote Entity Identity")
+    public void incorrectRemoteEntityIdentity() throws MslCryptoException, MslEncodingException, InvalidAlgorithmParameterException, NoSuchAlgorithmException, MslKeyExchangeException, URISyntaxException, IOException, ExecutionException, InterruptedException {
+        clientConfig = new ClientConfiguration()
+            .setScheme("http")
+            .setHost(getRemoteEntityUrl())
+            .setPath(PATH)
+            .setNumThreads(numThreads)
+            .setEntityAuthenticationScheme(EntityAuthenticationScheme.PSK)
+            .setIsPeerToPeer(false)
+            .setRemoteEntityIdentity(INVALID_ENTITY_IDENTITY)
+            .setUserId(USER_ID)
+            .setUserAuthenticationScheme(UserAuthenticationScheme.EMAIL_PASSWORD)
+            .setKeyRequestData(KeyExchangeScheme.SYMMETRIC_WRAPPED);
+        clientConfig.commitConfiguration();
+        
+        try {
+            sendReceive(TIME_OUT);
+        } catch (final ExecutionException e) {
+            final Throwable cause = e.getCause();
+            assertTrue(cause instanceof MslException);
+            final MslException me = (MslException)cause;
+            assertEquals(MslError.MESSAGE_SENDER_MISMATCH, me.getError());
         }
     }
 

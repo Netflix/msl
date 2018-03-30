@@ -68,6 +68,7 @@ public class ClientConfiguration {
     private String scheme = "http";
     private String remoteHost = "localhost";
     private String path = "";
+    private String remoteEntityIdentity = null;
     private String userId = null;
     private boolean isPeerToPeer = false;
     private EntityAuthenticationScheme entityAuthenticationScheme = EntityAuthenticationScheme.PSK;
@@ -91,7 +92,10 @@ public class ClientConfiguration {
         return this;
     }
 
-
+    public ClientConfiguration setRemoteEntityIdentity(final String identity) {
+        remoteEntityIdentity = identity;
+        return this;
+    }
 
     public ClientConfiguration setUserAuthenticationScheme(final UserAuthenticationScheme scheme) {
         userAuthenticationScheme = scheme;
@@ -236,6 +240,8 @@ public class ClientConfiguration {
 
         /** create message context and configure */
         messageContext = new ClientMessageContext(mslContext, userId, userAuthenticationScheme, isMessageEncrypted, isIntegrityProtected);
+        if (remoteEntityIdentity != null)
+            messageContext.setRemoteEntityIdentity(remoteEntityIdentity);
         messageContext.resetKeyRequestData(keyExchangeScheme);
         if(this.clearKeyRequestData) {
             messageContext.clearKeyRequestData();
