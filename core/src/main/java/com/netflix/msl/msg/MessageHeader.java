@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,9 +58,9 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * <p>If a master token exists, the header data chunks will be encrypted and
- * verified using the master token. The sender will also be included. If no
- * master token exists, the header data will be verified and encrypted based on
- * the entity authentication scheme.</p>
+ * verified using the master token. If no master token exists, the header data
+ * will be verified and encrypted based on the entity authentication
+ * scheme.</p>
  *
  * <p>If peer tokens exist, the message recipient is expected to use the peer
  * master token to secure its response and send the peer user ID token and peer
@@ -76,8 +76,6 @@ import com.netflix.msl.util.MslContext;
  * {@code
  * headerdata = {
  *   "#mandatory" : [ "messageid", "renewable", "handshake" ],
- *   "sender" : "string",
- *   "recipient" : "string",
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "nonreplayableid" : "int64(0,2^53^)",
@@ -94,8 +92,6 @@ import com.netflix.msl.util.MslContext;
  *   "peerservicetokens" : [ servicetoken ]
  * }} where:
  * <ul>
- * <li>{@code sender} is the sender entity identity</li>
- * <li>{@code recipient} is the intended recipient's entity identity</li>
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code nonreplayableid} is the non-replayable ID</li>
@@ -119,10 +115,6 @@ public class MessageHeader extends Header {
     private static final long MILLISECONDS_PER_SECOND = 1000;
 
     // Message header data.
-    /** Key sender. */
-    private static final String KEY_SENDER = "sender";
-    /** Key recipient. */
-    private static final String KEY_RECIPIENT = "recipient";
     /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
     /** Key message ID. */
@@ -161,8 +153,6 @@ public class MessageHeader extends Header {
      */
     public static class HeaderData {
         /**
-         * @param recipient the message recipient's entity identity. May be
-         *        null.
          * @param messageId the message ID.
          * @param nonReplayableId the message's non-replayable ID. May be null.
          * @param renewable the message's renewable flag.
@@ -179,14 +169,13 @@ public class MessageHeader extends Header {
          *        authentication for this message.
          * @param serviceTokens the service tokens. May be null or empty.
          */
-        public HeaderData(final String recipient, final long messageId, final Long nonReplayableId,
+        public HeaderData(final long messageId, final Long nonReplayableId,
             final boolean renewable, final boolean handshake,
             final MessageCapabilities capabilities,
             final Set<KeyRequestData> keyRequestData, final KeyResponseData keyResponseData,
             final UserAuthenticationData userAuthData, final UserIdToken userIdToken,
             final Set<ServiceToken> serviceTokens)
         {
-            this.recipient = recipient;
             this.messageId = messageId;
             this.nonReplayableId = nonReplayableId;
             this.renewable = renewable;
@@ -199,7 +188,6 @@ public class MessageHeader extends Header {
             this.serviceTokens = serviceTokens;
         }
 
-        public final String recipient;
         public final long messageId;
         public final Long nonReplayableId;
         public final boolean renewable;
@@ -269,7 +257,8 @@ public class MessageHeader extends Header {
         if (entityAuthData == null && masterToken == null)
             throw new MslInternalException("Message entity authentication data or master token must be provided.");
 
-        // Only include the recipient if the message will be encrypted.
+        // Do not allow user authentication data to be included if the message
+        // will not be encrypted.
         final boolean encrypted;
         if (masterToken != null) {
             encrypted = true;
@@ -277,9 +266,6 @@ public class MessageHeader extends Header {
             final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
             encrypted = scheme.encrypts();
         }
-
-        // Do not allow user authentication data to be included if the message
-        // will not be encrypted.
         if (!encrypted && headerData.userAuthData != null)
             throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
 
@@ -289,8 +275,6 @@ public class MessageHeader extends Header {
         this.renewable = headerData.renewable;
         this.handshake = headerData.handshake;
         this.capabilities = headerData.capabilities;
-        this.sender = (this.masterToken != null) ? ctx.getEntityAuthenticationData(null).getIdentity() : null;
-        this.recipient = (encrypted) ? headerData.recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = headerData.messageId;
         this.keyRequestData = Collections.unmodifiableSet((headerData.keyRequestData != null) ? headerData.keyRequestData : new HashSet<KeyRequestData>());
@@ -357,8 +341,6 @@ public class MessageHeader extends Header {
         try {
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
             headerdata = encoder.createObject();
-            if (this.sender != null) headerdata.put(KEY_SENDER, this.sender);
-            if (this.recipient != null) headerdata.put(KEY_RECIPIENT, this.recipient);
             headerdata.put(KEY_TIMESTAMP, this.timestamp);
             headerdata.put(KEY_MESSAGE_ID, this.messageId);
             headerdata.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);
@@ -541,9 +523,6 @@ public class MessageHeader extends Header {
         }
 
         try {
-            // If the message was sent with a master token pull the sender.
-            this.sender = (this.masterToken != null && headerdata.has(KEY_SENDER)) ? headerdata.getString(KEY_SENDER) : null;
-            this.recipient = (headerdata.has(KEY_RECIPIENT)) ? headerdata.getString(KEY_RECIPIENT) : null;
             this.timestamp = (headerdata.has(KEY_TIMESTAMP)) ? headerdata.getLong(KEY_TIMESTAMP) : null;
 
             // Pull key response data.
@@ -757,22 +736,6 @@ public class MessageHeader extends Header {
     }
 
     /**
-     * @return the sender entity identity. Will be {@code null} if the message
-     *         is using entity authentication data.
-     */
-    public String getSender() {
-        return sender;
-    }
-
-    /**
-     * @return the recipient entity identity. Will be {@code null} if there is
-     *         no specified recipient.
-     */
-    public String getRecipient() {
-        return recipient;
-    }
-
-    /**
      * @return the timestamp. May be null.
      */
     public Date getTimestamp() {
@@ -947,10 +910,6 @@ public class MessageHeader extends Header {
         final MessageHeader that = (MessageHeader) obj;
         return (masterToken != null && masterToken.equals(that.masterToken) ||
             entityAuthData != null && entityAuthData.equals(that.entityAuthData)) &&
-            (sender != null && sender.equals(that.sender) ||
-             sender == that.sender) &&
-            (recipient != null && recipient.equals(that.recipient) ||
-             recipient == that.recipient) &&
             (timestamp != null && timestamp.equals(that.timestamp) ||
              timestamp == null && that.timestamp == null) &&
             messageId == that.messageId &&
@@ -981,8 +940,6 @@ public class MessageHeader extends Header {
     @Override
     public int hashCode() {
         return ((masterToken != null) ? masterToken.hashCode() : entityAuthData.hashCode()) ^
-            ((sender != null) ? sender.hashCode() : 0) ^
-            ((recipient != null) ? recipient.hashCode() : 0) ^
             ((timestamp != null) ? timestamp.hashCode() : 0) ^
             Long.valueOf(messageId).hashCode() ^
             ((nonReplayableId != null) ? nonReplayableId.hashCode() : 0) ^
@@ -1006,10 +963,6 @@ public class MessageHeader extends Header {
     /** Header data. */
     private final MslObject headerdata;
 
-    /** Sender. */
-    private final String sender;
-    /** Recipient. */
-    private final String recipient;
     /** Timestamp in seconds since the epoch. */
     private final Long timestamp;
     /** Message ID. */

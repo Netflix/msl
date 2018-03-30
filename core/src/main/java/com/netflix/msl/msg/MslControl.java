@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -782,27 +782,6 @@ public class MslControl {
     }
     
     /**
-     * Returns the provided message's entity identity from the master token or
-     * entity authentication data, if it can be determined.
-     * 
-     * @param mis the message input stream.
-     * @return the message header's entity identity or null if unknown.
-     * @throws MslCryptoException if there is a crypto error accessing the
-     *         entity identity.
-     */
-    private static String getIdentity(final MessageInputStream mis) throws MslCryptoException {
-        final MessageHeader header = mis.getMessageHeader();
-        if (header == null)
-            throw new MslInternalException("This method should not be called with an error message.");
-        
-        final MasterToken masterToken = header.getMasterToken();
-        if (masterToken != null)
-            return masterToken.getIdentity();
-        final EntityAuthenticationData entityAuthData = header.getEntityAuthenticationData();
-        return entityAuthData.getIdentity();
-    }
-    
-    /**
      * Create a new instance of MSL control with the specified number of
      * threads. A thread count of zero will cause all operations to execute on
      * the calling thread.
@@ -1118,8 +1097,7 @@ public class MslControl {
         }
         
         try {
-            final String recipient = msgCtx.getRecipient();
-            final MessageBuilder builder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient);
+            final MessageBuilder builder = MessageBuilder.createRequest(ctx, masterToken, userIdToken);
             builder.setNonReplayable(msgCtx.isNonReplayable());
             return builder;
         } catch (final MslException e) {
@@ -1295,8 +1273,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
-                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, recipient, messageId);
+                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1330,8 +1307,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
-                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, null, recipient, messageId);
+                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1347,8 +1323,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
-                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, recipient, messageId);
+                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1382,8 +1357,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
-                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId);
+                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1426,8 +1400,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
-                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId);
+                final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1775,22 +1748,6 @@ public class MslControl {
             // Process the response.
             final String localIdentity = ctx.getEntityAuthenticationData(null).getIdentity();
             if (responseHeader != null) {
-                // Reject messages if the local entity is the issuer of the master
-                // token and the sender is not equal to the master token identity,
-                // or if the remote entity identity is equal to this entity
-                // identity.
-                final String sender = (masterToken != null) ? responseHeader.getSender() : entityAuthData.getIdentity();
-                if (masterToken != null && masterToken.isDecrypted() && sender != null && !masterToken.getIdentity().equals(sender))
-                    throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.getIdentity());
-                if (localIdentity != null && localIdentity.equals(sender))
-                    throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
-
-                // Reject messages if the message recipient is specified and not
-                // equal to the local entity.
-                final String recipient = responseHeader.getRecipient();
-                if (recipient != null && localIdentity != null && !recipient.equals(localIdentity))
-                    throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
-
                 // If there is a request update the stored crypto contexts.
                 if (request != null)
                     updateCryptoContexts(ctx, request, response);
@@ -2264,7 +2221,6 @@ public class MslControl {
      * @param debugCtx message debug context.
      * @param requestHeader message the error is being sent in response to. May
      *        be {@code null}.
-     * @param recipient error response recipient. May be {@code null}.
      * @param messageId request message ID. May be {@code null}.
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be
@@ -2279,9 +2235,9 @@ public class MslControl {
      *         returned by the MSL context.
      * @throws IOException if there is an error sending the error response.
      */
-    private void sendError(final MslContext ctx, final MessageDebugContext debugCtx, final MessageHeader requestHeader, final String recipient, final Long messageId, final MslError error, final String userMessage, final OutputStream out) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException, IOException {
+    private void sendError(final MslContext ctx, final MessageDebugContext debugCtx, final MessageHeader requestHeader, final Long messageId, final MslError error, final String userMessage, final OutputStream out) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException, IOException {
         // Create error header.
-        final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, recipient, messageId, error, userMessage);
+        final ErrorHeader errorHeader = MessageBuilder.createErrorResponse(ctx, messageId, error, userMessage);
         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
         
         // Determine encoder format.
@@ -2363,12 +2319,9 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    final MasterToken masterToken = e.getMasterToken();
-                    final EntityAuthenticationData entityAuthData = e.getEntityAuthenticationData();
-                    final String recipient = (masterToken != null) ? masterToken.getIdentity() : ((entityAuthData != null) ? entityAuthData.getIdentity() : null);
                     final MslError error = e.getError();
                     final String userMessage = messageRegistry.getUserMessage(error, null);
-                    sendError(ctx, debugCtx, null, recipient, e.getMessageId(), error, userMessage, out);
+                    sendError(ctx, debugCtx, null, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2382,7 +2335,7 @@ public class MslControl {
                 
                 // Maybe we can send an error response.
                 try {
-                    sendError(ctx, debugCtx, null, null, null, MslError.MSL_COMMS_FAILURE, null, out);
+                    sendError(ctx, debugCtx, null, null, MslError.MSL_COMMS_FAILURE, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2396,7 +2349,7 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    sendError(ctx, debugCtx, null, null, null, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, null, null, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2422,12 +2375,9 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    final MasterToken masterToken = e.getMasterToken();
-                    final EntityAuthenticationData entityAuthData = e.getEntityAuthenticationData();
-                    final String recipient = (masterToken != null) ? masterToken.getIdentity() : ((entityAuthData != null) ? entityAuthData.getIdentity() : null);
                     final MslError error = e.getError();
                     final String userMessage = messageRegistry.getUserMessage(error, null);
-                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2441,9 +2391,8 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    final String recipient = request.getIdentity();
                     final Long requestMessageId = requestHeader.getMessageId();
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2468,12 +2417,11 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    final String recipient = request.getIdentity();
                     final MslError error = e.getError();
                     final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                     final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
-                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2487,9 +2435,8 @@ public class MslControl {
                 
                 // Try to send an error response.
                 try {
-                    final String recipient = request.getIdentity();
                     final Long requestMessageId = requestHeader.getMessageId();
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2520,13 +2467,12 @@ public class MslControl {
                     
                     // Try to send an error response.
                     try {
-                        final String recipient = request.getIdentity();
                         final Long requestMessageId = requestHeader.getMessageId();
                         final MslError error = e.getError();
                         final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                         final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                         final String userMessage = messageRegistry.getUserMessage(error, languages);
-                        sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                        sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
                         if (cancelled(rt)) return null;
@@ -2540,9 +2486,8 @@ public class MslControl {
                     
                     // Maybe we can send an error response.
                     try {
-                        final String recipient = request.getIdentity();
                         final Long requestMessageId = requestHeader.getMessageId();
-                        sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
+                        sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
                         if (cancelled(rt)) return null;
@@ -2556,9 +2501,8 @@ public class MslControl {
                     
                     // Try to send an error response.
                     try {
-                        final String recipient = request.getIdentity();
                         final Long requestMessageId = requestHeader.getMessageId();
-                        sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                        sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
                         if (cancelled(rt)) return null;
@@ -2675,9 +2619,8 @@ public class MslControl {
                 if (securityRequired != null) {
                     // Try to send an error response.
                     try {
-                        final String recipient = MslControl.getIdentity(request);
                         final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                        sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, securityRequired, null, out);
+                        sendError(ctx, debugCtx, requestHeader, requestMessageId, securityRequired, null, out);
                         return null;
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
@@ -2693,9 +2636,8 @@ public class MslControl {
                 if (msgCtx.getUser() != null && builder.getMasterToken() == null && builder.getKeyExchangeData() == null) {
                     // Try to send an error response.
                     try {
-                        final String recipient = MslControl.getIdentity(request);
                         final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                        sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, out);
+                        sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, out);
                         return null;
                     } catch (final Throwable rt) {
                         // If we were cancelled then return null.
@@ -2756,9 +2698,8 @@ public class MslControl {
                 // response.
                 releaseMasterToken(ctx, builder.getMasterToken());
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, out);
                     return null;
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
@@ -2870,12 +2811,11 @@ public class MslControl {
                 if (cancelled(e)) return null;
                 
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final MslError error = e.getError();
                     final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                     final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
-                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the response.", rt, e);
                 }
@@ -2885,8 +2825,7 @@ public class MslControl {
                 if (cancelled(t)) return null;
                 
                 try {
-                    final String recipient = MslControl.getIdentity(request);
-                    sendError(ctx, debugCtx, requestHeader, recipient, null, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, null, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the response.", rt, t);
                 }
@@ -2918,9 +2857,8 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2934,13 +2872,12 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     final MslError error = e.getError();
                     final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                     final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -2954,9 +2891,8 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -3035,11 +2971,10 @@ public class MslControl {
                 }
                 
                 // Build and send the error response.
-                final String recipient = MslControl.getIdentity(request);
                 final MessageCapabilities caps = header.getMessageCapabilities();
                 final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                 final String userMessage = messageRegistry.getUserMessage(error, languages);
-                sendError(ctx, debugCtx, header, recipient, header.getMessageId(), error, userMessage, out);
+                sendError(ctx, debugCtx, header, header.getMessageId(), error, userMessage, out);
                 
                 // Success.
                 return Boolean.TRUE;
@@ -3657,12 +3592,11 @@ public class MslControl {
                 if (cancelled(e)) return null;
                 
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final MslError error = e.getError();
                     final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                     final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
-                    sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the message.", rt, e);
                 }
@@ -3672,8 +3606,7 @@ public class MslControl {
                 if (cancelled(t)) return null;
                 
                 try {
-                    final String recipient = MslControl.getIdentity(request);
-                    sendError(ctx, debugCtx, requestHeader, recipient, null, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, null, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     throw new MslErrorResponseException("Error building the message.", rt, t);
                 }
@@ -3699,9 +3632,8 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.MSL_COMMS_FAILURE, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -3715,13 +3647,12 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                     final MslError error = e.getError();
                     final MessageCapabilities caps = requestHeader.getMessageCapabilities();
                     final List<String> languages = (caps != null) ? caps.getLanguages() : null;
                     final String userMessage = messageRegistry.getUserMessage(error, languages);
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;
@@ -3735,9 +3666,8 @@ public class MslControl {
 
                 // Maybe we can send an error response.
                 try {
-                    final String recipient = MslControl.getIdentity(request);
                     final long requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
+                    sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError.INTERNAL_EXCEPTION, null, out);
                 } catch (final Throwable rt) {
                     // If we were cancelled then return null.
                     if (cancelled(rt)) return null;

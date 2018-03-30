@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,8 +77,6 @@ public class ErrorHeaderTest {
     private static final String KEY_SIGNATURE = "signature";
     
     // Message error data.
-    /** Key recipient. */
-    private static final String KEY_RECIPIENT = "recipient";
     /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
     /** Key message ID. */
@@ -127,7 +125,6 @@ public class ErrorHeaderTest {
     private static ICryptoContext cryptoContext;
     
     private static EntityAuthenticationData ENTITY_AUTH_DATA;
-    private static final String RECIPIENT = "recipient";
     private static final long MESSAGE_ID = 17;
     private static final ResponseCode ERROR_CODE = ResponseCode.FAIL;
     private static final int INTERNAL_CODE = 621;
@@ -155,20 +152,19 @@ public class ErrorHeaderTest {
 
     @Test
     public void ctors() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         assertEquals(ENTITY_AUTH_DATA, errorHeader.getEntityAuthenticationData());
         assertEquals(ERROR_CODE, errorHeader.getErrorCode());
         assertEquals(ERROR_MSG, errorHeader.getErrorMessage());
         assertEquals(INTERNAL_CODE, errorHeader.getInternalCode());
         assertEquals(MESSAGE_ID, errorHeader.getMessageId());
         assertEquals(USER_MSG, errorHeader.getUserMessage());
-        assertEquals(RECIPIENT, errorHeader.getRecipient());
         assertTrue(isAboutNow(errorHeader.getTimestamp()));
     }
     
     @Test
     public void mslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, UnsupportedEncodingException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
@@ -179,7 +175,6 @@ public class ErrorHeaderTest {
         final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
 
-        assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
         assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
@@ -190,7 +185,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void negativeInternalCodeMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG);
         assertEquals(-1, errorHeader.getInternalCode());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
@@ -202,7 +197,6 @@ public class ErrorHeaderTest {
         final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
 
-        assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
@@ -212,31 +206,8 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void nullRecipientMslObject() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslEncoderException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        assertNull(errorHeader.getRecipient());
-        
-        final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
-        final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-        assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, ENTITY_AUTH_DATA), entityAuthDataMo));
-        final byte[] ciphertext = mo.getBytes(KEY_ERRORDATA);
-        final byte[] plaintext = cryptoContext.decrypt(ciphertext, encoder);
-        final MslObject errordata = encoder.parseObject(plaintext);
-        final byte[] signature = mo.getBytes(KEY_SIGNATURE);
-        assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
-
-        assertFalse(errordata.has(KEY_RECIPIENT));
-        assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
-        assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
-        assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
-        assertEquals(INTERNAL_CODE, errordata.getInt(KEY_INTERNAL_CODE));
-        assertEquals(ERROR_MSG, errordata.getString(KEY_ERROR_MESSAGE));
-        assertEquals(USER_MSG, errordata.getString(KEY_USER_MESSAGE));
-    }
-    
-    @Test
     public void nullErrorMessageMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG);
         assertNull(errorHeader.getErrorMessage());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
@@ -248,7 +219,6 @@ public class ErrorHeaderTest {
         final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
 
-        assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
@@ -259,7 +229,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void nullUserMessageMslObject() throws MslEncodingException, MslEntityAuthException, MslEncoderException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null);
         assertNull(errorHeader.getUserMessage());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
@@ -271,7 +241,6 @@ public class ErrorHeaderTest {
         final byte[] signature = mo.getBytes(KEY_SIGNATURE);
         assertTrue(cryptoContext.verify(ciphertext, signature, encoder));
 
-        assertEquals(RECIPIENT, errordata.getString(KEY_RECIPIENT));
         assertTrue(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, errordata.getLong(KEY_MESSAGE_ID));
         assertEquals(ERROR_CODE.intValue(), errordata.getInt(KEY_ERROR_CODE));
@@ -282,7 +251,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void parseHeader() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         final Header header = Header.parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
         assertNotNull(header);
@@ -295,7 +264,6 @@ public class ErrorHeaderTest {
         assertEquals(errorHeader.getErrorMessage(), moErrorHeader.getErrorMessage());
         assertEquals(errorHeader.getInternalCode(), moErrorHeader.getInternalCode());
         assertEquals(errorHeader.getMessageId(), moErrorHeader.getMessageId());
-        assertEquals(errorHeader.getRecipient(), moErrorHeader.getRecipient());
         assertEquals(errorHeader.getUserMessage(), moErrorHeader.getUserMessage());
     }
     
@@ -304,7 +272,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
-        new ErrorHeader(ctx, null, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        new ErrorHeader(ctx, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     }
     
     @Test
@@ -312,7 +280,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         assertNotNull(errorHeaderMo.remove(KEY_ENTITY_AUTHENTICATION_DATA));
@@ -325,7 +293,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         errorHeaderMo.put(KEY_ENTITY_AUTHENTICATION_DATA, "x");
@@ -338,7 +306,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         assertNotNull(errorHeaderMo.remove(KEY_SIGNATURE));
@@ -351,7 +319,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         errorHeaderMo.put(KEY_SIGNATURE, false);
@@ -364,7 +332,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.MESSAGE_VERIFICATION_FAILED);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         errorHeaderMo.put(KEY_SIGNATURE, Base64.decode("AAA="));
@@ -377,7 +345,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         assertNotNull(errorHeaderMo.remove(KEY_ERRORDATA));
@@ -390,7 +358,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslCryptoException.class);
         thrown.expectMslError(MslError.CIPHERTEXT_ENVELOPE_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // This tests invalid but trusted error data so we must sign it.
@@ -408,7 +376,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.HEADER_DATA_MISSING);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // This tests empty but trusted error data so we must sign it.
@@ -422,7 +390,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void missingTimestamp() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -449,7 +417,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -476,7 +444,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -503,7 +471,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslEncodingException.class);
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -527,12 +495,12 @@ public class ErrorHeaderTest {
     
     @Test(expected = MslInternalException.class)
     public void negativeMessageIdCtor() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-        new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        new ErrorHeader(ctx, ENTITY_AUTH_DATA, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     }
     
     @Test(expected = MslInternalException.class)
     public void tooLargeMessageIdCtor() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-        new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MslConstants.MAX_LONG_VALUE + 1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        new ErrorHeader(ctx, ENTITY_AUTH_DATA, MslConstants.MAX_LONG_VALUE + 1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     }
     
     @Test
@@ -540,7 +508,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -567,7 +535,7 @@ public class ErrorHeaderTest {
         thrown.expect(MslMessageException.class);
         thrown.expectMslError(MslError.MESSAGE_ID_OUT_OF_RANGE);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -595,7 +563,7 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -623,7 +591,7 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
 
         // Before modifying the error data we need to decrypt it.
@@ -647,7 +615,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void missingInternalCode() throws MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -676,7 +644,7 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.MSL_PARSE_ERROR);
         thrown.expectMessageId(MESSAGE_ID);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -704,7 +672,7 @@ public class ErrorHeaderTest {
         thrown.expectMslError(MslError.INTERNAL_CODE_NEGATIVE);
         thrown.expectMessageId(MESSAGE_ID);
 
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -728,7 +696,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void missingErrorMessage() throws UnsupportedEncodingException, MslEncoderException, MslKeyExchangeException, MslUserAuthException, MslException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -753,7 +721,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void missingUserMessage() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final MslObject errorHeaderMo = MslTestUtils.toMslObject(encoder, errorHeader);
         
         // Before modifying the error data we need to decrypt it.
@@ -777,30 +745,10 @@ public class ErrorHeaderTest {
     }
     
     @Test
-    public void equalsRecipient() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
-        final String recipientA = "A";
-        final String recipientB = "B";
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
-
-        assertTrue(errorHeaderA.equals(errorHeaderA));
-        assertEquals(errorHeaderA.hashCode(), errorHeaderA.hashCode());
-        
-        assertFalse(errorHeaderA.equals(errorHeaderB));
-        assertFalse(errorHeaderB.equals(errorHeaderA));
-        assertTrue(errorHeaderA.hashCode() != errorHeaderB.hashCode());
-        
-        assertTrue(errorHeaderA.equals(errorHeaderA2));
-        assertTrue(errorHeaderA2.equals(errorHeaderA));
-        assertEquals(errorHeaderA.hashCode(), errorHeaderA2.hashCode());
-    }
-    
-    @Test
     public void equalsTimestamp() throws InterruptedException, MslKeyExchangeException, MslUserAuthException, MslEncoderException, MslException {
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         Thread.sleep(MILLISECONDS_PER_SECOND);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
 
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -819,8 +767,8 @@ public class ErrorHeaderTest {
     public void equalsMessageId() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final long messageIdA = 1;
         final long messageIdB = 2;
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
 
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -839,8 +787,8 @@ public class ErrorHeaderTest {
     public void equalsErrorCode() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final ResponseCode errorCodeA = ResponseCode.FAIL;
         final ResponseCode errorCodeB = ResponseCode.TRANSIENT_FAILURE;
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -859,8 +807,8 @@ public class ErrorHeaderTest {
     public void equalsInternalCode() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final int internalCodeA = 1;
         final int internalCodeB = 2;
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -879,9 +827,9 @@ public class ErrorHeaderTest {
     public void equalsErrorMessage() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final String errorMsgA = "A";
         final String errorMsgB = "B";
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG);
-        final ErrorHeader errorHeaderC = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG);
+        final ErrorHeader errorHeaderC = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -904,9 +852,9 @@ public class ErrorHeaderTest {
     public void equalsUserMessage() throws MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
         final String userMsgA = "A";
         final String userMsgB = "B";
-        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA);
-        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB);
-        final ErrorHeader errorHeaderC = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null);
+        final ErrorHeader errorHeaderA = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA);
+        final ErrorHeader errorHeaderB = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB);
+        final ErrorHeader errorHeaderC = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null);
         final ErrorHeader errorHeaderA2 = (ErrorHeader)Header.parseHeader(ctx, MslTestUtils.toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS);
         
         assertTrue(errorHeaderA.equals(errorHeaderA));
@@ -927,7 +875,7 @@ public class ErrorHeaderTest {
     
     @Test
     public void equalsObject() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         assertFalse(errorHeader.equals(null));
         assertFalse(errorHeader.equals(ERROR_MSG));
         assertTrue(errorHeader.hashCode() != ERROR_MSG.hashCode());
