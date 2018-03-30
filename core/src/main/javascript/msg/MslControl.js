@@ -591,6 +591,32 @@
         }
         return false;
     }
+    
+    /**
+     * Returns the provided message sender's entity identity from the master
+     * token or entity authentication data, if it can be determined.
+     *
+     * @param {MessageInputStream} mis the message input stream.
+     * @return {?string} the message sender's entity identity or null if unknown.
+     * @throws MslCryptoException if there is a crypto error accessing the
+     *         entity identity.
+     */
+    function getIdentity(mis) {
+        // Try message header's first, as that is the most common case.
+        var messageHeader = mis.getMessageHeader();
+        if (messageHeader) {
+            var masterToken = messageHeader.masterToken;
+            if (masterToken)
+                return masterToken.identity;
+            var msgEntityAuthData = messageHeader.entityAuthenticationData;
+            return msgEntityAuthData.getIdentity();
+        }
+        
+        // Try error headers.
+        var errorHeader = mis.getErrorHeader();
+        var errorEntityAuthData = errorHeader.entityAuthenticationData;
+        return errorEntityAuthData.getIdentity();
+    }
 
     var MslControlImpl = Class.create({
         /**
@@ -1827,7 +1853,7 @@
                     // request message ID + 1.
                     if (request) {
                         // Only enforce this for message headers and error headers that are
-                        // not entity re-authentcate or entity data re-authenticate (as in
+                        // not entity re-authenticate or entity data re-authenticate (as in
                         // those cases the remote entity is not always able to extract the
                         // request message ID).
                         var errorCode = (errorHeader) ? errorHeader.errorCode : null;
@@ -1850,9 +1876,19 @@
                     ctx.getEntityAuthenticationData(null, {
                         result: function(ead) {
                             InterruptibleExecutor(callback, function() {
-                                var localIdentity = ead.getIdentity();
-                                var sender;
                                 try {
+                                    // Reject if the sender is equal to this entity.
+                                    var localIdentity = ead.getIdentity();
+                                    var sender = getIdentity(response);
+                                    if (localIdentity && sender && localIdentity == sender)
+                                        throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
+                                    
+                                    // Reject if a recipient was specified and it is not equal to the
+                                    // message entity identity.
+                                    var expectedIdentity = msgCtx.getRecipient();
+                                    if (expectedIdentity && sender && expectedIdentity != sender)
+                                        throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
+                                    
                                     if (responseHeader) {
                                         // If there is a request update the stored crypto contexts.
                                         if (request)
@@ -1883,11 +1919,6 @@
 
                                         // Update the stored service tokens.
                                         this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-                                    } else {
-                                        // Reject errors if the sender is equal to this entity.
-                                        sender = errorHeader.entityAuthenticationData.getIdentity();
-                                        if (localIdentity && localIdentity == sender)
-                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
                                     }
 
                                     // Update the synchronized clock if we are a trusted network client

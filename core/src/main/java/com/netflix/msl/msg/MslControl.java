@@ -782,6 +782,33 @@ public class MslControl {
     }
     
     /**
+     * Returns the provided message sender's entity identity from the master
+     * token or entity authentication data, if it can be determined.
+     * 
+     * @param mis the message input stream.
+     * @return the message sender's entity identity or null if unknown.
+     * @throws MslCryptoException if there is a crypto error accessing the
+     *         entity identity.
+     */
+    private static String getIdentity(final MessageInputStream mis) throws MslCryptoException {
+        // Try message header's first, as that is the most common case.
+        final MessageHeader messageHeader = mis.getMessageHeader();
+        if (messageHeader != null) {
+            final MasterToken masterToken = messageHeader.getMasterToken();
+            if (masterToken != null)
+                return masterToken.getIdentity();
+            final EntityAuthenticationData entityAuthData = messageHeader.getEntityAuthenticationData();
+            return entityAuthData.getIdentity();
+        }
+        
+        // Try error headers.
+        final ErrorHeader errorHeader = mis.getErrorHeader();
+        final EntityAuthenticationData entityAuthData = errorHeader.getEntityAuthenticationData();
+        return entityAuthData.getIdentity();
+    }
+
+    
+    /**
      * Create a new instance of MSL control with the specified number of
      * threads. A thread count of zero will cause all operations to execute on
      * the calling thread.
@@ -1727,11 +1754,11 @@ public class MslControl {
         }
 
         try {
-            // If there is a request, make sure the response message ID equals the
-            // request message ID + 1.
+            // If there is a request make sure the response message ID equals
+            // the request message ID + 1.
             if (request != null) {
                 // Only enforce this for message headers and error headers that are
-                // not entity re-authentcate or entity data re-authenticate (as in
+                // not entity re-authenticate or entity data re-authenticate (as in
                 // those cases the remote entity is not always able to extract the
                 // request message ID).
                 final ResponseCode errorCode = (errorHeader != null) ? errorHeader.getErrorCode() : null;
@@ -1744,9 +1771,20 @@ public class MslControl {
                         throw new MslMessageException(MslError.UNEXPECTED_RESPONSE_MESSAGE_ID, "expected " + expectedMessageId + "; received " + responseMessageId);
                 }
             }
+            
+            // Reject if the sender is equal to this entity.
+            final String localIdentity = ctx.getEntityAuthenticationData(null).getIdentity();
+            final String sender = getIdentity(response);
+            if (localIdentity != null && sender != null && localIdentity.equals(sender))
+                throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
+            
+            // Reject if a recipient was specified and it is not equal to the
+            // message entity identity.
+            final String expectedIdentity = msgCtx.getRecipient();
+            if (expectedIdentity != null && sender != null && !expectedIdentity.equals(sender))
+                throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
 
             // Process the response.
-            final String localIdentity = ctx.getEntityAuthenticationData(null).getIdentity();
             if (responseHeader != null) {
                 // If there is a request update the stored crypto contexts.
                 if (request != null)
@@ -1777,11 +1815,6 @@ public class MslControl {
 
                 // Update the stored service tokens.
                 storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-            } else {
-                // Reject errors if the sender is equal to this entity.
-                final String sender = errorHeader.getEntityAuthenticationData().getIdentity();
-                if (localIdentity != null && localIdentity.equals(sender))
-                    throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
             }
             
             // Update the synchronized clock if we are a trusted network client
