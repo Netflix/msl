@@ -33,7 +33,7 @@
          * <p>Create an advanced request with the specified message properties
          * and application data.</p>
          *
-         * @param {string} recipient the intended recipient's entity identity.
+         * @param {string} identity the remote entity identity. May be null.
          * @param {boolean} isEncrypted true if encryption is required.
          * @param {boolean} isIntegrityProtected true if integrity protection
          *        is required.
@@ -43,12 +43,12 @@
          *        tokens in the response.
          * @param {Uint8Array} data the application data.
          */
-        init: function init(recipient, isEncrypted, isIntegrityProtected, isNonReplayable, isRequestingTokens, data) {
+        init: function init(identity, isEncrypted, isIntegrityProtected, isNonReplayable, isRequestingTokens, data) {
             // Set properties.
             var props = {
                 data: { value: data, writable: false, enumerable: true, configurable: false },
                 // Message context properties.
-                recipient: { value: recipient, writable: false, enuemrable: true, configurable: false },
+                remoteEntityIdentity: { value: identity, writable: false, enuemrable: true, configurable: false },
                 isEncrypted: { value: isEncrypted, writable: false, enumerable: true, configurable: false },
                 isIntegrityProtected: { value: isIntegrityProtected, writable: false, enumerable: true, configurable: false },
                 isNonReplayable: { value: isNonReplayable, writable: false, enumerable: true, configurable: false },

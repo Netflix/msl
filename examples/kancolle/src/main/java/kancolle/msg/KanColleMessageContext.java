@@ -77,10 +77,10 @@ public abstract class KanColleMessageContext implements MessageContext {
      * <p>No recipient is specified.</p>
      * 
      * @return {@code null}.
-     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
      */
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

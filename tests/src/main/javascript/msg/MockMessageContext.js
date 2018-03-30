@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -163,7 +163,7 @@
 
 	                // The properties.
 	                var props = {
-	                    recipient: { value: null, writable: true, enumerable: false, configurable: false },
+	                    remoteEntityIdentity: { value: null, writable: true, enumerable: false, configurable: false },
 	                    encrypted: { value: false, writable: true, enumerable: false, configurable: false },
 	                    integrityProtected: { value: false, writable: true, enumerable: false, configurable: false },
 	                    nonReplayable: { value: false, writable: true, enumerable: false, configurable: false },
@@ -196,15 +196,15 @@
 	    },
 	    
 	    /**
-	     * @param {string} recipient the message recipient or {@code null} if unknown.
+	     * @param {string} remoteEntityIdentity the remote entity identity or {@code null} if unknown.
 	     */
-	    setRecipient: function setRecipient(recipient) {
-	        this.recipient = recipient;
+	    setRemoteEntityIdentity: function setRemoteEntityIdentity(remoteEntityIdentity) {
+	        this.remoteEntityIdentity = remoteEntityIdentity;
 	    },
 	    
 	    /** @inheritDoc */
-	    getRecipient: function getRecipient() {
-	        return this.recipient;
+	    getRemoteEntityIdentity: function getRemoteEntityIdentity() {
+	        return this.remoteEntityIdentity;
 	    },
 	    
 	    /**

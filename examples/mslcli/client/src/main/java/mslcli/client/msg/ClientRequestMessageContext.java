@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,12 +21,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import mslcli.common.IllegalCmdArgumentException;
-import mslcli.common.MslConfig;
-import mslcli.common.msg.MessageConfig;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.SharedUtil;
-
 import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
@@ -40,6 +34,12 @@ import com.netflix.msl.msg.MessageOutputStream;
 import com.netflix.msl.msg.MessageServiceTokenBuilder;
 import com.netflix.msl.tokens.MslUser;
 import com.netflix.msl.userauth.UserAuthenticationData;
+
+import mslcli.common.IllegalCmdArgumentException;
+import mslcli.common.MslConfig;
+import mslcli.common.msg.MessageConfig;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>Client Request message context.</p>
@@ -102,10 +102,10 @@ public class ClientRequestMessageContext implements MessageContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
      */
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

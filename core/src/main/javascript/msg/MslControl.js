@@ -269,8 +269,8 @@
         },
 
         /** @inheritDoc */
-        getRecipient: function getRecipient() {
-            return this._appCtx.getRecipient();
+        getRemoteEntityIdentity: function getRemoteEntityIdentity() {
+            return this._appCtx.getRemoteEntityIdentity();
         },
 
         /** @inheritDoc */
@@ -1885,7 +1885,7 @@
                                     
                                     // Reject if a recipient was specified and it is not equal to the
                                     // message entity identity.
-                                    var expectedIdentity = msgCtx.getRecipient();
+                                    var expectedIdentity = msgCtx.getRemoteEntityIdentity();
                                     if (expectedIdentity && sender && expectedIdentity != sender)
                                         throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
                                     

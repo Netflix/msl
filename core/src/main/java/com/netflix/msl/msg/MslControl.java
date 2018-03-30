@@ -525,11 +525,11 @@ public class MslControl {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.msg.MessageContext#getRecipient()
+         * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
          */
         @Override
-        public String getRecipient() {
-            return appCtx.getRecipient();
+        public String getRemoteEntityIdentity() {
+            return appCtx.getRemoteEntityIdentity();
         }
 
         /* (non-Javadoc)
@@ -1780,7 +1780,7 @@ public class MslControl {
             
             // Reject if a recipient was specified and it is not equal to the
             // message entity identity.
-            final String expectedIdentity = msgCtx.getRecipient();
+            final String expectedIdentity = msgCtx.getRemoteEntityIdentity();
             if (expectedIdentity != null && sender != null && !expectedIdentity.equals(sender))
                 throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
 
