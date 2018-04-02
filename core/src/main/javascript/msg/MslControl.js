@@ -591,32 +591,6 @@
         }
         return false;
     }
-    
-    /**
-     * Returns the provided message sender's entity identity from the master
-     * token or entity authentication data, if it can be determined.
-     *
-     * @param {MessageInputStream} mis the message input stream.
-     * @return {?string} the message sender's entity identity or null if unknown.
-     * @throws MslCryptoException if there is a crypto error accessing the
-     *         entity identity.
-     */
-    function getIdentity(mis) {
-        // Try message header's first, as that is the most common case.
-        var messageHeader = mis.getMessageHeader();
-        if (messageHeader) {
-            var masterToken = messageHeader.masterToken;
-            if (masterToken)
-                return masterToken.identity;
-            var msgEntityAuthData = messageHeader.entityAuthenticationData;
-            return msgEntityAuthData.getIdentity();
-        }
-        
-        // Try error headers.
-        var errorHeader = mis.getErrorHeader();
-        var errorEntityAuthData = errorHeader.entityAuthenticationData;
-        return errorEntityAuthData.getIdentity();
-    }
 
     var MslControlImpl = Class.create({
         /**
@@ -1872,76 +1846,77 @@
                         }
                     }
 
-                    // Process the response.
-                    ctx.getEntityAuthenticationData(null, {
-                        result: function(ead) {
-                            InterruptibleExecutor(callback, function() {
-                                try {
-                                    // Reject if the sender is equal to this entity.
-                                    var localIdentity = ead.getIdentity();
-                                    var sender = getIdentity(response);
-                                    if (localIdentity && sender && localIdentity == sender)
-                                        throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
-                                    
-                                    // Reject if a recipient was specified and it is not equal to the
-                                    // message entity identity.
-                                    var expectedIdentity = msgCtx.getRemoteEntityIdentity();
-                                    if (expectedIdentity && sender && expectedIdentity != sender)
-                                        throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
-                                    
-                                    if (responseHeader) {
-                                        // If there is a request update the stored crypto contexts.
-                                        if (request)
-                                            this.updateIncomingCryptoContexts(ctx, request, response);
+                    try {
+                        // Verify expected identity if specified.
+                        var expectedIdentity = msgCtx.getRemoteEntityIdentity();
+                        if (expectedIdentity) {
+                            // Reject if the remote entity identity is not equal to the
+                            // message entity authentication data identity.
+                            if (entityAuthData) {
+                                var entityAuthIdentity = entityAuthData.getIdentity();
+                                if (entityAuthIdentity && expectedIdentity != entityAuthIdentity)
+                                    throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + entityAuthIdentity);
+                            }
 
-                                        // In trusted network mode the local tokens are the primary tokens.
-                                        // In peer-to-peer mode they are the peer tokens. The master token
-                                        // might be in the key response data.
-                                        var keyResponseData = responseHeader.keyResponseData;
-                                        var tokenVerificationMasterToken;
-                                        var localUserIdToken;
-                                        var serviceTokens;
-                                        if (!ctx.isPeerToPeer()) {
-                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
-                                            localUserIdToken = responseHeader.userIdToken;
-                                            serviceTokens = responseHeader.serviceTokens;
-                                        } else {
-                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
-                                            localUserIdToken = responseHeader.peerUserIdToken;
-                                            serviceTokens = responseHeader.peerServiceTokens;
-                                        }
+                            // Reject if in peer-to-peer mode and the message sender does
+                            // not match.
+                            if (ctx.isPeerToPeer()) {
+                                var sender = response.getIdentity();
+                                if (sender && expectedIdentity != sender)
+                                    throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
+                            }
+                        }
 
-                                        // Save any returned user ID token if the local entity is not the
-                                        // issuer of the user ID token.
-                                        var userId = msgCtx.getUserId();
-                                        if (userId && localUserIdToken && !localUserIdToken.isVerified())
-                                            ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
+                        // Process the response.
+                        if (responseHeader) {
+                            // If there is a request update the stored crypto contexts.
+                            if (request)
+                                this.updateIncomingCryptoContexts(ctx, request, response);
 
-                                        // Update the stored service tokens.
-                                        this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-                                    }
+                            // In trusted network mode the local tokens are the primary tokens.
+                            // In peer-to-peer mode they are the peer tokens. The master token
+                            // might be in the key response data.
+                            var keyResponseData = responseHeader.keyResponseData;
+                            var tokenVerificationMasterToken;
+                            var localUserIdToken;
+                            var serviceTokens;
+                            if (!ctx.isPeerToPeer()) {
+                                tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
+                                localUserIdToken = responseHeader.userIdToken;
+                                serviceTokens = responseHeader.serviceTokens;
+                            } else {
+                                tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
+                                localUserIdToken = responseHeader.peerUserIdToken;
+                                serviceTokens = responseHeader.peerServiceTokens;
+                            }
 
-                                    // Update the synchronized clock if we are a trusted network client
-                                    // (there is a request) or peer-to-peer entity.
-                                    var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
-                                    if (timestamp && (request || ctx.isPeerToPeer()))
-                                        ctx.updateRemoteTime(timestamp);
-                                } catch (e) {
-                                    if (e instanceof MslException) {
-                                        e.setMasterToken(masterToken);
-                                        e.setEntityAuthenticationData(entityAuthData);
-                                        e.setUserIdToken(userIdToken);
-                                        e.setUserAuthenticationData(userAuthData);
-                                    }
-                                    throw e;
-                                }
+                            // Save any returned user ID token if the local entity is not the
+                            // issuer of the user ID token.
+                            var userId = msgCtx.getUserId();
+                            if (userId && localUserIdToken && !localUserIdToken.isVerified())
+                                ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
 
-                                // Return the result.
-                                return response;
-                            }, self);
-                        },
-                        error: callback.error,
-                    });
+                            // Update the stored service tokens.
+                            this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
+                        }
+
+                        // Update the synchronized clock if we are a trusted network client
+                        // (there is a request) or peer-to-peer entity.
+                        var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
+                        if (timestamp && (request || ctx.isPeerToPeer()))
+                            ctx.updateRemoteTime(timestamp);
+                    } catch (e) {
+                        if (e instanceof MslException) {
+                            e.setMasterToken(masterToken);
+                            e.setEntityAuthenticationData(entityAuthData);
+                            e.setUserIdToken(userIdToken);
+                            e.setUserAuthenticationData(userAuthData);
+                        }
+                        throw e;
+                    }
+
+                    // Return the result.
+                    return response;
                 }, self);
             }
         },
