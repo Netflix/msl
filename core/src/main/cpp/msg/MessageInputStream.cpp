@@ -455,6 +455,13 @@ void MessageInputStream::abort()
 
 bool MessageInputStream::close(int timeout)
 {
+    // Close the tokenizer.
+    try {
+        tokenizer_->close();
+    } catch (const MslEncoderException& e) {
+        // Ignore exceptions.
+    }
+
 	// Only close the source if instructed to do so because we might want
 	// to reuse the connection.
 	if (closeSource_) {
@@ -474,13 +481,6 @@ bool MessageInputStream::close(int timeout)
 		} catch (const MslException& e) {
 			// Ignore exceptions.
 		}
-	}
-
-	// Close the tokenizer.
-	try {
-	    tokenizer_->close();
-	} catch (const MslEncoderException& e) {
-	    // Ignore exceptions.
 	}
 
 	// Success.

@@ -302,14 +302,27 @@ function sendRequest() {
                 if (errorHeader.userMessage)
                     errorMsg += "<br/>" + errorHeader.userMessage;
                 errorCallback(errorMsg);
-                return;
+            } else {
+                // Otherwise display the response.
+                showResponse(mis);
+    
+                // Check the username in case we logged in.
+                checkUsername();
             }
-
-            // Otherwise display the response.
-            showResponse(mis);
-
-            // Check the username in case we logged in.
-            checkUsername();
+            
+            // Close the channel.
+            if (channel.input)
+                channel.input.close(-1, {
+                    result: function() {},
+                    timeout: function() {},
+                    error: function(e) {}
+                });
+            if (channel.output)
+                channel.output.close(-1, {
+                    result: function() {},
+                    timeout: function() {},
+                    error: function(e) {}
+                });
         },
         error: function(e) {
             performButton.value = originalValue;

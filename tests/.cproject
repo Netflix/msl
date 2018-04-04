@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568" name="Debug" parent="cdt.managedbuild.config.gnu.cross.exe.debug">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568" name="Debug" parent="cdt.managedbuild.config.gnu.cross.exe.debug.129194568">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.macosx.base.1844414414" name="MacOSX GCC" superClass="cdt.managedbuild.toolchain.gnu.macosx.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.MachO64" id="cdt.managedbuild.target.gnu.platform.macosx.base.43558529" name="Debug Platform" osList="macosx" superClass="cdt.managedbuild.target.gnu.platform.macosx.base"/>
@@ -30,7 +30,7 @@
 								</option>
 								<option id="macosx.cpp.link.option.paths.1082102412" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.1103657322" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -51,7 +51,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1527158162" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -117,7 +117,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622" name="Release" parent="cdt.managedbuild.config.gnu.cross.exe.release">
+				<configuration artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.exe" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.exe,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622" name="Release" parent="cdt.managedbuild.config.gnu.cross.exe.release.1802512622">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.macosx.base.888281384" name="MacOSX GCC" superClass="cdt.managedbuild.toolchain.gnu.macosx.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.MachO64" id="cdt.managedbuild.target.gnu.platform.macosx.base.1489325537" name="Debug Platform" osList="macosx" superClass="cdt.managedbuild.target.gnu.platform.macosx.base"/>
@@ -133,7 +133,7 @@
 								</option>
 								<option id="macosx.cpp.link.option.paths.1230734662" name="Library search path (-L)" superClass="macosx.cpp.link.option.paths" useByScannerDiscovery="false" valueType="libPaths">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/Debug}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/lib"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/lib"/>
 								</option>
 								<inputType id="cdt.managedbuild.tool.macosx.cpp.linker.input.715455431" superClass="cdt.managedbuild.tool.macosx.cpp.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
@@ -154,7 +154,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.349980858" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -219,7 +219,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568.195588619" name="Debug Library" parent="cdt.managedbuild.config.gnu.cross.exe.debug">
+				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.debug" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568.195588619" name="Debug Library" parent="cdt.managedbuild.config.gnu.cross.exe.debug.129194568.195588619">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.debug.129194568.195588619." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.macosx.base.1262943948" name="MacOSX GCC" superClass="cdt.managedbuild.toolchain.gnu.macosx.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.MachO64" id="cdt.managedbuild.target.gnu.platform.macosx.base.1634598396" name="Debug Platform" osList="macosx" superClass="cdt.managedbuild.target.gnu.platform.macosx.base"/>
@@ -245,7 +245,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1845721471" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -311,7 +311,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622.138891633" name="Release Library" parent="cdt.managedbuild.config.gnu.cross.exe.release">
+				<configuration artifactExtension="a" artifactName="${ProjName}" buildArtefactType="org.eclipse.cdt.build.core.buildArtefactType.staticLib" buildProperties="org.eclipse.cdt.build.core.buildArtefactType=org.eclipse.cdt.build.core.buildArtefactType.staticLib,org.eclipse.cdt.build.core.buildType=org.eclipse.cdt.build.core.buildType.release" cleanCommand="rm -rf" description="" id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622.138891633" name="Release Library" parent="cdt.managedbuild.config.gnu.cross.exe.release.1802512622.138891633">
 					<folderInfo id="cdt.managedbuild.config.gnu.cross.exe.release.1802512622.138891633." name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.macosx.base.1312854591" name="MacOSX GCC" superClass="cdt.managedbuild.toolchain.gnu.macosx.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.MachO64" id="cdt.managedbuild.target.gnu.platform.macosx.base.342838623" name="Debug Platform" osList="macosx" superClass="cdt.managedbuild.target.gnu.platform.macosx.base"/>
@@ -337,7 +337,7 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-tests/src/main/cpp/lib}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/msl-core/src/main/cpp/lib}&quot;"/>
-									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2n/include"/>
+									<listOptionValue builtIn="false" value="/usr/local/Cellar/openssl/1.0.2o_1/include"/>
 								</option>
 								<option id="gnu.cpp.compiler.option.preprocessor.def.1520566858" name="Defined symbols (-D)" superClass="gnu.cpp.compiler.option.preprocessor.def" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="GTEST_DONT_DEFINE_FAIL=1"/>
@@ -386,7 +386,7 @@
 		</cconfiguration>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-		<project id="msl-tests.cdt.managedbuild.target.gnu.cross.exe.1953246307" name="Executable" projectType="cdt.managedbuild.target.gnu.cross.exe"/>
+		<project id="msl-tests.cdt.managedbuild.target.gnu.cross.exe.1953246307" name="Executable"/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.core.LanguageSettingsProviders"/>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
