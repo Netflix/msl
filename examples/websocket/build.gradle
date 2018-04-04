@@ -1,0 +1,20 @@
+buildscript {
+    repositories { jcenter() }
+    dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
+}
+
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+
+apply plugin: 'org.akhikhl.gretty'
+gretty {
+    contextPath = "/msl-websocket-server"
+}
+
+dependencies {
+    compile project(':msl-core')
+    compile "io.netty:netty-handler:latest.release"
+    compile "io.netty:netty-codec-http:latest.release"
+}
+
+war.baseName "msl-websocket-server"

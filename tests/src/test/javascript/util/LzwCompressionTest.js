@@ -15,6 +15,7 @@
  */
 
 var LzwCompression = require('msl-core/util/LzwCompression.js');
+var MslIoException = require('msl-core/MslIoException.js');
     
 /**
  * LZW output stream tests.
