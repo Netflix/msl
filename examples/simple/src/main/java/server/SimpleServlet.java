@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,7 @@ public class SimpleServlet extends HttpServlet {
             // FIXME: Remove encryption requirement.
             // Encryption is required to avoid accidentally leaking
             // information in the error message.
-            responseMsgCtx = new SimpleRespondMessageContext(null, true, e.getMessage());
+            responseMsgCtx = new SimpleRespondMessageContext(true, e.getMessage());
         }
 
         // Send response. We don't need the MslChannel because we are not

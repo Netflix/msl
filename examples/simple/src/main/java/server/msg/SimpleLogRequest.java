@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,7 +157,7 @@ public class SimpleLogRequest extends SimpleRequest {
         
         final Set<Token> tokens = new HashSet<Token>();
         tokens.add(new Token(SERVICETOKEN_LOGDATA_NAME, allMessages, true, true));
-        return new SimpleRespondMessageContext(getIdentity(), false, allMessages, tokens, cryptoContexts);
+        return new SimpleRespondMessageContext(false, allMessages, tokens, cryptoContexts);
     }
 
     /** Timestamp in seconds since the UNIX epoch. */

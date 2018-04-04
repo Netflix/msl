@@ -47,7 +47,7 @@ public class CriticalMessageContext extends ReportMessageContext {
     }
 
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return callsign;
     }
     

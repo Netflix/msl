@@ -44,7 +44,7 @@ public class ReceiveMessageContext implements MessageContext {
     }
 
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

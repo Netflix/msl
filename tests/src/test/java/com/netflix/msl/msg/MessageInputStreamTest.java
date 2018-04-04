@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,12 +191,12 @@ public class MessageInputStreamTest {
         random.nextBytes(DATA);
         buffer = new byte[MAX_PAYLOAD_CHUNKS * MAX_DATA_SIZE];
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         MESSAGE_HEADER = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
 
-        ERROR_HEADER =  new ErrorHeader(trustedNetCtx, entityAuthData, null, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
+        ERROR_HEADER =  new ErrorHeader(trustedNetCtx, entityAuthData, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
 
         final KeyRequestData keyRequest = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         KEY_REQUEST_DATA.add(keyRequest);
@@ -274,7 +274,7 @@ public class MessageInputStreamTest {
 
     @Test
     public void entityAuthDataIdentity() throws MslException, IOException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
@@ -290,7 +290,7 @@ public class MessageInputStreamTest {
     @Test
     public void masterTokenIdentity() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
 
@@ -305,7 +305,7 @@ public class MessageInputStreamTest {
     @Test
     public void errorHeaderIdentity() throws MslEncodingException, MslEntityAuthException, MslCryptoException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslMasterTokenException, IOException, MslException, MslEncoderException {
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final ErrorHeader errorHeader = new ErrorHeader(trustedNetCtx, entityAuthData, null, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
+        final ErrorHeader errorHeader = new ErrorHeader(trustedNetCtx, entityAuthData, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
 
         final InputStream is = generateInputStream(errorHeader, payloads);
         final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
@@ -325,7 +325,7 @@ public class MessageInputStreamTest {
         final UnauthenticatedAuthenticationFactory factory = new UnauthenticatedAuthenticationFactory(authutils);
         ctx.addEntityAuthenticationFactory(factory);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
@@ -346,7 +346,7 @@ public class MessageInputStreamTest {
         ctx.setTokenFactory(factory);
 
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -370,7 +370,7 @@ public class MessageInputStreamTest {
     public void userIdTokenUser() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
 
@@ -393,7 +393,7 @@ public class MessageInputStreamTest {
 
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -414,7 +414,7 @@ public class MessageInputStreamTest {
 
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUntrustedUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -427,7 +427,7 @@ public class MessageInputStreamTest {
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
     public void explicitHandshake() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
@@ -443,7 +443,7 @@ public class MessageInputStreamTest {
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
     public void inferredHandshake() throws MslException, IOException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
@@ -460,7 +460,7 @@ public class MessageInputStreamTest {
     // FIXME This can be removed once the old handshake logic is removed.
     @Test
     public void notHandshake() throws IOException, MslException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
@@ -476,7 +476,7 @@ public class MessageInputStreamTest {
 
     @Test
     public void keyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
@@ -495,7 +495,7 @@ public class MessageInputStreamTest {
 
     @Test
     public void peerKeyExchange() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, MslException, IOException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
@@ -522,7 +522,7 @@ public class MessageInputStreamTest {
         final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         ctx.removeKeyExchangeFactories(KeyExchangeScheme.SYMMETRIC_WRAPPED);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
@@ -542,7 +542,7 @@ public class MessageInputStreamTest {
         thrown.expectMslError(MslError.KEYX_RESPONSE_REQUEST_MISMATCH);
         thrown.expectMessageId(MSG_ID);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
@@ -573,7 +573,7 @@ public class MessageInputStreamTest {
         final KeyExchangeData keyExchangeData = factory.generateResponse(ctx, ENCODER_FORMAT, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, entityAuthData, null, headerData, peerData);
 
@@ -598,7 +598,7 @@ public class MessageInputStreamTest {
         final KeyExchangeData keyExchangeData = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequest, entityAuthData);
         final KeyResponseData keyResponseData = keyExchangeData.keyResponseData;
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
 
@@ -612,7 +612,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
 
@@ -626,7 +626,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(p2pCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
 
@@ -646,7 +646,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
 
@@ -666,7 +666,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
 
@@ -684,7 +684,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(ctx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -715,7 +715,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(p2pCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
 
@@ -733,7 +733,7 @@ public class MessageInputStreamTest {
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
         final Date expiration = new Date(System.currentTimeMillis() - 10000);
         final MasterToken masterToken = new MasterToken(p2pCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, null, masterToken, headerData, peerData);
 
@@ -749,7 +749,7 @@ public class MessageInputStreamTest {
         thrown.expectMessageId(MSG_ID);
 
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, false, true, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, false, true, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
 
@@ -765,7 +765,7 @@ public class MessageInputStreamTest {
         thrown.expectMessageId(MSG_ID);
 
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, true, true, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, true, true, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
 
@@ -781,7 +781,7 @@ public class MessageInputStreamTest {
         thrown.expectMessageId(MSG_ID);
 
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
 
@@ -797,7 +797,7 @@ public class MessageInputStreamTest {
         thrown.expectMessageId(MSG_ID);
 
         final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(p2pCtx, entityAuthData, null, headerData, peerData);
 
@@ -820,7 +820,7 @@ public class MessageInputStreamTest {
         factory.setLargestNonReplayableId(nonReplayableId);
         ctx.setTokenFactory(factory);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -843,7 +843,7 @@ public class MessageInputStreamTest {
         factory.setLargestNonReplayableId(nonReplayableId);
         ctx.setTokenFactory(factory);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, nonReplayableId - 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, nonReplayableId - 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -867,7 +867,7 @@ public class MessageInputStreamTest {
             try {
                 factory.setLargestNonReplayableId(largestNonReplayableId);
 
-                final HeaderData headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+                final HeaderData headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
                 final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
                 final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -901,7 +901,7 @@ public class MessageInputStreamTest {
             try {
                 factory.setLargestNonReplayableId(largestNonReplayableId);
 
-                final HeaderData headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+                final HeaderData headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
                 final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
                 final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -931,7 +931,7 @@ public class MessageInputStreamTest {
         factory.setLargestNonReplayableId(1L);
         ctx.setTokenFactory(factory);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -953,7 +953,7 @@ public class MessageInputStreamTest {
         factory.setLargestNonReplayableId(1L);
         ctx.setTokenFactory(factory);
 
-        final HeaderData headerData = new HeaderData(null, MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, 1L, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, null, masterToken, headerData, peerData);
 
@@ -990,7 +990,7 @@ public class MessageInputStreamTest {
 
     @Test
     public void readFromHandshakeMessage() throws IOException, MslUserAuthException, MslKeyExchangeException, MslUserIdTokenException, MslException, MslEncoderException {
-        final HeaderData headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final EntityAuthenticationData entityAuthData = trustedNetCtx.getEntityAuthenticationData(null);
         final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);

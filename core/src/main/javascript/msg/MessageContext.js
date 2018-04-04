@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,16 +58,15 @@
 	    getCryptoContexts: function() {},
 	    
 	    /**
-	     * <p>Called to identify the entity identity the message application data
-	     * is intended for. If the identity is not known this method must return
-	     * {@code null}.</p> 
+	     * <p>Called to identify the expected remote entity identity. If the remote
+	     * entity identity is not known this method must return {@code null}.</p> 
 	     * 
 	     * <p>Trusted network servers may always return {@code null}.</p>
 	     * 
-	     * @return {string} the entity identity of the application data recipient or
-	     *         {@code null} if the identity is not known.
+	     * @return {string} the remote entity identity or {@code null} if the identity is
+	     *         not known.
 	     */
-	    getRecipient: function() {},
+	    getRemoteEntityIdentity: function() {},
 	
 	    /**
 	     * <p>Called to determine if the message application data must be

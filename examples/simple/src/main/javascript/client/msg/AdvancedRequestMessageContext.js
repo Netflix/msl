@@ -63,8 +63,8 @@
         },
 
         /** @inheritDoc */
-        getRecipient: function() {
-            return this._request.recipient;
+        getRemoteEntityIdentity: function() {
+            return this._request.remoteEntityIdentity;
         },
 
         /** @inheritDoc */

@@ -60,7 +60,7 @@ public class ServerReceiveMessageContext extends PublicMessageContext {
     }
 
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

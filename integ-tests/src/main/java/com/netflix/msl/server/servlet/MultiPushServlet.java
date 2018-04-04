@@ -90,7 +90,7 @@ public class MultiPushServlet extends PushServlet {
             }
 
             @Override
-            public String getRecipient() {
+            public String getRemoteEntityIdentity() {
                 return null;
             }
 

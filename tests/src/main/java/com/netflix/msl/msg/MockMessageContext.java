@@ -102,7 +102,7 @@ public class MockMessageContext implements MessageContext {
      *         Hellman parameters.
      */
     public MockMessageContext(final MslContext ctx, final String userId, final UserAuthenticationScheme scheme) throws NoSuchAlgorithmException, InvalidAlgorithmParameterException, MslKeyExchangeException {
-        this.recipient = null;
+        this.remoteEntityIdentity = null;
         this.encrypted = false;
         this.integrityProtected = false;
         this.nonReplayable = false;
@@ -162,18 +162,18 @@ public class MockMessageContext implements MessageContext {
     }
     
     /**
-     * @param recipient the message recipient or {@code null} if unknown.
+     * @param remoteEntityIdentity the message recipient or {@code null} if unknown.
      */
-    public void setRecipient(final String recipient) {
-        this.recipient = recipient;
+    public void setRemoteEntityIdentity(final String remoteEntityIdentity) {
+        this.remoteEntityIdentity = remoteEntityIdentity;
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
      */
     @Override
-    public String getRecipient() {
-        return recipient;
+    public String getRemoteEntityIdentity() {
+        return remoteEntityIdentity;
     }
     
     /**
@@ -327,7 +327,7 @@ public class MockMessageContext implements MessageContext {
     }
 
     /** Message recipient. */
-    private String recipient;
+    private String remoteEntityIdentity;
     /** Message requires encryption. */
     private boolean encrypted;
     /** Message requires integrity protection. */

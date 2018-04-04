@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@
  * {@code
  * errordata = {
  *   "#mandatory" : [ "messageid", "errorcode" ],
- *   "recipient" : "string",
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,-)",
  *   "errorcode" : "int32(0,-)",
@@ -28,7 +27,6 @@
  *   "usermsg" : "string",
  * }} where:
  * <ul>
- * <li>{@code recipient} is the intended recipient's entity identity</li>
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code errorcode} is the error code</li>
@@ -60,12 +58,6 @@
     var MILLISECONDS_PER_SECOND = 1000;
 
     // Message error data.
-    /**
-     * Key recipient.
-     * @const
-     * @type {string}
-     */
-    var KEY_RECIPIENT = "recipient";
     /**
      * Key timestamp.
      * @const
@@ -121,7 +113,6 @@
          *
          * @param {MslContext} ctx MSL context.
          * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
-         * @param {?string} recipient the intended recipient's entity identity. May be null.
          * @param {number} messageId the message ID.
          * @param {MslConstants.ResponseCode} errorCode the error code.
          * @param {number} internalCode the internal code. Negative to indicate no code.
@@ -137,7 +128,7 @@
          * @throws MslMessageException if no entity authentication data is
          *         provided.
          */
-        init: function init(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData) {
+        init: function init(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, creationData) {
             if (internalCode < 0)
                 internalCode = -1;
 
@@ -149,11 +140,6 @@
             if (!entityAuthData)
                 throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
 
-            // Only include the recipient if the message will be encrypted.
-            var scheme = entityAuthData.scheme;
-            var encrypted = scheme.encrypts;
-            if (!encrypted) recipient = null;
-
             // Construct the error data.
             var timestampSeconds, errordata;
             if (!creationData) {
@@ -162,7 +148,6 @@
                 // Construct the error data.
                 var encoder = ctx.getMslEncoderFactory();
                 errordata = encoder.createObject();
-                if (recipient) errordata.put(KEY_RECIPIENT, recipient);
                 errordata.put(KEY_TIMESTAMP, timestampSeconds);
                 errordata.put(KEY_MESSAGE_ID, messageId);
                 errordata.put(KEY_ERROR_CODE, errorCode);
@@ -186,11 +171,6 @@
                  * @type {EntityAuthenticationData}
                  */
                 entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
-                /**
-                 * Recipient.
-                 * @type {?string}
-                 */
-                recipient: { value: recipient, writable: false, configurable: false },
                 /**
                  * Timestamp in seconds since the epoch.
                  * @type {?number}
@@ -317,7 +297,6 @@
      *
      * @param {MslContext} ctx MSL context.
      * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
-     * @param {?string} recipient the intended recipient's entity identity. May be null.
      * @param {number} messageId the message ID.
      * @param {MslConstants.ResponseCode} errorCode the error code.
      * @param {number} internalCode the internal code. Negative to indicate no code.
@@ -333,9 +312,9 @@
      * @throws MslEntityAuthException if there is an error with the entity
      *         authentication data.
      */
-    var ErrorHeader$create = function ErrorHeader$create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
+    var ErrorHeader$create = function ErrorHeader$create(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
         AsyncExecutor(callback, function() {
-            return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, null);
+            return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, null);
         });
     };
 
@@ -401,9 +380,8 @@
                                         throw e;
                                     }
                                     
-                                    var recipient, timestampSeconds, errorCode, internalCode, errorMsg, userMsg;
+                                    var timestampSeconds, errorCode, internalCode, errorMsg, userMsg;
                                     try {
-                                        recipient = (errordata.has(KEY_RECIPIENT)) ? errordata.getString(KEY_RECIPIENT) : null;
                                         timestampSeconds = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
                                         
                                         // If we do not recognize the error code then default to fail.
@@ -435,7 +413,7 @@
 
                                     // Return the error header.
                                     var creationData = new CreationData(errordata, timestampSeconds);
-                                    return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMsg, creationData);
+                                    return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, creationData);
                                 });
                             },
                             error: function(e) {

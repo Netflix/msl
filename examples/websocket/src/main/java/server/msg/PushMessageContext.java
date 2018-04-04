@@ -54,10 +54,10 @@ public class PushMessageContext implements MessageContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
      */
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,12 +79,10 @@ public class ServerRespondMessageContext implements MessageContext {
      * <p>Create a new response message context with the specified
      * properties.</p>
      * 
-     * @param recipient requesting entity identity.
      * @param encrypted true if the response data must be encrypted.
      * @param data application response data.
      */
-    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final byte[] data) {
-        this.recipient = recipient;
+    public ServerRespondMessageContext(final boolean encrypted, final byte[] data) {
         this.encrypted = encrypted;
         this.data = data;
         this.tokens = Collections.emptySet();
@@ -95,14 +93,12 @@ public class ServerRespondMessageContext implements MessageContext {
      * <p>Create a new response message context with the specified
      * properties.</p>
      * 
-     * @param recipient requesting entity identity.
      * @param encrypted true if the response data must be encrypted.
      * @param data application response data.
      * @param tokens application service tokens.
      * @param cryptoContexts application service token crypto contexts.
      */
-    public ServerRespondMessageContext(final String recipient, final boolean encrypted, final byte[] data, final Set<Token> tokens, final Map<String,ICryptoContext> cryptoContexts) {
-        this.recipient = recipient;
+    public ServerRespondMessageContext(final boolean encrypted, final byte[] data, final Set<Token> tokens, final Map<String,ICryptoContext> cryptoContexts) {
         this.encrypted = encrypted;
         this.data = data;
         this.tokens = tokens;
@@ -118,11 +114,11 @@ public class ServerRespondMessageContext implements MessageContext {
     }
 
     /* (non-Javadoc)
-     * @see com.netflix.msl.msg.MessageContext#getRecipient()
+     * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
      */
     @Override
-    public String getRecipient() {
-        return recipient;
+    public String getRemoteEntityIdentity() {
+        return null;
     }
 
     /* (non-Javadoc)
@@ -233,8 +229,6 @@ public class ServerRespondMessageContext implements MessageContext {
 
     /** Service token crypto contexts. */
     private final Map<String,ICryptoContext> cryptoContexts;
-    /** Recipient entity identity. */
-    private final String recipient;
     /** True if the response data must be encrypted. */
     private final boolean encrypted;
     /** Response data. */

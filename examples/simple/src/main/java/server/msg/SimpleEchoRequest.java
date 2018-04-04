@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class SimpleEchoRequest extends SimpleRequest {
         final SimpleUser user = getUser();
         final String username = (user != null) ? user.toString() : null;
         final String data = username + "@" + getIdentity() + ": " + message;
-        return new SimpleRespondMessageContext(getIdentity(), true, data);
+        return new SimpleRespondMessageContext(true, data);
     }
 
     /** Message to echo. */

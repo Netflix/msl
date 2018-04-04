@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,13 +202,13 @@ describe("MessageInputStream", function() {
             waitsFor(function() { return ENTITY_AUTH_DATA; }, "entityAuthData", MslTestConstants.TIMEOUT);
 
             runs(function() {
-                var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null, null);
+                var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null, null);
                 var peerData = new HeaderPeerData(null, null, null);
                 MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                     result: function(x) { MESSAGE_HEADER = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                ErrorHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+                ErrorHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
                     result: function(x) { ERROR_HEADER = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -384,7 +384,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -447,7 +447,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -510,7 +510,7 @@ describe("MessageInputStream", function() {
 
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(trustedNetCtx, entityAuthData, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+            ErrorHeader.create(trustedNetCtx, entityAuthData, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
                 result: function(x) { errorHeader = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -583,7 +583,7 @@ describe("MessageInputStream", function() {
             factory = new MockUnauthenticatedAuthenticationFactory();
             ctx.addEntityAuthenticationFactory(factory);
 
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -652,7 +652,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -761,7 +761,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -845,7 +845,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -923,7 +923,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, userIdToken, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -972,7 +972,7 @@ describe("MessageInputStream", function() {
     it("explicit handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1033,7 +1033,7 @@ describe("MessageInputStream", function() {
     it("inferred handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1105,7 +1105,7 @@ describe("MessageInputStream", function() {
     it("not a handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1185,7 +1185,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1271,7 +1271,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(p2pCtx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1367,7 +1367,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1435,7 +1435,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1520,7 +1520,7 @@ describe("MessageInputStream", function() {
         var messageHeader;
         runs(function() {
             var keyResponseData = keyExchangeData.keyResponseData;
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1596,7 +1596,7 @@ describe("MessageInputStream", function() {
         var messageHeader;
         runs(function() {
             var keyResponseData = keyExchangeData.keyResponseData;
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, keyResponseData, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1659,7 +1659,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1722,7 +1722,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1787,7 +1787,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1847,7 +1847,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1916,7 +1916,7 @@ describe("MessageInputStream", function() {
         // rejected.
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1991,7 +1991,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2049,7 +2049,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(p2pCtx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2096,7 +2096,7 @@ describe("MessageInputStream", function() {
     it("non-renewable handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, 1, false, true, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, false, true, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2143,7 +2143,7 @@ describe("MessageInputStream", function() {
     it("handshake message without key request data", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, 1, true, true, null, null, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, true, true, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2190,7 +2190,7 @@ describe("MessageInputStream", function() {
     it("non-replayable client message without master token", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2237,7 +2237,7 @@ describe("MessageInputStream", function() {
     it("non-replayable peer message without master token", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(p2pCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2306,7 +2306,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2375,7 +2375,7 @@ describe("MessageInputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, nonReplayableId - 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, nonReplayableId - 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2457,7 +2457,7 @@ describe("MessageInputStream", function() {
 
             factory.setLargestNonReplayableId(largestNonReplayableId);
 
-            var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(messageHeader) { generate(messageHeader); },
@@ -2541,7 +2541,7 @@ describe("MessageInputStream", function() {
 
             factory.setLargestNonReplayableId(largestNonReplayableId);
 
-            var headerData = new HeaderData(null, MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, nonReplayableId, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(messageHeader) { generate(messageHeader, i, nonReplayableId, largestNonReplayableId); },
@@ -2602,7 +2602,7 @@ describe("MessageInputStream", function() {
             factory.setLargestNonReplayableId(1);
             ctx.setTokenFactory(factory);
 
-            var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2671,7 +2671,7 @@ describe("MessageInputStream", function() {
             factory.setLargestNonReplayableId(1);
             ctx.setTokenFactory(factory);
 
-            var headerData = new HeaderData(null, MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, 1, true, false, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, null, masterToken, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2811,7 +2811,7 @@ describe("MessageInputStream", function() {
     it("read from handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
+            var headerData = new HeaderData(MSG_ID, null, true, true, null, KEY_REQUEST_DATA, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(trustedNetCtx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
