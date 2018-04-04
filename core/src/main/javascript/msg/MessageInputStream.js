@@ -1023,51 +1023,48 @@
             var self = this;
 
             InterruptibleExecutor(callback, function() {
-                // Only close the source if instructed to do so because we might want
-                // to reuse the connection.
-                if (this._closeSource) {
-                    this._source.close(timeout, callback);
-                    closeTokenizer();
-                }
+                // Close the tokenizer.
+                self._tokenizer.close(timeout, {
+                    result: function(success) {
+                        // Only close the source if instructed to do so because we might want
+                        // to reuse the connection.
+                        if (this._closeSource) {
+                            this._source.close(timeout, callback);
+                        }
 
-                // Otherwise if this is not a handshake message or error message then
-                // consume all payloads that may still be on the source input stream.
-                else {
-                    if (!this.getMessageHeader()) return true;
-                    this.isHandshake(timeout, {
-                        result: function(handshake) {
-                            if (handshake) closeTokenizer();
-                            else consume();
-                        },
-                        timeout: callback.timeout,
-                        // Ignore exceptions.
-                        error: function() { callback.result(true); },
-                    });
-                }
+                        // Otherwise if this is not a handshake message or error message then
+                        // consume all payloads that may still be on the source input stream.
+                        else {
+                            if (!this.getMessageHeader()) return true;
+                            this.isHandshake(timeout, {
+                                result: function(handshake) {
+                                    if (!handshake) callback.result(true);
+                                    else consume();
+                                },
+                                timeout: callback.timeout,
+                                // Ignore exceptions.
+                                error: function() { callback.result(true); },
+                            });
+                        }
 
-                function consume() {
-                    self.nextData(timeout, {
-                        result: function(data) {
-                            if (data) consume();
-                            else closeTokenizer();
-                        },
-                        timeout: callback.timeout,
+                        function consume() {
+                            self.nextData(timeout, {
+                                result: function(data) {
+                                    if (data) consume();
+                                    else callback.result(true);
+                                },
+                                timeout: callback.timeout,
+                                // Ignore exceptions.
+                                error: function() { callback.result(true); },
+                            });
+                        }
+                    },
+                    timeout: callback.timeout,
+                    error: function(e) {
                         // Ignore exceptions.
-                        error: function() { callback.result(true); },
-                    });
-                }
-                
-                function closeTokenizer() {
-                    // Close the tokenizer.
-                    self._tokenizer.close(timeout, {
-                        result: callback.result,
-                        timeout: callback.timeout,
-                        error: function(e) {
-                            // Ignore exceptions.
-                            callback.result(true);
-                        },
-                    });
-                }
+                        callback.result(true);
+                    },
+                });
             }, self);
         },
 
