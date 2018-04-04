@@ -86,12 +86,12 @@ public:
     virtual void removeCryptoContext(const std::string& name);
 
     /**
-     * @param recipient the message recipient or {@code null} if unknown.
+     * @param remoteEntityIdentity the message remote entity identity or {@code null} if unknown.
      */
-    virtual void setRecipient(const std::string& recipient) { recipient_ = recipient; }
+    virtual void setRemoteEntityIdentity(const std::string& remoteEntityIdentity) { remoteEntityIdentity_ = remoteEntityIdentity; }
 
     /** @inheritDoc */
-    virtual std::string getRecipient() { return recipient_; }
+    virtual std::string getRemoteEntityIdentity() { return remoteEntityIdentity_; }
 
     /**
      * @param encrypted true if the message must be encrypted.
@@ -183,8 +183,8 @@ public:
     virtual std::shared_ptr<MessageDebugContext> getDebugContext() { return debugContext_; }
 
 private:
-    /** Message recipient. */
-    std::string recipient_;
+    /** Message remote entity identity. */
+    std::string remoteEntityIdentity_;
     /** Message requires encryption. */
     bool encrypted_;
     /** Message requires integrity protection. */

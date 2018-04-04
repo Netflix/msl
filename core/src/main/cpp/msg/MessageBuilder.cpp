@@ -191,7 +191,6 @@ int64_t MessageBuilder::decrementMessageId(const int64_t messageId) {
 shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> ctx,
         shared_ptr<MasterToken> masterToken,
         shared_ptr<UserIdToken> userIdToken,
-        string recipient,
         int64_t messageId)
 {
 	if (messageId < 0 || messageId > MslConstants::MAX_LONG_VALUE) {
@@ -200,17 +199,16 @@ shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> 
 		throw MslInternalException(ss.str());
 	}
 	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
-	return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
+	return make_shared<MessageBuilder>(ctx, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> ctx,
         shared_ptr<MasterToken> masterToken,
-        shared_ptr<UserIdToken> userIdToken,
-        string recipient)
+        shared_ptr<UserIdToken> userIdToken)
 {
 	const int64_t messageId = MslUtils::getRandomLong(ctx);
 	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
-	return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
+	return make_shared<MessageBuilder>(ctx, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::createResponse(shared_ptr<MslContext> ctx,
@@ -220,9 +218,6 @@ shared_ptr<MessageBuilder> MessageBuilder::createResponse(shared_ptr<MslContext>
 	shared_ptr<EntityAuthenticationData> entityAuthData = requestHeader->getEntityAuthenticationData();
 	shared_ptr<UserIdToken> userIdToken = requestHeader->getUserIdToken();
 	shared_ptr<UserAuthenticationData> userAuthData = requestHeader->getUserAuthenticationData();
-
-	// The response recipient is the requesting entity.
-	const string recipient = (masterToken) ? masterToken->getIdentity() : entityAuthData->getIdentity();
 
 	// The response message ID must be equal to the request message ID + 1.
 	const int64_t requestMessageId = requestHeader->getMessageId();
@@ -327,10 +322,10 @@ shared_ptr<MessageBuilder> MessageBuilder::createResponse(shared_ptr<MslContext>
 			shared_ptr<MasterToken> peerMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : requestHeader->getPeerMasterToken();
 			shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
 			set<shared_ptr<ServiceToken>> peerServiceTokens = requestHeader->getPeerServiceTokens();
-			return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
+			return make_shared<MessageBuilder>(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
 		} else {
 			shared_ptr<MasterToken> localMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : masterToken;
-			return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), keyExchangeData);
+			return make_shared<MessageBuilder>(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), keyExchangeData);
 		}
 	} catch (MslException& e) {
 		e.setMasterToken(masterToken);
@@ -351,9 +346,6 @@ shared_ptr<MessageBuilder> MessageBuilder::createIdempotentResponse(shared_ptr<M
     shared_ptr<UserIdToken> userIdToken = requestHeader->getUserIdToken();
     shared_ptr<UserAuthenticationData> userAuthData = requestHeader->getUserAuthenticationData();
 
-    // The response recipient is the requesting entity.
-    const string recipient = (masterToken) ? masterToken->getIdentity() : entityAuthData->getIdentity();
-
     // The response message ID must be equal to the request message ID + 1.
     const int64_t requestMessageId = requestHeader->getMessageId();
     const int64_t messageId = incrementMessageId(requestMessageId);
@@ -372,10 +364,10 @@ shared_ptr<MessageBuilder> MessageBuilder::createIdempotentResponse(shared_ptr<M
             shared_ptr<MasterToken> peerMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : requestHeader->getPeerMasterToken();
             shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
             set<shared_ptr<ServiceToken>> peerServiceTokens = requestHeader->getPeerServiceTokens();
-            return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, shared_ptr<KeyExchangeData>());
+            return make_shared<MessageBuilder>(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, shared_ptr<KeyExchangeData>());
         } else {
             shared_ptr<MasterToken> localMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : masterToken;
-            return make_shared<MessageBuilder>(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
+            return make_shared<MessageBuilder>(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
         }
     } catch (MslException& e) {
         e.setMasterToken(masterToken);
@@ -388,7 +380,6 @@ shared_ptr<MessageBuilder> MessageBuilder::createIdempotentResponse(shared_ptr<M
 }
 
 shared_ptr<ErrorHeader> MessageBuilder::createErrorResponse(shared_ptr<MslContext> ctx,
-		string recipient,
 		int64_t requestMessageId,
 		MslError error,
 		string userMessage)
@@ -407,11 +398,10 @@ shared_ptr<ErrorHeader> MessageBuilder::createErrorResponse(shared_ptr<MslContex
 	const ResponseCode errorCode = error.getResponseCode();
 	const int32_t internalCode = error.getInternalCode();
 	const string errorMsg = error.getMessage();
-	return make_shared<ErrorHeader>(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage);
+	return make_shared<ErrorHeader>(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
 }
 
 MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
-        string recipient,
         int64_t messageId,
         shared_ptr<MessageCapabilities> capabilities,
         shared_ptr<MasterToken> masterToken,
@@ -423,7 +413,6 @@ MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
         shared_ptr<KeyExchangeData> keyExchangeData)
 	: ctx_(ctx)
 	, masterToken_(masterToken)
-	, recipient_(recipient)
 	, messageId_(messageId)
 	, keyExchangeData_(keyExchangeData)
 	, capabilities_(capabilities)
@@ -539,7 +528,7 @@ shared_ptr<MessageHeader> MessageBuilder::getHeader()
 	} else {
 		nonReplayableId = -1;
 	}
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(recipient_, messageId_, nonReplayableId, renewable_, handshake_, capabilities_, keyRequestData_, response, userAuthData_, userIdToken_, tokens);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>( messageId_, nonReplayableId, renewable_, handshake_, capabilities_, keyRequestData_, response, userAuthData_, userIdToken_, tokens);
 	set<shared_ptr<ServiceToken>> peerTokens;
 	for (map<string,shared_ptr<ServiceToken>>::iterator token = peerServiceTokens_.begin();
 		 token != peerServiceTokens_.end();

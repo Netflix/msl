@@ -92,7 +92,6 @@ const shared_ptr<ByteArray> COMPRESSIBLE_DATA = make_shared<ByteArray>(COMPRESSI
 /** I/O operation timeout in milliseconds. */
 const int TIMEOUT = 20;
 
-const string NULL_RECIPIENT = "";
 const int64_t REPLAYABLE_ID = -1;
 const shared_ptr<MessageCapabilities> NULL_MSG_CAPS;
 const set<shared_ptr<KeyRequestData>> EMPTY_KEYX_REQUESTS;
@@ -130,13 +129,13 @@ public:
 		shared_ptr<MslCompression::CompressionImpl> gzipImpl = make_shared<GzipCompression>();
 		MslCompression::registerImpl(MslConstants::CompressionAlgorithm::GZIP, gzipImpl);
 
-		shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, 1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+		shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		ENTITY_AUTH_DATA = ctx->getEntityAuthenticationData();
 		MESSAGE_HEADER = make_shared<MessageHeader>(ctx, ENTITY_AUTH_DATA, NULL_MASTER_TOKEN, headerData, peerData);
 		PAYLOAD_CRYPTO_CONTEXT = MESSAGE_HEADER->getCryptoContext();
 
-		ERROR_HEADER = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, NULL_RECIPIENT, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
+		ERROR_HEADER = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
 	}
 
 protected:
@@ -472,7 +471,7 @@ TEST_F(MessageOutputStreamTest, writeErrorHeader)
 
 TEST_F(MessageOutputStreamTest, writeHandshakeMessage)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, 1, REPLAYABLE_ID, false, true, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, true, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, ENTITY_AUTH_DATA, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -655,7 +654,7 @@ TEST_F(MessageOutputStreamTest, noCtxCompressionAlgorithm)
 
 TEST_F(MessageOutputStreamTest, noRequestCompressionAlgorithm)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, 1, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, ENTITY_AUTH_DATA, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -709,7 +708,7 @@ TEST_F(MessageOutputStreamTest, oneCompressionAlgorithm)
 	algos.insert(CompressionAlgorithm::GZIP);
 	shared_ptr<MessageCapabilities> capabilities = make_shared<MessageCapabilities>(algos, EMPTY_LANGUAGES, EMPTY_FORMATS);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, 1, REPLAYABLE_ID, false, false, capabilities, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, capabilities, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, ENTITY_AUTH_DATA, NULL_MASTER_TOKEN, headerData, peerData);
 

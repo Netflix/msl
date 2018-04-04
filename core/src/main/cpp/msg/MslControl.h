@@ -1052,7 +1052,6 @@ private: // methods
      * @param debugCtx message debug context.
      * @param requestHeader message the error is being sent in response to. May
      *        be {@code null}.
-     * @param recipient error response recipient. May be {@code null}.
      * @param messageId request message ID. May be {@code null}.
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be
@@ -1068,7 +1067,7 @@ private: // methods
      * @throws IOException if there is an error sending the error response->
      */
     void sendError(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<MessageDebugContext> debugCtx,
-            std::shared_ptr<MessageHeader> requestHeader, const std::string& recipient, int64_t messageId,
+            std::shared_ptr<MessageHeader> requestHeader, int64_t messageId,
             const MslError& error, const std::string& userMessage, std::shared_ptr<io::OutputStream> out);
 
 private: // attributes

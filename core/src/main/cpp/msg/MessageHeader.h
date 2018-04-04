@@ -51,8 +51,6 @@ class MessageCapabilities;
  * {@code
  * headerdata = {
  *   "#mandatory" : [ "messageid", "renewable", "handshake" ],
- *   "sender" : "string",
- *   "recipient" : "string",
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "nonreplayableid" : "int64(0,2^53^)",
@@ -69,8 +67,6 @@ class MessageCapabilities;
  *   "peerservicetokens" : [ servicetoken ]
  * }} where:
  * <ul>
- * <li>{@code sender} is the sender entity identity</li>
- * <li>{@code recipient} is the intended recipient's entity identity</li>
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code nonreplayableid} is the non-replayable ID</li>
@@ -95,8 +91,6 @@ public:
      */
     struct HeaderData {
         /**
-         * @param recipient the message recipient's entity identity. May be
-         *        empty.
          * @param messageId the message ID.
          * @param nonReplayableId the message's non-replayable ID. May be -1.
          * @param renewable the message's renewable flag.
@@ -113,13 +107,12 @@ public:
          *        authentication for this message.
          * @param serviceTokens the service tokens. May be null or empty.
          */
-        HeaderData(const std::string& recipient, int64_t messageId, int64_t nonReplayableId,
+        HeaderData(int64_t messageId, int64_t nonReplayableId,
             bool renewable, bool handshake, std::shared_ptr<MessageCapabilities> capabilities,
             std::set<std::shared_ptr<keyx::KeyRequestData>> keyRequestData, std::shared_ptr<keyx::KeyResponseData> keyResponseData,
             std::shared_ptr<userauth::UserAuthenticationData> userAuthData, std::shared_ptr<tokens::UserIdToken> userIdToken,
             std::set<std::shared_ptr<tokens::ServiceToken>> serviceTokens);
 
-        const std::string recipient;
         const int64_t messageId;
         const int64_t nonReplayableId;  // Note: this -1 where 'null' is used in java
         const bool renewable;
@@ -223,18 +216,6 @@ public:
      * @return the master token. May be null.
      */
     std::shared_ptr<tokens::MasterToken> getMasterToken() const;
-
-    /**
-     * @return the sender entity identity. Will be {@code null} if the message
-     *         is using entity authentication data.
-     */
-    std::string getSender() const;
-
-    /**
-     * @return the recipient entity identity. Will be {@code null} if there is
-     *         no specified recipient.
-     */
-    std::string getRecipient() const;
 
     /**
      * @return the timestamp. May be null.
@@ -404,10 +385,6 @@ private:
     /** Header data. */
     std::shared_ptr<io::MslObject> headerdata;
 
-    /** Sender. */
-    std::string sender;
-    /** Recipient. */
-    std::string recipient;
     /** Timestamp in seconds since the epoch. */
     int64_t timestamp;   // Note: this is -1 where 'null' is used in java
     /** Message ID. */

@@ -96,34 +96,34 @@ namespace {
 class DummyMslContext : public MslContext
 {
 private:
-	class DummyMslEncoderFactory : public MslEncoderFactory
-	{
-	public:
-		virtual ~DummyMslEncoderFactory() {}
-		DummyMslEncoderFactory() {}
+    class DummyMslEncoderFactory : public MslEncoderFactory
+    {
+    public:
+        virtual ~DummyMslEncoderFactory() {}
+        DummyMslEncoderFactory() {}
 
-		/** @inheritDoc */
-		virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& /*formats = std::set<MslEncoderFormat>()*/) {
-			return MslEncoderFormat::JSON;
-		}
+        /** @inheritDoc */
+        virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& /*formats = std::set<MslEncoderFormat>()*/) {
+            return MslEncoderFormat::JSON;
+        }
 
-	protected:
-		/** @inheritDoc */
-		virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> /*source*/, const MslEncoderFormat& /*format*/) {
-			throw MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
-		}
+    protected:
+        /** @inheritDoc */
+        virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> /*source*/, const MslEncoderFormat& /*format*/) {
+            throw MslInternalException("DummyMslEncoderFactory.createTokenizer() not supported.");
+        }
 
-	public:
-		/** @inheritDoc */
-		virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> /*encoding*/) {
+    public:
+        /** @inheritDoc */
+        virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> /*encoding*/) {
             throw MslInternalException("DummyMslEncoderFactory.parseObject() not supported.");
-		}
+        }
 
-		/** @inheritDoc */
-		virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> /*object*/, const MslEncoderFormat& /*format*/) {
+        /** @inheritDoc */
+        virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> /*object*/, const MslEncoderFormat& /*format*/) {
             throw MslInternalException("DummyMslEncoderFactory.encodeObject() not supported.");
-		}
-	};
+        }
+    };
 
 public:
     virtual ~DummyMslContext() {}
@@ -232,7 +232,7 @@ public:
         return appCtx->getCryptoContexts();
     }
     /** @inheritDoc */
-    virtual string  getRecipient() override { return appCtx->getRecipient(); }
+    virtual string getRemoteEntityIdentity() override { return appCtx->getRemoteEntityIdentity(); }
     /** @inheritDoc */
     virtual bool isEncrypted() override { return appCtx->isEncrypted(); }
     /** @inheritDoc */
@@ -394,28 +394,6 @@ public:
 private:
     KeyxResponseMessageContext() = delete;
 };
-
-/**
- * Returns the provided message's entity identity from the master token or
- * entity authentication data, if it can be determined.
- *
- * @param mis the message input stream.
- * @return the message header's entity identity or null if unknown.
- * @throws MslCryptoException if there is a crypto error accessing the
- *         entity identity.
- */
-string getIdentity(shared_ptr<MessageInputStream> mis)
-{
-    shared_ptr<MessageHeader> header = mis->getMessageHeader();
-    if (!header)
-        throw MslInternalException("This method should not be called with an error message.");
-
-    shared_ptr<MasterToken> masterToken = header->getMasterToken();
-    if (!masterToken)
-        return masterToken->getIdentity();
-    shared_ptr<EntityAuthenticationData> entityAuthData = header->getEntityAuthenticationData();
-    return entityAuthData->getIdentity();
-}
 
 /**
  * Update the MSL store by removing any service tokens marked for deletion
@@ -615,7 +593,7 @@ void MslControl::shutdown()
 
 shared_ptr<MasterToken> MslControl::getNewestMasterToken(shared_ptr<MslContext> ctx)
 {
-	// FIXME: This can get stuck forever if there's no way to interrupt/abort.
+    // FIXME: This can get stuck forever if there's no way to interrupt/abort.
     do {
         // Get the newest master token. If there is none then immediately
         // return.
@@ -773,8 +751,7 @@ shared_ptr<MessageBuilder> MslControl::buildRequest(shared_ptr<MslContext> ctx,
     }
 
     try {
-        const string recipient = msgCtx->getRecipient();
-        shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, recipient);
+        shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(ctx, masterToken, userIdToken);
         builder->setNonReplayable(msgCtx->isNonReplayable());
         return builder;
     } catch (const MslException& e) {
@@ -782,9 +759,9 @@ shared_ptr<MessageBuilder> MslControl::buildRequest(shared_ptr<MslContext> ctx,
         releaseMasterToken(ctx, masterToken);
         throw MslInternalException("User ID token not bound to master token despite internal check.", e);
     } catch (...) {
-    	// Release the master token lock.
-    	releaseMasterToken(ctx, masterToken);
-    	throw;
+        // Release the master token lock.
+        releaseMasterToken(ctx, masterToken);
+        throw;
     }
 }
 
@@ -871,8 +848,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            const string recipient = resendMsgCtx->getRecipient();
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, recipient, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -906,8 +882,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            const string recipient = resendMsgCtx->getRecipient();
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, nullptr, recipient, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -923,8 +898,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            const string recipient = resendMsgCtx->getRecipient();
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, recipient, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -958,8 +932,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Resend the request->
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            const string recipient = resendMsgCtx->getRecipient();
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, recipient, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -1002,8 +975,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Resend the request->
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            const string recipient = resendMsgCtx->getRecipient();
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, recipient, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -1225,11 +1197,11 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
     }
 
     try {
-        // If there is a request, make sure the response message ID equals the
-        // request message ID + 1.
+        // If there is a request make sure the response message ID equals
+        // the request message ID + 1.
         if (request) {
             // Only enforce this for message headers and error headers that are
-            // not entity re-authentcate or entity data re-authenticate (as in
+            // not entity re-authenticate or entity data re-authenticate (as in
             // those cases the remote entity is not always able to extract the
             // request message ID).
             const MslConstants::ResponseCode errorCode = (errorHeader ) ? errorHeader->getErrorCode() : MslConstants::ResponseCode::INVALID;
@@ -1246,33 +1218,35 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
             }
         }
 
+        // Verify expected identity if specified.
+        const string expectedIdentity = msgCtx->getRemoteEntityIdentity();
+        if (!expectedIdentity.empty()) {
+            // Reject if the remote entity identity is not equal to the
+            // message entity authentication data identity.
+            if (entityAuthData) {
+                const string entityAuthIdentity = entityAuthData->getIdentity();
+                if (!entityAuthIdentity.empty() && expectedIdentity != entityAuthIdentity) {
+                    stringstream ss;
+                    ss << "expected " << expectedIdentity << "; received " << entityAuthIdentity;
+                    throw MslMessageException(MslError::MESSAGE_SENDER_MISMATCH, ss.str());
+                }
+            }
+
+            // Reject if in peer-to-peer mode and the message sender does
+            // not match.
+            if (ctx->isPeerToPeer()) {
+                const string sender = response->getIdentity();
+                if (!sender.empty() && expectedIdentity != sender) {
+                    stringstream ss;
+                    ss << "expected " << expectedIdentity << "; received " << sender;
+                    throw MslMessageException(MslError::MESSAGE_SENDER_MISMATCH, ss.str());
+                }
+            }
+        }
+
         // Process the response.
         const string localIdentity = ctx->getEntityAuthenticationData()->getIdentity();
         if (responseHeader) {
-            // Reject messages if the local entity is the issuer of the master
-            // token and the sender is not equal to the master token identity,
-            // or if the remote entity identity is equal to this entity
-            // identity.
-            const string sender = (masterToken) ? responseHeader->getSender() : entityAuthData->getIdentity();
-            if ((masterToken && masterToken->isDecrypted() && !sender.empty() && masterToken->getIdentity() != sender))
-            {
-                stringstream ss;
-                ss << "sender " << sender << "; master token " << masterToken->getIdentity();
-                throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, ss.str());
-            }
-            if (!localIdentity.empty() && localIdentity == sender)
-            {
-                stringstream ss;
-                ss << sender << " == " << localIdentity;
-                throw MslMessageException(MslError::UNEXPECTED_LOCAL_MESSAGE_SENDER, ss.str());
-            }
-
-            // Reject messages if the message recipient is specified and not
-            // equal to the local entity.
-            const string recipient = responseHeader->getRecipient();
-            if (!recipient.empty() && !localIdentity.empty() && recipient != localIdentity)
-                throw MslMessageException(MslError::MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
-
             // If there is a request update the stored crypto contexts.
             if (request)
                 updateCryptoContexts(ctx, request, response);
@@ -1302,11 +1276,6 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
 
             // Update the stored service tokens.
             storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-        } else {
-            // Reject errors if the sender is equal to this entity.
-            const string sender = errorHeader->getEntityAuthenticationData()->getIdentity();
-            if (!localIdentity.empty() && localIdentity == sender)
-                throw MslMessageException(MslError::UNEXPECTED_MESSAGE_SENDER, sender);
         }
 
         // Update the synchronized clock if we are a trusted network client
@@ -1610,11 +1579,11 @@ void MslControl::releaseRenewalLock(shared_ptr<MslContext> ctx,
 }
 
 void MslControl::sendError(shared_ptr<MslContext> ctx, shared_ptr<MessageDebugContext> debugCtx,
-        shared_ptr<MessageHeader> requestHeader, const string& recipient, int64_t messageId,
+        shared_ptr<MessageHeader> requestHeader, int64_t messageId,
         const MslError& error, const string& userMessage, shared_ptr<OutputStream> out)
 {
     // Create error header->
-    shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(ctx, recipient, messageId, error, userMessage);
+    shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(ctx, messageId, error, userMessage);
     if (debugCtx) debugCtx->sentHeader(errorHeader);
 
     // Determine encoder format.
@@ -2215,10 +2184,9 @@ public:
             try {
                 shared_ptr<MasterToken> masterToken = e.getMasterToken();
                 shared_ptr<EntityAuthenticationData> entityAuthData = e.getEntityAuthenticationData();
-                const string recipient = (masterToken) ? masterToken->getIdentity() : ((entityAuthData) ? entityAuthData->getIdentity() : string());
                 const MslError error = e.getError();
                 const string userMessage = mslControl->messageRegistry->getUserMessage(error, vector<string>());
-                mslControl->sendError(ctx, debugCtx, nullptr, recipient, e.getMessageId(), error, userMessage, out);
+                mslControl->sendError(ctx, debugCtx, nullptr, e.getMessageId(), error, userMessage, out);
             } catch (const IException& rt) {
 //                // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2232,7 +2200,7 @@ public:
 
             // Maybe we can send an error message.
             try {
-                mslControl->sendError(ctx, debugCtx, nullptr, string(), -1, MslError::MSL_COMMS_FAILURE, string(), out);
+                mslControl->sendError(ctx, debugCtx, nullptr, -1, MslError::MSL_COMMS_FAILURE, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2246,7 +2214,7 @@ public:
 
             // Try to send an error response.
             try {
-                mslControl->sendError(ctx, debugCtx, nullptr, string(), -1, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, nullptr, -1, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2272,9 +2240,8 @@ public:
 
             // Try to send an error response.
             try {
-                const string recipient = request->getIdentity();
                 int64_t requestMessageId = requestHeader->getMessageId();
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2306,12 +2273,11 @@ public:
 
                 // Try to send an error response.
                 try {
-                    const string recipient = request->getIdentity();
                     const MslError error = e.getError();
                     shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                     vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
                     const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                    mslControl->sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                    mslControl->sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
                 } catch (const IException& rt) {
                     // If we were cancelled then return null.
     //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2326,9 +2292,8 @@ public:
 
                 // Try to send an error response.
                 try {
-                    const string recipient = request->getIdentity();
                     int64_t requestMessageId = requestHeader->getMessageId();
-                    mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
                 } catch (const IException& rt) {
                     // If we were cancelled then return null.
     //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2372,13 +2337,12 @@ public:
 
                     // Try to send an error response.
                     try {
-                        const string recipient = request->getIdentity();
                         int64_t requestMessageId = requestHeader->getMessageId();
                         const MslError error = e.getError();
                         shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                         vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
                         const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                        mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
                     } catch (const IException& rt) {
                         // If we were cancelled then return null.
 //                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2392,9 +2356,8 @@ public:
 
                     // Maybe we can send an error response.
                     try {
-                        const string recipient = request->getIdentity();
                         int64_t requestMessageId = requestHeader->getMessageId();
-                        mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
+                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
                     } catch (const IException& rt) {
                         // If we were cancelled then return null.
 //                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2409,9 +2372,8 @@ public:
 
                     // Try to send an error response.
                     try {
-                        const string recipient = request->getIdentity();
                         int64_t requestMessageId = requestHeader->getMessageId();
-                        mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
                     } catch (const IException& rt) {
                         // If we were cancelled then return null.
 //                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2553,9 +2515,8 @@ protected:
             if (securityRequired != MslError::OK) {
                 // Try to send an error response.
                 try {
-                    const string recipient = ::getIdentity(request);
                     const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                    mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, securityRequired, string(), out);
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, securityRequired, string(), out);
                     return nullptr;
                 } catch (const IException& rt) {
                     // If we were cancelled then return null.
@@ -2571,9 +2532,8 @@ protected:
             if (msgCtx->getUser() && !builder->getMasterToken() && !builder->getKeyExchangeData()) {
                 // Try to send an error response.
                 try {
-                    const string recipient = ::getIdentity(request);
                     const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                    mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::RESPONSE_REQUIRES_MASTERTOKEN, string(), out);
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::RESPONSE_REQUIRES_MASTERTOKEN, string(), out);
                     return nullptr;
                 } catch (const IException& rt) {
                     // If we were cancelled then return null.
@@ -2633,9 +2593,8 @@ protected:
             // response.
             mslControl->releaseMasterToken(ctx, builder->getMasterToken());
             try {
-                const string recipient = ::getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::RESPONSE_REQUIRES_MASTERTOKEN, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::RESPONSE_REQUIRES_MASTERTOKEN, string(), out);
                 return nullptr;
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
@@ -2749,12 +2708,11 @@ public:
 //            if (cancelled(e)) return nullptr;  // FIXME: How to handle cancellation?
 
             try {
-                const string recipient = ::getIdentity(request);
                 const MslError error = e.getError();
                 shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                 const vector<std::string> languages = (caps != nullptr) ? caps->getLanguages() : vector<std::string>();
                 const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
             } catch (const IException& rt) {
                 throw MslErrorResponseException("Error building the response.", rt, e);
             }
@@ -2764,8 +2722,7 @@ public:
 //            if (cancelled(t)) return nullptr;  // FIXME: How to handle cancellation?
 
             try {
-                const string recipient = ::getIdentity(request);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, -1, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, -1, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 throw MslErrorResponseException("Error building the response.", rt, t);
             }
@@ -2797,9 +2754,8 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = ::getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2813,13 +2769,12 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = ::getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
                 const MslError error = e.getError();
                 shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                 const vector<string> languages = (caps != nullptr) ? caps->getLanguages() : vector<string>();
                 const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2833,9 +2788,8 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = ::getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
@@ -2924,11 +2878,10 @@ public:
             }
 
             // Build and send the error response.
-            const string recipient = ::getIdentity(request);
             shared_ptr<MessageCapabilities> caps = header->getMessageCapabilities();
             const vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
             const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-            mslControl->sendError(ctx, debugCtx, header, recipient, header->getMessageId(), error, userMessage, out);
+            mslControl->sendError(ctx, debugCtx, header, header->getMessageId(), error, userMessage, out);
 
             // Success.
             return true;
@@ -3066,12 +3019,11 @@ public:
 //            if (cancelled(e)) return shared_ptr<MslChannel>();  // FIXME: How to handle cancellation?
 
             try {
-                const string recipient = getIdentity(request);
                 const MslError error = e.getError();
                 shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                 vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
                 const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, e.getMessageId(), error, userMessage, out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, e.getMessageId(), error, userMessage, out);
             } catch (const IException& rt) {
                 throw MslErrorResponseException("Error building the message.", rt, e);
             }
@@ -3081,8 +3033,7 @@ public:
 //            if (cancelled(t)) return null;  // FIXME: How to handle cancellation?
 
             try {
-                const string recipient = getIdentity(request);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, -1, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, -1, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 throw MslErrorResponseException("Error building the message.", rt, t);
             }
@@ -3108,9 +3059,8 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?
@@ -3124,13 +3074,12 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
                 const MslError error = e.getError();
                 shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
                 vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
                 const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, error, userMessage, out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?
@@ -3144,9 +3093,8 @@ public:
 
             // Maybe we can send an error response.
             try {
-                const string recipient = getIdentity(request);
                 const int64_t requestMessageId = MessageBuilder::decrementMessageId(builder->getMessageId());
-                mslControl->sendError(ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
             } catch (const IException& rt) {
                 // If we were cancelled then return null.
 //                if (cancelled(rt)) return null;  // FIXME: How to handle cancellation?

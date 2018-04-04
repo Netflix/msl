@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,6 @@ const int64_t SEQ_NO = 1;
 const int64_t MSG_ID = 42;
 const bool END_OF_MSG = true;
 
-const string NULL_RECIPIENT = "";
 const int64_t REPLAYABLE_ID = -1;
 const shared_ptr<MessageCapabilities> NULL_MSG_CAPS;
 const set<shared_ptr<KeyRequestData>> EMPTY_KEYX_REQUESTS;
@@ -163,12 +162,12 @@ public:
 	{
 		random.nextBytes(*DATA);
 
-		shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+		shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 		shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 		MESSAGE_HEADER = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
-		ERROR_HEADER =  make_shared<ErrorHeader>(trustedNetCtx, entityAuthData, NULL_RECIPIENT, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
+		ERROR_HEADER =  make_shared<ErrorHeader>(trustedNetCtx, entityAuthData, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
 
 		shared_ptr<KeyRequestData> keyRequest = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK);
 		KEY_REQUEST_DATA.insert(keyRequest);
@@ -274,7 +273,7 @@ TEST_F(MessageInputStreamTest, messageHeaderData)
 
 TEST_F(MessageInputStreamTest, entityAuthDataIdentity)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -290,7 +289,7 @@ TEST_F(MessageInputStreamTest, entityAuthDataIdentity)
 TEST_F(MessageInputStreamTest, masterTokenIdentity)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -305,7 +304,7 @@ TEST_F(MessageInputStreamTest, masterTokenIdentity)
 TEST_F(MessageInputStreamTest, errorHeaderIdentity)
 {
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
-	shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(trustedNetCtx, entityAuthData, NULL_RECIPIENT, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
+	shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(trustedNetCtx, entityAuthData, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
 
 	shared_ptr<InputStream> is = generateInputStream(errorHeader, payloads);
 	shared_ptr<MessageInputStream> mis = make_shared<MessageInputStream>(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
@@ -322,7 +321,7 @@ TEST_F(MessageInputStreamTest, revokedEntity)
 	shared_ptr<UnauthenticatedAuthenticationFactory> factory = make_shared<UnauthenticatedAuthenticationFactory>(authutils);
 	ctx->addEntityAuthenticationFactory(factory);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -344,7 +343,7 @@ TEST_F(MessageInputStreamTest, revokedMasterToken)
 	ctx->setTokenFactory(factory);
 
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -372,7 +371,7 @@ TEST_F(MessageInputStreamTest, userIdTokenUser)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
 	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -392,7 +391,7 @@ TEST_F(MessageInputStreamTest, revokedUserIdToken)
 
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
 	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -414,7 +413,7 @@ TEST_F(MessageInputStreamTest, untrustedUserIdToken)
 
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
 	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUntrustedUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, userIdToken, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -431,7 +430,7 @@ TEST_F(MessageInputStreamTest, untrustedUserIdToken)
 // FIXME This can be removed once the old handshake logic is removed.
 TEST_F(MessageInputStreamTest, explicitHandshake)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -447,7 +446,7 @@ TEST_F(MessageInputStreamTest, explicitHandshake)
 // FIXME This can be removed once the old handshake logic is removed.
 TEST_F(MessageInputStreamTest, inferredHandshake)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -464,7 +463,7 @@ TEST_F(MessageInputStreamTest, inferredHandshake)
 // FIXME This can be removed once the old handshake logic is removed.
 TEST_F(MessageInputStreamTest, notHandshake)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -480,7 +479,7 @@ TEST_F(MessageInputStreamTest, notHandshake)
 
 TEST_F(MessageInputStreamTest, keyExchange)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -499,7 +498,7 @@ TEST_F(MessageInputStreamTest, keyExchange)
 
 TEST_F(MessageInputStreamTest, peerKeyExchange)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = p2pCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(p2pCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -522,7 +521,7 @@ TEST_F(MessageInputStreamTest, unsupportedKeyExchangeScheme)
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 	ctx->removeKeyExchangeFactories(KeyExchangeScheme::SYMMETRIC_WRAPPED);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -543,7 +542,7 @@ TEST_F(MessageInputStreamTest, missingKeyRequestData)
 	// so create a local MSL context.
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, true);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
@@ -574,7 +573,7 @@ TEST_F(MessageInputStreamTest, incompatibleKeyRequestData)
 	shared_ptr<KeyExchangeData> keyExchangeData = factory->generateResponse(ctx, format, keyRequest, entityAuthData);
 	shared_ptr<KeyResponseData> keyResponseData = keyExchangeData->keyResponseData;
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, keyResponseData, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, keyResponseData, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -604,7 +603,7 @@ TEST_F(MessageInputStreamTest, oneCompatibleKeyRequestData)
 	shared_ptr<KeyExchangeData> keyExchangeData = factory->generateResponse(trustedNetCtx, format, keyRequest, entityAuthData);
 	shared_ptr<KeyResponseData> keyResponseData = keyExchangeData->keyResponseData;
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, keyResponseData, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, keyResponseData, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -618,7 +617,7 @@ TEST_F(MessageInputStreamTest, expiredRenewableClientMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -632,7 +631,7 @@ TEST_F(MessageInputStreamTest, expiredRenewablePeerMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(p2pCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -648,7 +647,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableClientMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -669,7 +668,7 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataClientMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -692,7 +691,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableServerMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -719,7 +718,7 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataPeerMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(p2pCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -738,7 +737,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewablePeerMessage)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(p2pCtx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -755,7 +754,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewablePeerMessage)
 TEST_F(MessageInputStreamTest, handshakeNotRenewable)
 {
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, false, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, false, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -772,7 +771,7 @@ TEST_F(MessageInputStreamTest, handshakeNotRenewable)
 TEST_F(MessageInputStreamTest, handshakeMissingKeyRequestData)
 {
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, true, true, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, true, true, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -790,7 +789,7 @@ TEST_F(MessageInputStreamTest, nonReplayableNoMasterTokenClientMessage)
 {
 
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -807,7 +806,7 @@ TEST_F(MessageInputStreamTest, nonReplayableNoMasterTokenClientMessage)
 TEST_F(MessageInputStreamTest, nonReplayableNoMasterTokenPeerMessage)
 {
 	shared_ptr<EntityAuthenticationData> entityAuthData = p2pCtx->getEntityAuthenticationData();
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(p2pCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -831,7 +830,7 @@ TEST_F(MessageInputStreamTest, nonReplayableIdEqual)
 	factory->setLargestNonReplayableId(nonReplayableId);
 	ctx->setTokenFactory(factory);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -855,7 +854,7 @@ TEST_F(MessageInputStreamTest, nonReplayableIdSmaller)
 	factory->setLargestNonReplayableId(nonReplayableId);
 	ctx->setTokenFactory(factory);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, nonReplayableId - 1, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, nonReplayableId - 1, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -884,7 +883,7 @@ TEST_F(MessageInputStreamTest, nonReplayableIdOutsideWindow)
 		try {
 			factory->setLargestNonReplayableId(largestNonReplayableId);
 
-			shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+			shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 			shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 			shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -920,7 +919,7 @@ TEST_F(MessageInputStreamTest, nonReplayableIdInsideWindow)
 		try {
 			factory->setLargestNonReplayableId(largestNonReplayableId);
 
-			shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+			shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, nonReplayableId, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 			shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 			shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -946,7 +945,7 @@ TEST_F(MessageInputStreamTest, replayedClientMessage)
 	factory->setLargestNonReplayableId(1L);
 	ctx->setTokenFactory(factory);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -969,7 +968,7 @@ TEST_F(MessageInputStreamTest, replayedPeerMessage)
 	factory->setLargestNonReplayableId(1L);
 	ctx->setTokenFactory(factory);
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, 1L, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
 
@@ -1010,7 +1009,7 @@ TEST_F(MessageInputStreamTest, readFromError)
 
 TEST_F(MessageInputStreamTest, readFromHandshakeMessage)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MSG_ID, REPLAYABLE_ID, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MSG_ID, REPLAYABLE_ID, true, true, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData();
 	shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);

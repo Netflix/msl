@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,6 @@ const string KEY_ERRORDATA = "errordata";
 const string KEY_SIGNATURE = "signature";
 
 // Message error data.
-/** Key recipient. */
-const string KEY_RECIPIENT = "recipient";
 /** Key timestamp. */
 const string KEY_TIMESTAMP = "timestamp";
 /** Key message ID. */
@@ -74,7 +72,6 @@ const string KEY_ERROR_MESSAGE = "errormsg";
 /** Key user message. */
 const string KEY_USER_MESSAGE = "usermsg";
 
-const string RECIPIENT = "recipient";
 const int64_t MESSAGE_ID = 17;
 const int32_t INTERNAL_CODE = 621;
 const string ERROR_MSG = "Error message.";
@@ -155,20 +152,19 @@ private:
 
 TEST_F(ErrorHeaderTest, ctors)
 {
-    const ErrorHeader errorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    const ErrorHeader errorHeader(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     EXPECT_EQ(ENTITY_AUTH_DATA, errorHeader.getEntityAuthenticationData());
     EXPECT_EQ(ERROR_CODE, errorHeader.getErrorCode());
     EXPECT_EQ(ERROR_MSG, errorHeader.getErrorMessage());
     EXPECT_EQ(INTERNAL_CODE, errorHeader.getInternalCode());
     EXPECT_EQ(MESSAGE_ID, errorHeader.getMessageId());
     EXPECT_EQ(USER_MSG, errorHeader.getUserMessage());
-    EXPECT_EQ(RECIPIENT, errorHeader.getRecipient());
     EXPECT_TRUE(isAboutNow(errorHeader.getTimestamp()));
 }
 
 TEST_F(ErrorHeaderTest, mslObject)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
 
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, errorHeader);
     shared_ptr<MslObject> entityAuthDataMo = mo->getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
@@ -179,7 +175,6 @@ TEST_F(ErrorHeaderTest, mslObject)
     shared_ptr<ByteArray> signature = mo->getBytes(KEY_SIGNATURE);
     EXPECT_TRUE(cryptoContext->verify(ciphertext, signature, encoder));
 
-    EXPECT_EQ(RECIPIENT, errordata->getString(KEY_RECIPIENT));
     EXPECT_EQ(MESSAGE_ID, errordata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(ERROR_CODE.intValue(), errordata->getInt(KEY_ERROR_CODE));
     EXPECT_EQ(INTERNAL_CODE, errordata->getInt(KEY_INTERNAL_CODE));
@@ -190,7 +185,7 @@ TEST_F(ErrorHeaderTest, mslObject)
 
 TEST_F(ErrorHeaderTest, negativeInternalCodeMslObject)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG);
     EXPECT_EQ(-1, errorHeader->getInternalCode());
 
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, errorHeader);
@@ -202,7 +197,6 @@ TEST_F(ErrorHeaderTest, negativeInternalCodeMslObject)
     shared_ptr<ByteArray> signature = mo->getBytes(KEY_SIGNATURE);
     EXPECT_TRUE(cryptoContext->verify(ciphertext, signature, encoder));
 
-    EXPECT_EQ(RECIPIENT, errordata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(errordata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, errordata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(ERROR_CODE.intValue(), errordata->getInt(KEY_ERROR_CODE));
@@ -211,32 +205,9 @@ TEST_F(ErrorHeaderTest, negativeInternalCodeMslObject)
     EXPECT_EQ(USER_MSG, errordata->getString(KEY_USER_MESSAGE));
 }
 
-TEST_F(ErrorHeaderTest, nullRecipientMslObject)
-{
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, "", MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-    EXPECT_TRUE(errorHeader->getRecipient().empty());
-
-    shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, errorHeader);
-    shared_ptr<MslObject> entityAuthDataMo = mo->getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
-    EXPECT_EQ(*MslTestUtils::toMslObject(encoder, ENTITY_AUTH_DATA), *entityAuthDataMo);
-    shared_ptr<ByteArray> ciphertext = mo->getBytes(KEY_ERRORDATA);
-    shared_ptr<ByteArray> plaintext = cryptoContext->decrypt(ciphertext, encoder);
-    shared_ptr<MslObject> errordata = encoder->parseObject(plaintext);
-    shared_ptr<ByteArray> signature = mo->getBytes(KEY_SIGNATURE);
-    EXPECT_TRUE(cryptoContext->verify(ciphertext, signature, encoder));
-
-    EXPECT_FALSE(errordata->has(KEY_RECIPIENT));
-    EXPECT_TRUE(isAboutNowSeconds(errordata->getLong(KEY_TIMESTAMP)));
-    EXPECT_EQ(MESSAGE_ID, errordata->getLong(KEY_MESSAGE_ID));
-    EXPECT_EQ(ERROR_CODE.intValue(), errordata->getInt(KEY_ERROR_CODE));
-    EXPECT_EQ(INTERNAL_CODE, errordata->getInt(KEY_INTERNAL_CODE));
-    EXPECT_EQ(ERROR_MSG, errordata->getString(KEY_ERROR_MESSAGE));
-    EXPECT_EQ(USER_MSG, errordata->getString(KEY_USER_MESSAGE));
-}
-
 TEST_F(ErrorHeaderTest, nullErrorMessageMslObject)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, "", USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, "", USER_MSG);
     EXPECT_TRUE(errorHeader->getErrorMessage().empty());
 
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, errorHeader);
@@ -248,7 +219,6 @@ TEST_F(ErrorHeaderTest, nullErrorMessageMslObject)
     shared_ptr<ByteArray> signature = mo->getBytes(KEY_SIGNATURE);
     EXPECT_TRUE(cryptoContext->verify(ciphertext, signature, encoder));
 
-    EXPECT_EQ(RECIPIENT, errordata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(errordata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, errordata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(ERROR_CODE.intValue(), errordata->getInt(KEY_ERROR_CODE));
@@ -259,7 +229,7 @@ TEST_F(ErrorHeaderTest, nullErrorMessageMslObject)
 
 TEST_F(ErrorHeaderTest, nullUserMessageMslObject)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, "");
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, "");
     EXPECT_TRUE(errorHeader->getUserMessage().empty());
 
     shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, errorHeader);
@@ -271,7 +241,6 @@ TEST_F(ErrorHeaderTest, nullUserMessageMslObject)
     shared_ptr<ByteArray> signature = mo->getBytes(KEY_SIGNATURE);
     EXPECT_TRUE(cryptoContext->verify(ciphertext, signature, encoder));
 
-    EXPECT_EQ(RECIPIENT, errordata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(errordata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, errordata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(ERROR_CODE.intValue(), errordata->getInt(KEY_ERROR_CODE));
@@ -282,7 +251,7 @@ TEST_F(ErrorHeaderTest, nullUserMessageMslObject)
 
 TEST_F(ErrorHeaderTest, parseHeader)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
     shared_ptr<Header> header = Header::parseHeader(ctx, errorHeaderMo, CRYPTO_CONTEXTS);
     EXPECT_TRUE(header);
@@ -295,7 +264,6 @@ TEST_F(ErrorHeaderTest, parseHeader)
     EXPECT_EQ(errorHeader->getErrorMessage(), moErrorHeader->getErrorMessage());
     EXPECT_EQ(errorHeader->getInternalCode(), moErrorHeader->getInternalCode());
     EXPECT_EQ(errorHeader->getMessageId(), moErrorHeader->getMessageId());
-    EXPECT_EQ(errorHeader->getRecipient(), moErrorHeader->getRecipient());
     EXPECT_EQ(errorHeader->getUserMessage(), moErrorHeader->getUserMessage());
 }
 
@@ -304,7 +272,7 @@ TEST_F(ErrorHeaderTest, missingEntityAuthDataCtor)
 //    thrown.expect(MslMessageException.class);
 //    thrown.expectMslError(MslError::MESSAGE_ENTITY_NOT_FOUND);
     try {
-        ErrorHeader eh(ctx, shared_ptr<EntityAuthenticationData>(), RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+        ErrorHeader eh(ctx, shared_ptr<EntityAuthenticationData>(), MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
         ADD_FAILURE() << "Should have thrown.";
     } catch (const MslMessageException& e) {
         EXPECT_EQ(MslError::MESSAGE_ENTITY_NOT_FOUND, e.getError());
@@ -316,7 +284,7 @@ TEST_F(ErrorHeaderTest, missingEntityAuthDataParseHeader)
 //    thrown.expect(MslMessageException.class);
 //    thrown.expectMslError(MslError::MESSAGE_ENTITY_NOT_FOUND);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     EXPECT_FALSE(errorHeaderMo->remove(KEY_ENTITY_AUTHENTICATION_DATA).isNull());
@@ -334,7 +302,7 @@ TEST_F(ErrorHeaderTest, invalidEntityAuthData)
 //    thrown.expect(MslEncodingException.class);
 //    thrown.expectMslError(MslError::MSL_PARSE_ERROR);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     errorHeaderMo->put<string>(KEY_ENTITY_AUTHENTICATION_DATA, "x");
@@ -352,7 +320,7 @@ TEST_F(ErrorHeaderTest, missingSignature)
 //    thrown.expect(MslEncodingException.class);
 //    thrown.expectMslError(MslError::MSL_PARSE_ERROR);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     EXPECT_FALSE(errorHeaderMo->remove(KEY_SIGNATURE).isNull());
@@ -370,7 +338,7 @@ TEST_F(ErrorHeaderTest, invalidSignature)
 //    thrown.expect(MslEncodingException.class);
 //    thrown.expectMslError(MslError::MSL_PARSE_ERROR);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     errorHeaderMo->put<bool>(KEY_SIGNATURE, false);
@@ -388,7 +356,7 @@ TEST_F(ErrorHeaderTest, incorrectSignature)
 //    thrown.expect(MslCryptoException.class);
 //    thrown.expectMslError(MslError::MESSAGE_VERIFICATION_FAILED);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     errorHeaderMo->put(KEY_SIGNATURE, Base64::decode("AAA="));
@@ -406,7 +374,7 @@ TEST_F(ErrorHeaderTest, missingErrordata)
 //    thrown.expect(MslEncodingException.class);
 //    thrown.expectMslError(MslError::MSL_PARSE_ERROR);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     EXPECT_FALSE(errorHeaderMo->remove(KEY_ERRORDATA).isNull());
@@ -424,7 +392,7 @@ TEST_F(ErrorHeaderTest, invalidErrordata)
 //    thrown.expect(MslCryptoException.class);
 //    thrown.expectMslError(MslError::CIPHERTEXT_ENVELOPE_PARSE_ERROR);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // This tests invalid but trusted error data so we must sign it.
@@ -447,7 +415,7 @@ TEST_F(ErrorHeaderTest, emptyErrordata)
 //    thrown.expect(MslMessageException.class);
 //    thrown.expectMslError(MslError::HEADER_DATA_MISSING);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // This tests empty but trusted error data so we must sign it.
@@ -466,7 +434,7 @@ TEST_F(ErrorHeaderTest, emptyErrordata)
 
 TEST_F(ErrorHeaderTest, missingTimestamp)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -490,7 +458,7 @@ TEST_F(ErrorHeaderTest, missingTimestamp)
 
 TEST_F(ErrorHeaderTest, invalidTimestamp)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -520,7 +488,7 @@ TEST_F(ErrorHeaderTest, invalidTimestamp)
 
 TEST_F(ErrorHeaderTest, missingMessageId)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -550,7 +518,7 @@ TEST_F(ErrorHeaderTest, missingMessageId)
 
 TEST_F(ErrorHeaderTest, invalidMessageId)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -581,18 +549,18 @@ TEST_F(ErrorHeaderTest, invalidMessageId)
 TEST_F(ErrorHeaderTest, negativeMessageIdCtor)
 {
 //(expected = MslInternalException.class)
-    EXPECT_THROW(ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG), MslInternalException);
+    EXPECT_THROW(ErrorHeader(ctx, ENTITY_AUTH_DATA, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG), MslInternalException);
 }
 
 TEST_F(ErrorHeaderTest, tooLargeMessageIdCtor)
 {
 //(expected = MslInternalException.class)
-    EXPECT_THROW(ErrorHeader(ctx, ENTITY_AUTH_DATA, RECIPIENT, MslConstants::MAX_LONG_VALUE + 1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG), MslInternalException);
+    EXPECT_THROW(ErrorHeader(ctx, ENTITY_AUTH_DATA, MslConstants::MAX_LONG_VALUE + 1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG), MslInternalException);
 }
 
 TEST_F(ErrorHeaderTest, negativeMessageIdParseHeader)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -625,7 +593,7 @@ TEST_F(ErrorHeaderTest, tooLargeMessageIdParseHeader)
 //    thrown.expect(MslMessageException.class);
 //    thrown.expectMslError(MslError::MESSAGE_ID_OUT_OF_RANGE);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -655,7 +623,7 @@ TEST_F(ErrorHeaderTest, tooLargeMessageIdParseHeader)
 
 TEST_F(ErrorHeaderTest, missingErrorCode)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -686,7 +654,7 @@ TEST_F(ErrorHeaderTest, missingErrorCode)
 
 TEST_F(ErrorHeaderTest, invalidErrorCode)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -717,7 +685,7 @@ TEST_F(ErrorHeaderTest, invalidErrorCode)
 
 TEST_F(ErrorHeaderTest, missingInternalCode)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -748,7 +716,7 @@ TEST_F(ErrorHeaderTest, invalidInternalCode)
 //    thrown.expectMslError(MslError::MSL_PARSE_ERROR);
 //    thrown.expectMessageId(MESSAGE_ID);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -783,7 +751,7 @@ TEST_F(ErrorHeaderTest, negativeInternalCode)
 //    thrown.expectMslError(MslError::INTERNAL_CODE_NEGATIVE);
 //    thrown.expectMessageId(MESSAGE_ID);
 
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -814,7 +782,7 @@ TEST_F(ErrorHeaderTest, negativeInternalCode)
 
 TEST_F(ErrorHeaderTest, missingErrorMessage)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -841,7 +809,7 @@ TEST_F(ErrorHeaderTest, missingErrorMessage)
 
 TEST_F(ErrorHeaderTest, missingUserMessage)
 {
-    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeader = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<MslObject> errorHeaderMo = MslTestUtils::toMslObject(encoder, errorHeader);
 
     // Before modifying the error data we need to decrypt it.
@@ -866,28 +834,11 @@ TEST_F(ErrorHeaderTest, missingUserMessage)
     EXPECT_TRUE(moErrorHeader->getUserMessage().empty());
 }
 
-TEST_F(ErrorHeaderTest, equalsRecipient)
-{
-    const string recipientA = "A";
-    const string recipientB = "B";
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
-
-    EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
-
-    EXPECT_FALSE(errorHeaderA->equals(errorHeaderB));
-    EXPECT_FALSE(errorHeaderB->equals(errorHeaderA));
-
-    EXPECT_TRUE(errorHeaderA->equals(errorHeaderA2));
-    EXPECT_TRUE(errorHeaderA2->equals(errorHeaderA));
-}
-
 TEST_F(ErrorHeaderTest, equalsTimestamp)
 {
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     sleep(1);  // FIXME: better way to do this? Adds a whole second to test runtime, currently +30%.
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
@@ -903,8 +854,8 @@ TEST_F(ErrorHeaderTest, equalsMessageId)
 {
     const int64_t messageIdA = 1;
     const int64_t messageIdB = 2;
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
@@ -920,8 +871,8 @@ TEST_F(ErrorHeaderTest, equalsErrorCode)
 {
     const MslConstants::ResponseCode errorCodeA = MslConstants::ResponseCode::FAIL;
     const MslConstants::ResponseCode errorCodeB = MslConstants::ResponseCode::TRANSIENT_FAILURE;
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG);
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
@@ -937,8 +888,8 @@ TEST_F(ErrorHeaderTest, equalsInternalCode)
 {
     const int32_t internalCodeA = 1;
     const int32_t internalCodeB = 2;
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG);
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
@@ -954,9 +905,9 @@ TEST_F(ErrorHeaderTest, equalsErrorMessage)
 {
     const string errorMsgA = "A";
     const string errorMsgB = "B";
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG);
-    shared_ptr<ErrorHeader> errorHeaderC = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, "", USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG);
+    shared_ptr<ErrorHeader> errorHeaderC = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, "", USER_MSG);
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));
@@ -975,9 +926,9 @@ TEST_F(ErrorHeaderTest, equalsUserMessage)
 {
     const string userMsgA = "A";
     const string userMsgB = "B";
-    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA);
-    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB);
-    shared_ptr<ErrorHeader> errorHeaderC = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, "");
+    shared_ptr<ErrorHeader> errorHeaderA = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA);
+    shared_ptr<ErrorHeader> errorHeaderB = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB);
+    shared_ptr<ErrorHeader> errorHeaderC = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, "");
     shared_ptr<ErrorHeader> errorHeaderA2 = dynamic_pointer_cast<ErrorHeader>(Header::parseHeader(ctx, MslTestUtils::toMslObject(encoder, errorHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(errorHeaderA->equals(errorHeaderA));

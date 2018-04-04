@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,6 @@ namespace msg {
 
 namespace {
 
-const string RECIPIENT = "recipient";
 const string SERVICE_TOKEN_NAME = "serviceTokenName";
 const string USER_ID = "userid";
 const string PEER_USER_ID = "peeruserid";
@@ -96,7 +95,6 @@ const string PARAMETERS_ID = MockDiffieHellmanParameters::DEFAULT_ID();
 
 shared_ptr<MasterToken> NULL_MASTER_TOKEN;
 shared_ptr<UserIdToken> NULL_USER_ID_TOKEN;
-const string NULL_RECIPIENT = "";
 const vector<string> EMPTY_LANGUAGES;
 const set<MslEncoderFormat> EMPTY_ENCODER_FORMATS;
 shared_ptr<MessageCapabilities> NULL_MSG_CAPS;
@@ -260,7 +258,7 @@ public:
 
 TEST_F(MessageBuilderTest_CreateRequest, createNullRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	EXPECT_TRUE(builder->willEncryptHeader());
 	EXPECT_TRUE(builder->willEncryptPayloads());
 	EXPECT_TRUE(builder->willIntegrityProtectHeader());
@@ -281,7 +279,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createNullRequest)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(NULL_RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(header->getServiceTokens().empty());
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_FALSE(header->getUserIdToken());
@@ -289,7 +286,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createNullRequest)
 
 TEST_F(MessageBuilderTest_CreateRequest, createNullPeerRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	EXPECT_TRUE(builder->willEncryptHeader());
 	EXPECT_TRUE(builder->willEncryptPayloads());
 	EXPECT_TRUE(builder->willIntegrityProtectHeader());
@@ -310,7 +307,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createNullPeerRequest)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(NULL_RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(header->getServiceTokens().empty());
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_FALSE(header->getUserIdToken());
@@ -319,7 +315,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createNullPeerRequest)
 TEST_F(MessageBuilderTest_CreateRequest, createRequest)
 {
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -358,7 +354,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createRequest)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(header->getServiceTokens(), serviceTokens));;
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *header->getUserIdToken());
@@ -368,7 +363,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createRequestWithMessageId)
 {
 	const int64_t messageId = 17;
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, RECIPIENT, messageId);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, messageId);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -406,7 +401,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createRequestWithMessageId)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(header->getServiceTokens(), serviceTokens));;
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *header->getUserIdToken());
@@ -415,7 +409,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createRequestWithMessageId)
 TEST_F(MessageBuilderTest_CreateRequest, createPeerRequest)
 {
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
@@ -461,7 +455,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createPeerRequest)
 	EXPECT_EQ(*PEER_MASTER_TOKEN, *header->getPeerMasterToken());
 	EXPECT_TRUE(MslTestUtils::equal(header->getPeerServiceTokens(), peerServiceTokens));
 	EXPECT_EQ(*PEER_USER_ID_TOKEN, *header->getPeerUserIdToken());
-	EXPECT_EQ(RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(header->getServiceTokens(), serviceTokens));;
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *header->getUserIdToken());
@@ -469,7 +462,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createPeerRequest)
 
 TEST_F(MessageBuilderTest_CreateRequest, createHandshakeRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setNonReplayable(true);
 	builder->setRenewable(false);
 	builder->setHandshake(true);
@@ -492,7 +485,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createHandshakeRequest)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(NULL_RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(header->getServiceTokens().empty());
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_FALSE(header->getUserIdToken());
@@ -500,7 +492,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createHandshakeRequest)
 
 TEST_F(MessageBuilderTest_CreateRequest, createPeerHandshakeRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setNonReplayable(true);
 	builder->setRenewable(false);
 	builder->setHandshake(true);
@@ -523,7 +515,6 @@ TEST_F(MessageBuilderTest_CreateRequest, createPeerHandshakeRequest)
 	EXPECT_FALSE(header->getPeerMasterToken());
 	EXPECT_TRUE(header->getPeerServiceTokens().empty());
 	EXPECT_FALSE(header->getPeerUserIdToken());
-	EXPECT_EQ(NULL_RECIPIENT, header->getRecipient());
 	EXPECT_TRUE(header->getServiceTokens().empty());
 	EXPECT_FALSE(header->getUserAuthenticationData());
 	EXPECT_FALSE(header->getUserIdToken());
@@ -532,7 +523,7 @@ TEST_F(MessageBuilderTest_CreateRequest, createPeerHandshakeRequest)
 TEST_F(MessageBuilderTest_CreateRequest, willEncryptRsaEntityAuth)
 {
 	shared_ptr<MslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	EXPECT_FALSE(builder->willEncryptHeader());
 	EXPECT_FALSE(builder->willEncryptPayloads());
 	EXPECT_TRUE(builder->willIntegrityProtectHeader());
@@ -542,7 +533,7 @@ TEST_F(MessageBuilderTest_CreateRequest, willEncryptRsaEntityAuth)
 TEST_F(MessageBuilderTest_CreateRequest, willIntegrityProtectNoneAuth)
 {
 	shared_ptr<MslContext> noneCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::NONE, false);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(noneCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(noneCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	EXPECT_FALSE(builder->willEncryptHeader());
 	EXPECT_FALSE(builder->willEncryptPayloads());
 	EXPECT_FALSE(builder->willIntegrityProtectHeader());
@@ -573,7 +564,7 @@ TEST_F(MessageBuilderTest_CreateRequest, storedServiceTokens)
 			updatedServiceTokens.insert(peerServiceToken);
 	}
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	EXPECT_TRUE(MslTestUtils::equal(updatedServiceTokens, builder->getServiceTokens()));
 	EXPECT_TRUE(builder->getPeerServiceTokens().empty());
 	shared_ptr<MessageHeader> header = builder->getHeader();
@@ -618,7 +609,7 @@ TEST_F(MessageBuilderTest_CreateRequest, storedPeerServiceTokens)
 			updatedPeerServiceTokens.insert(serviceToken);
 	}
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	EXPECT_TRUE(MslTestUtils::equal(updatedServiceTokens, builder->getServiceTokens()));
 	EXPECT_TRUE(MslTestUtils::equal(updatedPeerServiceTokens, builder->getPeerServiceTokens()));
@@ -633,7 +624,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUserAuthData)
 	// Setting the user authentication data will replace the user ID token
 	// and remove any user ID token bound service tokens.
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -674,7 +665,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUserAuthData)
 TEST_F(MessageBuilderTest_CreateRequest, setUserAuthDataNull)
 {
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -714,7 +705,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUserAuthDataNull)
 TEST_F(MessageBuilderTest_CreateRequest, unsetUserAuthData)
 {
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -755,7 +746,7 @@ TEST_F(MessageBuilderTest_CreateRequest, unsetUserAuthData)
 
 TEST_F(MessageBuilderTest_CreateRequest, overwriteKeyRequestData)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -789,7 +780,7 @@ TEST_F(MessageBuilderTest_CreateRequest, overwriteKeyRequestData)
 
 TEST_F(MessageBuilderTest_CreateRequest, removeKeyRequestData)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
 		 ++keyRequestData)
@@ -823,7 +814,7 @@ TEST_F(MessageBuilderTest_CreateRequest, removeKeyRequestData)
 
 TEST_F(MessageBuilderTest_CreateRequest, nonReplayableMissingMasterToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setNonReplayable(true);
 	try {
 		builder->getHeader();
@@ -835,7 +826,7 @@ TEST_F(MessageBuilderTest_CreateRequest, nonReplayableMissingMasterToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, mismatchedMasterTokenAddTokenServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
 	random.nextBytes(*data);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -849,7 +840,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedMasterTokenAddTokenServiceTok
 
 TEST_F(MessageBuilderTest_CreateRequest, nullMasterTokenAddServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
 	random.nextBytes(*data);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -865,7 +856,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedUserIdTokenAddServiceToken)
 {
 	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA);
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
 	random.nextBytes(*data);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, userIdTokenB, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -879,7 +870,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedUserIdTokenAddServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, nullUserIdTokenAddServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
 	random.nextBytes(*data);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -893,7 +884,7 @@ TEST_F(MessageBuilderTest_CreateRequest, nullUserIdTokenAddServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, excludeServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -914,7 +905,7 @@ TEST_F(MessageBuilderTest_CreateRequest, excludeServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, deleteServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 
 	// The service token must exist before it can be deleted.
 	shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
@@ -941,7 +932,7 @@ TEST_F(MessageBuilderTest_CreateRequest, deleteServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, deleteUnknownServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->deleteServiceToken(SERVICE_TOKEN_NAME);
 	shared_ptr<MessageHeader> messageHeader = builder->getHeader();
 	set<shared_ptr<ServiceToken>> tokens = messageHeader->getServiceTokens();
@@ -957,7 +948,7 @@ TEST_F(MessageBuilderTest_CreateRequest, deleteUnknownServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, notP2PCreatePeerRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	try {
 		builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 		ADD_FAILURE() << "Should have thrown";
@@ -967,7 +958,7 @@ TEST_F(MessageBuilderTest_CreateRequest, notP2PCreatePeerRequest)
 
 TEST_F(MessageBuilderTest_CreateRequest, missingPeerMasterTokenCreatePeerRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	try {
 		builder->setPeerAuthTokens(NULL_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 		ADD_FAILURE() << "Should have thrown";
@@ -977,7 +968,7 @@ TEST_F(MessageBuilderTest_CreateRequest, missingPeerMasterTokenCreatePeerRequest
 
 TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerMasterTokenCreatePeerRequest)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	try {
 		builder->setPeerAuthTokens(MASTER_TOKEN, PEER_USER_ID_TOKEN);
 		ADD_FAILURE() << "Should have thrown";
@@ -987,7 +978,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerMasterTokenCreatePeerRequ
 
 TEST_F(MessageBuilderTest_CreateRequest, notP2PAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	try {
 		builder->addPeerServiceToken(peerServiceToken);
@@ -998,7 +989,7 @@ TEST_F(MessageBuilderTest_CreateRequest, notP2PAddPeerServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, missingPeerMasterTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(p2pCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	try {
 		builder->addPeerServiceToken(peerServiceToken);
@@ -1010,7 +1001,7 @@ TEST_F(MessageBuilderTest_CreateRequest, missingPeerMasterTokenAddPeerServiceTok
 
 TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerMasterTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	try {
@@ -1023,7 +1014,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerMasterTokenAddPeerService
 
 TEST_F(MessageBuilderTest_CreateRequest, missingPeerUserIdTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(p2pCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	try {
@@ -1038,7 +1029,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerUserIdTokenAddPeerService
 {
 	shared_ptr<UserIdToken> userIdTokenA = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
 	shared_ptr<UserIdToken> userIdTokenB = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, userIdTokenA);
 	shared_ptr<ServiceToken> peerServiceToken = make_shared<ServiceToken>(p2pCtx, SERVICE_TOKEN_NAME, make_shared<ByteArray>(), PEER_MASTER_TOKEN, userIdTokenB, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 	try {
@@ -1051,7 +1042,7 @@ TEST_F(MessageBuilderTest_CreateRequest, mismatchedPeerUserIdTokenAddPeerService
 
 TEST_F(MessageBuilderTest_CreateRequest, excludePeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
@@ -1074,7 +1065,7 @@ TEST_F(MessageBuilderTest_CreateRequest, excludePeerServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, deletePeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 
 	// The service token must exist before it can be deleted.
@@ -1102,7 +1093,7 @@ TEST_F(MessageBuilderTest_CreateRequest, deletePeerServiceToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, deleteUnknownPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	builder->deletePeerServiceToken(SERVICE_TOKEN_NAME);
 	shared_ptr<MessageHeader> messageHeader = builder->getHeader();
@@ -1129,7 +1120,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setMasterToken)
 	set<shared_ptr<ServiceToken>> peerServiceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	store->addServiceTokens(peerServiceTokens);
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setAuthTokens(MASTER_TOKEN, NULL_USER_ID_TOKEN);
 
 	// The message service tokens will include all unbound service
@@ -1164,7 +1155,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setExistingMasterToken)
 	set<shared_ptr<ServiceToken>> peerServiceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	store->addServiceTokens(peerServiceTokens);
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setAuthTokens(MASTER_TOKEN, NULL_USER_ID_TOKEN);
 
 	// The message service tokens will include all unbound service
@@ -1199,7 +1190,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setAuthTokens)
 	set<shared_ptr<ServiceToken>> peerServiceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	store->addServiceTokens(peerServiceTokens);
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
 
 	// The message service tokens will include all unbound service
@@ -1234,7 +1225,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setExistingAuthTokens)
 	set<shared_ptr<ServiceToken>> peerServiceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	store->addServiceTokens(peerServiceTokens);
 
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
 
 	// The message service tokens will include all unbound service
@@ -1258,7 +1249,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setExistingAuthTokens)
 
 TEST_F(MessageBuilderTest_CreateRequest, setNullMasterToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setAuthTokens(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> header = builder->getHeader();
 	EXPECT_TRUE(header);
@@ -1269,7 +1260,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setNullMasterToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, setMismatchedAuthTokens)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	try {
 		builder->setAuthTokens(MASTER_TOKEN, PEER_USER_ID_TOKEN);
 		ADD_FAILURE() << "Should have thrown";
@@ -1279,7 +1270,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setMismatchedAuthTokens)
 
 TEST_F(MessageBuilderTest_CreateRequest, setUser)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setUser(USER_ID_TOKEN->getUser());
 	shared_ptr<UserIdToken> userIdToken = builder->getUserIdToken();
 	EXPECT_TRUE(userIdToken);
@@ -1288,7 +1279,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUser)
 
 TEST_F(MessageBuilderTest_CreateRequest, setUserNoMasterToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	try {
 		builder->setUser(USER_ID_TOKEN->getUser());
 		ADD_FAILURE() << "Should have thrown";
@@ -1298,7 +1289,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUserNoMasterToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, setUserHasUserIdToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	try {
 		builder->setUser(USER_ID_TOKEN->getUser());
 		ADD_FAILURE() << "Should have thrown";
@@ -1308,7 +1299,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setUserHasUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, setPeerUser)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setUser(PEER_USER_ID_TOKEN->getUser());
 	shared_ptr<UserIdToken> userIdToken = builder->getPeerUserIdToken();
@@ -1318,7 +1309,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setPeerUser)
 
 TEST_F(MessageBuilderTest_CreateRequest, setPeerUserNoPeerMasterToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	try {
 		builder->setUser(PEER_USER_ID_TOKEN->getUser());
 		ADD_FAILURE() << "Should have thrown";
@@ -1328,7 +1319,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setPeerUserNoPeerMasterToken)
 
 TEST_F(MessageBuilderTest_CreateRequest, setPeerUserHasPeerUserIdToken)
 {
-	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	try {
 		builder->setUser(USER_ID_TOKEN->getUser());
@@ -1340,7 +1331,7 @@ TEST_F(MessageBuilderTest_CreateRequest, setPeerUserHasPeerUserIdToken)
 TEST_F(MessageBuilderTest_CreateRequest, negativeMessageId)
 {
 	try {
-		MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT, -1);
+		MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, -1);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslInternalException& e) {
 	}
@@ -1349,7 +1340,7 @@ TEST_F(MessageBuilderTest_CreateRequest, negativeMessageId)
 TEST_F(MessageBuilderTest_CreateRequest, tooLargeMessageId)
 {
 	try {
-		MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT, MslConstants::MAX_LONG_VALUE + 1);
+		MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, MslConstants::MAX_LONG_VALUE + 1);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslInternalException& e) {
 	}
@@ -1373,46 +1364,32 @@ public:
 
 TEST_F(MessageBuilderTest_CreateError, ctor)
 {
-	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, RECIPIENT, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
+	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
 	EXPECT_TRUE(errorHeader);
 	EXPECT_EQ(MSL_ERROR.getResponseCode(), errorHeader->getErrorCode());
 	EXPECT_EQ(MSL_ERROR.getMessage(), errorHeader->getErrorMessage());
 	EXPECT_EQ(USER_MESSAGE, errorHeader->getUserMessage());
-	EXPECT_EQ(RECIPIENT, errorHeader->getRecipient());
-	EXPECT_EQ(REQUEST_MESSAGE_ID + 1, errorHeader->getMessageId());
-}
-
-TEST_F(MessageBuilderTest_CreateError, nullRecipient)
-{
-	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, NULL_RECIPIENT, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
-	EXPECT_TRUE(errorHeader);
-	EXPECT_EQ(MSL_ERROR.getResponseCode(), errorHeader->getErrorCode());
-	EXPECT_EQ(MSL_ERROR.getMessage(), errorHeader->getErrorMessage());
-	EXPECT_EQ(USER_MESSAGE, errorHeader->getUserMessage());
-	EXPECT_EQ(NULL_RECIPIENT, errorHeader->getRecipient());
 	EXPECT_EQ(REQUEST_MESSAGE_ID + 1, errorHeader->getMessageId());
 }
 
 TEST_F(MessageBuilderTest_CreateError, maxMessageId)
 {
 	const int64_t messageId = MslConstants::MAX_LONG_VALUE;
-	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, RECIPIENT, messageId, MSL_ERROR, USER_MESSAGE);
+	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
 	EXPECT_TRUE(errorHeader);
 	EXPECT_EQ(MSL_ERROR.getResponseCode(), errorHeader->getErrorCode());
 	EXPECT_EQ(MSL_ERROR.getMessage(), errorHeader->getErrorMessage());
 	EXPECT_EQ(USER_MESSAGE, errorHeader->getUserMessage());
-	EXPECT_EQ(RECIPIENT, errorHeader->getRecipient());
 	EXPECT_EQ(0, errorHeader->getMessageId());
 }
 
 TEST_F(MessageBuilderTest_CreateError, nullMessageId)
 {
-	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, RECIPIENT, NULL_MSG_ID, MSL_ERROR, USER_MESSAGE);
+	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, NULL_MSG_ID, MSL_ERROR, USER_MESSAGE);
 	EXPECT_TRUE(errorHeader);
 	EXPECT_EQ(MSL_ERROR.getResponseCode(), errorHeader->getErrorCode());
 	EXPECT_EQ(MSL_ERROR.getMessage(), errorHeader->getErrorMessage());
 	EXPECT_EQ(USER_MESSAGE, errorHeader->getUserMessage());
-	EXPECT_EQ(RECIPIENT, errorHeader->getRecipient());
 	EXPECT_TRUE(errorHeader->getMessageId() > 0);
 }
 
@@ -1420,7 +1397,7 @@ TEST_F(MessageBuilderTest_CreateError, negativeMessageId)
 {
 	const int64_t messageId = -12L;
 	try {
-		MessageBuilder::createErrorResponse(trustedNetCtx, RECIPIENT, messageId, MSL_ERROR, USER_MESSAGE);
+		MessageBuilder::createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslInternalException& e) {
 	}
@@ -1428,12 +1405,11 @@ TEST_F(MessageBuilderTest_CreateError, negativeMessageId)
 
 TEST_F(MessageBuilderTest_CreateError, nullUserMessage)
 {
-	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, RECIPIENT, REQUEST_MESSAGE_ID, MSL_ERROR, NULL_USER_MESSAGE);
+	shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, NULL_USER_MESSAGE);
 	EXPECT_TRUE(errorHeader);
 	EXPECT_EQ(MSL_ERROR.getResponseCode(), errorHeader->getErrorCode());
 	EXPECT_EQ(MSL_ERROR.getMessage(), errorHeader->getErrorMessage());
 	EXPECT_EQ(NULL_USER_MESSAGE, errorHeader->getUserMessage());
-	EXPECT_EQ(RECIPIENT, errorHeader->getRecipient());
 	EXPECT_EQ(REQUEST_MESSAGE_ID + 1, errorHeader->getMessageId());
 }
 
@@ -1495,7 +1471,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createNullResponse)
 {
 	// This will not exercise any of the complex logic, so no key
 	// request data, entity auth data, or user auth data. Just tokens.
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -1526,7 +1502,6 @@ TEST_F(MessageBuilderTest_CreateResponse, createNullResponse)
 	EXPECT_FALSE(response->getPeerMasterToken());
 	EXPECT_TRUE(response->getPeerServiceTokens().empty());
 	EXPECT_FALSE(response->getPeerUserIdToken());
-	EXPECT_EQ(MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), serviceTokens));
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *response->getUserIdToken());
@@ -1536,7 +1511,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createNullPeerResponse)
 {
 	// This will not exercise any of the complex logic, so no key
 	// request data, entity auth data, or user auth data. Just tokens.
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	requestBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
@@ -1577,13 +1552,12 @@ TEST_F(MessageBuilderTest_CreateResponse, createNullPeerResponse)
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_EQ(*PEER_USER_ID_TOKEN, *response->getUserIdToken());
 	EXPECT_TRUE(MslTestUtils::equal(response->getPeerServiceTokens(), serviceTokens));
-	EXPECT_EQ(MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), peerServiceTokens));
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, createEntityAuthResponse)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -1615,7 +1589,6 @@ TEST_F(MessageBuilderTest_CreateResponse, createEntityAuthResponse)
 	EXPECT_FALSE(response->getPeerMasterToken());
 	EXPECT_TRUE(response->getPeerServiceTokens().empty());
 	EXPECT_FALSE(response->getPeerUserIdToken());
-	EXPECT_EQ(entityAuthData->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), serviceTokens));
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_FALSE(response->getUserIdToken());
@@ -1623,7 +1596,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createEntityAuthResponse)
 
 TEST_F(MessageBuilderTest_CreateResponse, createEntityAuthPeerResponse)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
@@ -1664,15 +1637,13 @@ TEST_F(MessageBuilderTest_CreateResponse, createEntityAuthPeerResponse)
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_EQ(*PEER_USER_ID_TOKEN, *response->getUserIdToken());
 	shared_ptr<EntityAuthenticationData> entityAuthData = p2pCtx->getEntityAuthenticationData();
-	EXPECT_EQ(entityAuthData->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getPeerServiceTokens(), serviceTokens));
-	EXPECT_EQ(trustedNetCtx->getEntityAuthenticationData()->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), peerServiceTokens));
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, createResponse)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -1711,7 +1682,6 @@ TEST_F(MessageBuilderTest_CreateResponse, createResponse)
 	EXPECT_FALSE(response->getPeerMasterToken());
 	EXPECT_TRUE(response->getPeerServiceTokens().empty());
 	EXPECT_FALSE(response->getPeerUserIdToken());
-	EXPECT_EQ(MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), serviceTokens));
 	EXPECT_EQ(*USER_AUTH_DATA, *response->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *response->getUserIdToken());
@@ -1719,7 +1689,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createResponse)
 
 TEST_F(MessageBuilderTest_CreateResponse, createPeerResponse)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(p2pCtx, request);
@@ -1758,7 +1728,6 @@ TEST_F(MessageBuilderTest_CreateResponse, createPeerResponse)
 	EXPECT_EQ(*PEER_USER_ID_TOKEN, *response->getPeerUserIdToken());
 	EXPECT_EQ(*USER_AUTH_DATA, *response->getUserAuthenticationData());
 	EXPECT_TRUE(MslTestUtils::equal(response->getPeerServiceTokens(), peerServiceTokens));
-	EXPECT_EQ(PEER_MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), serviceTokens));
 	EXPECT_FALSE(response->getUserIdToken());
 }
@@ -1767,7 +1736,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createHandshakeResponse)
 {
 	// This will not exercise any of the complex logic, so no key
 	// request data, entity auth data, or user auth data. Just tokens.
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -1801,7 +1770,6 @@ TEST_F(MessageBuilderTest_CreateResponse, createHandshakeResponse)
 	EXPECT_FALSE(response->getPeerMasterToken());
 	EXPECT_TRUE(response->getPeerServiceTokens().empty());
 	EXPECT_FALSE(response->getPeerUserIdToken());
-	EXPECT_EQ(MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), serviceTokens));
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_EQ(*USER_ID_TOKEN, *response->getUserIdToken());
@@ -1811,7 +1779,7 @@ TEST_F(MessageBuilderTest_CreateResponse, createPeerHandshakeResponse)
 {
 	// This will not exercise any of the complex logic, so no key
 	// request data, entity auth data, or user auth data. Just tokens.
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	requestBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
@@ -1856,14 +1824,13 @@ TEST_F(MessageBuilderTest_CreateResponse, createPeerHandshakeResponse)
 	EXPECT_FALSE(response->getUserAuthenticationData());
 	EXPECT_EQ(*PEER_USER_ID_TOKEN, *response->getUserIdToken());
 	EXPECT_TRUE(MslTestUtils::equal(response->getPeerServiceTokens(), serviceTokens));
-	EXPECT_EQ(MASTER_TOKEN->getIdentity(), response->getRecipient());
 	EXPECT_TRUE(MslTestUtils::equal(response->getServiceTokens(), peerServiceTokens));
 }
 
 TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuth)
 {
 	shared_ptr<MslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(rsaCtx, request);
@@ -1874,7 +1841,7 @@ TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuth)
 TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuthKeyExchange)
 {
 	shared_ptr<MslContext> rsaCtx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(rsaCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -1891,7 +1858,7 @@ TEST_F(MessageBuilderTest_CreateResponse, willEncryptRsaEntityAuthKeyExchange)
 
 TEST_F(MessageBuilderTest_CreateResponse, storedServiceTokens)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 	EXPECT_TRUE(request->getServiceTokens().empty());
 
@@ -1928,7 +1895,7 @@ TEST_F(MessageBuilderTest_CreateResponse, storedServiceTokens)
 
 TEST_F(MessageBuilderTest_CreateResponse, storedPeerServiceTokens)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 	EXPECT_TRUE(request->getServiceTokens().empty());
 	EXPECT_TRUE(request->getPeerServiceTokens().empty());
@@ -1989,7 +1956,7 @@ TEST_F(MessageBuilderTest_CreateResponse, storedPeerServiceTokens)
 
 TEST_F(MessageBuilderTest_CreateResponse, keyxAddServiceToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2020,7 +1987,7 @@ TEST_F(MessageBuilderTest_CreateResponse, keyxAddServiceToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, nullKeyxAddServiceToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -2044,7 +2011,7 @@ TEST_F(MessageBuilderTest_CreateResponse, nullKeyxAddServiceToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, keyxAddMismatchedServiceToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2075,7 +2042,7 @@ TEST_F(MessageBuilderTest_CreateResponse, keyxAddMismatchedServiceToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerKeyxAddMismatchedServiceToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
@@ -2109,7 +2076,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerKeyxAddMismatchedServiceToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, maxRequestMessageId)
 {
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, MslConstants::MAX_LONG_VALUE, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(MslConstants::MAX_LONG_VALUE, REPLAYABLE_ID, false, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, MASTER_TOKEN, headerData, peerData);
 
@@ -2123,7 +2090,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2149,7 +2116,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2176,7 +2143,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenMaxSequenceNumber)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2205,7 +2172,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenFutureRenewalWindow)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2230,7 +2197,7 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredMasterToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2256,7 +2223,7 @@ TEST_F(MessageBuilderTest_CreateResponse, nonReplayableRequest)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 20000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, MslConstants::MAX_LONG_VALUE, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setNonReplayable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
@@ -2280,7 +2247,7 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedKeyExchangeRenewMasterToken
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(trustedNetCtx, NULL_ENTITYAUTH_DATA, requestMasterToken, headerData, peerData);
 
@@ -2308,7 +2275,7 @@ TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeRenewMasterToke
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, requestMasterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, requestMasterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	// This should place the supported key exchange scheme in the
 	// middle, guaranteeing that we will have to skip one unsupported
@@ -2336,7 +2303,7 @@ TEST_F(MessageBuilderTest_CreateResponse, untrustedMasterTokenRenewMasterToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(ctx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, requestMasterToken, headerData, peerData);
 
@@ -2375,7 +2342,7 @@ TEST_F(MessageBuilderTest_CreateResponse, untrustedMasterTokenRenewMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, keyResponseData)
 {
-	shared_ptr<MessageBuilder> localRequestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> localRequestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	localRequestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
@@ -2399,7 +2366,7 @@ TEST_F(MessageBuilderTest_CreateResponse, keyResponseData)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerKeyResponseData)
 {
-	shared_ptr<MessageBuilder> localRequestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> localRequestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	localRequestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 		 keyRequestData != KEY_REQUEST_DATA.end();
@@ -2433,7 +2400,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerKeyResponseData)
 
 TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataNotRenewable)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
 	     ++keyRequestData)
@@ -2451,7 +2418,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataNotRenewable)
 
 TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataRenewable)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2472,7 +2439,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataRenewable)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataRenewable)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2504,7 +2471,7 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedKeyExchangeEntityAuthData)
 		ctx->removeKeyExchangeFactories(*scheme);
 	}
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, KEY_REQUEST_DATA, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(ctx, ctx->getEntityAuthenticationData(), NULL_MASTER_TOKEN, headerData, peerData);
 
@@ -2529,7 +2496,7 @@ TEST_F(MessageBuilderTest_CreateResponse, oneSupportedKeyExchangeEntityAuthData)
 	}
 	ctx->addKeyExchangeFactory(make_shared<AsymmetricWrappedExchange>(make_shared<MockAuthenticationUtils>()));
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	// This should place the supported key exchange scheme in the
 	// middle, guaranteeing that we will have to skip one unsupported
@@ -2549,7 +2516,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewUserIdToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
@@ -2569,7 +2536,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewUserIdTokenNotRenewable)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -2589,7 +2556,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewUserIdToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(p2pCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
@@ -2610,7 +2577,7 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdToken)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
@@ -2630,7 +2597,7 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdTokenNotRenewable)
 	shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 20000);
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() - 10000);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -2659,7 +2626,7 @@ TEST_F(MessageBuilderTest_CreateResponse, expiredUserIdTokenServerMessage)
 	// Now rebuild the user ID token and the build the request.
 	shared_ptr<MslObject> userIdTokenMo = MslTestUtils::toMslObject(encoder, requestUserIdToken);
 	shared_ptr<UserIdToken> unverifiedUserIdToken = make_shared<UserIdToken>(ctx, userIdTokenMo, MASTER_TOKEN);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(ctx, request);
@@ -2680,7 +2647,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewMasterTokenAndRenewUserIdToken)
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2712,7 +2679,7 @@ TEST_F(MessageBuilderTest_CreateResponse, renewTokensNoKeyRequestData)
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
@@ -2735,7 +2702,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterTokenAndRenewUserIdToke
 	shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
 	shared_ptr<MasterToken> requestMasterToken = make_shared<MasterToken>(p2pCtx, renewalWindow, expiration, 1L, 1L, NULL_ISSUER_DATA, MockPresharedAuthenticationFactory::PSK_ESN, MockPresharedAuthenticationFactory::KPE, MockPresharedAuthenticationFactory::KPH);
 	shared_ptr<UserIdToken> requestUserIdToken = make_shared<UserIdToken>(p2pCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, requestUserIdToken, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, requestMasterToken, requestUserIdToken);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -2765,7 +2732,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerRenewMasterTokenAndRenewUserIdToke
 
 TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2781,7 +2748,7 @@ TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthenticated)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2803,7 +2770,7 @@ TEST_F(MessageBuilderTest_CreateResponse, masterTokenUserAuthenticated)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2820,7 +2787,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthenticated)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, true);
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2842,7 +2809,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerMasterTokenUserAuthenticated)
 
 TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2870,7 +2837,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthenticatedData)
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2904,7 +2871,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityAuthDataUserAuthenticatedData)
 
 TEST_F(MessageBuilderTest_CreateResponse, entityUserAuthNoKeyRequestData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -2919,7 +2886,7 @@ TEST_F(MessageBuilderTest_CreateResponse, entityUserAuthNoKeyRequestData)
 
 TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataUserAuthData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2947,7 +2914,7 @@ TEST_F(MessageBuilderTest_CreateResponse, peerEntityAuthDataUserAuthenticatedDat
 {
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, true);
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->setUserAuthenticationData(USER_AUTH_DATA);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
@@ -2990,7 +2957,7 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedUserAuthentication)
 		ctx->removeUserAuthenticationFactory(*scheme);
 	}
 
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(NULL_RECIPIENT, REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, USER_AUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>(REQUEST_MESSAGE_ID, REPLAYABLE_ID, true, false, NULL_MSG_CAPS, EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, USER_AUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
 	shared_ptr<MessageHeader> request = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, MASTER_TOKEN, headerData, peerData);
 
@@ -3005,7 +2972,7 @@ TEST_F(MessageBuilderTest_CreateResponse, unsupportedUserAuthentication)
 
 TEST_F(MessageBuilderTest_CreateResponse, setMasterToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MslStore> store = trustedNetCtx->getMslStore();
@@ -3039,7 +3006,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setExistingMasterToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MslStore> store = trustedNetCtx->getMslStore();
@@ -3073,7 +3040,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setExistingMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setAuthTokens)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MslStore> store = trustedNetCtx->getMslStore();
@@ -3107,7 +3074,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setAuthTokens)
 
 TEST_F(MessageBuilderTest_CreateResponse, setExistingAuthTokens)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MslStore> store = trustedNetCtx->getMslStore();
@@ -3141,7 +3108,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setExistingAuthTokens)
 
 TEST_F(MessageBuilderTest_CreateResponse, setNullMasterToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -3154,7 +3121,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setNullMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setMismatchedAuthTokens)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -3176,7 +3143,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setMasterTokenHasKeyExchangeData)
 	const SecretKey hmacKey = MockPresharedAuthenticationFactory::KPH;
 	shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1, 1, NULL_ISSUER_DATA, identity, encryptionKey, hmacKey);
 
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, masterToken, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, masterToken, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
@@ -3196,7 +3163,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setMasterTokenHasKeyExchangeData)
 
 TEST_F(MessageBuilderTest_CreateResponse, setMasterTokenHasPeerKeyExchangeData)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<KeyRequestData>>::iterator keyRequestData = KEY_REQUEST_DATA.begin();
 	     keyRequestData != KEY_REQUEST_DATA.end();
 	     ++keyRequestData)
@@ -3252,7 +3219,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setMasterTokenHasPeerKeyExchangeData)
 
 TEST_F(MessageBuilderTest_CreateResponse, setUser)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -3264,7 +3231,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setUser)
 
 TEST_F(MessageBuilderTest_CreateResponse, setUserNoMasterToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -3276,7 +3243,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setUserNoMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setUserHasUserIdToken)
 		{
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(trustedNetCtx, request);
@@ -3289,7 +3256,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setUserHasUserIdToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setPeerUser)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(p2pCtx, request);
@@ -3301,7 +3268,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setPeerUser)
 
 TEST_F(MessageBuilderTest_CreateResponse, setPeerUserNoPeerMasterToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(p2pCtx, request);
@@ -3314,7 +3281,7 @@ TEST_F(MessageBuilderTest_CreateResponse, setPeerUserNoPeerMasterToken)
 
 TEST_F(MessageBuilderTest_CreateResponse, setPeerUserHasPeerUserIdToken)
 {
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 
 	shared_ptr<MessageBuilder> responseBuilder = MessageBuilder::createResponse(p2pCtx, request);
@@ -3336,7 +3303,7 @@ TEST_F(MessageBuilderTest_CreateResponse, oneRequestCapabilities)
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 	shared_ptr<MessageCapabilities> caps = make_shared<MessageCapabilities>(gzipOnly, EMPTY_LANGUAGES, EMPTY_ENCODER_FORMATS);
 	ctx->setMessageCapabilities(caps);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 	EXPECT_EQ(*caps, *request->getMessageCapabilities());
 
@@ -3354,7 +3321,7 @@ TEST_F(MessageBuilderTest_CreateResponse, nullRequestCapabilities)
 
 	shared_ptr<MockMslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::PSK, false);
 	ctx->setMessageCapabilities(NULL_MSG_CAPS);
-	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
 	EXPECT_FALSE(request->getMessageCapabilities());
 
