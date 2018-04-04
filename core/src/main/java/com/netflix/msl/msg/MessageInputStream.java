@@ -590,6 +590,13 @@ public class MessageInputStream extends InputStream {
      */
     @Override
     public void close() throws IOException {
+        // Close the tokenizer.
+        try {
+            tokenizer.close();
+        } catch (final MslEncoderException e) {
+            // Ignore exceptions.
+        }
+
         // Only close the source if instructed to do so because we might want
         // to reuse the connection.
         if (closeSource) {
@@ -609,13 +616,6 @@ public class MessageInputStream extends InputStream {
             } catch (final MslException e) {
                 // Ignore exceptions.
             }
-        }
-        
-        // Close the tokenizer.
-        try {
-            tokenizer.close();
-        } catch (final MslEncoderException e) {
-            // Ignore exceptions.
         }
     }
 
