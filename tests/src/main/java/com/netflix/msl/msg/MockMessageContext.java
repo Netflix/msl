@@ -162,7 +162,7 @@ public class MockMessageContext implements MessageContext {
     }
     
     /**
-     * @param remoteEntityIdentity the message recipient or {@code null} if unknown.
+     * @param remoteEntityIdentity the message remote entity identity or {@code null} if unknown.
      */
     public void setRemoteEntityIdentity(final String remoteEntityIdentity) {
         this.remoteEntityIdentity = remoteEntityIdentity;
@@ -326,7 +326,7 @@ public class MockMessageContext implements MessageContext {
         return debugContext;
     }
 
-    /** Message recipient. */
+    /** Message remote entity identity. */
     private String remoteEntityIdentity;
     /** Message requires encryption. */
     private boolean encrypted;

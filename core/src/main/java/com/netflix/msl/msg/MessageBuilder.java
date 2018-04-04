@@ -411,7 +411,6 @@ public class MessageBuilder {
      * specified (i.e. unknown) then a random message ID will be generated.</p>
      * 
      * @param ctx MSL context.
-     * @param recipient error response recipient. May be null.
      * @param requestMessageId message ID of request. May be null.
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be null.
