@@ -65,10 +65,6 @@ namespace {
 const int64_t MILLISECONDS_PER_SECOND = 1000;
 
 // Message header data.
-/** Key sender. */
-const string KEY_SENDER = "sender";
-/** Key recipient. */
-const string KEY_RECIPIENT = "recipient";
 /** Key timestamp. */
 const string KEY_TIMESTAMP = "timestamp";
 /** Key message ID. */
@@ -118,13 +114,12 @@ vector<Variant> mslEncodableVector(const set<shared_ptr<T>>& s)
 
 } // namespace anonymous
 
-MessageHeader::HeaderData::HeaderData(const string& recipient, int64_t messageId, int64_t nonReplayableId,
+MessageHeader::HeaderData::HeaderData(int64_t messageId, int64_t nonReplayableId,
         bool renewable, bool handshake, shared_ptr<MessageCapabilities> capabilities,
         set<shared_ptr<KeyRequestData>> keyRequestData, shared_ptr<KeyResponseData> keyResponseData,
         shared_ptr<UserAuthenticationData> userAuthData, shared_ptr<UserIdToken> userIdToken,
         set<shared_ptr<ServiceToken>> serviceTokens)
-    : recipient(recipient)
-    , messageId(messageId)
+    : messageId(messageId)
     , nonReplayableId(nonReplayableId)
     , renewable(renewable)
     , handshake(handshake)
@@ -160,7 +155,8 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     if (!ead && !mt)
         throw MslInternalException("Message entity authentication data or master token must be provided.");
 
-    // Only include the recipient if the message will be encrypted.
+    // Do not allow user authentication data to be included if the message
+    // will not be encrypted.
     bool encrypted;
     if (mt) {
         encrypted = true;
@@ -168,9 +164,6 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
         EntityAuthenticationScheme scheme = ead->getScheme();
         encrypted = scheme.encrypts();
     }
-
-    // Do not allow user authentication data to be included if the message
-    // will not be encrypted.
     if (!encrypted && headerData->userAuthData)
         throw MslInternalException("User authentication data cannot be included if the message is not encrypted.");
 
@@ -180,8 +173,6 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     renewable = headerData->renewable;
     handshake = headerData->handshake;
     capabilities = headerData->capabilities;
-    sender = (masterToken) ? ctx->getEntityAuthenticationData()->getIdentity() : string();
-    recipient = (encrypted) ? headerData->recipient : string();
     timestamp = ctx->getTime() / MILLISECONDS_PER_SECOND;
     messageId = headerData->messageId;
     keyRequestData = headerData->keyRequestData;
@@ -249,10 +240,6 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     try {
         shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
         headerdata = encoder->createObject();
-        if (!sender.empty())
-            headerdata->put(KEY_SENDER, sender);
-        if (!recipient.empty())
-            headerdata->put(KEY_RECIPIENT, recipient);
         headerdata->put(KEY_TIMESTAMP, timestamp);
         headerdata->put(KEY_MESSAGE_ID, messageId);
         headerdata->put(KEY_NON_REPLAYABLE, nonReplayableId != -1);
@@ -407,9 +394,6 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx,
     }
 
     try {
-        // If the message was sent with a master token pull the sender.
-        sender = (masterToken && headerdata->has(KEY_SENDER)) ? headerdata->getString(KEY_SENDER) : string();
-        recipient = (headerdata->has(KEY_RECIPIENT)) ? headerdata->getString(KEY_RECIPIENT) : string();
         timestamp = (headerdata->has(KEY_TIMESTAMP)) ? headerdata->getLong(KEY_TIMESTAMP) : -1;
 
         // Pull key response data.
@@ -605,16 +589,6 @@ shared_ptr<MasterToken> MessageHeader::getMasterToken() const
     return masterToken;
 }
 
-string MessageHeader::getSender() const
-{
-    return sender;
-}
-
-string MessageHeader::getRecipient() const
-{
-    return recipient;
-}
-
 shared_ptr<Date> MessageHeader::getTimestamp() const
 {
     return (timestamp != -1) ? make_shared<Date>(timestamp * MILLISECONDS_PER_SECOND) : shared_ptr<Date>();
@@ -753,8 +727,6 @@ bool MessageHeader::equals(shared_ptr<const Header> obj) const
     shared_ptr<const MessageHeader> that = dynamic_pointer_cast<const MessageHeader>(obj);
 	return ((masterToken && masterToken->equals(that->masterToken)) ||
 			(entityAuthData && entityAuthData->equals(that->entityAuthData))) &&
-			(sender == that->sender) &&
-			(recipient == that->recipient) &&
 			(timestamp == that->timestamp) &&
 			(messageId == that->messageId) &&
 			(nonReplayableId == that->nonReplayableId) &&

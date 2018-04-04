@@ -268,6 +268,7 @@
 	    MESSAGE_REPLAYED_UNRECOVERABLE : new MslError(6040, MslConstants.ResponseCode.ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover."),
 	    UNEXPECTED_LOCAL_MESSAGE_SENDER : new MslError(6041, MslConstants.ResponseCode.FAIL, "Message sender is equal to the local entity."),
 	    UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA : new MslError(6042, MslConstants.ResponseCode.FAIL, "User authentication data included in unencrypted message header."),
+	    MESSAGE_SENDER_MISMATCH : new MslError(6043, MslConstants.ResponseCode.FAIL, "Message sender entity identity does not match expected identity."),
 
 	    // 7 Key Exchange
 	    UNIDENTIFIED_KEYX_SCHEME : new MslError(7000, MslConstants.ResponseCode.FAIL, "Unable to identify key exchange scheme."),

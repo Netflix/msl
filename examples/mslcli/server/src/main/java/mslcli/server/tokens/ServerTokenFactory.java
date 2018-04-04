@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,10 @@
 
 package mslcli.server.tokens;
 
-import java.math.BigInteger;
 import java.sql.Date;
-import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.crypto.SecretKey;
-
-import mslcli.common.tokens.SimpleUser;
-import mslcli.common.util.AppContext;
-import mslcli.common.util.ConfigurationException;
-import mslcli.common.util.SharedUtil;
 
 import com.netflix.msl.MslConstants;
 import com.netflix.msl.MslCryptoException;
@@ -45,6 +38,11 @@ import com.netflix.msl.tokens.TokenFactory;
 import com.netflix.msl.tokens.UserIdToken;
 import com.netflix.msl.util.MslContext;
 import com.netflix.msl.util.MslUtils;
+
+import mslcli.common.tokens.SimpleUser;
+import mslcli.common.util.AppContext;
+import mslcli.common.util.ConfigurationException;
+import mslcli.common.util.SharedUtil;
 
 /**
  * <p>A server-side memory-backed token factory.</p>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,8 +50,6 @@ describe("ErrorHeader", function() {
     var KEY_SIGNATURE = "signature";
     
     // Message error data.
-    /** Key recipient. */
-    var KEY_RECIPIENT = "recipient";
     /** Key timestamp. */
     var KEY_TIMESTAMP = "timestamp";
     /** Key message ID. */
@@ -98,7 +96,6 @@ describe("ErrorHeader", function() {
     
     var ENTITY_AUTH_DATA;
     var ENTITY_AUTH_DATA_MO;
-    var RECIPIENT = "recipient";
     var MESSAGE_ID = 17;
     var ERROR_CODE = MslConstants.ResponseCode.FAIL;
     var INTERNAL_CODE = 621;
@@ -143,7 +140,7 @@ describe("ErrorHeader", function() {
     it("ctors", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -156,7 +153,6 @@ describe("ErrorHeader", function() {
 	        expect(errorHeader.internalCode).toEqual(INTERNAL_CODE);
 	        expect(errorHeader.messageId).toEqual(MESSAGE_ID);
 	        expect(errorHeader.userMessage).toEqual(USER_MSG);
-	        expect(errorHeader.recipient).toEqual(RECIPIENT);
 	        expect(isAboutNow(errorHeader.timestamp)).toBeTruthy();
         });
     });
@@ -164,7 +160,7 @@ describe("ErrorHeader", function() {
     it("mslobject is correct", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -206,7 +202,6 @@ describe("ErrorHeader", function() {
 	        expect(verified).toBeTruthy();
 	        
 	        var errordata = encoder.parseObject(plaintext);
-	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
 	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
 	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
 	        expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
@@ -219,7 +214,7 @@ describe("ErrorHeader", function() {
     it("mslobject is correct for negative internal code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, -17, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -262,7 +257,7 @@ describe("ErrorHeader", function() {
 	        expect(verified).toBeTruthy();
 	        
 	        var errordata = encoder.parseObject(plaintext);
-	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
+
             expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
 	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
 	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
@@ -272,66 +267,10 @@ describe("ErrorHeader", function() {
         });
     });
     
-    it("mslobject is correct with null recipient", function() {
-        var errorHeader;
-        runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
-                result: function(hdr) { errorHeader = hdr; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return errorHeader; }, "errorHeader", MslTestConstants.TIMEOUT);
-        
-        var mo;
-        runs(function() {
-            expect(errorHeader.recipient).toBeNull();
-            MslTestUtils.toMslObject(encoder, errorHeader, {
-                result: function(x) { mo = x; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return mo; }, "mo", MslTestConstants.TIMEOUT);
-
-        var ciphertext, plaintext, signature;
-        runs(function() {
-            var entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA);
-            expect(entityAuthDataMo).toEqual(ENTITY_AUTH_DATA_MO);
-            ciphertext = mo.getBytes(KEY_ERRORDATA);
-            cryptoContext.decrypt(ciphertext, encoder, {
-                result: function(p) { plaintext = p; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-            signature = mo.getBytes(KEY_SIGNATURE);
-        });
-        waitsFor(function() { return ciphertext && plaintext && signature; }, "ciphertext, plaintext, and signature", MslTestConstants.TIMEOUT);
-
-        var verified;
-        runs(function() {
-            cryptoContext.verify(ciphertext, signature, encoder, {
-                result: function(v) { verified = v; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return verified; }, "verified", MslTestConstants.TIMEOUT);
-        
-        runs(function() {
-            expect(verified).toBeTruthy();
-            
-            var errordata = encoder.parseObject(plaintext);
-            expect(errordata.has(KEY_RECIPIENT)).toBeFalsy();
-            expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
-            expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
-            expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
-            expect(errordata.getInt(KEY_INTERNAL_CODE)).toEqual(INTERNAL_CODE);
-            expect(errordata.getString(KEY_ERROR_MESSAGE)).toEqual(ERROR_MSG);
-            expect(errordata.getString(KEY_USER_MESSAGE)).toEqual(USER_MSG);
-        });
-    });
-    
     it("mslobject is correct with null error message", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -374,7 +313,6 @@ describe("ErrorHeader", function() {
 	        expect(verified).toBeTruthy();
 	        
 	        var errordata = encoder.parseObject(plaintext);
-	        expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
             expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
 	        expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
 	        expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
@@ -387,7 +325,7 @@ describe("ErrorHeader", function() {
     it("mslobject is correct with null user message", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -430,7 +368,6 @@ describe("ErrorHeader", function() {
             expect(verified).toBeTruthy();
             
             var errordata = encoder.parseObject(plaintext);
-            expect(errordata.getString(KEY_RECIPIENT)).toEqual(RECIPIENT);
             expect(isAboutNowSeconds(errordata.getLong(KEY_TIMESTAMP))).toBeTruthy();
             expect(errordata.getLong(KEY_MESSAGE_ID)).toEqual(MESSAGE_ID);
             expect(errordata.getInt(KEY_ERROR_CODE)).toEqual(ERROR_CODE);
@@ -443,7 +380,7 @@ describe("ErrorHeader", function() {
     it("parse header", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -479,7 +416,6 @@ describe("ErrorHeader", function() {
 	        expect(moErrorHeader.errorMessage).toEqual(errorHeader.errorMessage);
 	        expect(moErrorHeader.internalCode).toEqual(errorHeader.internalCode);
 	        expect(moErrorHeader.messageId).toEqual(errorHeader.messageId);
-	        expect(moErrorHeader.recipient).toEqual(errorHeader.recipient);
 	        expect(moErrorHeader.userMessage).toEqual(errorHeader.userMessage);
         });
     });
@@ -487,7 +423,7 @@ describe("ErrorHeader", function() {
     it("ctor with missing entity authentication data", function() {
     	var exception;
         runs(function() {
-            ErrorHeader.create(ctx, null, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { },
                 error: function(err) { exception = err; }
             });
@@ -503,7 +439,7 @@ describe("ErrorHeader", function() {
     it("parseHeader with missing entity authentication data", function() {
     	var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -538,7 +474,7 @@ describe("ErrorHeader", function() {
     it("invalid entity authentication data", function() {
     	var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -573,7 +509,7 @@ describe("ErrorHeader", function() {
     it("missing signature", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -608,7 +544,7 @@ describe("ErrorHeader", function() {
     it("invalid signature", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -643,7 +579,7 @@ describe("ErrorHeader", function() {
     it("incorrect signature", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -678,7 +614,7 @@ describe("ErrorHeader", function() {
     it("missing errordata", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -713,7 +649,7 @@ describe("ErrorHeader", function() {
     it("invalid errordata", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -757,7 +693,7 @@ describe("ErrorHeader", function() {
     it("empty errordata", function() {
         var errorHeader;
         runs(function() {
-        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -800,7 +736,7 @@ describe("ErrorHeader", function() {
     it("missing timestamp", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -877,7 +813,7 @@ describe("ErrorHeader", function() {
     it("invalid timestamp", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -958,7 +894,7 @@ describe("ErrorHeader", function() {
     it("missing message ID", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1039,7 +975,7 @@ describe("ErrorHeader", function() {
     it("invalid message ID", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1120,7 +1056,7 @@ describe("ErrorHeader", function() {
     it("ctor with negative message ID", function() {
         var exception;
         runs(function() {
-        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, -1, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
         		result: function() {},
         		error: function(e) { exception = e; }
         	});
@@ -1135,7 +1071,7 @@ describe("ErrorHeader", function() {
     it("ctor with too large message ID", function() {
         var exception;
         runs(function() {
-        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MslConstants.MAX_LONG_VALUE + 2, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+        	ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MslConstants.MAX_LONG_VALUE + 2, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
         		result: function() {},
         		error: function(e) { exception = e; }
         	});
@@ -1150,7 +1086,7 @@ describe("ErrorHeader", function() {
     it("parseHeader with negative message ID", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1231,7 +1167,7 @@ describe("ErrorHeader", function() {
     it("parseHeader with too large message ID", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1312,7 +1248,7 @@ describe("ErrorHeader", function() {
     it("missing error code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1393,7 +1329,7 @@ describe("ErrorHeader", function() {
     it("invalid error code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1474,7 +1410,7 @@ describe("ErrorHeader", function() {
     it("missing internal code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1554,7 +1490,7 @@ describe("ErrorHeader", function() {
     it("invalid internal code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1635,7 +1571,7 @@ describe("ErrorHeader", function() {
     it("negative internal code", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1716,7 +1652,7 @@ describe("ErrorHeader", function() {
     it("missing error message", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1796,7 +1732,7 @@ describe("ErrorHeader", function() {
     it("missing user message", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -1873,58 +1809,15 @@ describe("ErrorHeader", function() {
         });
     });
     
-    xit("equals recipient", function() {
-        var recipientA = "A";
-        var recipientB = "B";
-        var errorHeaderA, errorHeaderB;
-        runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, recipientA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
-                result: function(hdr) { errorHeaderA = hdr; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, recipientB, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
-                result: function(hdr) { errorHeaderB = hdr; },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return errorHeaderA && errorHeaderB; }, "error headers", MslTestConstants.TIMEOUT);
-        var errorHeaderA2;
-        runs(function() {
-            MslTestUtils.toMslObject(encoder, errorHeaderA, {
-                result: function(mo) {
-                    Header.parseHeader(ctx, mo, CRYPTO_CONTEXTS, {
-                        result: function(hdr) { errorHeaderA2 = hdr; },
-                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-                    });
-                },
-                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-            });
-        });
-        waitsFor(function() { return errorHeaderA2; }, "errorHeaderA2", MslTestConstants.TIMEOUT);
-
-        runs(function() {
-            expect(errorHeaderA.equals(errorHeaderA)).toBeTruthy();
-            expect(errorHeaderA.uniqueKey()).toEqual(errorHeaderA.uniqueKey());
-            
-            expect(errorHeaderA.equals(errorHeaderB)).toBeFalsy();
-            expect(errorHeaderB.equals(errorHeaderA)).toBeFalsy();
-            expect(errorHeaderB.uniqueKey()).not.toEqual(errorHeaderA.uniqueKey());
-            
-            expect(errorHeaderA.equals(errorHeaderA2)).toBeTruthy();
-            expect(errorHeaderA2.equals(errorHeaderA)).toBeTruthy();
-            expect(errorHeaderA2.uniqueKey()).toEqual(errorHeaderA.uniqueKey());
-        });
-    });
-    
     xit("equals timestamp", function() {
         var errorHeaderA, errorHeaderB;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
             setTimeout(MILLISECONDS_PER_SECOND, function() {
-                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                     result: function(hdr) { errorHeaderB = hdr; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1964,11 +1857,11 @@ describe("ErrorHeader", function() {
         var messageIdB = 2;
         var errorHeaderA, errorHeaderB;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, messageIdA, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, messageIdB, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderB = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2007,11 +1900,11 @@ describe("ErrorHeader", function() {
         var errorCodeB = MslConstants.ResponseCode.TRANSIENT_FAILURE;
         var errorHeaderA, errorHeaderB;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeA, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, errorCodeB, INTERNAL_CODE, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderB = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2050,11 +1943,11 @@ describe("ErrorHeader", function() {
         var internalCodeB = 2;
         var errorHeaderA, errorHeaderB;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeA, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, internalCodeB, ERROR_MSG, USER_MSG, {
                 result: function(hdr) { errorHeaderB = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2093,15 +1986,15 @@ describe("ErrorHeader", function() {
         var errorMsgB = "B";
         var errorHeaderA, errorHeaderB, errorHeaderC;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgA, USER_MSG, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, errorMsgB, USER_MSG, {
                 result: function(hdr) { errorHeaderB = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, null, USER_MSG, {
                 result: function(token) { errorHeaderC = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2140,15 +2033,15 @@ describe("ErrorHeader", function() {
         var userMsgB = "B";
         var errorHeaderA, errorHeaderB, errorHeaderC;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgA, {
                 result: function(hdr) { errorHeaderA = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, userMsgB, {
                 result: function(hdr) { errorHeaderB = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, null, {
                 result: function(token) { errorHeaderC = token; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });
@@ -2185,7 +2078,7 @@ describe("ErrorHeader", function() {
     xit("equals object", function() {
         var errorHeader;
         runs(function() {
-            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, RECIPIENT, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, {
+            ErrorHeader.create(ctx, ENTITY_AUTH_DATA, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, {
                 result: function(hdr) { errorHeader = hdr; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); }
             });

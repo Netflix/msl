@@ -40,7 +40,6 @@ namespace msg {
  * {@code
  * errordata = {
  *   "#mandatory" : [ "messageid", "errorcode" ],
- *   "recipient" : "string",
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "errorcode" : "int32(0,-)",
@@ -49,7 +48,6 @@ namespace msg {
  *   "usermsg" : "string",
  * }} where:
  * <ul>
- * <li>{@code recipient} is the intended recipient's entity identity</li>
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code errorcode} is the error code</li>
@@ -68,7 +66,6 @@ public:
      *
      * @param ctx MSL context.
      * @param entityAuthData the entity authentication data.
-     * @param recipient the intended recipient's entity identity. May be null.
      * @param messageId the message ID.
      * @param errorCode the error code.
      * @param internalCode the internal code. Negative to indicate no code.
@@ -78,7 +75,7 @@ public:
      *         provided.
      */
     ErrorHeader(std::shared_ptr<util::MslContext> ctx, std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData,
-            const std::string& recipient, int64_t messageId, const MslConstants::ResponseCode& errorCode,
+            int64_t messageId, const MslConstants::ResponseCode& errorCode,
             int32_t internalCode, const std::string& errorMsg, const std::string& userMsg);
 
     /**
@@ -110,11 +107,6 @@ public:
     {
         return entityAuthData_;
     }
-
-    /**
-     * @return the recipient. May be null.
-     */
-    std::string getRecipient() const { return recipient_; }
 
     /**
      * @return the timestamp. May be null.
@@ -168,8 +160,6 @@ private:
     /** Error data. */
     std::shared_ptr<io::MslObject> errordata_;
 
-    /** Recipient. */
-    std::string recipient_;  // Note: empty means java null
     /** Timestamp in seconds since the epoch. */
     int64_t timestamp_;
     /** Message ID. */
@@ -177,7 +167,7 @@ private:
     /** Error code. */
     MslConstants::ResponseCode errorCode_;
     /** Internal code. */
-    int32_t internalCode_;   // FIXME: inte64_t?
+    int32_t internalCode_;   // FIXME: int64_t?
     /** Error message. */
     std::string errorMsg_; // Note: empty means java null
     /** User message. */

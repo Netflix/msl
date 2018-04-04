@@ -70,7 +70,6 @@ public:
      * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
      *        provided.
      * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
-     * @param recipient message recipient. May be null.
      * @param messageId the message ID to use. Must be within range.
      * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
@@ -79,7 +78,6 @@ public:
     static std::shared_ptr<MessageBuilder> createRequest(std::shared_ptr<util::MslContext> ctx,
                                                          std::shared_ptr<tokens::MasterToken> masterToken,
                                                          std::shared_ptr<tokens::UserIdToken> userIdToken,
-                                                         std::string recipient,
                                                          int64_t messageId);
     /**
      * <p>Create a new message builder that will craft a new message.</p>
@@ -88,15 +86,13 @@ public:
      * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
      *        provided.
      * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
-     * @param recipient message recipient. May be null.
      * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
     static std::shared_ptr<MessageBuilder> createRequest(std::shared_ptr<util::MslContext> ctx,
                                                          std::shared_ptr<tokens::MasterToken> masterToken,
-                                                         std::shared_ptr<tokens::UserIdToken> userIdToken,
-                                                         std::string recipient);
+                                                         std::shared_ptr<tokens::UserIdToken> userIdToken);
     /**
      * Create a new message builder that will craft a new message in response
      * to another message. The constructed message may be used as a request.
@@ -141,7 +137,6 @@ public:
      * specified (i.e. unknown); then a random message ID will be generated.</p>
      * 
      * @param ctx MSL context.
-     * @param recipient error response recipient. May be null.
      * @param requestMessageId message ID of request. May be null.
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be null.
@@ -156,7 +151,6 @@ public:
      *         returned by the MSL context.
      */
     static std::shared_ptr<ErrorHeader> createErrorResponse(std::shared_ptr<util::MslContext> ctx,
-                                                            std::string recipient,
                                                             int64_t requestMessageId,
                                                             MslError error,
                                                             std::string userMessage);
@@ -166,7 +160,6 @@ public:
      * data if a master token was issued or renewed.
      * 
      * @param ctx MSL context.
-     * @param recipient message recipient. May be null.
      * @param messageId message ID.
      * @param capabilities message capabilities.
      * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
@@ -183,7 +176,6 @@ public:
      *         token.
      */
     MessageBuilder(std::shared_ptr<util::MslContext> ctx,
-                   std::string recipient,
                    int64_t messageId,
                    std::shared_ptr<msg::MessageCapabilities> capabilities,
                    std::shared_ptr<tokens::MasterToken> masterToken,
@@ -533,8 +525,6 @@ private:
 
     /** Message header master token. */
     std::shared_ptr<tokens::MasterToken> masterToken_;
-    /** Message recipient. */
-    const std::string recipient_;
     /** Header data message ID. */
     int64_t messageId_;
     /** Key exchange data. */

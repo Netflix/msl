@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,16 +100,15 @@ public:
     virtual std::map<std::string,std::shared_ptr<crypto::ICryptoContext>> getCryptoContexts() = 0;
 
     /**
-     * <p>Called to identify the entity identity the message application data
-     * is intended for. If the identity is not known this method must return
-     * {@code null}.</p>
+     * <p>Called to identify the expected remote entity identity. If the remote
+     * entity identity is not known this method must return {@code null}.</p>
      *
      * <p>Trusted network servers may always return {@code null}.</p>
      *
-     * @return the entity identity of the application data recipient or
-     *         {@code null} if the identity is not known.
+     * @return the remote entity identity or {@code null} if the identity is
+     *         not known.
      */
-    virtual std::string getRecipient() = 0;
+    virtual std::string getRemoteEntityIdentity() = 0;
 
     /**
      * <p>Called to determine if the message application data must be

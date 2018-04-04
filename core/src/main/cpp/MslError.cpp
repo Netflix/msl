@@ -245,6 +245,7 @@ const MslError MslError::MESSAGE_MASTERTOKENBASED_VERIFICATION_FAILED(6039, Resp
 const MslError MslError::MESSAGE_REPLAYED_UNRECOVERABLE(6040, ResponseCode::ENTITY_REAUTH, "Non-replayable message replayed with a sequence number that is too far out of sync to recover.");
 const MslError MslError::UNEXPECTED_LOCAL_MESSAGE_SENDER(6041, ResponseCode::FAIL, "Message sender is equal to the local entity.");
 const MslError MslError::UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA(6042, ResponseCode::FAIL, "User authentication data included in unencrypted message header.");
+const MslError MslError::MESSAGE_SENDER_MISMATCH(6043, ResponseCode::FAIL, "Message sender entity identity does not match expected identity.");
 
 // 7 Key Exchange
 const MslError MslError::UNIDENTIFIED_KEYX_SCHEME(7000, ResponseCode::FAIL, "Unable to identify key exchange scheme.");

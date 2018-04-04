@@ -96,7 +96,7 @@ public class WiretapMessageContext implements MessageContext {
     }
 
     @Override
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return null;
     }
 

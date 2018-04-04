@@ -107,13 +107,13 @@ describe("MessageOutputStream", function() {
             waitsFor(function() { return ENTITY_AUTH_DATA; }, "entity authentication data", MslTestConstants.TIMEOUT);
 
             runs(function() {
-                var headerData = new HeaderData(null, 1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
+                var headerData = new HeaderData(1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
                 var peerData = new HeaderPeerData(null, null, null);
                 MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                     result: function(x) { MESSAGE_HEADER = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
-                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, null, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
+                ErrorHeader.create(ctx, ENTITY_AUTH_DATA, 1, MslConstants.ResponseCode.FAIL, 3, "errormsg", "usermsg", {
                     result: function(x) { ERROR_HEADER = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1159,7 +1159,7 @@ describe("MessageOutputStream", function() {
     it("write to a handshake message", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, 1, null, false, true, null, null, null, null, null, null);
+            var headerData = new HeaderData(1, null, false, true, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -1839,7 +1839,7 @@ describe("MessageOutputStream", function() {
     it("no request compression algorithms", function() {
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, 1, null, false, false, null, null, null, null, null, null);
+            var headerData = new HeaderData(1, null, false, false, null, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },
@@ -2014,7 +2014,7 @@ describe("MessageOutputStream", function() {
 
         var messageHeader;
         runs(function() {
-            var headerData = new HeaderData(null, 1, null, false, false, capabilities, null, null, null, null, null);
+            var headerData = new HeaderData(1, null, false, false, capabilities, null, null, null, null, null);
             var peerData = new HeaderPeerData(null, null, null);
             MessageHeader.create(ctx, ENTITY_AUTH_DATA, null, headerData, peerData, {
                 result: function(x) { messageHeader = x; },

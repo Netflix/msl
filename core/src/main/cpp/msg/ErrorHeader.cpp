@@ -47,8 +47,6 @@ namespace {
 const int64_t MILLISECONDS_PER_SECOND = 1000;
 
 // Message error data.
-/** Key recipient. */
-const string KEY_RECIPIENT = "recipient";
 /** Key timestamp. */
 const string KEY_TIMESTAMP = "timestamp";
 /** Key message ID. */
@@ -65,7 +63,7 @@ const string KEY_USER_MESSAGE = "usermsg";
 } // namespace anonymous
 
 ErrorHeader::ErrorHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthenticationData> entityAuthData,
-        const string& recipient, int64_t messageId, const MslConstants::ResponseCode& errorCode,
+        int64_t messageId, const MslConstants::ResponseCode& errorCode,
         int32_t internalCode, const string& errorMsg, const string& userMsg)
     : ctx_(ctx)
     , entityAuthData_(entityAuthData)
@@ -87,15 +85,9 @@ ErrorHeader::ErrorHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthentica
     if (!entityAuthData)
         throw MslMessageException(MslError::MESSAGE_ENTITY_NOT_FOUND);
 
-    // Only include the recipient if the message will be encrypted.
-    const EntityAuthenticationScheme scheme = entityAuthData->getScheme();
-    const bool encrypted = scheme.encrypts();
-    recipient_ = (encrypted) ?  recipient : string();
-
     // Construct the error data.
     shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
     errordata_ = encoder->createObject();
-    if (!recipient_.empty()) errordata_->put(KEY_RECIPIENT, recipient_);
     errordata_->put(KEY_TIMESTAMP, timestamp_);
     errordata_->put(KEY_MESSAGE_ID, messageId_);
     errordata_->put(KEY_ERROR_CODE, errorCode_.value());
@@ -147,7 +139,6 @@ ErrorHeader::ErrorHeader(shared_ptr<MslContext> ctx, shared_ptr<ByteArray> error
     }
 
     try {
-        recipient_ = (errordata_->has(KEY_RECIPIENT)) ? errordata_->getString(KEY_RECIPIENT) : string();
         timestamp_ = (errordata_->has(KEY_TIMESTAMP)) ? errordata_->getLong(KEY_TIMESTAMP) : -1;
 
         // If we do not recognize the error code then default to fail.
@@ -246,7 +237,6 @@ bool ErrorHeader::equals(shared_ptr<const Header> obj) const
     shared_ptr<const ErrorHeader> that = dynamic_pointer_cast<const ErrorHeader>(obj);
     // Don't need to check shared_ptr for null, since templated operator==() above does this.
     return (entityAuthData_ == that->entityAuthData_) &&
-    		(recipient_ == that->recipient_) &&
 			(timestamp_ == that->timestamp_) &&
 			(messageId_ == that->messageId_) &&
 			(errorCode_ == that->errorCode_) &&

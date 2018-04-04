@@ -99,10 +99,6 @@ const string KEY_HEADERDATA = "headerdata";
 const string KEY_SIGNATURE = "signature";
 
 // Message header data.
-/** Key sender. */
-const string KEY_SENDER = "sender";
-/** Key recipient. */
-const string KEY_RECIPIENT = "recipient";
 /** Key timestamp. */
 const string KEY_TIMESTAMP = "timestamp";
 /** Key message ID. */
@@ -134,7 +130,6 @@ const string KEY_PEER_USER_ID_TOKEN = "peeruseridtoken";
 /** Key peer service tokens. */
 const string KEY_PEER_SERVICE_TOKENS = "peerservicetokens";
 
-const string RECIPIENT = "recipient";
 const int64_t MESSAGE_ID = 1;
 const int64_t NON_REPLAYABLE_ID = 1L;   // java Long wants null allowed
 const bool RENEWABLE = true;
@@ -290,8 +285,7 @@ public:
           */
         HeaderDataBuilder(shared_ptr<MockMslContext> ctx, shared_ptr<MasterToken> masterToken,
                 shared_ptr<UserIdToken> userIdToken, bool createSrvcTokens)
-        : recipient(RECIPIENT)
-        , messageId(MESSAGE_ID)
+        : messageId(MESSAGE_ID)
         , nonReplayableId(NON_REPLAYABLE_ID)
         , renewable(RENEWABLE)
         , handshake(HANDSHAKE)
@@ -315,8 +309,7 @@ public:
         */
        HeaderDataBuilder(shared_ptr<MockMslContext> ctx, shared_ptr<UserIdToken> userIdToken,
                set<shared_ptr<ServiceToken>> serviceTokens)
-       : recipient(RECIPIENT)
-       , messageId(MESSAGE_ID)
+       : messageId(MESSAGE_ID)
        , nonReplayableId(NON_REPLAYABLE_ID)
        , renewable(RENEWABLE)
        , handshake(HANDSHAKE)
@@ -339,8 +332,6 @@ public:
                keyResponseData.reset();
            } else if (key == KEY_NON_REPLAYABLE_ID) {
                nonReplayableId = -1;
-           } else if (key == KEY_RECIPIENT) {
-               recipient.clear();
            } else if (key == KEY_USER_AUTHENTICATION_DATA) {
                userAuthData.reset();
            } else if (key == KEY_USER_ID_TOKEN) {
@@ -369,7 +360,6 @@ public:
        HeaderDataBuilder& setKEY_KEY_RESPONSE_DATA(const shared_ptr<KeyResponseData> & value) { keyResponseData = value; return *this; }
        HeaderDataBuilder& setKEY_MESSAGE_ID(const int64_t & value) { messageId = value; return *this; }
        HeaderDataBuilder& setKEY_NON_REPLAYABLE_ID(const int64_t & value) { nonReplayableId = value; return *this; }
-       HeaderDataBuilder& setKEY_RECIPIENT(const string & value) { recipient = value; return *this; }
        HeaderDataBuilder& setKEY_RENEWABLE(const bool & value) { renewable = value; return *this; }
        HeaderDataBuilder& setKEY_SERVICE_TOKENS(const set<shared_ptr<ServiceToken>> & value) { serviceTokens = value; return *this; }
        HeaderDataBuilder& setKEY_USER_AUTHENTICATION_DATA(const shared_ptr<UserAuthenticationData> & value) { userAuthData = value; return *this; }
@@ -382,14 +372,13 @@ public:
         */
        shared_ptr<MessageHeader::HeaderData> build()
        {
-           return make_shared<MessageHeader::HeaderData>(recipient, messageId,
+           return make_shared<MessageHeader::HeaderData>(messageId,
                    nonReplayableId, renewable, handshake, capabilities, keyRequestData,
                    keyResponseData, userAuthData, userIdToken, serviceTokens);
        }
 
     private:
         /** Header data values. */
-        string recipient;
         int64_t messageId;
         int64_t nonReplayableId;
         bool renewable;
@@ -479,8 +468,6 @@ TEST_F(MessageHeaderTest, entityAuthDataCtors)
     EXPECT_EQ(KEY_REQUEST_DATA, messageHeader.getKeyRequestData());
     EXPECT_EQ(*KEY_RESPONSE_DATA, *messageHeader.getKeyResponseData());
     EXPECT_FALSE(messageHeader.getMasterToken());
-    EXPECT_TRUE(messageHeader.getSender().empty());
-    EXPECT_EQ(RECIPIENT, messageHeader.getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader.getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader.getMessageId());
     EXPECT_FALSE(messageHeader.getPeerMasterToken());
@@ -515,8 +502,6 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayable)
     EXPECT_EQ(KEY_REQUEST_DATA, messageHeader.getKeyRequestData());
     EXPECT_EQ(*KEY_RESPONSE_DATA, *messageHeader.getKeyResponseData());
     EXPECT_FALSE(messageHeader.getMasterToken());
-    EXPECT_TRUE(messageHeader.getSender().empty());
-    EXPECT_EQ(RECIPIENT, messageHeader.getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader.getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader.getMessageId());
     EXPECT_FALSE(messageHeader.getPeerMasterToken());
@@ -560,8 +545,6 @@ TEST_F(MessageHeaderTest, entityAuthDataMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_FALSE(headerdata->has(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
@@ -605,8 +588,6 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayableMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_FALSE(headerdata->has(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
@@ -640,8 +621,6 @@ TEST_F(MessageHeaderTest, entityAuthDataPeerCtors)
     EXPECT_EQ(PEER_KEY_REQUEST_DATA, messageHeader->getKeyRequestData());
     EXPECT_EQ(PEER_KEY_RESPONSE_DATA, messageHeader->getKeyResponseData());
     EXPECT_FALSE(messageHeader->getMasterToken());
-    EXPECT_TRUE(messageHeader->getSender().empty());
-    EXPECT_EQ(RECIPIENT, messageHeader->getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_EQ(PEER_MASTER_TOKEN, messageHeader->getPeerMasterToken());
@@ -677,8 +656,6 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayablePeerCtors)
     EXPECT_EQ(messageHeader->getKeyRequestData(), PEER_KEY_REQUEST_DATA);
     EXPECT_EQ(PEER_KEY_RESPONSE_DATA, messageHeader->getKeyResponseData());
     EXPECT_FALSE(messageHeader->getMasterToken());
-    EXPECT_TRUE(messageHeader->getSender().empty());
-    EXPECT_EQ(RECIPIENT, messageHeader->getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_EQ(PEER_MASTER_TOKEN, messageHeader->getPeerMasterToken());
@@ -723,8 +700,6 @@ TEST_F(MessageHeaderTest, entityAuthDataPeerMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_FALSE(headerdata->has(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
@@ -769,8 +744,6 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayablePeerMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_FALSE(headerdata->has(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
@@ -803,8 +776,6 @@ TEST_F(MessageHeaderTest, masterTokenCtors)
     EXPECT_EQ(KEY_REQUEST_DATA, messageHeader->getKeyRequestData());
     EXPECT_EQ(*KEY_RESPONSE_DATA, *messageHeader->getKeyResponseData());
     EXPECT_EQ(MASTER_TOKEN, messageHeader->getMasterToken());
-    EXPECT_EQ(entityAuthData->getIdentity(), messageHeader->getSender());
-    EXPECT_EQ(RECIPIENT, messageHeader->getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_FALSE(messageHeader->getPeerMasterToken());
@@ -846,8 +817,6 @@ TEST_F(MessageHeaderTest, masterTokenMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_EQ(entityAuthData->getIdentity(), headerdata->getString(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
@@ -884,8 +853,6 @@ TEST_F(MessageHeaderTest, masterTokenPeerCtors)
     EXPECT_EQ(messageHeader->getKeyRequestData(), PEER_KEY_REQUEST_DATA);
     EXPECT_EQ(PEER_KEY_RESPONSE_DATA, messageHeader->getKeyResponseData());
     EXPECT_EQ(MASTER_TOKEN, messageHeader->getMasterToken());
-    EXPECT_EQ(entityAuthData->getIdentity(), messageHeader->getSender());
-    EXPECT_EQ(RECIPIENT, messageHeader->getRecipient());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_EQ(PEER_MASTER_TOKEN, messageHeader->getPeerMasterToken());
@@ -931,8 +898,6 @@ TEST_F(MessageHeaderTest, masterTokenPeerMslObject)
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
     EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
-    EXPECT_EQ(entityAuthData->getIdentity(), headerdata->getString(KEY_SENDER));
-    EXPECT_EQ(RECIPIENT, headerdata->getString(KEY_RECIPIENT));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
@@ -946,7 +911,6 @@ TEST_F(MessageHeaderTest, masterTokenPeerMslObject)
 TEST_F(MessageHeaderTest, nullArgumentsEntityAuthCtor)
 {
     HeaderDataBuilder builder(p2pCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
-    builder.setNull(KEY_RECIPIENT);
     builder.setNull(KEY_CAPABILITIES);
     builder.setNull(KEY_KEY_REQUEST_DATA);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -966,8 +930,6 @@ TEST_F(MessageHeaderTest, nullArgumentsEntityAuthCtor)
     EXPECT_TRUE(messageHeader->getKeyRequestData().empty());
     EXPECT_FALSE(messageHeader->getKeyResponseData());
     EXPECT_FALSE(messageHeader->getMasterToken());
-    EXPECT_TRUE(messageHeader->getSender().empty());
-    EXPECT_TRUE(messageHeader->getRecipient().empty());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_FALSE(messageHeader->getPeerMasterToken());
@@ -984,7 +946,6 @@ TEST_F(MessageHeaderTest, emptyArgumentsEntityAuthCtor)
     set<shared_ptr<KeyRequestData>> keyRequestData;
     set<shared_ptr<ServiceToken>> serviceTokens;
     HeaderDataBuilder builder(p2pCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
-    builder.setNull(KEY_RECIPIENT);
     builder.setNull(KEY_CAPABILITIES);
     builder.setKEY_KEY_REQUEST_DATA(keyRequestData);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -1006,8 +967,6 @@ TEST_F(MessageHeaderTest, emptyArgumentsEntityAuthCtor)
     EXPECT_TRUE(messageHeader->getKeyRequestData().empty());
     EXPECT_FALSE(messageHeader->getKeyResponseData());
     EXPECT_FALSE(messageHeader->getMasterToken());
-    EXPECT_TRUE(messageHeader->getSender().empty());
-    EXPECT_TRUE(messageHeader->getRecipient().empty());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_FALSE(messageHeader->getPeerMasterToken());
@@ -1022,7 +981,6 @@ TEST_F(MessageHeaderTest, emptyArgumentsEntityAuthCtor)
 TEST_F(MessageHeaderTest, nullArgumentsMasterTokenCtor)
 {
     HeaderDataBuilder builder(p2pCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
-    builder.setNull(KEY_RECIPIENT);
     builder.setNull(KEY_CAPABILITIES);
     builder.setNull(KEY_KEY_REQUEST_DATA);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -1041,8 +999,6 @@ TEST_F(MessageHeaderTest, nullArgumentsMasterTokenCtor)
     EXPECT_TRUE(messageHeader->getKeyRequestData().empty());
     EXPECT_FALSE(messageHeader->getKeyResponseData());
     EXPECT_EQ(MASTER_TOKEN, messageHeader->getMasterToken());
-    EXPECT_EQ(p2pCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID)->getIdentity(), messageHeader->getSender());
-    EXPECT_TRUE(messageHeader->getRecipient().empty());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_FALSE(messageHeader->getPeerMasterToken());
@@ -1059,7 +1015,6 @@ TEST_F(MessageHeaderTest, emptyArgumentsMasterTokenCtor)
     set<shared_ptr<KeyRequestData>> keyRequestData;
     set<shared_ptr<ServiceToken>> serviceTokens;
     HeaderDataBuilder builder(p2pCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
-    builder.setNull(KEY_RECIPIENT);
     builder.setNull(KEY_CAPABILITIES);
     builder.setKEY_KEY_REQUEST_DATA(keyRequestData);
     builder.setNull(KEY_KEY_RESPONSE_DATA);
@@ -1080,8 +1035,6 @@ TEST_F(MessageHeaderTest, emptyArgumentsMasterTokenCtor)
     EXPECT_TRUE(messageHeader->getKeyRequestData().empty());
     EXPECT_FALSE(messageHeader->getKeyResponseData());
     EXPECT_EQ(MASTER_TOKEN, messageHeader->getMasterToken());
-    EXPECT_EQ(p2pCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID)->getIdentity(), messageHeader->getSender());
-    EXPECT_TRUE(messageHeader->getRecipient().empty());
     EXPECT_TRUE(isAboutNow(messageHeader->getTimestamp()));
     EXPECT_EQ(MESSAGE_ID, messageHeader->getMessageId());
     EXPECT_FALSE(messageHeader->getPeerMasterToken());
@@ -2529,104 +2482,6 @@ TEST_F(MessageHeaderTest, peerServiceTokenMismatchedPeerUserIdTokenParseHeader)
     }
 }
 
-TEST_F(MessageHeaderTest, differentMasterTokenSender)
-{
-    shared_ptr<Date> renewalWindow = make_shared<Date>(Date::now()->getTime() - 10000);
-    shared_ptr<Date> expiration = make_shared<Date>(Date::now()->getTime() + 10000);
-    const SecretKey encryptionKey(make_shared<ByteArray>(16), JcaAlgorithm::AES);
-    const SecretKey hmacKey(make_shared<ByteArray>(32), JcaAlgorithm::HMAC_SHA256);
-    shared_ptr<MasterToken> masterToken = make_shared<MasterToken>(trustedNetCtx, renewalWindow, expiration, 1L, 1L, shared_ptr<MslObject>(), "IDENTITY", encryptionKey, hmacKey);
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
-    builder.setNull(KEY_KEY_REQUEST_DATA);
-    builder.setNull(KEY_KEY_RESPONSE_DATA);
-    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
-    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
-    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), masterToken, headerData, peerData);
-
-    EXPECT_EQ(trustedNetCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID)->getIdentity(), messageHeader->getSender());
-
-    shared_ptr<MslObject> mo = MslTestUtils::toMslObject(encoder, messageHeader);
-    shared_ptr<Header> header = Header::parseHeader(trustedNetCtx, mo, map<string, shared_ptr<ICryptoContext>>());
-    EXPECT_TRUE(instanceof<MessageHeader>(header.get()));
-
-    shared_ptr<MessageHeader> moMessageHeader = dynamic_pointer_cast<MessageHeader>(header);
-    EXPECT_EQ(messageHeader->getSender(), moMessageHeader->getSender());
-}
-
-TEST_F(MessageHeaderTest, missingSender)
-{
-//    thrown.expect(MslEncodingException.class);
-//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
-    builder.setNull(KEY_KEY_REQUEST_DATA);
-    builder.setNull(KEY_KEY_RESPONSE_DATA);
-    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
-    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
-    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<entityauth::EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
-    shared_ptr<MslObject> messageHeaderMo = MslTestUtils::toMslObject(encoder, messageHeader);
-
-    // Before modifying the header data we need to decrypt it.
-    shared_ptr<ICryptoContext> cryptoContext = make_shared<SessionCryptoContext>(trustedNetCtx, MASTER_TOKEN);
-    shared_ptr<ByteArray> ciphertext = messageHeaderMo->getBytes(KEY_HEADERDATA);
-    shared_ptr<ByteArray> plaintext = cryptoContext->decrypt(ciphertext, encoder);
-    shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
-
-    // After modifying the header data we need to encrypt it.
-    headerdataMo->remove(KEY_SENDER);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-    messageHeaderMo->put(KEY_HEADERDATA, headerdata);
-
-    // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
-    messageHeaderMo->put(KEY_SIGNATURE, signature);
-
-    shared_ptr<Header> header = Header::parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
-    EXPECT_TRUE(instanceof<MessageHeader>(header.get()));
-
-    shared_ptr<MessageHeader> moMessageHeader = dynamic_pointer_cast<MessageHeader>(header);
-    EXPECT_EQ(string(), moMessageHeader->getSender());
-}
-
-TEST_F(MessageHeaderTest, invalidSender)
-{
-//    thrown.expect(MslEncodingException.class);
-//    thrown.expectMslError(MslError.MSL_PARSE_ERROR);
-
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
-    builder.setNull(KEY_KEY_REQUEST_DATA);
-    builder.setNull(KEY_KEY_RESPONSE_DATA);
-    builder.setNull(KEY_USER_AUTHENTICATION_DATA);
-    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
-    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<entityauth::EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
-    shared_ptr<MslObject> messageHeaderMo = MslTestUtils::toMslObject(encoder, messageHeader);
-
-    // Before modifying the header data we need to decrypt it.
-    shared_ptr<ICryptoContext> cryptoContext = make_shared<SessionCryptoContext>(trustedNetCtx, MASTER_TOKEN);
-    shared_ptr<ByteArray> ciphertext = messageHeaderMo->getBytes(KEY_HEADERDATA);
-    shared_ptr<ByteArray> plaintext = cryptoContext->decrypt(ciphertext, encoder);
-    shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
-
-    // After modifying the header data we need to encrypt it.
-    headerdataMo->put<int>(KEY_SENDER, 1234);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
-    messageHeaderMo->put(KEY_HEADERDATA, headerdata);
-
-    // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
-    messageHeaderMo->put(KEY_SIGNATURE, signature);
-
-    try {
-        Header::parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
-        ADD_FAILURE() << "Should have thrown.";
-    } catch (const MslEncodingException& e) {
-        EXPECT_EQ(MslError::MSL_PARSE_ERROR, e.getError());
-    }
-}
-
 TEST_F(MessageHeaderTest, missingTimestamp)
 {
     HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(),false);
@@ -3574,46 +3429,6 @@ TEST_F(MessageHeaderTest, equalsMasterTokenEntityAuthData)
     shared_ptr<EntityAuthenticationData> entityAuthData = trustedNetCtx->getEntityAuthenticationData(MslContext::ReauthCode::INVALID);
     shared_ptr<MessageHeader> messageHeaderA = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
     shared_ptr<MessageHeader> messageHeaderB = make_shared<MessageHeader>(trustedNetCtx, entityAuthData, shared_ptr<MasterToken>(), headerData, peerData);
-    shared_ptr<MessageHeader> messageHeaderA2 = dynamic_pointer_cast<MessageHeader>(Header::parseHeader(trustedNetCtx, MslTestUtils::toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS));
-
-    EXPECT_TRUE(messageHeaderA->equals(messageHeaderA));
-
-    EXPECT_FALSE(messageHeaderA->equals(messageHeaderB));
-    EXPECT_FALSE(messageHeaderB->equals(messageHeaderA));
-
-    EXPECT_TRUE(messageHeaderA->equals(messageHeaderA2));
-    EXPECT_TRUE(messageHeaderA2->equals(messageHeaderA));
-}
-
-TEST_F(MessageHeaderTest, equalsSender)
-{
-    shared_ptr<MslContext> ctx = make_shared<MockMslContext>(EntityAuthenticationScheme::RSA, false);
-
-    HeaderDataBuilder builder(trustedNetCtx, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), false);
-    shared_ptr<MessageHeader::HeaderData> headerData = builder.build();
-    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
-    shared_ptr<MessageHeader> messageHeaderA = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
-    shared_ptr<MessageHeader> messageHeaderB = make_shared<MessageHeader>(ctx, shared_ptr<entityauth::EntityAuthenticationData>(), MASTER_TOKEN, headerData, peerData);
-    shared_ptr<MessageHeader> messageHeaderA2 = dynamic_pointer_cast<MessageHeader>(Header::parseHeader(trustedNetCtx, MslTestUtils::toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS));
-
-    EXPECT_TRUE(messageHeaderA->equals(messageHeaderA));
-
-    EXPECT_FALSE(messageHeaderA->equals(messageHeaderB));
-    EXPECT_FALSE(messageHeaderB->equals(messageHeaderA));
-
-    EXPECT_TRUE(messageHeaderA->equals(messageHeaderA2));
-    EXPECT_TRUE(messageHeaderA2->equals(messageHeaderA));
-}
-
-TEST_F(MessageHeaderTest, equalsRecipient)
-{
-    set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-    shared_ptr<MessageHeader::HeaderData> headerDataA = HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).setKEY_RECIPIENT("recipientA").build();
-    shared_ptr<MessageHeader::HeaderData> headerDataB = HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).setKEY_RECIPIENT("recipientB").build();
-    shared_ptr<MessageHeader::HeaderPeerData> peerData = make_shared<MessageHeader::HeaderPeerData>(shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>());
-
-    shared_ptr<MessageHeader> messageHeaderA = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), MASTER_TOKEN, headerDataA, peerData);
-    shared_ptr<MessageHeader> messageHeaderB = make_shared<MessageHeader>(trustedNetCtx, shared_ptr<EntityAuthenticationData>(), MASTER_TOKEN, headerDataB, peerData);
     shared_ptr<MessageHeader> messageHeaderA2 = dynamic_pointer_cast<MessageHeader>(Header::parseHeader(trustedNetCtx, MslTestUtils::toMslObject(encoder, messageHeaderA), CRYPTO_CONTEXTS));
 
     EXPECT_TRUE(messageHeaderA->equals(messageHeaderA));

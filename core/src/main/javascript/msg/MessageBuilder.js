@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -230,7 +230,6 @@
      * @param {MasterToken} masterToken master token. May be null unless a user ID token is
      *        provided.
      * @param {UserIdToken} userIdToken user ID token. May be null.
-     * @param {?string} recipient message recipient. May be null.
      * @param {?number} messageId the message ID to use. Must be within range.
      * @param {{result: function(MessageBuilder), error: function(Error)}}
      *        callback the callback that will receive the message builder or
@@ -238,7 +237,7 @@
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    var MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, recipient, messageId, callback) {
+    var MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, messageId, callback) {
         AsyncExecutor(callback, function() {
             if (messageId == undefined || messageId == null) {
                 messageId = MslUtils.getRandomLong(ctx);
@@ -252,7 +251,7 @@
                 result: function(entityAuthData) {
                     AsyncExecutor(callback, function() {
                         var capabilities = ctx.getMessageCapabilities();
-                        return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
+                        return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
                     });
                 },
                 error: callback.error,
@@ -361,9 +360,6 @@
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
 
-            // The response recipient is the requesting entity.
-            var recipient = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
-
             // The response message ID must be equal to the request message ID + 1.
             var requestMessageId = requestHeader.messageId;
             var messageId = MessageBuilder$incrementMessageId(requestMessageId);
@@ -406,10 +402,10 @@
                                                     var peerMasterToken = (keyResponseData) ? keyResponseData.masterToken : requestHeader.peerMasterToken;
                                                     var peerUserIdToken = requestHeader.peerUserIdToken;
                                                     var peerServiceTokens = requestHeader.peerServiceTokens;
-                                                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
+                                                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
                                                 } else {
                                                     var localMasterToken = (keyResponseData) ? keyResponseData.masterToken : masterToken;
-                                                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
+                                                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
                                                 }
                                             });
                                         },
@@ -461,9 +457,6 @@
             var userIdToken = requestHeader.userIdToken;
             var userAuthData = requestHeader.userAuthenticationData;
             
-            // The response recipient is the requesting entity.
-            var recipient = (masterToken) ? masterToken.identity : entityAuthData.getIdentity();
-            
             // The response message ID must be equal to the request message ID + 1.
             var requestMessageId = requestHeader.messageId;
             var messageId = MessageBuilder$incrementMessageId(requestMessageId);
@@ -482,10 +475,10 @@
                     var peerMasterToken = (keyResponseData) ? keyResponseData.masterToken : requestHeader.peerMasterToken;
                     var peerUserIdToken = requestHeader.peerUserIdToken;
                     var peerServiceTokens = requestHeader.peerServiceTokens;
-                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
                 } else {
                     var localMasterToken = (keyResponseData) ? keyResponseData.masterToken : masterToken;
-                    return new MessageBuilder(ctx, recipient, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
                 }
             } catch (e) {
                 if (e instanceof MslException) {
@@ -506,7 +499,6 @@
      * specified (i.e. unknown) then a random message ID will be generated.</p>
      *
      * @param {MslContext} ctx MSL context.
-     * @param {?string} recipient error response recipient. May be null.
      * @param {?number} requestMessageId message ID of request. May be null.
      * @param {MslError} error the MSL error.
      * @param {string} userMessage localized user-consumable error message. May be null.
@@ -520,7 +512,7 @@
      * @throws MslMessageException if no entity authentication data was
      *         returned by the MSL context.
      */
-    var MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, recipient, requestMessageId, error, userMessage, callback) {
+    var MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, requestMessageId, error, userMessage, callback) {
         AsyncExecutor(callback, function() {
             ctx.getEntityAuthenticationData(null, {
                 result: function(entityAuthData) {
@@ -538,7 +530,7 @@
                         var errorCode = error.responseCode;
                         var internalCode = error.internalCode;
                         var errorMsg = error.message;
-                        ErrorHeader.create(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
+                        ErrorHeader.create(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
                     });
                 },
                 error: callback.error,
@@ -552,7 +544,6 @@
          * data if a master token was issued or renewed.
          *
          * @param {MslContext} ctx MSL context.
-         * @param {?string} recipient message recipient. May be null.
          * @param {number} messageId message ID.
          * @param {MessageCapabilities} message capabilities.
          * @param {EntityAuthenticationData} entityAuthData entity
@@ -573,7 +564,7 @@
          * @throws MslException if a user ID token is not bound to its master
          *         token.
          */
-        init: function init(ctx, recipient, messageId, capabilities, entityAuthData, masterToken, userIdToken, serviceTokens, peerMasterToken, peerUserIdToken, peerServiceTokens, keyExchangeData) {
+        init: function init(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, serviceTokens, peerMasterToken, peerUserIdToken, peerServiceTokens, keyExchangeData) {
             // Primary and peer token combinations will be verified when the
             // message header is constructed. So delay those checks in favor of
             // avoiding duplicate code.
@@ -633,7 +624,6 @@
 
             // Set the primary fields.
             var _ctx = ctx;
-            var _recipient = recipient;
             var _messageId = messageId;
             var _capabilities = capabilities;
             var _entityAuthData = entityAuthData;
@@ -659,8 +649,6 @@
                 _entityAuthData: { value: _entityAuthData, writable: false, enumerable: false, configurable: false },
                 /** @type {MasterToken} */
                 _masterToken: { value: _masterToken, writable: true, enumerable: false, configurable: false },
-                /** @type {string} */
-                _recipient: { value: _recipient, writable: false, enumerable: false, configurable: false },
                 /** @type {number} */
                 _messageId: { value: _messageId, writable: false, enumerable: false, configurable: false },
                 /** @type {MessageCapabilities} */
@@ -812,7 +800,7 @@
                 } else {
                     nonReplayableId = null;
                 }
-                var headerData = new MessageHeader.HeaderData(this._recipient, this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
+                var headerData = new MessageHeader.HeaderData(this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
                 var peerTokens = [];
                 for (var peerName in this._peerServiceTokens)
                     peerTokens.push(this._peerServiceTokens[peerName]);

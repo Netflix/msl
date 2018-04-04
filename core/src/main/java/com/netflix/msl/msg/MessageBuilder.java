@@ -182,17 +182,16 @@ public class MessageBuilder {
      * @param masterToken master token. May be null unless a user ID token is
      *        provided.
      * @param userIdToken user ID token. May be null.
-     * @param recipient message recipient. May be null.
      * @param messageId the message ID to use. Must be within range.
      * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final String recipient, final long messageId) throws MslException {
+    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final long messageId) throws MslException {
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
-        return new MessageBuilder(ctx, recipient, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
+        return new MessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
     }
     
     /**
@@ -202,15 +201,14 @@ public class MessageBuilder {
      * @param masterToken master token. May be null unless a user ID token is
      *        provided.
      * @param userIdToken user ID token. May be null.
-     * @param recipient message recipient. May be null.
      * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final String recipient) throws MslException {
+    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
         final long messageId = MslUtils.getRandomLong(ctx);
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
-        return new MessageBuilder(ctx, recipient, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
+        return new MessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
     }
     
     /**
@@ -237,9 +235,6 @@ public class MessageBuilder {
         final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
         UserIdToken userIdToken = requestHeader.getUserIdToken();
         final UserAuthenticationData userAuthData = requestHeader.getUserAuthenticationData();
-        
-        // The response recipient is the requesting entity.
-        final String recipient = (masterToken != null) ? masterToken.getIdentity() : entityAuthData.getIdentity();
         
         // The response message ID must be equal to the request message ID + 1.
         final long requestMessageId = requestHeader.getMessageId();
@@ -343,10 +338,10 @@ public class MessageBuilder {
                 final MasterToken peerMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : requestHeader.getPeerMasterToken();
                 final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
                 final Set<ServiceToken> peerServiceTokens = requestHeader.getPeerServiceTokens();
-                return new MessageBuilder(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
+                return new MessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
             } else {
                 final MasterToken localMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : masterToken;
-                return new MessageBuilder(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
+                return new MessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
             }
         } catch (final MslException e) {
             e.setMasterToken(masterToken);
@@ -377,9 +372,6 @@ public class MessageBuilder {
         final UserIdToken userIdToken = requestHeader.getUserIdToken();
         final UserAuthenticationData userAuthData = requestHeader.getUserAuthenticationData();
         
-        // The response recipient is the requesting entity.
-        final String recipient = (masterToken != null) ? masterToken.getIdentity() : entityAuthData.getIdentity();
-        
         // The response message ID must be equal to the request message ID + 1.
         final long requestMessageId = requestHeader.getMessageId();
         final long messageId = incrementMessageId(requestMessageId);
@@ -398,10 +390,10 @@ public class MessageBuilder {
                 final MasterToken peerMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : requestHeader.getPeerMasterToken();
                 final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
                 final Set<ServiceToken> peerServiceTokens = requestHeader.getPeerServiceTokens();
-                return new MessageBuilder(ctx, recipient, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+                return new MessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
             } else {
                 final MasterToken localMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : masterToken;
-                return new MessageBuilder(ctx, recipient, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+                return new MessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
             }
         } catch (final MslException e) {
             e.setMasterToken(masterToken);
@@ -419,7 +411,6 @@ public class MessageBuilder {
      * specified (i.e. unknown) then a random message ID will be generated.</p>
      * 
      * @param ctx MSL context.
-     * @param recipient error response recipient. May be null.
      * @param requestMessageId message ID of request. May be null.
      * @param error the MSL error.
      * @param userMessage localized user-consumable error message. May be null.
@@ -431,7 +422,7 @@ public class MessageBuilder {
      * @throws MslMessageException if no entity authentication data was
      *         returned by the MSL context.
      */
-    public static ErrorHeader createErrorResponse(final MslContext ctx, final String recipient, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
+    public static ErrorHeader createErrorResponse(final MslContext ctx, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         // If we have the request message ID then the error response message ID
         // must be equal to the request message ID + 1.
@@ -446,7 +437,7 @@ public class MessageBuilder {
         final ResponseCode errorCode = error.getResponseCode();
         final int internalCode = error.getInternalCode();
         final String errorMsg = error.getMessage();
-        return new ErrorHeader(ctx, entityAuthData, recipient, messageId, errorCode, internalCode, errorMsg, userMessage);
+        return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
     }
     
     /**
@@ -454,7 +445,6 @@ public class MessageBuilder {
      * data if a master token was issued or renewed.
      * 
      * @param ctx MSL context.
-     * @param recipient message recipient. May be null.
      * @param messageId message ID.
      * @param capabilities message capabilities.
      * @param masterToken master token. May be null unless a user ID token is
@@ -470,7 +460,7 @@ public class MessageBuilder {
      * @throws MslException if a user ID token is not bound to its master
      *         token.
      */
-    private MessageBuilder(final MslContext ctx, final String recipient, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
+    private MessageBuilder(final MslContext ctx, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
         // Primary and peer token combinations will be verified when the
         // message header is constructed. So delay those checks in favor of
         // avoiding duplicate code.
@@ -479,7 +469,6 @@ public class MessageBuilder {
         
         // Set the primary fields.
         this.ctx = ctx;
-        this.recipient = recipient;
         this.messageId = messageId;
         this.capabilities = capabilities;
         this.masterToken = masterToken;
@@ -625,7 +614,7 @@ public class MessageBuilder {
         } else {
             nonReplayableId = null;
         }
-        final HeaderData headerData = new HeaderData(recipient, messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, response, userAuthData, userIdToken, tokens);
+        final HeaderData headerData = new HeaderData(messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, response, userAuthData, userIdToken, tokens);
         final Set<ServiceToken> peerTokens = new HashSet<ServiceToken>(peerServiceTokens.values());
         final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerTokens);
         
@@ -1140,8 +1129,6 @@ public class MessageBuilder {
     
     /** Message header master token. */
     private MasterToken masterToken;
-    /** Message recipient. */
-    private final String recipient;
     /** Header data message ID. */
     private long messageId;
     /** Key exchange data. */

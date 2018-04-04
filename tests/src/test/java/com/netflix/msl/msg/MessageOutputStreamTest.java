@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,13 +112,13 @@ public class MessageOutputStreamTest {
         ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
         
-        final HeaderData headerData = new HeaderData(null, 1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(1, null, false, false, ctx.getMessageCapabilities(), null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         ENTITY_AUTH_DATA = ctx.getEntityAuthenticationData(null);
         MESSAGE_HEADER = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
         PAYLOAD_CRYPTO_CONTEXT = MESSAGE_HEADER.getCryptoContext();
         
-        ERROR_HEADER =  new ErrorHeader(ctx, ENTITY_AUTH_DATA, null, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
+        ERROR_HEADER =  new ErrorHeader(ctx, ENTITY_AUTH_DATA, 1, ResponseCode.FAIL, 3, "errormsg", "usermsg");
     }
     
     @AfterClass
@@ -491,7 +491,7 @@ public class MessageOutputStreamTest {
     
     @Test(expected = MslInternalException.class)
     public void writeHandshakeMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, IOException {
-        final HeaderData headerData = new HeaderData(null, 1, null, false, true, ctx.getMessageCapabilities(), null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(1, null, false, true, ctx.getMessageCapabilities(), null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
         
@@ -672,7 +672,7 @@ public class MessageOutputStreamTest {
     
     @Test
     public void noRequestCompressionAlgorithm() throws IOException, MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException {
-        final HeaderData headerData = new HeaderData(null, 1, null, false, false, null, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(1, null, false, false, null, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
         
@@ -723,7 +723,7 @@ public class MessageOutputStreamTest {
         algos.add(CompressionAlgorithm.GZIP);
         final MessageCapabilities capabilities = new MessageCapabilities(algos, null, null);
 
-        final HeaderData headerData = new HeaderData(null, 1, null, false, false, capabilities, null, null, null, null, null);
+        final HeaderData headerData = new HeaderData(1, null, false, false, capabilities, null, null, null, null, null);
         final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
         final MessageHeader messageHeader = new MessageHeader(ctx, ENTITY_AUTH_DATA, null, headerData, peerData);
 

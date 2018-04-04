@@ -70,7 +70,6 @@ const CompressionAlgorithm COMPRESSION_ALGO = CompressionAlgorithm::NOCOMPRESSIO
 
 const shared_ptr<MasterToken> NULL_MASTER_TOKEN;
 const shared_ptr<UserIdToken> NULL_USER_ID_TOKEN;
-const string NULL_RECIPIENT = "";
 } // namespace anonymous
 
 /**
@@ -124,7 +123,7 @@ protected:
 
 TEST_F(MessageServiceTokenBuilderTest, primaryMasterToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_TRUE(tokenBuilder->isPrimaryMasterTokenAvailable());
@@ -135,7 +134,7 @@ TEST_F(MessageServiceTokenBuilderTest, primaryMasterToken)
 
 TEST_F(MessageServiceTokenBuilderTest, primaryMasterTokenKeyx)
 {
-	shared_ptr<MessageBuilder>requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder>requestBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->addKeyRequestData(KEY_REQUEST_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -153,7 +152,7 @@ TEST_F(MessageServiceTokenBuilderTest, primaryMasterTokenKeyx)
 
 TEST_F(MessageServiceTokenBuilderTest, primaryUserIdToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_TRUE(tokenBuilder->isPrimaryMasterTokenAvailable());
@@ -164,7 +163,7 @@ TEST_F(MessageServiceTokenBuilderTest, primaryUserIdToken)
 
 TEST_F(MessageServiceTokenBuilderTest, peerMasterToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -176,7 +175,7 @@ TEST_F(MessageServiceTokenBuilderTest, peerMasterToken)
 
 TEST_F(MessageServiceTokenBuilderTest, peerMasterTokenKeyx)
 {
-	shared_ptr<MessageBuilder>requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder>requestBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	requestBuilder->setRenewable(true);
 	requestBuilder->addKeyRequestData(KEY_REQUEST_DATA);
 	shared_ptr<MessageHeader> request = requestBuilder->getHeader();
@@ -192,7 +191,7 @@ TEST_F(MessageServiceTokenBuilderTest, peerMasterTokenKeyx)
 
 TEST_F(MessageServiceTokenBuilderTest, peerUserIdToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -204,7 +203,7 @@ TEST_F(MessageServiceTokenBuilderTest, peerUserIdToken)
 
 TEST_F(MessageServiceTokenBuilderTest, getPrimaryServiceTokens)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::const_iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -220,7 +219,7 @@ TEST_F(MessageServiceTokenBuilderTest, getPrimaryServiceTokens)
 
 TEST_F(MessageServiceTokenBuilderTest, getPeerServiceTokens)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> peerServiceTokens = MslTestUtils::getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::const_iterator peerServiceToken = peerServiceTokens.begin();
@@ -237,7 +236,7 @@ TEST_F(MessageServiceTokenBuilderTest, getPeerServiceTokens)
 
 TEST_F(MessageServiceTokenBuilderTest, getBothServiceTokens)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	for (set<shared_ptr<ServiceToken>>::const_iterator serviceToken = serviceTokens.begin();
 		 serviceToken != serviceTokens.end();
@@ -261,7 +260,7 @@ TEST_F(MessageServiceTokenBuilderTest, getBothServiceTokens)
 
 TEST_F(MessageServiceTokenBuilderTest, addPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
 
@@ -276,7 +275,7 @@ TEST_F(MessageServiceTokenBuilderTest, addPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -286,7 +285,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPrimaryServiceTok
 
 TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
@@ -297,7 +296,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPrimaryServiceTok
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -307,7 +306,7 @@ TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -317,7 +316,7 @@ TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, addPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());
@@ -333,7 +332,7 @@ TEST_F(MessageServiceTokenBuilderTest, addPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -344,7 +343,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -356,7 +355,7 @@ TEST_F(MessageServiceTokenBuilderTest, mismatchedUserIdTokenAddPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -366,7 +365,7 @@ TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -377,7 +376,7 @@ TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, trustedNetAddPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
@@ -390,7 +389,7 @@ TEST_F(MessageServiceTokenBuilderTest, trustedNetAddPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, addUnboundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
 
@@ -411,7 +410,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUnboundPrimaryServiceTo
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUnboundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -423,7 +422,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUnboundPrimaryServiceTo
 
 TEST_F(MessageServiceTokenBuilderTest, addMasterBoundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
 
@@ -441,7 +440,7 @@ TEST_F(MessageServiceTokenBuilderTest, addMasterBoundPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddMasterBoundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addMasterBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -456,7 +455,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddMasterBoundPrimaryServi
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addMasterBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -468,7 +467,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddMasterBoundPrimaryServi
 
 TEST_F(MessageServiceTokenBuilderTest, addUserBoundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
 
@@ -486,7 +485,7 @@ TEST_F(MessageServiceTokenBuilderTest, addUserBoundPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddUserBoundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -498,7 +497,7 @@ TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddUserBoundPrimaryServiceTo
 
 TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddUserBoundPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -513,7 +512,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUserBoundPrimaryService
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUserBoundPrimaryServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -525,7 +524,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUserBoundPrimaryService
 
 TEST_F(MessageServiceTokenBuilderTest, excludePrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -539,7 +538,7 @@ TEST_F(MessageServiceTokenBuilderTest, excludePrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME));
@@ -547,7 +546,7 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, deletePrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -575,7 +574,7 @@ TEST_F(MessageServiceTokenBuilderTest, deletePrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPrimaryServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME));
@@ -583,7 +582,7 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPrimaryServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, addUnboundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());
 
@@ -601,7 +600,7 @@ TEST_F(MessageServiceTokenBuilderTest, addUnboundPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, trustedNetAddUnboundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
 
 	try {
@@ -616,7 +615,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUnboundPeerServiceToken
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUnboundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -628,7 +627,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUnboundPeerServiceToken
 
 TEST_F(MessageServiceTokenBuilderTest, addMasterBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());
@@ -647,7 +646,7 @@ TEST_F(MessageServiceTokenBuilderTest, addMasterBoundPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddMasterBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addMasterBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -662,7 +661,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddMasterBoundPeerServiceT
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -675,7 +674,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddMasterBoundPeerServiceT
 
 TEST_F(MessageServiceTokenBuilderTest, trustedNetAddMasterBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addMasterBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -683,7 +682,7 @@ TEST_F(MessageServiceTokenBuilderTest, trustedNetAddMasterBoundPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, addUserBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());
@@ -702,7 +701,7 @@ TEST_F(MessageServiceTokenBuilderTest, addUserBoundPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddUserBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUserBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -714,7 +713,7 @@ TEST_F(MessageServiceTokenBuilderTest, noMasterTokenAddUserBoundPeerServiceToken
 
 TEST_F(MessageServiceTokenBuilderTest, noUserIdTokenAddUserBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -730,7 +729,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUserBoundPeerServiceTok
 	p2pMsgCtx->removeCryptoContext(TOKEN_NAME);
 	p2pMsgCtx->removeCryptoContext(EMPTY_TOKEN_NAME);
 
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -743,7 +742,7 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUserBoundPeerServiceTok
 
 TEST_F(MessageServiceTokenBuilderTest, trustedNetAddUserBoundPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(trustedNetCtx, trustedNetMsgCtx, msgBuilder);
 
 	EXPECT_FALSE(tokenBuilder->addUserBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
@@ -751,7 +750,7 @@ TEST_F(MessageServiceTokenBuilderTest, trustedNetAddUserBoundPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, excludePeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addPeerServiceToken(serviceToken);
@@ -766,7 +765,7 @@ TEST_F(MessageServiceTokenBuilderTest, excludePeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
@@ -775,7 +774,7 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, deletePeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addPeerServiceToken(serviceToken);
@@ -804,7 +803,7 @@ TEST_F(MessageServiceTokenBuilderTest, deletePeerServiceToken)
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPeerServiceToken)
 {
-	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, NULL_RECIPIENT);
+	shared_ptr<MessageBuilder> msgBuilder = MessageBuilder::createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
