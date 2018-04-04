@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ public class MSLHttpListener implements IHttpListener {
     private static final String KEY_MASTER_TOKEN = "mastertoken";
     private static final String KEY_HEADERDATA = "headerdata";
     private static final String KEY_SIGNATURE = "signature";
-    private static final String KEY_SENDER = "sender";
     private static final String KEY_MESSAGE_ID = "messageid";
     private static final String KEY_RENEWABLE = "renewable";
     private static final String KEY_CAPABILITIES = "capabilities";
@@ -69,7 +68,6 @@ public class MSLHttpListener implements IHttpListener {
     private static final String KEY_USER_AUTHENTICATION_DATA = "userauthdata";
     private static final String KEY_USER_ID_TOKEN = "useridtoken";
     private static final String KEY_SERVICE_TOKENS = "servicetokens";
-    private static final String KEY_RECIPIENT = "recipient";
     private static final String KEY_NON_REPLAYABLE_ID = "nonreplayableid";
     private static final String KEY_HANDSHAKE = "handshake";
     private static final String KEY_PAYLOAD = "payload";
@@ -242,7 +240,6 @@ public class MSLHttpListener implements IHttpListener {
     
                 final MslObject errordataMo = encoder.createObject();
                 try {
-                    errordataMo.put(KEY_RECIPIENT, errorHeader.getRecipient());
                     errordataMo.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
                     errordataMo.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
                     errordataMo.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
@@ -295,8 +292,6 @@ public class MSLHttpListener implements IHttpListener {
 
             final MslObject headerdataMo = encoder.createObject();
             try {
-                headerdataMo.put(KEY_SENDER, messageHeader.getSender());
-                headerdataMo.put(KEY_RECIPIENT, messageHeader.getRecipient());
                 headerdataMo.put(KEY_MESSAGE_ID, messageHeader.getMessageId());
                 headerdataMo.put(KEY_NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
                 headerdataMo.put(KEY_RENEWABLE, messageHeader.isRenewable());

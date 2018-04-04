@@ -421,7 +421,7 @@ describe("DefaultMslEncoderFactory", function() {
                 var jsonMessageHeader;
                 runs(function() {
                     // Create JSON version.
-                    var jsonHeaderData = new MessageHeader.HeaderData(null, 1, null, false, false, jsonCaps, null, null, null, null, null);
+                    var jsonHeaderData = new MessageHeader.HeaderData(1, null, false, false, jsonCaps, null, null, null, null, null);
                     MessageHeader.create(ctx, entityAuthData, null, jsonHeaderData, peerData, {
                         result: function(x) { jsonMessageHeader = x; },
                         error: function(e) { expect(function() { throw e; }).not.toThrow(); },

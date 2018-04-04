@@ -43,7 +43,6 @@ import com.netflix.msl.util.MslContext;
  * {@code
  * errordata = {
  *   "#mandatory" : [ "messageid", "errorcode" ],
- *   "recipient" : "string",
  *   "timestamp" : "int64(0,2^53^)",
  *   "messageid" : "int64(0,2^53^)",
  *   "errorcode" : "int32(0,-)",
@@ -52,7 +51,6 @@ import com.netflix.msl.util.MslContext;
  *   "usermsg" : "string",
  * }} where:
  * <ul>
- * <li>{@code recipient} is the intended recipient's entity identity</li>
  * <li>{@code timestamp} is the sender time when the header is created in seconds since the UNIX epoch</li>
  * <li>{@code messageid} is the message ID</li>
  * <li>{@code errorcode} is the error code</li>
@@ -68,8 +66,6 @@ public class ErrorHeader extends Header {
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
     // Message error data.
-    /** Key recipient. */
-    private static final String KEY_RECIPIENT = "recipient";
     /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
     /** Key message ID. */
@@ -88,7 +84,6 @@ public class ErrorHeader extends Header {
      * 
      * @param ctx MSL context.
      * @param entityAuthData the entity authentication data.
-     * @param recipient the intended recipient's entity identity. May be null.
      * @param messageId the message ID.
      * @param errorCode the error code.
      * @param internalCode the internal code. Negative to indicate no code.
@@ -97,7 +92,7 @@ public class ErrorHeader extends Header {
      * @throws MslMessageException if no entity authentication data is
      *         provided.
      */
-    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final String recipient, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
+    public ErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
         // Message ID must be within range.
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is out of range.");
@@ -106,13 +101,8 @@ public class ErrorHeader extends Header {
         if (entityAuthData == null)
             throw new MslMessageException(MslError.MESSAGE_ENTITY_NOT_FOUND);
         
-        // Only include the recipient if the message will be encrypted.
-        final EntityAuthenticationScheme scheme = entityAuthData.getScheme();
-        final boolean encrypted = scheme.encrypts();
-        
         this.ctx = ctx;
         this.entityAuthData = entityAuthData;
-        this.recipient = (encrypted) ?  recipient : null;
         this.timestamp = ctx.getTime() / MILLISECONDS_PER_SECOND;
         this.messageId = messageId;
         this.errorCode = errorCode;
@@ -123,7 +113,6 @@ public class ErrorHeader extends Header {
         // Construct the error data.
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         errordata = encoder.createObject();
-        if (this.recipient != null) errordata.put(KEY_RECIPIENT, this.recipient);
         errordata.put(KEY_TIMESTAMP, this.timestamp);
         errordata.put(KEY_MESSAGE_ID, this.messageId);
         errordata.put(KEY_ERROR_CODE, this.errorCode.intValue());
@@ -189,7 +178,6 @@ public class ErrorHeader extends Header {
         }
         
         try {
-            recipient = (errordata.has(KEY_RECIPIENT)) ? errordata.getString(KEY_RECIPIENT) : null;
             timestamp = (errordata.has(KEY_TIMESTAMP)) ? errordata.getLong(KEY_TIMESTAMP) : null;
             
             // If we do not recognize the error code then default to fail.
@@ -222,13 +210,6 @@ public class ErrorHeader extends Header {
      */
     public EntityAuthenticationData getEntityAuthenticationData() {
         return entityAuthData;
-    }
-    
-    /**
-     * @return the recipient. May be null.
-     */
-    public String getRecipient() {
-        return recipient;
     }
     
     /**
@@ -336,7 +317,6 @@ public class ErrorHeader extends Header {
         if (!(obj instanceof ErrorHeader)) return false;
         final ErrorHeader that = (ErrorHeader)obj;
         return entityAuthData.equals(that.entityAuthData) &&
-            (recipient == that.recipient || (recipient != null && recipient.equals(that.recipient))) &&
             (timestamp != null && timestamp.equals(that.timestamp) ||
              timestamp == null && that.timestamp == null) &&
             messageId == that.messageId &&
@@ -352,7 +332,6 @@ public class ErrorHeader extends Header {
     @Override
     public int hashCode() {
         return entityAuthData.hashCode() ^
-            ((recipient != null) ? recipient.hashCode() : 0) ^
             ((timestamp != null) ? timestamp.hashCode() : 0) ^
             Long.valueOf(messageId).hashCode() ^
             errorCode.hashCode() ^
@@ -369,8 +348,6 @@ public class ErrorHeader extends Header {
     /** Error data. */
     private final MslObject errordata;
     
-    /** Recipient. */
-    private final String recipient;
     /** Timestamp in seconds since the epoch. */
     private final Long timestamp;
     /** Message ID. */

@@ -68,7 +68,7 @@
         },
 
         /** @inheritDoc */
-        getRecipient: function() {
+        getRemoteEntityIdentity: function() {
             return SimpleConstants.SERVER_ID;
         },
 

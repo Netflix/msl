@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -125,7 +125,7 @@ public class ServiceTokenTests extends BaseTestClass {
 
 
     @Test(groups = "UnboundServiceTokenTests")
-    public void unboudServiceTokenWithData() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
+    public void unboundServiceTokenWithData() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = getMasterToken(new Date(System.currentTimeMillis() + 10000) /*renewableWindow*/,
                 new Date(System.currentTimeMillis() + 20000) /*expiration*/, TIME_OUT, 0  /*sequenceNumberOffset*/);
 
@@ -146,7 +146,7 @@ public class ServiceTokenTests extends BaseTestClass {
         assertEquals(serviceTokens, returnedServiceTokens, "Retured service tokens are not the same as the sent");
     }
 
-    @Test(dependsOnMethods = "unboudServiceTokenWithData", groups = "UnboundServiceTokenTests")
+    @Test(dependsOnMethods = "unboundServiceTokenWithData", groups = "UnboundServiceTokenTests")
     public void testUnboundServiceTokenWithoutData() throws InterruptedException, ExecutionException, MslException, IOException, MslEncoderException {
         final MasterToken masterToken = getMasterToken(new Date(System.currentTimeMillis() + 10000) /*renewableWindow*/,
                 new Date(System.currentTimeMillis() + 20000) /*expiration*/, TIME_OUT, 0  /*sequenceNumberOffset*/);

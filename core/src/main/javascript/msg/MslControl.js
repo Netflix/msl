@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -269,8 +269,8 @@
         },
 
         /** @inheritDoc */
-        getRecipient: function getRecipient() {
-            return this._appCtx.getRecipient();
+        getRemoteEntityIdentity: function getRemoteEntityIdentity() {
+            return this._appCtx.getRemoteEntityIdentity();
         },
 
         /** @inheritDoc */
@@ -590,23 +590,6 @@
                 t = undefined;
         }
         return false;
-    }
-
-    /**
-     * Returns the provided message header's entity identity from the master
-     * token or entity authentication data, if it can be determined.
-     *
-     * @param {MessageHeader} header the message header.
-     * @return {?string} the message header's entity identity or null if unknown.
-     * @throws MslCryptoException if there is a crypto error accessing the
-     *         entity identity.
-     */
-    function getIdentity(header) {
-        var masterToken = header.masterToken;
-        if (masterToken)
-            return masterToken.identity;
-        var entityAuthData = header.entityAuthenticationData;
-        return entityAuthData.getIdentity();
     }
 
     var MslControlImpl = Class.create({
@@ -961,8 +944,7 @@
                             userIdToken = null;
                         }
 
-                        var recipient = msgCtx.getRecipient();
-                        MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, null, {
+                        MessageBuilder.createRequest(ctx, masterToken, userIdToken, null, {
                             result: function(builder) {
                                 AsyncExecutor(callback, function() {
                                     builder.setNonReplayable(msgCtx.isNonReplayable());
@@ -1157,8 +1139,7 @@
                     // Make sure the use the error header message ID + 1.
                     var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                    var recipient = resendMsgCtx.getRecipient();
-                    MessageBuilder.createRequest(ctx, null, null, recipient, messageId, {
+                    MessageBuilder.createRequest(ctx, null, null, messageId, {
                         result: function(requestBuilder) {
                             InterruptibleExecutor(callback, function() {
                                 if (ctx.isPeerToPeer()) {
@@ -1188,8 +1169,7 @@
                             var masterToken = tokenTicket && tokenTicket.masterToken;
                             var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                             var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                            var recipient = resendMsgCtx.getRecipient();
-                            MessageBuilder.createRequest(ctx, masterToken, null, recipient, messageId, {
+                            MessageBuilder.createRequest(ctx, masterToken, null, messageId, {
                                 result: function(requestBuilder) {
                                     InterruptibleExecutor(callback, function() {
                                         if (ctx.isPeerToPeer()) {
@@ -1276,8 +1256,7 @@
                         // Make sure the use the error header message ID + 1.
                         var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                         var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                        var recipient = resendMsgCtx.getRecipient();
-                        MessageBuilder.createRequest(ctx, null, null, recipient, messageId, {
+                        MessageBuilder.createRequest(ctx, null, null, messageId, {
                             result: function(requestBuilder) {
                                 InterruptibleExecutor(callback, function() {
                                     if (ctx.isPeerToPeer()) {
@@ -1324,8 +1303,7 @@
                                     // Resend the request.
                                     var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                                    var recipient = resendMsgCtx.getRecipient();
-                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
+                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, messageId, {
                                         result: function(requestBuilder) {
                                             InterruptibleExecutor(callback, function() {
                                                 if (ctx.isPeerToPeer()) {
@@ -1385,8 +1363,7 @@
                                     // Resend the request.
                                     var messageId = MessageBuilder.incrementMessageId(errorHeader.messageId);
                                     var resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                                    var recipient = resendMsgCtx.getRecipient();
-                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId, {
+                                    MessageBuilder.createRequest(ctx, masterToken, userIdToken, messageId, {
                                         result: function(requestBuilder) {
                                             InterruptibleExecutor(callback, function() {
                                                 if (ctx.isPeerToPeer()) {
@@ -1850,7 +1827,7 @@
                     // request message ID + 1.
                     if (request) {
                         // Only enforce this for message headers and error headers that are
-                        // not entity re-authentcate or entity data re-authenticate (as in
+                        // not entity re-authenticate or entity data re-authenticate (as in
                         // those cases the remote entity is not always able to extract the
                         // request message ID).
                         var errorCode = (errorHeader) ? errorHeader.errorCode : null;
@@ -1869,86 +1846,77 @@
                         }
                     }
 
-                    // Process the response.
-                    ctx.getEntityAuthenticationData(null, {
-                        result: function(ead) {
-                            InterruptibleExecutor(callback, function() {
-                                var localIdentity = ead.getIdentity();
-                                var sender;
-                                try {
-                                    if (responseHeader) {
-                                        // Reject messages if this is a trusted network server and the
-                                        // sender is not equal to the master token identity or if the
-                                        // sender is equal to this entity.
-                                        sender = (masterToken) ? responseHeader.sender : entityAuthData.getIdentity();
-                                        if ((masterToken && masterToken.isDecrypted() && sender && masterToken.identity != sender))
-                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, "sender " + sender + "; master token " + masterToken.identity);
-                                        if (localIdentity && localIdentity == sender)
-                                            throw new MslMessageException(MslError.UNEXPECTED_LOCAL_MESSAGE_SENDER, sender + " == " + localIdentity);
+                    try {
+                        // Verify expected identity if specified.
+                        var expectedIdentity = msgCtx.getRemoteEntityIdentity();
+                        if (expectedIdentity) {
+                            // Reject if the remote entity identity is not equal to the
+                            // message entity authentication data identity.
+                            if (entityAuthData) {
+                                var entityAuthIdentity = entityAuthData.getIdentity();
+                                if (entityAuthIdentity && expectedIdentity != entityAuthIdentity)
+                                    throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + entityAuthIdentity);
+                            }
 
-                                        // Reject messages if the message recipient is specified and not
-                                        // equal to the local entity.
-                                        var recipient = responseHeader.recipient;
-                                        if (recipient && localIdentity && recipient != localIdentity)
-                                            throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient);
+                            // Reject if in peer-to-peer mode and the message sender does
+                            // not match.
+                            if (ctx.isPeerToPeer()) {
+                                var sender = response.getIdentity();
+                                if (sender && expectedIdentity != sender)
+                                    throw new MslMessageException(MslError.MESSAGE_SENDER_MISMATCH, "expected " + expectedIdentity + "; received " + sender);
+                            }
+                        }
 
-                                        // If there is a request update the stored crypto contexts.
-                                        if (request)
-                                            this.updateIncomingCryptoContexts(ctx, request, response);
+                        // Process the response.
+                        if (responseHeader) {
+                            // If there is a request update the stored crypto contexts.
+                            if (request)
+                                this.updateIncomingCryptoContexts(ctx, request, response);
 
-                                        // In trusted network mode the local tokens are the primary tokens.
-                                        // In peer-to-peer mode they are the peer tokens. The master token
-                                        // might be in the key response data.
-                                        var keyResponseData = responseHeader.keyResponseData;
-                                        var tokenVerificationMasterToken;
-                                        var localUserIdToken;
-                                        var serviceTokens;
-                                        if (!ctx.isPeerToPeer()) {
-                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
-                                            localUserIdToken = responseHeader.userIdToken;
-                                            serviceTokens = responseHeader.serviceTokens;
-                                        } else {
-                                            tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
-                                            localUserIdToken = responseHeader.peerUserIdToken;
-                                            serviceTokens = responseHeader.peerServiceTokens;
-                                        }
+                            // In trusted network mode the local tokens are the primary tokens.
+                            // In peer-to-peer mode they are the peer tokens. The master token
+                            // might be in the key response data.
+                            var keyResponseData = responseHeader.keyResponseData;
+                            var tokenVerificationMasterToken;
+                            var localUserIdToken;
+                            var serviceTokens;
+                            if (!ctx.isPeerToPeer()) {
+                                tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.masterToken;
+                                localUserIdToken = responseHeader.userIdToken;
+                                serviceTokens = responseHeader.serviceTokens;
+                            } else {
+                                tokenVerificationMasterToken = (keyResponseData) ? keyResponseData.masterToken : responseHeader.peerMasterToken;
+                                localUserIdToken = responseHeader.peerUserIdToken;
+                                serviceTokens = responseHeader.peerServiceTokens;
+                            }
 
-                                        // Save any returned user ID token if the local entity is not the
-                                        // issuer of the user ID token.
-                                        var userId = msgCtx.getUserId();
-                                        if (userId && localUserIdToken && !localUserIdToken.isVerified())
-                                            ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
+                            // Save any returned user ID token if the local entity is not the
+                            // issuer of the user ID token.
+                            var userId = msgCtx.getUserId();
+                            if (userId && localUserIdToken && !localUserIdToken.isVerified())
+                                ctx.getMslStore().addUserIdToken(userId, localUserIdToken);
 
-                                        // Update the stored service tokens.
-                                        this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
-                                    } else {
-                                        // Reject errors if the sender is equal to this entity.
-                                        sender = errorHeader.entityAuthenticationData.getIdentity();
-                                        if (localIdentity && localIdentity == sender)
-                                            throw new MslMessageException(MslError.UNEXPECTED_MESSAGE_SENDER, sender);
-                                    }
+                            // Update the stored service tokens.
+                            this.storeServiceTokens(ctx, tokenVerificationMasterToken, localUserIdToken, serviceTokens);
+                        }
 
-                                    // Update the synchronized clock if we are a trusted network client
-                                    // (there is a request) or peer-to-peer entity.
-                                    var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
-                                    if (timestamp && (request || ctx.isPeerToPeer()))
-                                        ctx.updateRemoteTime(timestamp);
-                                } catch (e) {
-                                    if (e instanceof MslException) {
-                                        e.setMasterToken(masterToken);
-                                        e.setEntityAuthenticationData(entityAuthData);
-                                        e.setUserIdToken(userIdToken);
-                                        e.setUserAuthenticationData(userAuthData);
-                                    }
-                                    throw e;
-                                }
+                        // Update the synchronized clock if we are a trusted network client
+                        // (there is a request) or peer-to-peer entity.
+                        var timestamp = (responseHeader) ? responseHeader.timestamp : errorHeader.timestamp;
+                        if (timestamp && (request || ctx.isPeerToPeer()))
+                            ctx.updateRemoteTime(timestamp);
+                    } catch (e) {
+                        if (e instanceof MslException) {
+                            e.setMasterToken(masterToken);
+                            e.setEntityAuthenticationData(entityAuthData);
+                            e.setUserIdToken(userIdToken);
+                            e.setUserAuthenticationData(userAuthData);
+                        }
+                        throw e;
+                    }
 
-                                // Return the result.
-                                return response;
-                            }, self);
-                        },
-                        error: callback.error,
-                    });
+                    // Return the result.
+                    return response;
                 }, self);
             }
         },
@@ -3046,7 +3014,6 @@
      * @param {?MessageDebugContext} debugCtx message debug context. May be {@code null}.
      * @param {?MessageHeader} requestHeader message the error is being sent in response to. May
      *        be {@code null}.
-     * @param {?string} recipient error response recipient. May be {@code null}.
      * @param {number} messageId error response message ID.
      * @param {MslError} err MSL error.
      * @param {string} userMessage user-consumable error message. May be
@@ -3057,9 +3024,9 @@
      *        callback the callback will receive true on success, be notified
      *        of timeout and any thrown exceptions.
      */
-    function sendError(service, ctrl, ctx, debugCtx, requestHeader, recipient, messageId, error, userMessage, output, timeout, callback) {
+    function sendError(service, ctrl, ctx, debugCtx, requestHeader, messageId, error, userMessage, output, timeout, callback) {
         // Create error header.
-        MessageBuilder.createErrorResponse(ctx, recipient, messageId, error, userMessage, {
+        MessageBuilder.createErrorResponse(ctx, messageId, error, userMessage, {
             result: function(errorHeader) {
                 if (debugCtx) debugCtx.sentHeader(errorHeader);
                 
@@ -3198,29 +3165,24 @@
                             if (cancelled(e)) return null;
 
                             // Try to send an error response.
-                            var recipient, requestMessageId, mslError, userMessage, toThrow;
+                            var requestMessageId, mslError, userMessage, toThrow;
                             if (e instanceof MslException) {
-                                var masterToken = e.masterToken;
-                                var entityAuthData = e.entityAuthenticationData;
-                                recipient = (masterToken) ? masterToken.identity : ((entityAuthData) ? entityAuthData.getIdentity() : null);
                                 requestMessageId = e.messageId;
                                 mslError = e.error;
                                 userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, null);
                                 toThrow = e;
                             } else if (e instanceof MslIoException) {
-                                recipient = null;
                                 requestMessageId = null;
                                 mslError = MslError.MSL_COMMS_FAILURE;
                                 userMessage = null;
                                 toThrow = e;
                             } else {
-                                recipient = null;
                                 requestMessageId = null;
                                 mslError = MslError.INTERNAL_EXCEPTION;
                                 userMessage = null;
                                 toThrow = new MslInternalException("Error receiving the message header.", e);
                             }
-                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), null, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                            sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), null, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
                                 timeout: callback.timeout,
                                 error: function(re) {
@@ -3270,23 +3232,19 @@
                                if (cancelled(e)) return null;
 
                                // We couldn't read, but maybe we can write an error response.
-                               var recipient, requestMessageId, mslError, userMessage, toThrow;
+                               var requestMessageId, mslError, userMessage, toThrow;
                                if (e instanceof MslException) {
-                                   var masterToken = e.masterToken;
-                                   var entityAuthData = e.entityAuthenticationData;
-                                   recipient = (masterToken) ? masterToken.identity : ((entityAuthData) ? entityAuthData.getIdentity() : null);
                                    requestMessageId = e.messageId;
                                    mslError = e.error;
                                    userMessage = this._ctrl.messageRegistry.getUserMessage(mslError, null);
                                    toThrow = e;
                                } else {
-                                   recipient = request.getIdentity();
                                    requestMessageId = requestHeader.messageId;
                                    mslError = MslError.INTERNAL_EXCEPTION;
                                    userMessage = null;
                                    toThrow = new MslInternalException("Error peeking into the message payloads.", e);
                                }
-                               sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                               sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                    result: function(success) { callback.error(toThrow); },
                                    timeout: callback.timeout,
                                    error: function(re) {
@@ -3369,7 +3327,6 @@
 
                                 // Try to send an error response.
                                 var requestHeader = request.getMessageHeader();
-                                var recipient = request.getIdentity();
                                 var requestMessageId, mslError, userMessage, toThrow;
                                 if (e instanceof MslException) {
                                     requestMessageId = e.messageId;
@@ -3384,7 +3341,7 @@
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error creating an automatic handshake response.", e);
                                 }
-                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
                                     timeout: callback.timeout,
                                     error: function(re) {
@@ -3433,7 +3390,6 @@
 
                                 // Try to send an error response.
                                 var requestHeader = request.getMessageHeader();
-                                var recipient = request.getIdentity();
                                 var requestMessageId, mslError, userMessage, toThrow;
                                 if (e instanceof MslException) {
                                     requestMessageId = e.messageId;
@@ -3453,7 +3409,7 @@
                                     userMessage = null;
                                     toThrow = new MslInternalException("Error sending an automatic handshake response.", e);
                                 }
-                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                sendError(this, this._ctrl, this._ctx, this._msgCtx.getDebugContext(), requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                     result: function(success) { callback.error(toThrow); },
                                     timeout: callback.timeout,
                                     error: function(re) {
@@ -3563,7 +3519,7 @@
                     tokenTicket = builderTokenTicket.tokenTicket;
                     var debugCtx = this._msgCtx.getDebugContext();
                     var requestHeader = this._request.getMessageHeader();
-                    var recipient, requestMessageId;
+                    var requestMessageId;
                     
                     // Do nothing if we cannot send one more message.
                     if (msgCount + 1 > MslConstants.MAX_MESSAGES) {
@@ -3585,9 +3541,8 @@
                         securityRequired = null;
                     if (securityRequired) {
                         // Try to send an error response.
-                        recipient = getIdentity(this._request);
                         requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                        sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, securityRequired, null, this._output, this._timeout, {
+                        sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, securityRequired, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
                             error: function(re) {
@@ -3611,9 +3566,8 @@
                     // client must re-initiate the transaction.
                     if (this._msgCtx.getUser() && !builder.getMasterToken() && !builder.getKeyExchangeData()) {
                         // Try to send an error response.
-                        recipient = getIdentity(this._request);
                         requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                        sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
+                        sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                             result: function(success) { callback.result(null); },
                             timeout: callback.timeout,
                             error: function(re) {
@@ -3716,9 +3670,8 @@
                     // Release the master token lock and try to send an error
                     // response.
                     this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                    var recipient = getIdentity(this._request);
                     var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
-                    sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
+                    sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, MslError.RESPONSE_REQUIRES_MASTERTOKEN, null, this._output, this._timeout, {
                         result: function(success) { callback.result(null); },
                         timeout: callback.timeout,
                         error: function(e) {
@@ -3928,7 +3881,6 @@
                                             if (cancelled(e)) return null;
 
                                             // Maybe we can send an error response.
-                                            var recipient = getIdentity(this._request);
                                             var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                                             var mslError, userMessage, toThrow;
                                             if (e instanceof MslException) {
@@ -3946,7 +3898,7 @@
                                                 userMessage = null;
                                                 toThrow = new MslInternalException("Error sending the response.", e);
                                             }
-                                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
                                                 timeout: callback.timeout,
                                                 error: function(re) {
@@ -3980,7 +3932,6 @@
                                             if (cancelled(e)) return null;
 
                                             // Maybe we can send an error response.
-                                            var recipient = getIdentity(this._request);
                                             var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                                             var mslError, userMessage, toThrow;
                                             if (e instanceof MslException) {
@@ -3998,7 +3949,7 @@
                                                 userMessage = null;
                                                 toThrow = new MslInternalException("Error sending the response.", e);
                                             }
-                                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                                 result: function(success) { callback.error(toThrow); },
                                                 timeout: callback.timeout,
                                                 error: function(re) {
@@ -4023,7 +3974,6 @@
                             if (cancelled(e)) return null;
 
                             // Try to send an error response.
-                            var recipient = getIdentity(this._request);
                             var requestMessageId, mslError, userMessage, toThrow;
                             if (e instanceof MslException) {
                                 requestMessageId = e.messageId;
@@ -4038,7 +3988,7 @@
                                 userMessage = null;
                                 toThrow = new MslInternalException("Error building the response.", e);
                             }
-                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
                                 timeout: callback.timeout,
                                 error: function(re) {
@@ -4966,7 +4916,6 @@
 
                                     // Maybe we can send an error response.
                                     var builder = builderTokenTicket.builder;
-                                    var recipient = getIdentity(this._request);
                                     var requestMessageId = MessageBuilder.decrementMessageId(builder.getMessageId());
                                     var mslError, userMessage, toThrow;
                                     if (e instanceof MslException) {
@@ -4984,7 +4933,7 @@
                                         userMessage = null;
                                         toThrow = new MslInternalException("Error pushing the message.", e);
                                     }
-                                    sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                                    sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                         result: function(success) { callback.error(toThrow); },
                                         timeout: callback.timeout,
                                         error: function(re) {
@@ -5007,7 +4956,6 @@
                             if (cancelled(e)) return null;
 
                             // Try to send an error response.
-                            var recipient = getIdentity(this._request);
                             var requestMessageId, mslError, userMessage, toThrow;
                             if (e instanceof MslException) {
                                 requestMessageId = e.messageId;
@@ -5022,7 +4970,7 @@
                                 userMessage = null;
                                 toThrow = new MslInternalException("Error building the message.", e);
                             }
-                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, recipient, requestMessageId, mslError, userMessage, this._output, this._timeout, {
+                            sendError(this, this._ctrl, this._ctx, debugCtx, requestHeader, requestMessageId, mslError, userMessage, this._output, this._timeout, {
                                 result: function(success) { callback.error(toThrow); },
                                 timeout: callback.timeout,
                                 error: function(re) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -454,7 +454,7 @@ public class DefaultMslEncoderFactorySuite {
             final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
             
             // Create JSON version.
-            final HeaderData jsonHeaderData = new HeaderData(null, 1, null, false, false, jsonCaps, null, null, null, null, null);
+            final HeaderData jsonHeaderData = new HeaderData(1, null, false, false, jsonCaps, null, null, null, null, null);
             final MessageHeader jsonMessageHeader = new MessageHeader(ctx, entityAuthData, null, jsonHeaderData, peerData);
             final ICryptoContext jsonCryptoContext = jsonMessageHeader.getCryptoContext();
             final MessageOutputStream jsonMos = new MessageOutputStream(ctx, destination, jsonMessageHeader, jsonCryptoContext);
