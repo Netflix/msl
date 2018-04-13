@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * <p>ECC asymmetric keys entity authentication factory.</p>
- *
  */
 public class EccAuthenticationFactory extends EntityAuthenticationFactory {
     /**
@@ -79,29 +78,29 @@ public class EccAuthenticationFactory extends EntityAuthenticationFactory {
         // Make sure we have the right kind of entity authentication data.
         if (!(authdata instanceof EccAuthenticationData))
             throw new MslInternalException("Incorrect authentication data type " + authdata.getClass().getName() + ".");
-        final EccAuthenticationData rad = (EccAuthenticationData)authdata;
+        final EccAuthenticationData ead = (EccAuthenticationData)authdata;
 
         // Check for revocation.
-        final String identity = rad.getIdentity();
+        final String identity = ead.getIdentity();
         if (authutils.isEntityRevoked(identity))
-            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "ecc" + identity).setEntityAuthenticationData(rad);
+            throw new MslEntityAuthException(MslError.ENTITY_REVOKED, "ecc" + identity).setEntityAuthenticationData(ead);
 
         // Verify the scheme is permitted.
         if (!authutils.isSchemePermitted(identity, getScheme()))
-            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(rad);
+            throw new MslEntityAuthException(MslError.INCORRECT_ENTITYAUTH_DATA, "Authentication Scheme for Device Type Not Supported " + identity + ":" + getScheme()).setEntityAuthenticationData(ead);
 
         // Extract ECC authentication data.
-        final String pubkeyid = rad.getPublicKeyId();
+        final String pubkeyid = ead.getPublicKeyId();
         final PublicKey publicKey = store.getPublicKey(pubkeyid);
         final PrivateKey privateKey = store.getPrivateKey(pubkeyid);
 
         // The local entity must have a private key.
         if (pubkeyid.equals(keyPairId) && privateKey == null)
-            throw new MslEntityAuthException(MslError.ECC_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
+            throw new MslEntityAuthException(MslError.ECC_PRIVATEKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(ead);
 
         // Remote entities must have a public key.
         else if (!pubkeyid.equals(keyPairId) && publicKey == null)
-            throw new MslEntityAuthException(MslError.ECC_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(rad);
+            throw new MslEntityAuthException(MslError.ECC_PUBLICKEY_NOT_FOUND, pubkeyid).setEntityAuthenticationData(ead);
 
         // Return the crypto context.
         return new EccCryptoContext(identity, privateKey, publicKey, Mode.SIGN_VERIFY);
@@ -112,5 +111,5 @@ public class EccAuthenticationFactory extends EntityAuthenticationFactory {
     /** ECC key store. */
     private final EccStore store;
     /** Authentication utilities. */
-    final AuthenticationUtils authutils;
+    private final AuthenticationUtils authutils;
 }
