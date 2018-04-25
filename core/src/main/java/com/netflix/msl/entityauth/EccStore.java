@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2016 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -21,7 +21,6 @@ import java.util.Set;
 
 /**
  * An ECC public key store contains trusted ECC public and private keys.
- *
  */
 public interface EccStore {
     /**
@@ -36,10 +35,10 @@ public interface EccStore {
      * @return the public key of the identified key pair or null if not found.
      */
     public PublicKey getPublicKey(final String identity);
-    
+
     /**
      * Return the private key of the identified ECC key pair.
-     * 
+     *
      * @param identity ECC key pair identity.
      * @return the private key of the identified key pair or null if not found.
      */
