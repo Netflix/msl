@@ -65,6 +65,8 @@ namespace {
 const int64_t MILLISECONDS_PER_SECOND = 1000;
 
 // Message header data.
+/** Key sender. */
+const string KEY_SENDER = "sender";
 /** Key timestamp. */
 const string KEY_TIMESTAMP = "timestamp";
 /** Key message ID. */
@@ -167,6 +169,18 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     if (!encrypted && headerData->userAuthData)
         throw MslInternalException("User authentication data cannot be included if the message is not encrypted.");
 
+    // Older MSL stacks expect the sender if a master token is being used.
+    //
+    // If the local entity does not know its entity identity, then use the
+    // empty string. This will work except for the case where the old MSL
+    // stack is receiving a message for which it is also the issuer of the
+    // master token. That scenario will continue to fail.
+    shared_ptr<string> sender;
+    if (mt) {
+        const string localIdentity = ctx->getEntityAuthenticationData()->getIdentity();
+        sender = make_shared<string>(localIdentity);
+    }
+
     entityAuthData = (!mt) ? ead : shared_ptr<EntityAuthenticationData>();
     masterToken = mt;
     nonReplayableId = headerData->nonReplayableId;
@@ -240,6 +254,7 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     try {
         shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
         headerdata = encoder->createObject();
+        if (sender) headerdata->put(KEY_SENDER, *sender);
         headerdata->put(KEY_TIMESTAMP, timestamp);
         headerdata->put(KEY_MESSAGE_ID, messageId);
         headerdata->put(KEY_NON_REPLAYABLE, nonReplayableId != -1);
