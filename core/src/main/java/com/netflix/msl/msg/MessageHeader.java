@@ -115,6 +115,8 @@ public class MessageHeader extends Header {
     private static final long MILLISECONDS_PER_SECOND = 1000;
 
     // Message header data.
+    /** Key sender. */
+    private static final String KEY_SENDER = "sender";
     /** Key timestamp. */
     private static final String KEY_TIMESTAMP = "timestamp";
     /** Key message ID. */
@@ -268,6 +270,20 @@ public class MessageHeader extends Header {
         }
         if (!encrypted && headerData.userAuthData != null)
             throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
+        
+        // Older MSL stacks expect the sender if a master token is being used.
+        //
+        // If the local entity does not know its entity identity, then use the
+        // empty string. This will work except for the case where the old MSL
+        // stack is receiving a message for which it is also the issuer of the
+        // master token. That scenario will continue to fail.
+        final String sender;
+        if (masterToken != null) {
+            final String localIdentity = ctx.getEntityAuthenticationData(null).getIdentity();
+            sender = (localIdentity != null) ? localIdentity : "";
+        } else {
+            sender = null;
+        }
 
         this.entityAuthData = (masterToken == null) ? entityAuthData : null;
         this.masterToken = masterToken;
@@ -341,6 +357,7 @@ public class MessageHeader extends Header {
         try {
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
             headerdata = encoder.createObject();
+            if (sender != null) headerdata.put(KEY_SENDER, sender);
             headerdata.put(KEY_TIMESTAMP, this.timestamp);
             headerdata.put(KEY_MESSAGE_ID, this.messageId);
             headerdata.put(KEY_NON_REPLAYABLE, this.nonReplayableId != null);

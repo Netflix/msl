@@ -101,6 +101,12 @@
     
     // Message header data.
     /**
+     * Key sender.
+     * @const
+     * @type {string}
+     */
+    var KEY_SENDER = "sender";
+    /**
      * Key timestamp.
      * @const
      * @type {number}
@@ -513,161 +519,191 @@
          */
         init: function init(ctx, entityAuthData, masterToken, headerData, peerData, creationData, callback) {
             var self = this;
-
             AsyncExecutor(callback, function() {
-                // Message ID must be within range.
-                if (headerData.messageId < 0 || headerData.messageId > MslConstants.MAX_LONG_VALUE)
-                    throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
-
-                // Message entity must be provided.
-                if (!entityAuthData && !masterToken)
-                    throw new MslInternalException("Message entity authentication data or master token must be provided.");
-                
-                // Do not allow user authentication data to be included if the message
-                // will not be encrypted.
-                var encrypted;
-                if (masterToken) {
-                    encrypted = true;
+                if (creationData) {
+                    // Ignore the sender.
+                    construct(null);
                 } else {
-                    var scheme = entityAuthData.scheme;
-                    encrypted = scheme.encrypts;
+                    // Older MSL stacks expect the sender if a master token is being used.
+                    //
+                    // If the local entity does not know its entity identity, then use the
+                    // empty string. This will work except for the case where the old MSL
+                    // stack is receiving a message for which it is also the issuer of the
+                    // master token. That scenario will continue to fail.
+                    if (masterToken) {
+                        ctx.getEntityAuthenticationData(null, {
+                            result: function(ead) {
+                                AsyncExecutor(callback, function() {
+                                    var localIdentity = ead.getIdentity();
+                                    var sender = (localIdentity) ? localIdentity : "";
+                                    construct(sender);
+                                }, self);
+                            },
+                            error: callback.error,
+                        });
+                    } else {
+                        construct(null);
+                    }
                 }
-                if (!encrypted && headerData.userAuthData)
-                    throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
-                
-                entityAuthData = (!masterToken) ? entityAuthData : null;
-                var nonReplayableId = headerData.nonReplayableId;
-                var renewable = headerData.renewable;
-                var handshake = headerData.handshake;
-                var capabilities = headerData.capabilities;
-                var messageId = headerData.messageId;
-                var keyRequestData = (headerData.keyRequestData) ? headerData.keyRequestData : [];
-                var keyResponseData = headerData.keyResponseData;
-                var userAuthData = headerData.userAuthData;
-                var userIdToken = headerData.userIdToken;
-                var serviceTokens = (headerData.serviceTokens) ? headerData.serviceTokens : [];
-                var peerMasterToken, peerUserIdToken, peerServiceTokens;
-                if (ctx.isPeerToPeer()) {
-                    peerMasterToken = peerData.peerMasterToken;
-                    peerUserIdToken = peerData.peerUserIdToken;
-                    peerServiceTokens = (peerData.peerServiceTokens) ? peerData.peerServiceTokens : [];
-                } else {
-                    peerMasterToken = null;
-                    peerUserIdToken = null;
-                    peerServiceTokens = [];
-                }
+            }, self);
 
-                // Grab token verification master tokens.
-                var tokenVerificationMasterToken, peerTokenVerificationMasterToken;
-                if (keyResponseData) {
-                    // The key response data is used for token verification in a
-                    // trusted services network and peer token verification in a peer-
-                    // to-peer network.
-                    if (!ctx.isPeerToPeer()) {
-                        tokenVerificationMasterToken = keyResponseData.masterToken;
-                        peerTokenVerificationMasterToken = peerMasterToken;
+            function construct(sender) {
+                AsyncExecutor(callback, function() {
+                    // Message ID must be within range.
+                    if (headerData.messageId < 0 || headerData.messageId > MslConstants.MAX_LONG_VALUE)
+                        throw new MslInternalException("Message ID " + headerData.messageId + " is out of range.");
+    
+                    // Message entity must be provided.
+                    if (!entityAuthData && !masterToken)
+                        throw new MslInternalException("Message entity authentication data or master token must be provided.");
+                    
+                    // Do not allow user authentication data to be included if the message
+                    // will not be encrypted.
+                    var encrypted;
+                    if (masterToken) {
+                        encrypted = true;
+                    } else {
+                        var scheme = entityAuthData.scheme;
+                        encrypted = scheme.encrypts;
+                    }
+                    if (!encrypted && headerData.userAuthData)
+                        throw new MslInternalException("User authentication data cannot be included if the message is not encrypted.");
+                    
+                    entityAuthData = (!masterToken) ? entityAuthData : null;
+                    var nonReplayableId = headerData.nonReplayableId;
+                    var renewable = headerData.renewable;
+                    var handshake = headerData.handshake;
+                    var capabilities = headerData.capabilities;
+                    var messageId = headerData.messageId;
+                    var keyRequestData = (headerData.keyRequestData) ? headerData.keyRequestData : [];
+                    var keyResponseData = headerData.keyResponseData;
+                    var userAuthData = headerData.userAuthData;
+                    var userIdToken = headerData.userIdToken;
+                    var serviceTokens = (headerData.serviceTokens) ? headerData.serviceTokens : [];
+                    var peerMasterToken, peerUserIdToken, peerServiceTokens;
+                    if (ctx.isPeerToPeer()) {
+                        peerMasterToken = peerData.peerMasterToken;
+                        peerUserIdToken = peerData.peerUserIdToken;
+                        peerServiceTokens = (peerData.peerServiceTokens) ? peerData.peerServiceTokens : [];
+                    } else {
+                        peerMasterToken = null;
+                        peerUserIdToken = null;
+                        peerServiceTokens = [];
+                    }
+    
+                    // Grab token verification master tokens.
+                    var tokenVerificationMasterToken, peerTokenVerificationMasterToken;
+                    if (keyResponseData) {
+                        // The key response data is used for token verification in a
+                        // trusted services network and peer token verification in a peer-
+                        // to-peer network.
+                        if (!ctx.isPeerToPeer()) {
+                            tokenVerificationMasterToken = keyResponseData.masterToken;
+                            peerTokenVerificationMasterToken = peerMasterToken;
+                        } else {
+                            tokenVerificationMasterToken = masterToken;
+                            peerTokenVerificationMasterToken = keyResponseData.masterToken;
+                        }
                     } else {
                         tokenVerificationMasterToken = masterToken;
-                        peerTokenVerificationMasterToken = keyResponseData.masterToken;
+                        peerTokenVerificationMasterToken = peerMasterToken;
                     }
-                } else {
-                    tokenVerificationMasterToken = masterToken;
-                    peerTokenVerificationMasterToken = peerMasterToken;
-                }
-
-                // Check token combinations.
-                if (userIdToken && (!tokenVerificationMasterToken || !userIdToken.isBoundTo(tokenVerificationMasterToken)))
-                    throw new MslInternalException("User ID token must be bound to a master token.");
-                if (peerUserIdToken && (!peerTokenVerificationMasterToken || !peerUserIdToken.isBoundTo(peerTokenVerificationMasterToken)))
-                    throw new MslInternalException("Peer user ID token must be bound to a peer master token.");
-
-                // All service tokens must be unbound or if bound, bound to the
-                // provided tokens.
-                serviceTokens.forEach(function(serviceToken) {
-                    if (serviceToken.isMasterTokenBound() && (!tokenVerificationMasterToken || !serviceToken.isBoundTo(tokenVerificationMasterToken)))
-                        throw new MslInternalException("Master token bound service tokens must be bound to the provided master token.");
-                    if (serviceToken.isUserIdTokenBound() && (!userIdToken || !serviceToken.isBoundTo(userIdToken)))
-                        throw new MslInternalException("User ID token bound service tokens must be bound to the provided user ID token.");
-                }, this);
-                peerServiceTokens.forEach(function(peerServiceToken) {
-                    if (peerServiceToken.isMasterTokenBound() && (!peerTokenVerificationMasterToken || !peerServiceToken.isBoundTo(peerTokenVerificationMasterToken)))
-                        throw new MslInternalException("Master token bound peer service tokens must be bound to the provided peer master token.");
-                    if (peerServiceToken.isUserIdTokenBound() && (!peerUserIdToken || !peerServiceToken.isBoundTo(peerUserIdToken)))
-                        throw new MslInternalException("User ID token bound peer service tokens must be bound to the provided peer user ID token.");
-                }, this);
-
-                // Create the header data.
-                var user, timestampSeconds, headerdata, messageCryptoContext;
-                if (!creationData) {
-                    // Grab the user.
-                    user = (userIdToken) ? userIdToken.user : null;
+    
+                    // Check token combinations.
+                    if (userIdToken && (!tokenVerificationMasterToken || !userIdToken.isBoundTo(tokenVerificationMasterToken)))
+                        throw new MslInternalException("User ID token must be bound to a master token.");
+                    if (peerUserIdToken && (!peerTokenVerificationMasterToken || !peerUserIdToken.isBoundTo(peerTokenVerificationMasterToken)))
+                        throw new MslInternalException("Peer user ID token must be bound to a peer master token.");
+    
+                    // All service tokens must be unbound or if bound, bound to the
+                    // provided tokens.
+                    serviceTokens.forEach(function(serviceToken) {
+                        if (serviceToken.isMasterTokenBound() && (!tokenVerificationMasterToken || !serviceToken.isBoundTo(tokenVerificationMasterToken)))
+                            throw new MslInternalException("Master token bound service tokens must be bound to the provided master token.");
+                        if (serviceToken.isUserIdTokenBound() && (!userIdToken || !serviceToken.isBoundTo(userIdToken)))
+                            throw new MslInternalException("User ID token bound service tokens must be bound to the provided user ID token.");
+                    }, this);
+                    peerServiceTokens.forEach(function(peerServiceToken) {
+                        if (peerServiceToken.isMasterTokenBound() && (!peerTokenVerificationMasterToken || !peerServiceToken.isBoundTo(peerTokenVerificationMasterToken)))
+                            throw new MslInternalException("Master token bound peer service tokens must be bound to the provided peer master token.");
+                        if (peerServiceToken.isUserIdTokenBound() && (!peerUserIdToken || !peerServiceToken.isBoundTo(peerUserIdToken)))
+                            throw new MslInternalException("User ID token bound peer service tokens must be bound to the provided peer user ID token.");
+                    }, this);
+    
+                    // Create the header data.
+                    var user, timestampSeconds, headerdata, messageCryptoContext;
+                    if (!creationData) {
+                        // Grab the user.
+                        user = (userIdToken) ? userIdToken.user : null;
+                        
+                        // Set the creation timestamp.
+                        timestampSeconds = parseInt(ctx.getTime() / MILLISECONDS_PER_SECOND);
+    
+                        // Construct the header data.
+                        try {
+                            var encoder = ctx.getMslEncoderFactory();
+                            headerdata = encoder.createObject();
+                            if (typeof sender === 'string') headerdata.put(KEY_SENDER, sender);
+                            headerdata.put(KEY_TIMESTAMP, timestampSeconds);
+                            headerdata.put(KEY_MESSAGE_ID, messageId);
+                            headerdata.put(KEY_NON_REPLAYABLE, (typeof nonReplayableId === 'number'));
+                            if (typeof nonReplayableId === 'number') headerdata.put(KEY_NON_REPLAYABLE_ID, nonReplayableId);
+                            headerdata.put(KEY_RENEWABLE, renewable);
+                            headerdata.put(KEY_HANDSHAKE, handshake);
+                            if (capabilities) headerdata.put(KEY_CAPABILITIES, capabilities);
+                            if (keyRequestData.length > 0) headerdata.put(KEY_KEY_REQUEST_DATA, keyRequestData);
+                            if (keyResponseData) headerdata.put(KEY_KEY_RESPONSE_DATA, keyResponseData);
+                            if (userAuthData) headerdata.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
+                            if (userIdToken) headerdata.put(KEY_USER_ID_TOKEN, userIdToken);
+                            if (serviceTokens.length > 0) headerdata.put(KEY_SERVICE_TOKENS, serviceTokens);
+                            if (peerMasterToken) headerdata.put(KEY_PEER_MASTER_TOKEN, peerMasterToken);
+                            if (peerUserIdToken) headerdata.put(KEY_PEER_USER_ID_TOKEN, peerUserIdToken);
+                            if (peerServiceTokens.length > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, peerServiceTokens);
+                        } catch (e) {
+                            if (e instanceof MslEncoderException) {
+                                throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
+                                    .setMasterToken(masterToken)
+                                    .setEntityAuthenticationData(entityAuthData)
+                                    .setUserIdToken(peerUserIdToken)
+                                    .setUserAuthenticationData(userAuthData)
+                                    .setMessageId(messageId);
+                            }
+                            throw e;
+                        }
+    
+                        // Get the correct crypto context.
+                        try {
+                            messageCryptoContext = getMessageCryptoContext(ctx, entityAuthData, masterToken);
+                        } catch (e) {
+                            if (e instanceof MslException) {
+                                e.setMasterToken(masterToken);
+                                e.setEntityAuthenticationData(entityAuthData);
+                                e.setUserIdToken(userIdToken);
+                                e.setUserAuthenticationData(userAuthData);
+                                e.setMessageId(messageId);
+                            }
+                            throw e;
+                        }
+                    } else {
+                        user = creationData.user;
+                        timestampSeconds = creationData.timestampSeconds;
+                        headerdata = creationData.headerdata;
+                        messageCryptoContext = creationData.messageCryptoContext;
+                    }
                     
-                    // Set the creation timestamp.
-                    timestampSeconds = parseInt(ctx.getTime() / MILLISECONDS_PER_SECOND);
-
-                    // Construct the header data.
-                    try {
-                        var encoder = ctx.getMslEncoderFactory();
-                        headerdata = encoder.createObject();
-                        headerdata.put(KEY_TIMESTAMP, timestampSeconds);
-                        headerdata.put(KEY_MESSAGE_ID, messageId);
-                        headerdata.put(KEY_NON_REPLAYABLE, (typeof nonReplayableId === 'number'));
-                        if (typeof nonReplayableId === 'number') headerdata.put(KEY_NON_REPLAYABLE_ID, nonReplayableId);
-                        headerdata.put(KEY_RENEWABLE, renewable);
-                        headerdata.put(KEY_HANDSHAKE, handshake);
-                        if (capabilities) headerdata.put(KEY_CAPABILITIES, capabilities);
-                        if (keyRequestData.length > 0) headerdata.put(KEY_KEY_REQUEST_DATA, keyRequestData);
-                        if (keyResponseData) headerdata.put(KEY_KEY_RESPONSE_DATA, keyResponseData);
-                        if (userAuthData) headerdata.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
-                        if (userIdToken) headerdata.put(KEY_USER_ID_TOKEN, userIdToken);
-                        if (serviceTokens.length > 0) headerdata.put(KEY_SERVICE_TOKENS, serviceTokens);
-                        if (peerMasterToken) headerdata.put(KEY_PEER_MASTER_TOKEN, peerMasterToken);
-                        if (peerUserIdToken) headerdata.put(KEY_PEER_USER_ID_TOKEN, peerUserIdToken);
-                        if (peerServiceTokens.length > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, peerServiceTokens);
-                    } catch (e) {
-                        if (e instanceof MslEncoderException) {
-                            throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
-                                .setMasterToken(masterToken)
-                                .setEntityAuthenticationData(entityAuthData)
-                                .setUserIdToken(peerUserIdToken)
-                                .setUserAuthenticationData(userAuthData)
-                                .setMessageId(messageId);
-                        }
-                        throw e;
-                    }
-
-                    // Get the correct crypto context.
-                    try {
-                        messageCryptoContext = getMessageCryptoContext(ctx, entityAuthData, masterToken);
-                    } catch (e) {
-                        if (e instanceof MslException) {
-                            e.setMasterToken(masterToken);
-                            e.setEntityAuthenticationData(entityAuthData);
-                            e.setUserIdToken(userIdToken);
-                            e.setUserAuthenticationData(userAuthData);
-                            e.setMessageId(messageId);
-                        }
-                        throw e;
-                    }
-                } else {
-                    user = creationData.user;
-                    timestampSeconds = creationData.timestampSeconds;
-                    headerdata = creationData.headerdata;
-                    messageCryptoContext = creationData.messageCryptoContext;
-                }
-                
-                // The properties.
-                var props = buildProperties(ctx, entityAuthData, masterToken, headerdata,
-                    timestampSeconds, messageId, nonReplayableId,
-                    renewable, handshake,
-                    capabilities, keyRequestData, keyResponseData,
-                    userAuthData, userIdToken,
-                    serviceTokens,
-                    peerMasterToken, peerUserIdToken, peerServiceTokens,
-                    user, messageCryptoContext);
-                Object.defineProperties(this, props);
-                return this;
-            }, self);
+                    // The properties.
+                    var props = buildProperties(ctx, entityAuthData, masterToken, headerdata,
+                        timestampSeconds, messageId, nonReplayableId,
+                        renewable, handshake,
+                        capabilities, keyRequestData, keyResponseData,
+                        userAuthData, userIdToken,
+                        serviceTokens,
+                        peerMasterToken, peerUserIdToken, peerServiceTokens,
+                        user, messageCryptoContext);
+                    Object.defineProperties(this, props);
+                    return this;
+                }, self);
+            }
         },
 
         /**
