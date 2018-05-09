@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2017 Netflix, Inc.  All rights reserved.
- * 
+ * Copyright (c) 2017-2018 Netflix, Inc.  All rights reserved.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -24,16 +24,16 @@ import java.io.Reader;
  * necessary to decode the character, and does not close the underlying input
  * stream. This ensures any unneeded bytes remain on the input stream, which
  * can then be reused.</p>
- * 
+ *
  * <p>Based on Andy Clark's
  * {@code com.sun.org.apache.xerces.internal.impl.io.UTF8Reader}.</p>
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class ThriftyUtf8Reader extends Reader {
     /** Default byte buffer size (8192). */
     public static final int DEFAULT_BUFFER_SIZE = 8192;
-    
+
     /** Input stream. */
     private final InputStream fInputStream;
     /** Byte buffer. */
@@ -42,11 +42,11 @@ public class ThriftyUtf8Reader extends Reader {
     private int fOffset = 0;
     /** Surrogate character. */
     private int fSurrogate = -1;
-    
+
     public ThriftyUtf8Reader(final InputStream inputStream) {
         fInputStream = inputStream;
     }
-    
+
     @Override
     public int read() throws IOException {
         // decode character
@@ -459,13 +459,54 @@ public class ThriftyUtf8Reader extends Reader {
     }
 
     @Override
-    public void reset() {
+    public long skip(final long n) throws IOException {
+        // Don't pass skip down to the backing input stream since we're being
+        // asked to skip characters and not bytes.
+        long remaining = n;
+        final char[] ch = new char[fBuffer.length];
+        do {
+            final int length = ch.length < remaining ? ch.length : (int)remaining;
+            final int count = read(ch, 0, length);
+            if (count > 0)
+                remaining -= count;
+            else
+                break;
+        } while (remaining > 0);
+
+        final long skipped = n - remaining;
+        return skipped;
+    }
+
+    /**
+     * Tell whether this stream supports the mark() operation.
+     */
+    @Override
+    public boolean markSupported() {
+        return fInputStream.markSupported();
+    }
+
+    @Override
+    public void mark(final int readLimit) throws IOException {
+        // This is complicated because the read limit is in characters but the
+        // backing input stream is in bytes. If we really want to be safe then
+        // we need to multiply by 4 bytes. Account for overflow.
+        final int byteLimit = 4 * readLimit;
+        final int safeLimit = (byteLimit < 0) ? Integer.MAX_VALUE : byteLimit;
+        fInputStream.mark(safeLimit);
+    }
+
+    @Override
+    public void reset() throws IOException {
         fOffset = 0;
         fSurrogate = -1;
+        fInputStream.reset();
     }
 
     @Override
     public void close() {
+        // Explicitly do not close the backing input stream for our use case.
+        // This is because we are using ThriftyUtf8Reader inside a stream
+        // parser.
     }
 
     /** Throws an exception for expected byte. */
