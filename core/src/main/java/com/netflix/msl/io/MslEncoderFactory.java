@@ -157,7 +157,7 @@ public abstract class MslEncoderFactory {
      */
     public MslTokenizer createTokenizer(final InputStream source) throws IOException, MslEncoderException {
         // Read the byte stream identifier (and only the identifier).
-        final InputStream bufferedSource = source.markSupported() ? source : new UnsynchronizedBufferedInputStream(source, 1);
+        final InputStream bufferedSource = source.markSupported() ? source : new UnsynchronizedBufferedInputStream(source);
         bufferedSource.mark(1);
         final byte id = (byte)bufferedSource.read();
         if (id == -1)
