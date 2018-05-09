@@ -490,7 +490,8 @@ public class ThriftyUtf8Reader extends Reader {
         // This is complicated because the read limit is in characters but the
         // backing input stream is in bytes. If we really want to be safe then
         // we need to multiply by 4 bytes. Account for overflow.
-        final int safeLimit = Math.max(Integer.MAX_VALUE, 4 * readLimit);
+        final int byteLimit = 4 * readLimit;
+        final int safeLimit = (byteLimit < 0) ? Integer.MAX_VALUE : byteLimit;
         fInputStream.mark(safeLimit);
     }
 
