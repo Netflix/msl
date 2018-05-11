@@ -63,6 +63,10 @@
 	var MslMessageException = require('../MslMessageException.js');
 	var MslError = require('../MslError.js');
 	
+	// Cyclic dependency declarations.
+	var MessageHeader,
+	    ErrorHeader;
+	
 	/**
 	 * Common header keys.
 	 * @const
@@ -185,8 +189,8 @@
         
         function processHeaders(entityAuthData, masterToken, signature) {
             AsyncExecutor(callback, function() {
-                var MessageHeader = require('../msg/MessageHeader.js');
-                var ErrorHeader = require('../msg/ErrorHeader.js');
+                if (!MessageHeader) MessageHeader = require('../msg/MessageHeader.js');
+                if (!ErrorHeader) ErrorHeader = require('../msg/ErrorHeader.js');
                 
                 try {
                     // Process message headers.

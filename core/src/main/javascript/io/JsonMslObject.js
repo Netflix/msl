@@ -33,6 +33,10 @@
 	var Base64 = require('../util/Base64.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
     
+    // Cyclic dependency declarations.
+    var MslEncoderFactory,
+        JsonMslArray;
+    
     /**
      * Encode the provided MSL object into JSON.
      * 
@@ -75,6 +79,10 @@
          */
         init: function init(encoder, source) {
             init.base.call(this);
+
+            // Cyclic dependency assignments.
+            if (!MslEncoderFactory) MslEncoderFactory = require('../io/MslEncoderFactory.js');
+            if (!JsonMslArray) JsonMslArray = require('../io/JsonMslArray.js');
             
             // Set properties.
             var props = {
@@ -126,8 +134,6 @@
         
         /** @inheritDoc */
         put: function put(key, value) {
-            var JsonMslArray = require('../io/JsonMslArray.js');
-
             var o;
             try {
                 // Convert Object to MslObject.
@@ -149,8 +155,6 @@
 
         /** @inheritDoc */
         getBytes: function getBytes(key) {
-            var MslEncoderFactory = require('../io/MslEncoderFactory.js');
-            
             // When a JsonMslObject is decoded, there's no way for us to know if a
             // value is supposed to be a String to byte[]. Therefore interpret
             // Strings as Base64-encoded data consistent with the toJSONString()
