@@ -162,7 +162,7 @@ public class ErrorHeaderTest {
         assertEquals(INTERNAL_CODE, errorHeader.getInternalCode());
         assertEquals(MESSAGE_ID, errorHeader.getMessageId());
         assertEquals(USER_MSG, errorHeader.getUserMessage());
-        assertEquals(RECIPIENT, errorHeader.getRecipient());
+        assertEquals(RECIPIENT, errorHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(errorHeader.getTimestamp()));
     }
     
@@ -214,7 +214,7 @@ public class ErrorHeaderTest {
     @Test
     public void nullRecipientMslObject() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslEncoderException, MslCryptoException {
         final ErrorHeader errorHeader = new ErrorHeader(ctx, ENTITY_AUTH_DATA, null, MESSAGE_ID, ERROR_CODE, INTERNAL_CODE, ERROR_MSG, USER_MSG);
-        assertNull(errorHeader.getRecipient());
+        assertNull(errorHeader.getRemoteEntityIdentity());
         
         final MslObject mo = MslTestUtils.toMslObject(encoder, errorHeader);
         final MslObject entityAuthDataMo = mo.getMslObject(KEY_ENTITY_AUTHENTICATION_DATA, encoder);
@@ -295,7 +295,7 @@ public class ErrorHeaderTest {
         assertEquals(errorHeader.getErrorMessage(), moErrorHeader.getErrorMessage());
         assertEquals(errorHeader.getInternalCode(), moErrorHeader.getInternalCode());
         assertEquals(errorHeader.getMessageId(), moErrorHeader.getMessageId());
-        assertEquals(errorHeader.getRecipient(), moErrorHeader.getRecipient());
+        assertEquals(errorHeader.getRemoteEntityIdentity(), moErrorHeader.getRemoteEntityIdentity());
         assertEquals(errorHeader.getUserMessage(), moErrorHeader.getUserMessage());
     }
     

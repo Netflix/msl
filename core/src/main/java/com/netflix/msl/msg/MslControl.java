@@ -525,11 +525,11 @@ public class MslControl {
         }
         
         /* (non-Javadoc)
-         * @see com.netflix.msl.msg.MessageContext#getRecipient()
+         * @see com.netflix.msl.msg.MessageContext#getRemoteEntityIdentity()
          */
         @Override
-        public String getRecipient() {
-            return appCtx.getRecipient();
+        public String getRemoteEntityIdentity() {
+            return appCtx.getRemoteEntityIdentity();
         }
 
         /* (non-Javadoc)
@@ -1093,7 +1093,7 @@ public class MslControl {
         }
         
         try {
-            final String recipient = msgCtx.getRecipient();
+            final String recipient = msgCtx.getRemoteEntityIdentity();
             final MessageBuilder builder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient);
             builder.setNonReplayable(msgCtx.isNonReplayable());
             return builder;
@@ -1248,7 +1248,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
+                final String recipient = resendMsgCtx.getRemoteEntityIdentity();
                 final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, recipient, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
@@ -1283,7 +1283,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
+                final String recipient = resendMsgCtx.getRemoteEntityIdentity();
                 final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, null, recipient, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
@@ -1300,7 +1300,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
+                final String recipient = resendMsgCtx.getRemoteEntityIdentity();
                 final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, null, null, recipient, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
@@ -1335,7 +1335,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
+                final String recipient = resendMsgCtx.getRemoteEntityIdentity();
                 final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
@@ -1379,7 +1379,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final String recipient = resendMsgCtx.getRecipient();
+                final String recipient = resendMsgCtx.getRemoteEntityIdentity();
                 final MessageBuilder requestBuilder = MessageBuilder.createRequest(ctx, masterToken, userIdToken, recipient, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
@@ -1740,7 +1740,7 @@ public class MslControl {
 
                 // Reject messages if the message recipient is specified and not
                 // equal to the local entity.
-                final String recipient = responseHeader.getRecipient();
+                final String recipient = responseHeader.getRemoteEntityIdentity();
                 if (recipient != null && localIdentity != null && !recipient.equals(localIdentity))
                     throw new MslMessageException(MslError.MESSAGE_RECIPIENT_MISMATCH, recipient + " != " + localIdentity);
 

@@ -107,8 +107,8 @@ public interface MessageContext {
      * @return the entity identity of the application data recipient or
      *         {@code null} if the identity is not known.
      */
-    public String getRecipient();
-    
+    public String getRemoteEntityIdentity();
+
     /**
      * <p>Called to determine if the message application data must be
      * encrypted.</p>

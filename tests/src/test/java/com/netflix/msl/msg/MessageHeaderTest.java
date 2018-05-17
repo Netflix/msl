@@ -373,7 +373,7 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -411,7 +411,7 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -540,7 +540,7 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
@@ -579,7 +579,7 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
@@ -709,7 +709,7 @@ public class MessageHeaderTest {
         assertEquals(KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(entityAuthData.getIdentity(), messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -793,7 +793,7 @@ public class MessageHeaderTest {
         assertEquals(PEER_KEY_RESPONSE_DATA, messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(entityAuthData.getIdentity(), messageHeader.getSender());
-        assertEquals(RECIPIENT, messageHeader.getRecipient());
+        assertEquals(RECIPIENT, messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertEquals(PEER_MASTER_TOKEN, messageHeader.getPeerMasterToken());
@@ -877,7 +877,7 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertNull(messageHeader.getRecipient());
+        assertNull(messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -917,7 +917,7 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertNull(messageHeader.getMasterToken());
         assertNull(messageHeader.getSender());
-        assertNull(messageHeader.getRecipient());
+        assertNull(messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -952,7 +952,7 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(p2pCtx.getEntityAuthenticationData(null).getIdentity(), messageHeader.getSender());
-        assertNull(messageHeader.getRecipient());
+        assertNull(messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());
@@ -991,7 +991,7 @@ public class MessageHeaderTest {
         assertNull(messageHeader.getKeyResponseData());
         assertEquals(MASTER_TOKEN, messageHeader.getMasterToken());
         assertEquals(p2pCtx.getEntityAuthenticationData(null).getIdentity(), messageHeader.getSender());
-        assertNull(messageHeader.getRecipient());
+        assertNull(messageHeader.getRemoteEntityIdentity());
         assertTrue(isAboutNow(messageHeader.getTimestamp()));
         assertEquals(MESSAGE_ID, messageHeader.getMessageId());
         assertNull(messageHeader.getPeerMasterToken());

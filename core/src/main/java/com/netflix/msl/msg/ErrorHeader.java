@@ -227,7 +227,7 @@ public class ErrorHeader extends Header {
     /**
      * @return the recipient. May be null.
      */
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return recipient;
     }
     

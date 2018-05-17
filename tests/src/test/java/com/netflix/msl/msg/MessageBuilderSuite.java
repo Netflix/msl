@@ -283,7 +283,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertNull(header.getRecipient());
+            assertNull(header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().isEmpty());
             assertNull(header.getUserAuthenticationData());
             assertNull(header.getUserIdToken());
@@ -312,7 +312,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertNull(header.getRecipient());
+            assertNull(header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().isEmpty());
             assertNull(header.getUserAuthenticationData());
             assertNull(header.getUserIdToken());
@@ -352,7 +352,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertEquals(RECIPIENT, header.getRecipient());
+            assertEquals(RECIPIENT, header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().equals(serviceTokens));
             assertNull(header.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, header.getUserIdToken());
@@ -392,7 +392,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertEquals(RECIPIENT, header.getRecipient());
+            assertEquals(RECIPIENT, header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().equals(serviceTokens));
             assertNull(header.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, header.getUserIdToken());
@@ -435,7 +435,7 @@ public class MessageBuilderSuite {
             assertEquals(PEER_MASTER_TOKEN, header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().equals(peerServiceTokens));
             assertEquals(PEER_USER_ID_TOKEN, header.getPeerUserIdToken());
-            assertEquals(RECIPIENT, header.getRecipient());
+            assertEquals(RECIPIENT, header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().equals(serviceTokens));
             assertNull(header.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, header.getUserIdToken());
@@ -466,7 +466,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertNull(header.getRecipient());
+            assertNull(header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().isEmpty());
             assertNull(header.getUserAuthenticationData());
             assertNull(header.getUserIdToken());
@@ -497,7 +497,7 @@ public class MessageBuilderSuite {
             assertNull(header.getPeerMasterToken());
             assertTrue(header.getPeerServiceTokens().isEmpty());
             assertNull(header.getPeerUserIdToken());
-            assertNull(header.getRecipient());
+            assertNull(header.getRemoteEntityIdentity());
             assertTrue(header.getServiceTokens().isEmpty());
             assertNull(header.getUserAuthenticationData());
             assertNull(header.getUserIdToken());
@@ -1194,7 +1194,7 @@ public class MessageBuilderSuite {
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
             assertEquals(USER_MESSAGE, errorHeader.getUserMessage());
-            assertEquals(RECIPIENT, errorHeader.getRecipient());
+            assertEquals(RECIPIENT, errorHeader.getRemoteEntityIdentity());
             assertEquals(REQUEST_MESSAGE_ID + 1, errorHeader.getMessageId());
         }
         
@@ -1205,7 +1205,7 @@ public class MessageBuilderSuite {
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
             assertEquals(USER_MESSAGE, errorHeader.getUserMessage());
-            assertNull(errorHeader.getRecipient());
+            assertNull(errorHeader.getRemoteEntityIdentity());
             assertEquals(REQUEST_MESSAGE_ID + 1, errorHeader.getMessageId());
         }
         
@@ -1217,7 +1217,7 @@ public class MessageBuilderSuite {
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
             assertEquals(USER_MESSAGE, errorHeader.getUserMessage());
-            assertEquals(RECIPIENT, errorHeader.getRecipient());
+            assertEquals(RECIPIENT, errorHeader.getRemoteEntityIdentity());
             assertEquals(0, errorHeader.getMessageId());
         }
         
@@ -1228,7 +1228,7 @@ public class MessageBuilderSuite {
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
             assertEquals(USER_MESSAGE, errorHeader.getUserMessage());
-            assertEquals(RECIPIENT, errorHeader.getRecipient());
+            assertEquals(RECIPIENT, errorHeader.getRemoteEntityIdentity());
             assertTrue(errorHeader.getMessageId() > 0);
         }
         
@@ -1245,7 +1245,7 @@ public class MessageBuilderSuite {
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
             assertNull(errorHeader.getUserMessage());
-            assertEquals(RECIPIENT, errorHeader.getRecipient());
+            assertEquals(RECIPIENT, errorHeader.getRemoteEntityIdentity());
             assertEquals(REQUEST_MESSAGE_ID + 1, errorHeader.getMessageId());
         }
     }
@@ -1330,7 +1330,7 @@ public class MessageBuilderSuite {
             assertNull(response.getPeerMasterToken());
             assertTrue(response.getPeerServiceTokens().isEmpty());
             assertNull(response.getPeerUserIdToken());
-            assertEquals(MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(serviceTokens));
             assertNull(response.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, response.getUserIdToken());
@@ -1373,7 +1373,7 @@ public class MessageBuilderSuite {
             assertNull(response.getUserAuthenticationData());
             assertEquals(PEER_USER_ID_TOKEN, response.getUserIdToken());
             assertTrue(response.getPeerServiceTokens().equals(serviceTokens));
-            assertEquals(MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(peerServiceTokens));
         }
         
@@ -1407,7 +1407,7 @@ public class MessageBuilderSuite {
             assertNull(response.getPeerMasterToken());
             assertTrue(response.getPeerServiceTokens().isEmpty());
             assertNull(response.getPeerUserIdToken());
-            assertEquals(entityAuthData.getIdentity(), response.getRecipient());
+            assertEquals(entityAuthData.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(serviceTokens));
             assertNull(response.getUserAuthenticationData());
             assertNull(response.getUserIdToken());
@@ -1448,9 +1448,9 @@ public class MessageBuilderSuite {
             assertNull(response.getUserAuthenticationData());
             assertEquals(PEER_USER_ID_TOKEN, response.getUserIdToken());
             final EntityAuthenticationData entityAuthData = p2pCtx.getEntityAuthenticationData(null);
-            assertEquals(entityAuthData.getIdentity(), response.getRecipient());
+            assertEquals(entityAuthData.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getPeerServiceTokens().equals(serviceTokens));
-            assertEquals(trustedNetCtx.getEntityAuthenticationData(null).getIdentity(), response.getRecipient());
+            assertEquals(trustedNetCtx.getEntityAuthenticationData(null).getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(peerServiceTokens));
         }
         
@@ -1487,7 +1487,7 @@ public class MessageBuilderSuite {
             assertNull(response.getPeerMasterToken());
             assertTrue(response.getPeerServiceTokens().isEmpty());
             assertNull(response.getPeerUserIdToken());
-            assertEquals(MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(serviceTokens));
             assertEquals(USER_AUTH_DATA, response.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, response.getUserIdToken());
@@ -1526,7 +1526,7 @@ public class MessageBuilderSuite {
             assertEquals(PEER_USER_ID_TOKEN, response.getPeerUserIdToken());
             assertEquals(USER_AUTH_DATA, response.getUserAuthenticationData());
             assertTrue(response.getPeerServiceTokens().equals(peerServiceTokens));
-            assertEquals(PEER_MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(PEER_MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(serviceTokens));
             assertNull(response.getUserIdToken());
         }
@@ -1565,7 +1565,7 @@ public class MessageBuilderSuite {
             assertNull(response.getPeerMasterToken());
             assertTrue(response.getPeerServiceTokens().isEmpty());
             assertNull(response.getPeerUserIdToken());
-            assertEquals(MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(serviceTokens));
             assertNull(response.getUserAuthenticationData());
             assertEquals(USER_ID_TOKEN, response.getUserIdToken());
@@ -1612,7 +1612,7 @@ public class MessageBuilderSuite {
             assertNull(response.getUserAuthenticationData());
             assertEquals(PEER_USER_ID_TOKEN, response.getUserIdToken());
             assertTrue(response.getPeerServiceTokens().equals(serviceTokens));
-            assertEquals(MASTER_TOKEN.getIdentity(), response.getRecipient());
+            assertEquals(MASTER_TOKEN.getIdentity(), response.getRemoteEntityIdentity());
             assertTrue(response.getServiceTokens().equals(peerServiceTokens));
         }
 

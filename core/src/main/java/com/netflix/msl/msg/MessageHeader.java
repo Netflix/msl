@@ -768,7 +768,7 @@ public class MessageHeader extends Header {
      * @return the recipient entity identity. Will be {@code null} if there is
      *         no specified recipient.
      */
-    public String getRecipient() {
+    public String getRemoteEntityIdentity() {
         return recipient;
     }
 

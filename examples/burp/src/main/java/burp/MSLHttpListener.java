@@ -242,7 +242,7 @@ public class MSLHttpListener implements IHttpListener {
     
                 final MslObject errordataMo = encoder.createObject();
                 try {
-                    errordataMo.put(KEY_RECIPIENT, errorHeader.getRecipient());
+                    errordataMo.put(KEY_RECIPIENT, errorHeader.getRemoteEntityIdentity());
                     errordataMo.put(KEY_MESSAGE_ID, errorHeader.getMessageId());
                     errordataMo.put(KEY_ERROR_CODE, errorHeader.getErrorCode().intValue());
                     errordataMo.put(KEY_INTERNAL_CODE, errorHeader.getInternalCode());
@@ -296,7 +296,7 @@ public class MSLHttpListener implements IHttpListener {
             final MslObject headerdataMo = encoder.createObject();
             try {
                 headerdataMo.put(KEY_SENDER, messageHeader.getSender());
-                headerdataMo.put(KEY_RECIPIENT, messageHeader.getRecipient());
+                headerdataMo.put(KEY_RECIPIENT, messageHeader.getRemoteEntityIdentity());
                 headerdataMo.put(KEY_MESSAGE_ID, messageHeader.getMessageId());
                 headerdataMo.put(KEY_NON_REPLAYABLE_ID, messageHeader.getNonReplayableId());
                 headerdataMo.put(KEY_RENEWABLE, messageHeader.isRenewable());
