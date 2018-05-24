@@ -32,6 +32,9 @@
 	var MslException = require('../MslException.js');
 	var Base64 = require('../util/Base64.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
+
+    // Cyclic dependency declarations.
+	var JsonMslObject;
 	
 	var JsonMslArray = module.exports = MslArray.extend({
         /**
@@ -49,6 +52,9 @@
          */
         init: function init(encoder, source) {
             init.base.call(this);
+            
+            // Cyclic dependency assignments.
+            if (!JsonMslObject) JsonMslObject = require('../io/JsonMslObject.js');
             
             // Set properties.
             var props = {
@@ -90,8 +96,6 @@
         
         /** @inheritDoc */
         put: function put(index, value) {
-            var JsonMslObject = require('../io/JsonMslObject.js');
-            
             var o;
             try {
                 // Convert JSONObject to MslObject.
