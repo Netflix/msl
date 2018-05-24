@@ -888,7 +888,18 @@ public class MessageHeader extends Header {
             return encodings.get(format);
 
         // Encrypt and sign the header data.
-        final byte[] plaintext = encoder.encodeObject(headerdata, format);
+        byte[] plaintext = encoder.encodeObject(headerdata, format);
+
+        /**
+         * well, that's odd
+         */
+        if (plaintext.length % 2 == 0) {
+            byte[] unalignedPlaintext = new byte[plaintext.length + 1];
+            System.arraycopy(plaintext, 0, unalignedPlaintext, 0, plaintext.length);
+            unalignedPlaintext[plaintext.length] = 0x20;
+            plaintext = unalignedPlaintext;
+        }
+
         final byte[] ciphertext;
         try {
             ciphertext = this.messageCryptoContext.encrypt(plaintext, encoder, format);
