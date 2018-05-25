@@ -310,9 +310,10 @@ describe("Semaphore", function() {
                 case 1:
                 {
                     var ticket1 = tickets.shift();
-                    if (ticket1)
+                    if (ticket1) {
                         ++expectedAcquired;
-                    sem.signal();
+                        sem.signal();
+                    }
                     break;
                 }
                 case 2:
