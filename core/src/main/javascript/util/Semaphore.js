@@ -23,6 +23,7 @@
     var Class = require('../util/Class.js');
     var MslConstants = require('../MslConstants.js');
     var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
+    var MslInternalException = require('../MslInternalException.js');
 
     /**
      * @param {number} the ticket number.

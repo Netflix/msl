@@ -17,6 +17,7 @@
 describe("Semaphore", function() {
     var Semaphore = require('msl-core/util/Semaphore.js');
     var Random = require('msl-core/util/Random.js');
+    var MslInternalException = require('msl-core/MslInternalException.js');
     
     var RESOURCE_COUNT = 3;
     var TIMEOUT = 150;
