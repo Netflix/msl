@@ -131,6 +131,7 @@
 	var MslErrorResponseException = require('../MslErrorResponseException.js');
 	var MslIoException = require('../MslIoException.js');
 	var MslUtils = require('../util/MslUtils.js');
+	var Semaphore = require('../util/Semaphore.js');
 
     /**
      * Application level errors that may translate into MSL level errors.
@@ -203,11 +204,17 @@
     /**
      * Creates a function that when called will abort the service.
      *
+     * @param {MslControl} ctrl the MSL control reference.
+     * @parma {?number} ticket the transaction cancellation ticket.
      * @param {ReceiveService|RespondService|RequestService} service the
      *        service that will be aborted.
      */
-    function CancellationFunction(service) {
-        return function() { service.abort(); };
+    function CancellationFunction(ctrl, ticket, service) {
+        return function() {
+            if (ticket)
+                ctrl._threads.cancel(ticket);
+            service.abort();
+        };
     }
 
     /**
@@ -2505,16 +2512,26 @@
 
     var MslControl = module.exports = Class.create({
         /**
-         * Create a new instance of MSL control.
+         * Create a new instance of MSL control with the specified number of
+         * threads and user error message registry. A thread count of zero will
+         * allow an unlimited number of simultaneous MSL transactions.
          *
+         * @param {number=} numThreads number of worker threads to create.
          * @param {?MessageStreamFactory=} streamFactory message stream factory. May be {@code null}.
          * @param {?ErrorMessageRegistry=} messageRegistry error message registry. May be {@code null}.
          */
-        init: function init(streamFactory, messageRegistry) {
+        init: function init(numThreads, streamFactory, messageRegistry) {
+            // Create the thread pool if requested.
+            var threads = null;
+            if (typeof numThreads === 'number' && numThreads > 0)
+                threads = new Semaphore(numThreads);
+            
             // The properties.
             var props = {
                 /** @type {MslControlImpl} */
                 _impl: { value: new MslControlImpl(streamFactory, messageRegistry), writable: false, enumerable: false, configurable: false },
+                /** @type {Semaphore} */
+                _threads: { value: threads, writable: false, enumerable: false, configurable: false },
                 /** True if shutdown. */
                 _shutdown: { value: false, writable: false, enumerable: false, configurable: false }
             };
@@ -2539,6 +2556,69 @@
          */
         shutdown: function shutdown() {
             this._shutdown = true;
+        },
+        
+        /**
+         * Submit a service for execution on one of the threads, or immediately
+         * if threads are not being used. Upon completion, timeout, or error
+         * the thread will be released.
+         * 
+         * @param {SendService|ReceiveService|RespondService|ErrorService|RequestService}
+         *        service the service to execute.
+         * @param {?} cancelledValue the value to return if the thread is not
+         *        acquired due to cancellation.
+         * @param {number} timeout thread acquisition timeout in milliseconds.
+         * @param {{result: function(?), timeout: function(), error: function(Error)}}
+         *        callback the callback that will receive the service return
+         *        value, be notified of timeout, or any thrown exceptions.
+         * @return {CancellationFunction} a function which if called will
+         *         cancel the operation and release the thread.
+         */
+        submit: function(service, cancelledValue, timeout, callback) {
+            var self = this;
+            
+            // If we have a thread limit, acquire one of the threads and then
+            // execute.
+            if (this._threads) {
+                // Create a callback that will release the thread upon completion.
+                var threadCallback = {
+                    result: function(x) {
+                        AsyncExecutor(callback, function() {
+                            this._threads.signal();
+                            return x;
+                        }, self);
+                    },
+                    timeout: function() {
+                        AsyncExecutor(callback, function() {
+                            this._threads.signal();
+                            callback.timeout();
+                        }, self);
+                    },
+                    error: function(e) {
+                        AsyncExecutor(callback, function() {
+                            this._threads.signal();
+                            callback.error(e);
+                        }, self);
+                    },
+                };
+                
+                // Acquire the thread.
+                var ticket = this._threads.wait(timeout, {
+                    result: function(acquired) {
+                        if (acquired)
+                            setTimeout(function() { service.call(threadCallback); }, 0);
+                        else
+                            callback.result(cancelledValue);
+                    },
+                    timeout: callback.timeout,
+                    error: callback.error,
+                });
+                return CancellationFunction(this, ticket, service);
+            }
+            
+            // Otherwise execute immediately.
+            setTimeout(function() { service.call(callback); }, 0);
+            return CancellationFunction(this, null, service);
         },
         
         /**
@@ -2646,8 +2726,7 @@
             
             var sendMsgCtx = new SendMessageContext(msgCtx);
             var service = new SendService(this._impl, ctx, msgCtx, remoteEntity, input, output, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, null, timeout, callback);
         },
 
         /**
@@ -2723,8 +2802,7 @@
             }
             
             var service = new PushService(this._impl, ctx, msgCtx, input, output, request, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, null, timeout, callback);
         },
 
         /**
@@ -2771,10 +2849,9 @@
          */
         receive: function receive(ctx, msgCtx, input, output, timeout, callback) {
             if (this._shutdown)
-                throw new MslException('MslControl is shutdown.');
+                throw new MslException('MslControl is shutdown.');            
             var service = new ReceiveService(this._impl, ctx, msgCtx, input, output, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, null, timeout, callback);
         },
 
         /**
@@ -2838,8 +2915,7 @@
             if (this._shutdown)
                 throw new MslException('MslControl is shutdown.');
             var service = new RespondService(this._impl, ctx, msgCtx, input, output, request, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, null, timeout, callback);
         },
 
         /**
@@ -2878,8 +2954,7 @@
             if (this._shutdown)
                 throw new MslException('MslControl is shutdown.');
             var service = new ErrorService(this._impl, ctx, msgCtx, err, out, request, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, false, timeout, callback);
         },
 
         /**
@@ -3000,8 +3075,7 @@
             // other function.
 
             var service = new RequestService(this._impl, ctx, msgCtx, remoteEntity, input, output, null, Receive.ALWAYS, 0, timeout);
-            setTimeout(function() { service.call(callback); }, 0);
-            return CancellationFunction(service);
+            return this.submit(service, null, timeout, callback);
         }
     });
 
