@@ -937,40 +937,45 @@
             this.getNewestMasterToken(service, ctx, timeout, {
                 result: function(tokenTicket) {
                     AsyncExecutor(callback, function() {
-                        var masterToken = (tokenTicket && tokenTicket.masterToken);
-                        var userIdToken;
-                        if (masterToken) {
-                            // Grab the user ID token for the message's user. It may not be bound
-                            // to the newest master token if the newest master token invalidated
-                            // it.
-                            var userId = msgCtx.getUserId();
-                            var store = ctx.getMslStore();
-                            var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
-                            userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-                        } else {
-                            userIdToken = null;
-                        }
-
-                        MessageBuilder.createRequest(ctx, masterToken, userIdToken, null, {
-                            result: function(builder) {
-                                AsyncExecutor(callback, function() {
-                                    builder.setNonReplayable(msgCtx.isNonReplayable());
-                                    return {
-                                        builder: builder,
-                                        tokenTicket: tokenTicket
-                                    };
-                                });
-                            },
-                            error: function(e) {
-                                AsyncExecutor(callback, function() {
-                                    // Release the master token lock.
-                                    this.releaseMasterToken(ctx, tokenTicket);
-                                    if (e instanceof MslException)
-                                        e = new MslInternalException("User ID token not bound to master token despite internal check.", e);
-                                    throw e;
-                                }, self);
+                        try {
+                            var masterToken = (tokenTicket && tokenTicket.masterToken);
+                            var userIdToken;
+                            if (masterToken) {
+                                // Grab the user ID token for the message's user. It may not be bound
+                                // to the newest master token if the newest master token invalidated
+                                // it.
+                                var userId = msgCtx.getUserId();
+                                var store = ctx.getMslStore();
+                                var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
+                                userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+                            } else {
+                                userIdToken = null;
                             }
-                        });
+    
+                            MessageBuilder.createRequest(ctx, masterToken, userIdToken, null, {
+                                result: function(builder) {
+                                    AsyncExecutor(callback, function() {
+                                        builder.setNonReplayable(msgCtx.isNonReplayable());
+                                        return {
+                                            builder: builder,
+                                            tokenTicket: tokenTicket
+                                        };
+                                    });
+                                },
+                                error: function(e) {
+                                    AsyncExecutor(callback, function() {
+                                        // Release the master token lock.
+                                        this.releaseMasterToken(ctx, tokenTicket);
+                                        if (e instanceof MslException)
+                                            e = new MslInternalException("User ID token not bound to master token despite internal check.", e);
+                                        throw e;
+                                    }, self);
+                                }
+                            });
+                        } catch (e) {
+                            // Release the master token lock.
+                            this.releaseMasterToken(ctx, tokenTicket);
+                        }
                     }, self);
                 },
                 timeout: callback.timeout,
@@ -1050,23 +1055,28 @@
                         this.getNewestMasterToken(service, ctx, timeout, {
                             result: function(tokenTicket) {
                                 InterruptibleExecutor(callback, function() {
-                                    var masterToken = tokenTicket && tokenTicket.masterToken;
-                                    var userIdToken;
-                                    if (masterToken) {
-                                        // Grab the user ID token for the message's user. It may not be
-                                        // bound to the newest master token if the newest master token
-                                        // invalidated it.
-                                        var userId = msgCtx.getUserId();
-                                        var store = ctx.getMslStore();
-                                        var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
-                                        userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-                                    } else {
-                                        userIdToken = null;
+                                    try {
+                                        var masterToken = tokenTicket && tokenTicket.masterToken;
+                                        var userIdToken;
+                                        if (masterToken) {
+                                            // Grab the user ID token for the message's user. It may not be
+                                            // bound to the newest master token if the newest master token
+                                            // invalidated it.
+                                            var userId = msgCtx.getUserId();
+                                            var store = ctx.getMslStore();
+                                            var storedUserIdToken = (userId) ? store.getUserIdToken(userId) : null;
+                                            userIdToken = (storedUserIdToken && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+                                        } else {
+                                            userIdToken = null;
+                                        }
+    
+                                        // Set the authentication tokens.
+                                        builder.setAuthTokens(masterToken, userIdToken);
+                                        return { builder: builder, tokenTicket: tokenTicket };
+                                    } catch (e) {
+                                        // Release the master token lock.
+                                        this.releaseMasterToken(ctx, tokenTicket);
                                     }
-
-                                    // Set the authentication tokens.
-                                    builder.setAuthTokens(masterToken, userIdToken);
-                                    return { builder: builder, tokenTicket: tokenTicket };
                                 }, self);
                             },
                             timeout: callback.timeout,
@@ -3438,27 +3448,11 @@
                     responseBuilder.setRenewable(false);
                     this._ctrl.send(this._ctx, keyxMsgCtx, this._output, responseBuilder, false, this._timeout, {
                         result: function(sent) {
-                            InterruptibleExecutor(callback, function() {
-                                // Release the master token lock.
-                                if (this._ctx.isPeerToPeer())
-                                    this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                return null;
-                            }, self);
+                            callback.result(null);
                         },
-                        timeout: function() {
-                            InterruptibleExecutor(callback, function() {
-                                // Release the master token lock.
-                                if (this._ctx.isPeerToPeer())
-                                    this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                callback.timeout();
-                            }, self);
-                        },
+                        timeout: callback.timeout,
                         error: function(e) {
                             InterruptibleExecutor(callback, function() {
-                                // Release the master token lock.
-                                if (this._ctx.isPeerToPeer())
-                                    this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-
                                 // If we were cancelled then return null.
                                 if (cancelled(e)) return null;
 
@@ -4650,8 +4644,20 @@
                                                                         return new MslChannel(response, newResult.request);
                                                                     }, self);
                                                                 },
-                                                                timeout: callback.timeout,
-                                                                error: callback.error,
+                                                                timeout: function() {
+                                                                    InterruptibleExecutor(callback, function() {
+                                                                        // Release the master token read lock.
+                                                                        this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
+                                                                        callback.timeout();
+                                                                    }, self);
+                                                                },
+                                                                error: function(e) {
+                                                                    InterruptibleExecutor(callback, function() {
+                                                                        // Release the master token read lock.
+                                                                        this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
+                                                                        callback.error(e);
+                                                                    }, self);
+                                                                }
                                                             });
                                                         }, self);
                                                     });
@@ -4671,29 +4677,9 @@
                                                                 return null;
                                                             }
 
-                                                            self.execute(keyxMsgCtx, keyxBuilder, this._timeout, msgCount, {
-                                                                result: function(newResponse) {
-                                                                    InterruptibleExecutor(callback, function() {
-                                                                        // Release the master token read lock.
-                                                                        this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                                                        return newResponse;
-                                                                    }, self);
-                                                                },
-                                                                timeout: function() {
-                                                                    InterruptibleExecutor(callback, function() {
-                                                                        // Release the master token read lock.
-                                                                        this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                                                        callback.timeout();
-                                                                    }, self);
-                                                                },
-                                                                error: function(e) {
-                                                                    InterruptibleExecutor(callback, function() {
-                                                                        // Release the master token read lock.
-                                                                        this._ctrl.releaseMasterToken(this._ctx, tokenTicket);
-                                                                        callback.error(e);
-                                                                    }, self);
-                                                                }
-                                                            });
+                                                            // The master token lock acquired from buildResponse() will be
+                                                            // released by the recursive call to execute().
+                                                            self.execute(keyxMsgCtx, keyxBuilder, this._timeout, msgCount, callback);
                                                         }, self);
                                                     });
                                                 }
