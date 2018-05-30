@@ -738,19 +738,19 @@ shared_ptr<MessageBuilder> MslControl::buildRequest(shared_ptr<MslContext> ctx,
 
     // Grab the newest master token.
     shared_ptr<MasterToken> masterToken = getNewestMasterToken(ctx);
-    shared_ptr<UserIdToken> userIdToken;
-    if (masterToken) {
-        // Grab the user ID token for the message's user. It may not be bound
-        // to the newest master token if the newest master token invalidated
-        // it.
-        const string userId = msgCtx->getUserId();
-        shared_ptr<UserIdToken> storedUserIdToken = (!userId.empty()) ? store->getUserIdToken(userId) : nullptr;
-        userIdToken = (storedUserIdToken && storedUserIdToken->isBoundTo(masterToken)) ? storedUserIdToken : nullptr;
-    } else {
-        userIdToken = nullptr;
-    }
-
     try {
+        shared_ptr<UserIdToken> userIdToken;
+        if (masterToken) {
+            // Grab the user ID token for the message's user. It may not be bound
+            // to the newest master token if the newest master token invalidated
+            // it.
+            const string userId = msgCtx->getUserId();
+            shared_ptr<UserIdToken> storedUserIdToken = (!userId.empty()) ? store->getUserIdToken(userId) : nullptr;
+            userIdToken = (storedUserIdToken && storedUserIdToken->isBoundTo(masterToken)) ? storedUserIdToken : nullptr;
+        } else {
+            userIdToken = nullptr;
+        }
+
         shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(ctx, masterToken, userIdToken);
         builder->setNonReplayable(msgCtx->isNonReplayable());
         return builder;
@@ -792,22 +792,28 @@ shared_ptr<MessageBuilder> MslControl::buildResponse(shared_ptr<MslContext> ctx,
     // Either way we should be able to use the newest master token,
     // acquiring the read lock at the same time which we definitely want.
     shared_ptr<MasterToken> masterToken = getNewestMasterToken(ctx);
-    shared_ptr<UserIdToken> userIdToken;
-    if (masterToken) {
-        // Grab the user ID token for the message's user. It may not be
-        // bound to the newest master token if the newest master token
-        // invalidated it.
-        const string userId = msgCtx->getUserId();
-        shared_ptr<MslStore> store = ctx->getMslStore();
-        shared_ptr<UserIdToken> storedUserIdToken = (!userId.empty()) ? store->getUserIdToken(userId) : nullptr;
-        userIdToken = (storedUserIdToken && storedUserIdToken->isBoundTo(masterToken)) ? storedUserIdToken : nullptr;
-    } else {
-        userIdToken = nullptr;
-    }
+    try {
+        shared_ptr<UserIdToken> userIdToken;
+        if (masterToken) {
+            // Grab the user ID token for the message's user. It may not be
+            // bound to the newest master token if the newest master token
+            // invalidated it.
+            const string userId = msgCtx->getUserId();
+            shared_ptr<MslStore> store = ctx->getMslStore();
+            shared_ptr<UserIdToken> storedUserIdToken = (!userId.empty()) ? store->getUserIdToken(userId) : nullptr;
+            userIdToken = (storedUserIdToken && storedUserIdToken->isBoundTo(masterToken)) ? storedUserIdToken : nullptr;
+        } else {
+            userIdToken = nullptr;
+        }
 
-    // Set the authentication tokens.
-    builder->setAuthTokens(masterToken, userIdToken);
-    return builder;
+        // Set the authentication tokens.
+        builder->setAuthTokens(masterToken, userIdToken);
+        return builder;
+    } catch (...) {
+        // Release the master token lock.
+        releaseMasterToken(ctx, masterToken);
+        throw;
+    }
 }
 
 shared_ptr<MessageBuilder> MslControl::buildDetachedResponse(shared_ptr<MslContext> ctx,
@@ -2027,16 +2033,17 @@ private:
             shared_ptr<MessageContext> keyxMsgCtx = make_shared<KeyxResponseMessageContext>(msgCtx);
             shared_ptr<MessageBuilder> keyxBuilder = mslControl->buildResponse(ctx, keyxMsgCtx, responseHeader);
 
-            // Release the master token read lock with any exit from this scope.
-            // FIXME: duplicate in RespondService::trustedNetworkExecute
+            // We should release the master token lock when finished, but
+            // there is one case where we should not.
             struct Cleanup
             {
                 Cleanup(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MasterToken> masterToken)
                 : mslControl(mslControl), ctx(ctx), masterToken(masterToken) {}
-                ~Cleanup() { mslControl->releaseMasterToken(ctx, masterToken); }
+                ~Cleanup() { if (releaseLock) mslControl->releaseMasterToken(ctx, masterToken); }
                 MslControl * const mslControl;
                 shared_ptr<MslContext> ctx;
                 shared_ptr<MasterToken> masterToken;
+                bool releaseLock = true;
             } cleanup(mslControl, ctx, keyxBuilder->getMasterToken());
 
             // If the response is not a handshake message then we do not
@@ -2083,6 +2090,7 @@ private:
                     // Otherwise we don't care about an I/O exception on close.
                 }
 
+                cleanup.releaseLock = false;
                 return execute(keyxMsgCtx, keyxBuilder, timeout, msgCount);
             }
         }
@@ -2309,79 +2317,64 @@ public:
         // message from the remote entity can be retrieved by another call
         // to receive.
         shared_ptr<MessageContext> keyxMsgCtx = make_shared<KeyxResponseMessageContext>(msgCtx);
-        { // scope for Cleanup, like java 'finally'
-            struct Cleanup {
-                Cleanup(MslControl * mslControl, shared_ptr<MslContext> ctx, shared_ptr<MasterToken> masterToken)
-                : mslControl(mslControl), ctx(ctx), masterToken(masterToken) {}
-                ~Cleanup() {
-                    // Release the master token lock.
-                    if (ctx->isPeerToPeer())
-                        mslControl->releaseMasterToken(ctx, masterToken);
-                }
-                MslControl * const mslControl;
-                shared_ptr<MslContext> ctx;
-                shared_ptr<MasterToken> masterToken;
-            } cleanup(mslControl, ctx, responseBuilder->getMasterToken());
+        if (!ctx->isPeerToPeer()) {
+            try {
+                responseBuilder->setRenewable(false);
+                mslControl->send(ctx, keyxMsgCtx, out, responseBuilder, false);
+                return nullptr;
+//            } catch (const InterruptedException& e) {  // FIXME: How to handle cancellation?
+//                // We were cancelled so return null.
+//                return nullptr;
+            } catch (const MslException& e) {
+                // If we were cancelled then return null.
+//                if (cancelled(e)) return nullptr;  // FIXME: How to handle cancellation?
 
-            if (!ctx->isPeerToPeer()) {
+                // Try to send an error response.
                 try {
-                    responseBuilder->setRenewable(false);
-                    mslControl->send(ctx, keyxMsgCtx, out, responseBuilder, false);
-                    return nullptr;
-//                } catch (const InterruptedException& e) {  // FIXME: How to handle cancellation?
-//                    // We were cancelled so return null.
-//                    return nullptr;
-                } catch (const MslException& e) {
+                    int64_t requestMessageId = requestHeader->getMessageId();
+                    const MslError error = e.getError();
+                    shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
+                    vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
+                    const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
+                } catch (const IException& rt) {
                     // If we were cancelled then return null.
-//                    if (cancelled(e)) return nullptr;  // FIXME: How to handle cancellation?
-
-                    // Try to send an error response.
-                    try {
-                        int64_t requestMessageId = requestHeader->getMessageId();
-                        const MslError error = e.getError();
-                        shared_ptr<MessageCapabilities> caps = requestHeader->getMessageCapabilities();
-                        vector<string> languages = (caps) ? caps->getLanguages() : vector<string>();
-                        const string userMessage = mslControl->messageRegistry->getUserMessage(error, languages);
-                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, error, userMessage, out);
-                    } catch (const IException& rt) {
-                        // If we were cancelled then return null.
 //                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
 
-                        throw MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
-                    }
-                    throw e;
-                } catch (const IOException& e) {
-                    // If we were cancelled then return null.
-//                    if (cancelled(e)) return nullptr;  // FIXME: How to handle cancellation?
-
-                    // Maybe we can send an error response.
-                    try {
-                        int64_t requestMessageId = requestHeader->getMessageId();
-                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
-                    } catch (const IException& rt) {
-                        // If we were cancelled then return null.
-//                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
-
-                        throw MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
-                    }
-                    throw e;
-                } catch (const IException& t) {
-                    // If we were cancelled then return null.
-//                    if (cancelled(t)) return nullptr;  // FIXME: How to handle cancellation?
-
-
-                    // Try to send an error response.
-                    try {
-                        int64_t requestMessageId = requestHeader->getMessageId();
-                        mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
-                    } catch (const IException& rt) {
-                        // If we were cancelled then return null.
-//                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
-
-                        throw MslErrorResponseException("Error sending an automatic handshake response.", rt, t);
-                    }
-                    throw MslInternalException("Error sending an automatic handshake response.", t);
+                    throw MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
                 }
+                throw e;
+            } catch (const IOException& e) {
+                // If we were cancelled then return null.
+//                if (cancelled(e)) return nullptr;  // FIXME: How to handle cancellation?
+
+                // Maybe we can send an error response.
+                try {
+                    int64_t requestMessageId = requestHeader->getMessageId();
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::MSL_COMMS_FAILURE, string(), out);
+                } catch (const IException& rt) {
+                    // If we were cancelled then return null.
+//                        if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
+
+                    throw MslErrorResponseException("Error sending an automatic handshake response.", rt, e);
+                }
+                throw e;
+            } catch (const IException& t) {
+                // If we were cancelled then return null.
+//                if (cancelled(t)) return nullptr;  // FIXME: How to handle cancellation?
+
+
+                // Try to send an error response.
+                try {
+                    int64_t requestMessageId = requestHeader->getMessageId();
+                    mslControl->sendError(ctx, debugCtx, requestHeader, requestMessageId, MslError::INTERNAL_EXCEPTION, string(), out);
+                } catch (const IException& rt) {
+                    // If we were cancelled then return null.
+//                    if (cancelled(rt)) return nullptr;  // FIXME: How to handle cancellation?
+
+                    throw MslErrorResponseException("Error sending an automatic handshake response.", rt, t);
+                }
+                throw MslInternalException("Error sending an automatic handshake response.", t);
             }
         }
 
