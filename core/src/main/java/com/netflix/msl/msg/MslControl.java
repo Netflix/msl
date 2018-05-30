@@ -1084,19 +1084,19 @@ public class MslControl {
 
         // Grab the newest master token.
         final MasterToken masterToken = getNewestMasterToken(ctx);
-        final UserIdToken userIdToken;
-        if (masterToken != null) {
-            // Grab the user ID token for the message's user. It may not be bound
-            // to the newest master token if the newest master token invalidated
-            // it.
-            final String userId = msgCtx.getUserId();
-            final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
-            userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-        } else {
-            userIdToken = null;
-        }
-
         try {
+            final UserIdToken userIdToken;
+            if (masterToken != null) {
+                // Grab the user ID token for the message's user. It may not be bound
+                // to the newest master token if the newest master token invalidated
+                // it.
+                final String userId = msgCtx.getUserId();
+                final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
+                userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+            } else {
+                userIdToken = null;
+            }
+            
             final MessageBuilder builder = MessageBuilder.createRequest(ctx, masterToken, userIdToken);
             builder.setNonReplayable(msgCtx.isNonReplayable());
             return builder;
@@ -1170,22 +1170,28 @@ public class MslControl {
         // Either way we should be able to use the newest master token,
         // acquiring the read lock at the same time which we definitely want.
         final MasterToken masterToken = getNewestMasterToken(ctx);
-        final UserIdToken userIdToken;
-        if (masterToken != null) {
-            // Grab the user ID token for the message's user. It may not be
-            // bound to the newest master token if the newest master token
-            // invalidated it.
-            final String userId = msgCtx.getUserId();
-            final MslStore store = ctx.getMslStore();
-            final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
-            userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
-        } else {
-            userIdToken = null;
+        try {
+            final UserIdToken userIdToken;
+            if (masterToken != null) {
+                // Grab the user ID token for the message's user. It may not be
+                // bound to the newest master token if the newest master token
+                // invalidated it.
+                final String userId = msgCtx.getUserId();
+                final MslStore store = ctx.getMslStore();
+                final UserIdToken storedUserIdToken = (userId != null) ? store.getUserIdToken(userId) : null;
+                userIdToken = (storedUserIdToken != null && storedUserIdToken.isBoundTo(masterToken)) ? storedUserIdToken : null;
+            } else {
+                userIdToken = null;
+            }
+    
+            // Set the authentication tokens.
+            builder.setAuthTokens(masterToken, userIdToken);
+            return builder;
+        } catch (final RuntimeException e) {
+            // Release the master token lock.
+            releaseMasterToken(ctx, masterToken);
+            throw e;
         }
-
-        // Set the authentication tokens.
-        builder.setAuthTokens(masterToken, userIdToken);
-        return builder;
     }
 
     /**
@@ -2524,10 +2530,6 @@ public class MslControl {
                         throw new MslErrorResponseException("Error sending an automatic handshake response.", rt, t);
                     }
                     throw new MslInternalException("Error sending an automatic handshake response.", t);
-                } finally {
-                    // Release the master token lock.
-                    if (ctx.isPeerToPeer())
-                        releaseMasterToken(ctx, responseBuilder.getMasterToken());
                 }
             }
 
@@ -3328,6 +3330,9 @@ public class MslControl {
                 final MessageContext keyxMsgCtx = new KeyxResponseMessageContext(msgCtx);
                 final MessageBuilder keyxBuilder = buildResponse(ctx, keyxMsgCtx, responseHeader);
 
+                // We should release the master token lock when finished, but
+                // there is one case where we should not.
+                boolean releaseLock = true;
                 try {
                     // If the response is not a handshake message then we do not
                     // expect a reply.
@@ -3373,11 +3378,15 @@ public class MslControl {
                             // Otherwise we don't care about an I/O exception on close.
                         }
 
+                        // The master token lock acquired from buildResponse() will be
+                        // released by the recursive call to execute().
+                        releaseLock = false;
                         return execute(keyxMsgCtx, keyxBuilder, timeout, msgCount);
                     }
                 } finally {
-                    // Release the master token read lock.
-                    releaseMasterToken(ctx, keyxBuilder.getMasterToken());
+                    // Release the master token read lock if necessary.
+                    if (releaseLock)
+                        releaseMasterToken(ctx, keyxBuilder.getMasterToken());
                 }
             }
 
