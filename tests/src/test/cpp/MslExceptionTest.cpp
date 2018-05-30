@@ -213,7 +213,7 @@ TEST_F(MslExceptionTest, UserIdToken)
     shared_ptr<MslContext> ctx = make_shared<MockMslContext >(EntityAuthenticationScheme::PSK, false);
     shared_ptr<MasterToken> mt = MslTestUtils::getMasterToken(ctx, 1111, 2222);
     const int64_t serialNumber = 3333;
-    shared_ptr<MslUser> user = make_shared<NiceMock<MockMslUser>>("foo");
+    shared_ptr<MslUser> user = make_shared<NiceMock<MockMslUser>>("17");
     uit1 = MslTestUtils::getUserIdToken(ctx, mt, serialNumber, user);
 
     // set / get
