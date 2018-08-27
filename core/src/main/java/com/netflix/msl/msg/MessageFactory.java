@@ -25,6 +25,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslError;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslMessageException;
@@ -36,11 +37,11 @@ import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.util.MslContext;
 
 /**
- * <p>A message stream factory is used to create message streams.</p>
+ * <p>A message factory is used to create message streams and builders.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MessageStreamFactory {
+public class MessageFactory {
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
      * 
@@ -118,4 +119,36 @@ public class MessageStreamFactory {
     public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final MessageHeader header, final ICryptoContext cryptoContext) throws IOException {
         return new MessageOutputStream(ctx, destination, header, cryptoContext);
     }
+
+    /**
+     * Construct a new message builder for a response.
+     *
+     * @param ctx the MSL context.
+     * @param request message header.
+     * @throws IOException if there is an error writing the header.
+     */
+    public MessageBuilder createResponseMessageBuilder(final MslContext ctx, final MessageHeader request) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslUserAuthException, MslException, InterruptedException {
+        return MessageBuilder.createResponse(ctx, request);
+    }
+
+    /**
+     * Creates a message builder and message context appropriate for re-sending
+     * the original message in response to the received error.
+     *
+     * @param ctx MSL context.
+     * @param msgCtx message context.
+     * @param sent result of original sent message.
+     * @param errorHeader received error header.
+     * @return the message builder and message context that should be used to
+     *         re-send the original request in response to the received error
+     *         or null if the error cannot be handled (i.e. should be returned
+     *         to the application).
+     * @throws MslException if there is an error creating the message.
+     * @throws InterruptedException if the thread is interrupted while trying
+     *         to acquire the master token lock (user re-authentication only).
+     */
+    public ErrorHeader createErrorResponse(final MslContext ctx, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
+        return MessageBuilder.createErrorResponse(ctx, requestMessageId, error, userMessage);
+    }
 }
+

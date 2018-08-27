@@ -165,12 +165,12 @@
                  * MSL context.
                  * @type {MslContext}
                  */
-                ctx: { value: ctx, writable: false, enumerable: false, configurable: false },
+                ctx: { value: ctx, writable: true, enumerable: false, configurable: false },
                 /**
                  * Entity authentication data.
                  * @type {EntityAuthenticationData}
                  */
-                entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
+                entityAuthenticationData: { value: entityAuthData, writable: true, configurable: false },
                 /**
                  * Timestamp in seconds since the epoch.
                  * @type {?number}
@@ -205,12 +205,12 @@
                  * Error data.
                  * @type {MslObject}
                  */
-                errordata: { value: errordata, writable: false, enumerable: false, configurable: false },
+                errordata: { value: errordata, writable: true, enumerable: false, configurable: false },
                 /**
                  * Cached encodings.
                  * @type {Object<MslEncoderFormat,Uint8Array>}
                  */
-                encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+                encodings: { value: {}, writable: true, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
         },

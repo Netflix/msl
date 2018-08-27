@@ -16,7 +16,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
-import com.netflix.msl.msg.MessageStreamFactory;
+import com.netflix.msl.msg.MessageFactory;
 import rx.Observable;
 import rx.Observable.OnSubscribe;
 import rx.Subscriber;
@@ -235,13 +235,14 @@ public abstract class Proxy {
      * <p>The MSL token crypto context will be used to verify and decrypt the
      * MSL tokens of received messages.</p>
      * 
+     * @param messageFactory message factory.
      * @param registry MSL error message registry.
      * @param entityAuthData local entity authentication data.
      * @param entityAuthFactory local entity authentication factory.
      * @param mslCryptoContext MSL token crypto context.
      */
-    public Proxy(final MessageStreamFactory messageStreamFactory, final ErrorMessageRegistry registry, final EntityAuthenticationData entityAuthData, final EntityAuthenticationFactory entityAuthFactory, final ICryptoContext mslCryptoContext) {
-        mslCtrl = new MslControl(0, messageStreamFactory, registry);
+    public Proxy(final MessageFactory messageFactory, final ErrorMessageRegistry registry, final EntityAuthenticationData entityAuthData, final EntityAuthenticationFactory entityAuthFactory, final ICryptoContext mslCryptoContext) {
+        mslCtrl = new MslControl(0, messageFactory, registry);
         proxyMslCtx = new ProxyMslContext(entityAuthData, entityAuthFactory, mslCryptoContext);
         failoverMslCtx = new FailoverMslContext(entityAuthData, entityAuthFactory, mslCryptoContext);
     }
