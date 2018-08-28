@@ -839,7 +839,7 @@ public class MslControl {
      * and MSL control, meaning they will see the actual MSL message data as it
      * is being read from or written to the remote entity.
      *
-     * @param factory filter message factory. May be null.
+     * @param factory filter stream factory. May be null.
      */
     public void setFilterFactory(final FilterStreamFactory factory) {
         filterFactory = factory;
