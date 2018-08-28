@@ -118,7 +118,7 @@
 	var InterruptibleExecutor = require('../util/InterruptibleExecutor.js');
 	var MslInterruptedException = require('../MslInterruptedException.js');
 	var MslException = require('../MslException.js');
-	var MessageStreamFactory = require('../msg/MessageStreamFactory.js');
+	var MessageFactory = require('../msg/MessageFactory.js');
 	var ReadWriteLock = require('../util/ReadWriteLock.js');
 	var MessageBuilder = require('../msg/MessageBuilder.js');
 	var MslInternalException = require('../MslInternalException.js');
@@ -603,22 +603,22 @@
         /**
          * Create a new instance of MSL control.
          *
-         * @param {?MessageStreamFactory} streamFactory message stream factory. May be {@code null}.
+         * @param {?MessageFactory} messageFactory message factory. May be {@code null}.
          * @param {?ErrorMessageRegistry} messageRegistry error message registry. May be {@code null}.
          */
-        init: function init(streamFactory, messageRegistry) {
-            if (!streamFactory)
-                streamFactory = new MessageStreamFactory();
+        init: function init(messageFactory, messageRegistry) {
+            if (!messageFactory)
+                messageFactory = new MessageFactory();
             if (!messageRegistry)
                 messageRegistry = new DummyMessageRegistry();
 
             // The properties.
             var props = {
                 /**
-                 * Message stream factory.
-                 * @type {MessageStreamFactory}
+                 * Message factory.
+                 * @type {MessageFactory}
                  */
-                _streamFactory: { value: streamFactory, writable: false, enumerable: false, configurable: false },
+                _messageFactory: { value: messageFactory, writable: false, enumerable: false, configurable: false },
                 /**
                  * Error message registry.
                  * @type {ErrorMessageRegistry}
@@ -1027,7 +1027,7 @@
             var self = this;
 
             // Create the response.
-            MessageBuilder.createResponse(ctx, request, {
+            messageFactory.createResponse(ctx, request, {
                 result: function(builder) {
                     InterruptibleExecutor(callback, function() {
                         builder.setNonReplayable(msgCtx.isNonReplayable());
@@ -1669,7 +1669,7 @@
 
                                         // Send the request.
                                         var os = (this._filterFactory != null) ? this._filterFactory.getOutputStream(out) : out;
-                                        this._streamFactory.createOutputStream(ctx, os, requestHeader, payloadCryptoContext, null, timeout, {
+                                        this._messageFactory.createOutputStream(ctx, os, requestHeader, payloadCryptoContext, null, timeout, {
                                             result: function(request) {
                                                 InterruptibleExecutor(callback, function() {
                                                     // Register abort function.
@@ -1790,7 +1790,7 @@
                     keyRequestData = request.keyRequestData.filter(function() { return true; });
                 var cryptoContexts = msgCtx.getCryptoContexts();
                 var is = (this._filterFactory) ? this._filterFactory.getInputStream(input) : input;
-                this._streamFactory.createInputStream(ctx, is, keyRequestData, cryptoContexts, timeout, {
+                this._messageFactory.createInputStream(ctx, is, keyRequestData, cryptoContexts, timeout, {
                     result: function(response) {
                         InterruptibleExecutor(callback, function() {
                             // Register abort function.
@@ -2527,10 +2527,10 @@
          * allow an unlimited number of simultaneous MSL transactions.
          *
          * @param {number=} numThreads number of worker threads to create.
-         * @param {?MessageStreamFactory=} streamFactory message stream factory. May be {@code null}.
+         * @param {?MessageFactory=} messageFactory message factory. May be {@code null}.
          * @param {?ErrorMessageRegistry=} messageRegistry error message registry. May be {@code null}.
          */
-        init: function init(numThreads, streamFactory, messageRegistry) {
+        init: function init(numThreads, messageFactory, messageRegistry) {
             // Create the thread pool if requested.
             var threads = null;
             if (typeof numThreads === 'number' && numThreads > 0)
@@ -2539,7 +2539,7 @@
             // The properties.
             var props = {
                 /** @type {MslControlImpl} */
-                _impl: { value: new MslControlImpl(streamFactory, messageRegistry), writable: false, enumerable: false, configurable: false },
+                _impl: { value: new MslControlImpl(messageFactory, messageRegistry), writable: false, enumerable: false, configurable: false },
                 /** @type {Semaphore} */
                 _threads: { value: threads, writable: false, enumerable: false, configurable: false },
                 /** True if shutdown. */
@@ -3110,7 +3110,7 @@
      */
     function sendError(service, ctrl, ctx, debugCtx, requestHeader, messageId, error, userMessage, output, timeout, callback) {
         // Create error header.
-        MessageBuilder.createErrorResponse(ctx, messageId, error, userMessage, {
+        messageFactory.createErrorResponse(ctx, messageId, error, userMessage, {
             result: function(errorHeader) {
                 if (debugCtx) debugCtx.sentHeader(errorHeader);
                 
@@ -3123,7 +3123,7 @@
                 var format = encoder.getPreferredFormat(formats);
                 
                 // Send error response.
-                ctrl._streamFactory.createOutputStream(ctx, output, errorHeader, null, format, timeout, {
+                ctrl._messageFactory.createOutputStream(ctx, output, errorHeader, null, format, timeout, {
                     result: function(response) {
                         InterruptibleExecutor(callback, function() {
                             // Register abort function.

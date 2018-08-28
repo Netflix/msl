@@ -118,7 +118,7 @@ public class MessageBuilder {
      * @throws MslException if there is an error creating or renewing the
      *         master token.
      */
-    private static KeyExchangeData issueMasterToken(final MslContext ctx, final MslEncoderFormat format, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
+    protected static KeyExchangeData issueMasterToken(final MslContext ctx, final MslEncoderFormat format, final Set<KeyRequestData> keyRequestData, final MasterToken masterToken, final EntityAuthenticationData entityAuthData) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
         // Attempt key exchange in the preferred order.
         MslException keyxException = null;
         final Iterator<KeyExchangeFactory> factories = ctx.getKeyExchangeFactories().iterator();
@@ -460,7 +460,7 @@ public class MessageBuilder {
      * @throws MslException if a user ID token is not bound to its master
      *         token.
      */
-    private MessageBuilder(final MslContext ctx, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
+    protected MessageBuilder(final MslContext ctx, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
         // Primary and peer token combinations will be verified when the
         // message header is constructed. So delay those checks in favor of
         // avoiding duplicate code.
@@ -1125,35 +1125,35 @@ public class MessageBuilder {
     }
     
     /** MSL context. */
-    private final MslContext ctx;
+    protected final MslContext ctx;
     
     /** Message header master token. */
-    private MasterToken masterToken;
+    protected MasterToken masterToken;
     /** Header data message ID. */
-    private long messageId;
+    protected long messageId;
     /** Key exchange data. */
-    private final KeyExchangeData keyExchangeData;
+    protected final KeyExchangeData keyExchangeData;
     /** Message non-replayable. */
-    private boolean nonReplayable = false;
+    protected boolean nonReplayable = false;
     /** Header data renewable. */
-    private boolean renewable = false;
+    protected boolean renewable = false;
     /** Handshake message. */
-    private boolean handshake = false;
+    protected boolean handshake = false;
     /** Message capabilities. */
-    private final MessageCapabilities capabilities;
+    protected final MessageCapabilities capabilities;
     /** Header data key request data. */
-    private final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
+    protected final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
     /** Header data user authentication data. */
-    private UserAuthenticationData userAuthData = null;
+    protected UserAuthenticationData userAuthData = null;
     /** Header data user ID token. */
-    private UserIdToken userIdToken = null;
+    protected UserIdToken userIdToken = null;
     /** Header data service tokens keyed off token name. */
-    private final Map<String,ServiceToken> serviceTokens = new HashMap<String,ServiceToken>();
+    protected final Map<String,ServiceToken> serviceTokens = new HashMap<String,ServiceToken>();
     
     /** Header peer data master token. */
-    private MasterToken peerMasterToken = null;
+    protected MasterToken peerMasterToken = null;
     /** Header peer data user ID token. */
-    private UserIdToken peerUserIdToken = null;
+    protected UserIdToken peerUserIdToken = null;
     /** Header peer data service tokens keyed off token name. */
-    private final Map<String,ServiceToken> peerServiceTokens = new HashMap<String,ServiceToken>();
+    protected final Map<String,ServiceToken> peerServiceTokens = new HashMap<String,ServiceToken>();
 }

@@ -974,11 +974,11 @@ public class MessageHeader extends Header {
     }
 
     /** Entity authentication data. */
-    private final EntityAuthenticationData entityAuthData;
+    protected final EntityAuthenticationData entityAuthData;
     /** Master token. */
-    private final MasterToken masterToken;
+    protected final MasterToken masterToken;
     /** Header data. */
-    private final MslObject headerdata;
+    protected final MslObject headerdata;
 
     /** Timestamp in seconds since the epoch. */
     private final Long timestamp;
@@ -1014,8 +1014,8 @@ public class MessageHeader extends Header {
     private final MslUser user;
 
     /** Message crypto context. */
-    private final ICryptoContext messageCryptoContext;
+    protected final ICryptoContext messageCryptoContext;
 
     /** Cached encodings. */
-    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    protected final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

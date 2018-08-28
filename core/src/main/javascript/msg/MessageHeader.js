@@ -328,18 +328,18 @@
              * already been authenticated and is using a master token instead.
              * @type {?EntityAuthenticationData}
              */
-            entityAuthenticationData: { value: entityAuthData, writable: false, configurable: false },
+            entityAuthenticationData: { value: entityAuthData, writable: true, configurable: false },
             /**
              * Returns the primary master token identifying the entity and containing
              * the session keys. May be null if the entity has not been authenticated.
              * @type {?MasterToken}
              */
-            masterToken: { value: masterToken, writable: false, configurable: false },
+            masterToken: { value: masterToken, writable: true, configurable: false },
             /**
              * Header data.
              * @type {MslObject}
              */
-            headerdata: { value: headerdata, writable: false, enumerable: false, configurable: false },
+            headerdata: { value: headerdata, writable: true, enumerable: false, configurable: false },
             /**
              * Timestamp in seconds since the epoch.
              * @type {?number}
@@ -369,7 +369,7 @@
              * Message capabilities.
              * @type {?MessageCapabilities}
              */
-            messageCapabilities: { value: capabilities, writable: false, configurable: false },
+            messageCapabilities: { value: capabilities, writable: true, configurable: false },
             /**
              * Key request data.
              * @type {Array.<KeyRequestData>}
@@ -437,12 +437,12 @@
              * @see #isEncrypting()
              * @type {ICryptoContext}
              */
-            cryptoContext: { value: messageCryptoContext, writable: false, configurable: false },
+            cryptoContext: { value: messageCryptoContext, writable: true, configurable: false },
             /**
              * Cached encodings.
              * @type {Object<MslEncoderFormat,Uint8Array>}
              */
-            encodings: { value: {}, writable: false, enumerable: false, configurable: false },
+            encodings: { value: {}, writable: true, enumerable: false, configurable: false },
         };
     }
 

@@ -26,7 +26,7 @@
 	var MessageInputStream = require('../msg/MessageInputStream.js');
 	var MessageOutputStream = require('../msg/MessageOutputStream.js');
 	
-	var MessageStreamFactory = module.exports = Class.create({
+	var MessageFactory = module.exports = Class.create({
 	    /**
 	     * <p>Construct a new message input stream. The header is parsed.</p>
 	     *
@@ -99,5 +99,42 @@
 	    createOutputStream: function createOutputStream(ctx, destination, header, cryptoContext, format, timeout, callback) {
 	        MessageOutputStream.create(ctx, destination, header, cryptoContext, format, timeout, callback);
 	    },
+
+	    /**
+	     * Construct a new message builder for a response.
+	     *
+	     * @param {MslContext} ctx the MSL context.
+	     * @param request message header.
+	     * @param {{result: function(MessageBuilder), timeout: function(), error: function(Error)}}
+	     *        callback the callback that will receive the message builder,
+	     *        or any thrown exceptions.
+	     * @throws IOException if there is an error writing the header.
+	     */
+	    createResponse: function createResponse(ctx, requestHeader, callback) {
+	        MessageBuilder.createResponse(ctx, requestHeader, callback);
+	    },
+
+	    /**
+	     * <p>Create a new message builder that will craft a new error message in
+	     * response to another message. If the message ID of the request is not
+	     * specified (i.e. unknown) then a random message ID will be generated.</p>
+	     *
+	     * @param {MslContext} ctx MSL context.
+	     * @param {?number} requestMessageId message ID of request. May be null.
+	     * @param {MslError} error the MSL error.
+	     * @param {string} userMessage localized user-consumable error message. May be null.
+	     * @param {{result: function(ErrorHeader), error: function(Error)}}
+	     *        callback the callback that will receive the error header or any
+	     *        thrown exceptions.
+	     * @throws MslCryptoException if there is an error encrypting or signing
+	     *         the message.
+	     * @throws MslEntityAuthException if there is an error with the entity
+	     *         authentication data.
+	     * @throws MslMessageException if no entity authentication data was
+	     *         returned by the MSL context.
+	     */
+	    createErrorResponse: function createErrorResponse(ctx, requestMessageId, error, userMessage, callback) {
+	        MessageBuilder.createErrorResponse(ctx, requestMessageId, error, userMessage, callback);
+	    }
 	});
-})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageStreamFactory'));
+})(require, (typeof module !== 'undefined') ? module : mkmodule('MessageFactory'));
