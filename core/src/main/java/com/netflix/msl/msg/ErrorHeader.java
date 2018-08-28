@@ -341,7 +341,7 @@ public class ErrorHeader extends Header {
     }
 
     /** MSL context. */
-    private final MslContext ctx;
+    protected final MslContext ctx;
     
     /** Entity authentication data. */
     protected final EntityAuthenticationData entityAuthData;
