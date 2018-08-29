@@ -347,8 +347,8 @@ public class PayloadChunk implements MslEncodable {
     private final byte[] data;
     
     /** Payload crypto context. */
-    private final ICryptoContext cryptoContext;
+    protected final ICryptoContext cryptoContext;
 
     /** Cached encodings. */
-    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    protected final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

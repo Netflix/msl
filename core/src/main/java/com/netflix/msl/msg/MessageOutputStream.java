@@ -25,6 +25,7 @@ import java.util.Set;
 
 import com.netflix.msl.MslConstants.CompressionAlgorithm;
 import com.netflix.msl.MslCryptoException;
+import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
@@ -276,7 +277,7 @@ public class MessageOutputStream extends OutputStream {
         // payload with the end of message flag set.
         try {
             final byte[] data = currentPayload.toByteArray();
-            final PayloadChunk chunk = new PayloadChunk(ctx, payloadSequenceNumber, messageHeader.getMessageId(), closed, compressionAlgo, data, this.cryptoContext);
+            final PayloadChunk chunk = createPayloadChunk(ctx, payloadSequenceNumber, messageHeader.getMessageId(), closed, compressionAlgo, data, this.cryptoContext);
             if (caching) payloads.add(chunk);
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
             final byte[] encoding = chunk.toMslEncoding(encoder, encoderFormat);
@@ -297,6 +298,26 @@ public class MessageOutputStream extends OutputStream {
         } catch (final MslException e) {
             throw new IOException("Error compressing payload chunk [sequence number " + payloadSequenceNumber + "].", e);
         }
+    }
+
+    /**
+     * Create new payload chunk
+     *
+     * @param ctx the MSL context.
+     * @param sequenceNumber sequence number.
+     * @param messageId the message ID.
+     * @param endofmsg true if this is the last payload chunk of the message.
+     * @param compressionAlgo the compression algorithm. May be {@code null}
+     *        for no compression.
+     * @param data the payload chunk application data.
+     * @param cryptoContext the crypto context.
+     * @throws MslEncodingException if there is an error encoding the data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the payload chunk.
+     * @throws MslException if there is an error compressing the data.
+     */
+    protected PayloadChunk createPayloadChunk(final MslContext ctx, final long sequenceNumber, final long messageId, final boolean endofmsg, final CompressionAlgorithm compressionAlgo, final byte[] data, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslException {
+            return new PayloadChunk(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext);
     }
 
     /* (non-Javadoc)
