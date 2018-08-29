@@ -36,7 +36,6 @@ import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.keyx.KeyExchangeScheme;
 import com.netflix.msl.msg.ConsoleFilterStreamFactory;
 import com.netflix.msl.msg.MslControl;
-import com.netflix.msl.msg.NetflixMessageFactory;
 import com.netflix.msl.server.configuration.msg.ServerMessageContext;
 import com.netflix.msl.server.configuration.tokens.TokenFactoryType;
 import com.netflix.msl.server.configuration.util.ServerMslContext;
@@ -106,7 +105,7 @@ public class BaseServlet extends HttpServlet {
      */
     protected void configure() throws Exception {
         /** MSL control configuration. */
-        mslCtrl = new MslControl(numThreads, new NetflixMessageFactory(), null);
+        mslCtrl = new MslControl(numThreads, null, null);
         if(setConsoleFilterStreamFactory) {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
