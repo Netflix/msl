@@ -657,7 +657,9 @@ public class MessageOutputStreamTest {
         
         // The intersection of compression algorithms is computed when a
         // response header is generated.
-        final MessageHeader responseHeader = MessageBuilder.createResponse(ctx, MESSAGE_HEADER).getHeader();
+        final MessageBuilder builder = new MessageBuilder();
+        builder.createResponse(ctx, MESSAGE_HEADER);
+        final MessageHeader responseHeader = builder.getHeader();
 
         final MessageOutputStream mos = new MessageOutputStream(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT);
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.GZIP));

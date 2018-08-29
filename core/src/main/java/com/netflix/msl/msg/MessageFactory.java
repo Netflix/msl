@@ -25,6 +25,7 @@ import com.netflix.msl.MslCryptoException;
 import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslEntityAuthException;
 import com.netflix.msl.MslException;
+import com.netflix.msl.MslError;
 import com.netflix.msl.MslKeyExchangeException;
 import com.netflix.msl.MslMasterTokenException;
 import com.netflix.msl.MslMessageException;
@@ -36,11 +37,11 @@ import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.util.MslContext;
 
 /**
- * <p>A message stream factory is used to create message streams.</p>
+ * <p>A message factory is used to create message streams and builders.</p>
  * 
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-public class MessageStreamFactory {
+public class MessageFactory {
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
      * 
@@ -118,4 +119,13 @@ public class MessageStreamFactory {
     public MessageOutputStream createOutputStream(final MslContext ctx, final OutputStream destination, final MessageHeader header, final ICryptoContext cryptoContext) throws IOException {
         return new MessageOutputStream(ctx, destination, header, cryptoContext);
     }
+
+    /**
+     * Construct a new message builder.
+     *
+     */
+    public MessageBuilder createMessageBuilder() {
+        return new MessageBuilder();
+    }
 }
+

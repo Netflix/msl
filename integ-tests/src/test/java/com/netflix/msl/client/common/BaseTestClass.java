@@ -243,7 +243,8 @@ public class BaseTestClass {
     public MessageInputStream sendReceive(final OutputStream out, final InputStream in,
                                           final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens,
                                           final boolean isRenewable, final boolean addKeyRequestData) throws MslException, IOException {
-        final MessageBuilder builder = MessageBuilder.createRequest(clientConfig.getMslContext(), masterToken, userIdToken);
+        final MessageBuilder builder = new MessageBuilder();
+        builder.createRequest(clientConfig.getMslContext(), masterToken, userIdToken);
         builder.setRenewable(isRenewable);
         builder.setNonReplayable(clientConfig.getMessageContext().isNonReplayable());
 

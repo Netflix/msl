@@ -175,6 +175,11 @@ public class MessageBuilder {
     }
 
     /**
+     * <p>Construct a new MessageBuilder</p>
+     */
+    public MessageBuilder() {}
+
+    /**
      * <p>Create a new message builder that will craft a new message with the
      * specified message ID.</p>
      * 
@@ -183,15 +188,15 @@ public class MessageBuilder {
      *        provided.
      * @param userIdToken user ID token. May be null.
      * @param messageId the message ID to use. Must be within range.
-     * @return the message builder.
+     * @return void
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final long messageId) throws MslException {
+    public void createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final long messageId) throws MslException {
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
-        return new MessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
+        initializeMessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
     }
     
     /**
@@ -201,14 +206,14 @@ public class MessageBuilder {
      * @param masterToken master token. May be null unless a user ID token is
      *        provided.
      * @param userIdToken user ID token. May be null.
-     * @return the message builder.
+     * @return void
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    public static MessageBuilder createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
+    public void createRequest(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken) throws MslException {
         final long messageId = MslUtils.getRandomLong(ctx);
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
-        return new MessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
+        initializeMessageBuilder(ctx, messageId, capabilities, masterToken, userIdToken, null, null, null, null, null);
     }
     
     /**
@@ -217,7 +222,7 @@ public class MessageBuilder {
      * 
      * @param ctx MSL context.
      * @param requestHeader message header to respond to.
-     * @return the message builder.
+     * @return void
      * @throws MslMasterTokenException if the provided message's master token
      *         is not trusted.
      * @throws MslCryptoException if the crypto context from a key exchange
@@ -230,7 +235,7 @@ public class MessageBuilder {
      *         bound to its corresponding master token or there is an error
      *         creating or renewing the master token.
      */
-    public static MessageBuilder createResponse(final MslContext ctx, final MessageHeader requestHeader) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslUserAuthException, MslException {
+    public void createResponse(final MslContext ctx, final MessageHeader requestHeader) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslUserAuthException, MslException {
         final MasterToken masterToken = requestHeader.getMasterToken();
         final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
         UserIdToken userIdToken = requestHeader.getUserIdToken();
@@ -338,10 +343,12 @@ public class MessageBuilder {
                 final MasterToken peerMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : requestHeader.getPeerMasterToken();
                 final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
                 final Set<ServiceToken> peerServiceTokens = requestHeader.getPeerServiceTokens();
-                return new MessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
+                initializeMessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
+                return;
             } else {
                 final MasterToken localMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : masterToken;
-                return new MessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
+                initializeMessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
+                return;
             }
         } catch (final MslException e) {
             e.setMasterToken(masterToken);
@@ -360,13 +367,13 @@ public class MessageBuilder {
      * 
      * @param ctx MSL context.
      * @param requestHeader message header to respond to.
-     * @return the message builder.
+     * @return void
      * @throws MslCryptoException if there is an error accessing the remote
      *         entity identity.
      * @throws MslException if any of the request's user ID tokens is not bound
      *         to its master token.
      */
-    public static MessageBuilder createIdempotentResponse(final MslContext ctx, final MessageHeader requestHeader) throws MslCryptoException, MslException {
+    public void createIdempotentResponse(final MslContext ctx, final MessageHeader requestHeader) throws MslCryptoException, MslException {
         final MasterToken masterToken = requestHeader.getMasterToken();
         final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
         final UserIdToken userIdToken = requestHeader.getUserIdToken();
@@ -390,10 +397,12 @@ public class MessageBuilder {
                 final MasterToken peerMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : requestHeader.getPeerMasterToken();
                 final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
                 final Set<ServiceToken> peerServiceTokens = requestHeader.getPeerServiceTokens();
-                return new MessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+                initializeMessageBuilder(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
+                return;
             } else {
                 final MasterToken localMasterToken = (keyResponseData != null) ? keyResponseData.getMasterToken() : masterToken;
-                return new MessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+                initializeMessageBuilder(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
+                return;
             }
         } catch (final MslException e) {
             e.setMasterToken(masterToken);
@@ -422,7 +431,7 @@ public class MessageBuilder {
      * @throws MslMessageException if no entity authentication data was
      *         returned by the MSL context.
      */
-    public static ErrorHeader createErrorResponse(final MslContext ctx, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
+    public ErrorHeader createErrorResponse(final MslContext ctx, final Long requestMessageId, final MslError error, final String userMessage) throws MslCryptoException, MslEntityAuthException, MslMessageException {
         final EntityAuthenticationData entityAuthData = ctx.getEntityAuthenticationData(null);
         // If we have the request message ID then the error response message ID
         // must be equal to the request message ID + 1.
@@ -437,7 +446,24 @@ public class MessageBuilder {
         final ResponseCode errorCode = error.getResponseCode();
         final int internalCode = error.getInternalCode();
         final String errorMsg = error.getMessage();
-        return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
+        return constructErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
+    }
+
+    /**
+     * Construct a new error header
+     * 
+     * @param ctx MSL context.
+     * @param entityAuthData the entity authentication data.
+     * @param messageId the message ID.
+     * @param errorCode the error code.
+     * @param internalCode the internal code. Negative to indicate no code.
+     * @param errorMsg the error message. May be null.
+     * @param userMsg the user message. May be null.
+     * @throws MslMessageException if no entity authentication data is
+     *         provided.
+     */
+    public ErrorHeader constructErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
+        return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg);
     }
     
     /**
@@ -460,7 +486,7 @@ public class MessageBuilder {
      * @throws MslException if a user ID token is not bound to its master
      *         token.
      */
-    private MessageBuilder(final MslContext ctx, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
+    public void initializeMessageBuilder(final MslContext ctx, final long messageId, final MessageCapabilities capabilities, final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens, final MasterToken peerMasterToken, final UserIdToken peerUserIdToken, final Set<ServiceToken> peerServiceTokens, final KeyExchangeData keyExchangeData) throws MslException {
         // Primary and peer token combinations will be verified when the
         // message header is constructed. So delay those checks in favor of
         // avoiding duplicate code.
@@ -617,10 +643,23 @@ public class MessageBuilder {
         final HeaderData headerData = new HeaderData(messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, response, userAuthData, userIdToken, tokens);
         final Set<ServiceToken> peerTokens = new HashSet<ServiceToken>(peerServiceTokens.values());
         final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerTokens);
-        
-        return new MessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
+
+        return constructMessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
     }
-    
+
+    /**
+     * Construct a new message header
+     * @param ctx MSL context.
+     * @param entityAuthData entity authentication data. Null if a master token is provided.
+     * @param masterToken master token to renew. Null if the identity is provided.
+     * @param headerData message header data container.
+     * @param peerData message header peer data container.
+     * @return the message header.
+     */ 
+    protected MessageHeader constructMessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslException, MslCryptoException {
+        return new MessageHeader(ctx, entityAuthData, masterToken, headerData, peerData);
+    }
+
     /**
      * <p>Set the message ID.</p>
      * 
@@ -1125,14 +1164,14 @@ public class MessageBuilder {
     }
     
     /** MSL context. */
-    private final MslContext ctx;
+    private MslContext ctx;
     
     /** Message header master token. */
     private MasterToken masterToken;
     /** Header data message ID. */
     private long messageId;
     /** Key exchange data. */
-    private final KeyExchangeData keyExchangeData;
+    private KeyExchangeData keyExchangeData;
     /** Message non-replayable. */
     private boolean nonReplayable = false;
     /** Header data renewable. */
@@ -1140,7 +1179,7 @@ public class MessageBuilder {
     /** Handshake message. */
     private boolean handshake = false;
     /** Message capabilities. */
-    private final MessageCapabilities capabilities;
+    private MessageCapabilities capabilities;
     /** Header data key request data. */
     private final Set<KeyRequestData> keyRequestData = new HashSet<KeyRequestData>();
     /** Header data user authentication data. */

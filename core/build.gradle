@@ -50,7 +50,7 @@ task javadoc_public(type: Javadoc) {
         "**/MessageInputStream.java",
         "**/MessageOutputStream.java",
         "**/MessageServiceTokenBuilder.java",
-        "**/MessageStreamFactory.java",
+        "**/MessageFactory.java",
         "**/MslArray.java",
         "**/MslConstants.java",
         "**/MslContext.java",
