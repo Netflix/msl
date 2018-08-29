@@ -834,7 +834,7 @@ public class MslControl {
     }
 
     /**
-     * Assigns a filter message factory that will be used to filter any incoming
+     * Assigns a filter stream factory that will be used to filter any incoming
      * or outgoing messages. The filters will be placed between the MSL message
      * and MSL control, meaning they will see the actual MSL message data as it
      * is being read from or written to the remote entity.

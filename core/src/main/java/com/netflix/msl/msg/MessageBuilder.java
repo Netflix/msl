@@ -188,7 +188,6 @@ public class MessageBuilder {
      *        provided.
      * @param userIdToken user ID token. May be null.
      * @param messageId the message ID to use. Must be within range.
-     * @return void
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
@@ -206,7 +205,6 @@ public class MessageBuilder {
      * @param masterToken master token. May be null unless a user ID token is
      *        provided.
      * @param userIdToken user ID token. May be null.
-     * @return void
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
@@ -222,7 +220,6 @@ public class MessageBuilder {
      * 
      * @param ctx MSL context.
      * @param requestHeader message header to respond to.
-     * @return void
      * @throws MslMasterTokenException if the provided message's master token
      *         is not trusted.
      * @throws MslCryptoException if the crypto context from a key exchange
@@ -367,7 +364,6 @@ public class MessageBuilder {
      * 
      * @param ctx MSL context.
      * @param requestHeader message header to respond to.
-     * @return void
      * @throws MslCryptoException if there is an error accessing the remote
      *         entity identity.
      * @throws MslException if any of the request's user ID tokens is not bound
@@ -462,7 +458,7 @@ public class MessageBuilder {
      * @throws MslMessageException if no entity authentication data is
      *         provided.
      */
-    public ErrorHeader constructErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
+    protected ErrorHeader constructErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
         return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg);
     }
     
