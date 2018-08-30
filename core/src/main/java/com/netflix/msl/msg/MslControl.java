@@ -1097,8 +1097,7 @@ public class MslControl {
                 userIdToken = null;
             }
 
-            final MessageBuilder builder = messageFactory.createMessageBuilder();
-            builder.createRequest(ctx, masterToken, userIdToken);
+            final MessageBuilder builder = messageFactory.createRequest(ctx, masterToken, userIdToken);
             builder.setNonReplayable(msgCtx.isNonReplayable());
             return builder;
         } catch (final MslException e) {
@@ -1148,8 +1147,7 @@ public class MslControl {
      */
     private MessageBuilder buildResponse(final MslContext ctx, final MessageContext msgCtx, final MessageHeader request) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslUserAuthException, MslException, InterruptedException {
         // Create the response.
-        final MessageBuilder builder = messageFactory.createMessageBuilder();
-        builder.createResponse(ctx, request);
+        final MessageBuilder builder = messageFactory.createResponse(ctx, request);
         builder.setNonReplayable(msgCtx.isNonReplayable());
 
         // Trusted network clients should use the newest master token. Trusted
@@ -1213,8 +1211,7 @@ public class MslControl {
      */
     private MessageBuilder buildDetachedResponse(final MslContext ctx, final MessageContext msgCtx, final MessageHeader request) throws MslCryptoException, MslException {
         // Create an idempotent response. Assign a random message ID.
-        final MessageBuilder builder = messageFactory.createMessageBuilder();
-        builder.createIdempotentResponse(ctx, request);
+        final MessageBuilder builder = messageFactory.createIdempotentResponse(ctx, request);
         builder.setNonReplayable(msgCtx.isNonReplayable());
         builder.setMessageId(MslUtils.getRandomLong(ctx));
         return builder;
@@ -1282,8 +1279,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final MessageBuilder requestBuilder = messageFactory.createMessageBuilder();
-                requestBuilder.createRequest(ctx, null, null, messageId);
+                final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1317,8 +1313,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final MessageBuilder requestBuilder = messageFactory.createMessageBuilder();
-                requestBuilder.createRequest(ctx, masterToken, null, messageId);
+                final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, masterToken, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1334,8 +1329,7 @@ public class MslControl {
                 // Make sure the use the error header message ID + 1.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final MessageBuilder requestBuilder = messageFactory.createMessageBuilder();
-                requestBuilder.createRequest(ctx, null, null, messageId);
+                final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1369,8 +1363,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final MessageBuilder requestBuilder = messageFactory.createMessageBuilder();
-                requestBuilder.createRequest(ctx, masterToken, userIdToken, messageId);
+                final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, masterToken, userIdToken, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -1413,8 +1406,7 @@ public class MslControl {
                 // Resend the request.
                 final long messageId = MessageBuilder.incrementMessageId(errorHeader.getMessageId());
                 final MessageContext resendMsgCtx = new ResendMessageContext(payloads, msgCtx);
-                final MessageBuilder requestBuilder = messageFactory.createMessageBuilder();
-                requestBuilder.createRequest(ctx, masterToken, userIdToken, messageId);
+                final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, masterToken, userIdToken, messageId);
                 if (ctx.isPeerToPeer()) {
                     final MasterToken peerMasterToken = requestHeader.getPeerMasterToken();
                     final UserIdToken peerUserIdToken = requestHeader.getPeerUserIdToken();
@@ -2265,8 +2257,7 @@ public class MslControl {
      */
     private void sendError(final MslContext ctx, final MessageDebugContext debugCtx, final MessageHeader requestHeader, final Long messageId, final MslError error, final String userMessage, final OutputStream out) throws MslEncodingException, MslCryptoException, MslEntityAuthException, MslMessageException, IOException {
         // Create error header.
-        final MessageBuilder builder = messageFactory.createMessageBuilder();
-        final ErrorHeader errorHeader = builder.createErrorResponse(ctx, messageId, error, userMessage);
+        final ErrorHeader errorHeader = messageFactory.createErrorResponse(ctx, messageId, error, userMessage);
 
         if (debugCtx != null) debugCtx.sentHeader(errorHeader);
 

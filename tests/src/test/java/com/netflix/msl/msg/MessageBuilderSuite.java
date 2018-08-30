@@ -126,6 +126,8 @@ public class MessageBuilderSuite {
     private static MslContext p2pCtx;
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
+    /** Message Factory. */
+    private static MessageFactory messageFactory = new MessageFactory();
     
     private static MasterToken MASTER_TOKEN, PEER_MASTER_TOKEN;
     private static ICryptoContext CRYPTO_CONTEXT, ALT_MSL_CRYPTO_CONTEXT;
@@ -261,8 +263,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void createNullRequest() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             assertTrue(builder.willEncryptHeader());
             assertTrue(builder.willEncryptPayloads());
             assertTrue(builder.willIntegrityProtectHeader());
@@ -290,8 +291,7 @@ public class MessageBuilderSuite {
     
         @Test
         public void createNullPeerRequest() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, null, null);
             assertTrue(builder.willEncryptHeader());
             assertTrue(builder.willEncryptPayloads());
             assertTrue(builder.willIntegrityProtectHeader());
@@ -320,8 +320,7 @@ public class MessageBuilderSuite {
         @Test
         public void createRequest() throws MslException {
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -361,8 +360,7 @@ public class MessageBuilderSuite {
         public void createRequestWithMessageId() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslException {
             final long messageId = 17;
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, messageId);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, messageId);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -400,8 +398,7 @@ public class MessageBuilderSuite {
         @Test
         public void createPeerRequest() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
@@ -442,8 +439,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void createHandshakeRequest() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setNonReplayable(true);
             builder.setRenewable(false);
             builder.setHandshake(true);
@@ -473,8 +469,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void createPeerHandshakeRequest() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, null, null);
             builder.setNonReplayable(true);
             builder.setRenewable(false);
             builder.setHandshake(true);
@@ -505,8 +500,7 @@ public class MessageBuilderSuite {
         @Test
         public void willEncryptX509EntityAuth() throws MslException {
             final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(x509Ctx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(x509Ctx, null, null);
             assertFalse(builder.willEncryptHeader());
             assertFalse(builder.willEncryptPayloads());
             assertTrue(builder.willIntegrityProtectHeader());
@@ -516,8 +510,7 @@ public class MessageBuilderSuite {
         @Test
         public void willIntegrityProtectNoneAuth() throws MslException {
             final MslContext noneCtx = new MockMslContext(EntityAuthenticationScheme.NONE, false);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(noneCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(noneCtx, null, null);
             assertFalse(builder.willEncryptHeader());
             assertFalse(builder.willEncryptPayloads());
             assertFalse(builder.willIntegrityProtectHeader());
@@ -544,8 +537,7 @@ public class MessageBuilderSuite {
                     updatedServiceTokens.add(peerServiceToken);
             }
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             assertEquals(updatedServiceTokens, builder.getServiceTokens());
             assertTrue(builder.getPeerServiceTokens().isEmpty());
             final MessageHeader header = builder.getHeader();
@@ -582,8 +574,7 @@ public class MessageBuilderSuite {
                     updatedPeerServiceTokens.add(serviceToken);
             }
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             assertEquals(updatedServiceTokens, builder.getServiceTokens());
             assertEquals(updatedPeerServiceTokens, builder.getPeerServiceTokens());
@@ -598,8 +589,7 @@ public class MessageBuilderSuite {
             // Setting the user authentication data will replace the user ID token
             // and remove any user ID token bound service tokens.
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -632,8 +622,7 @@ public class MessageBuilderSuite {
         @Test
         public void setUserAuthDataNull() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -665,8 +654,7 @@ public class MessageBuilderSuite {
         @Test
         public void unsetUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -699,8 +687,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void overwriteKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
@@ -726,8 +713,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void removeKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 builder.addKeyRequestData(keyRequestData);
             final KeyRequestData keyRequestData = KEY_REQUEST_DATA.toArray(new KeyRequestData[0])[0];
@@ -759,8 +745,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.NONREPLAYABLE_MESSAGE_REQUIRES_MASTERTOKEN);
 
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setNonReplayable(true);
             builder.getHeader();
         }
@@ -770,8 +755,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             final byte[] data = new byte[1];
             random.nextBytes(data);
             final ServiceToken serviceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
@@ -783,8 +767,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             final byte[] data = new byte[1];
             random.nextBytes(data);
             final ServiceToken serviceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, null, false, null, new NullCryptoContext());
@@ -798,8 +781,7 @@ public class MessageBuilderSuite {
 
             final UserIdToken userIdTokenA = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
             final UserIdToken userIdTokenB = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA);
             final byte[] data = new byte[1];
             random.nextBytes(data);
             final ServiceToken serviceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, userIdTokenB, false, null, new NullCryptoContext());
@@ -810,8 +792,7 @@ public class MessageBuilderSuite {
         public void nullUserIdTokenAddServiceToken() throws MslException {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH);
-
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             final byte[] data = new byte[1];
             random.nextBytes(data);
             final ServiceToken serviceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
@@ -820,8 +801,9 @@ public class MessageBuilderSuite {
         
         @Test
         public void excludeServiceToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+
             for (final ServiceToken serviceToken : serviceTokens)
                 builder.addServiceToken(serviceToken);
             
@@ -837,7 +819,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void deleteServiceToken() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             
             // The service token must exist before it can be deleted.
             final byte[] data = new byte[1];
@@ -860,7 +842,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void deleteUnknownServiceToken() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.deleteServiceToken(SERVICE_TOKEN_NAME);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getServiceTokens();
@@ -872,28 +854,27 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void notP2PCreatePeerRequest() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             
         }
         
         @Test(expected = MslInternalException.class)
         public void missingPeerMasterTokenCreatePeerRequest() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(null, PEER_USER_ID_TOKEN);
             
         }
         
         @Test(expected = MslException.class)
         public void mismatchedPeerMasterTokenCreatePeerRequest() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(MASTER_TOKEN, PEER_USER_ID_TOKEN);
         }
         
         @Test(expected = MslInternalException.class)
         public void notP2PAddPeerServiceToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final ServiceToken peerServiceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, new byte[0], null, null, false, null, new NullCryptoContext());
             builder.addPeerServiceToken(peerServiceToken);
         }
@@ -903,7 +884,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder builder = new MessageBuilder();builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final ServiceToken peerServiceToken = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, new byte[0], PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
             builder.addPeerServiceToken(peerServiceToken);
         }
@@ -913,8 +894,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final ServiceToken peerServiceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, new byte[0], MASTER_TOKEN, null, false, null, new NullCryptoContext());
             builder.addPeerServiceToken(peerServiceToken);
@@ -925,8 +905,7 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH);
 
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
             final ServiceToken peerServiceToken = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, new byte[0], PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
             builder.addPeerServiceToken(peerServiceToken);
@@ -939,8 +918,7 @@ public class MessageBuilderSuite {
 
             final UserIdToken userIdTokenA = MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
             final UserIdToken userIdTokenB = MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, userIdTokenA);
             final ServiceToken peerServiceToken = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, new byte[0], PEER_MASTER_TOKEN, userIdTokenB, false, null, new NullCryptoContext());
             builder.addPeerServiceToken(peerServiceToken);
@@ -948,8 +926,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void excludePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -968,8 +945,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void deletePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             
             // The service token must exist before it can be deleted.
@@ -993,8 +969,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void deleteUnknownPeerServiceToken() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             builder.deletePeerServiceToken(SERVICE_TOKEN_NAME);
             final MessageHeader messageHeader = builder.getHeader();
@@ -1017,8 +992,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setAuthTokens(MASTER_TOKEN, null);
             
             // The message service tokens will include all unbound service
@@ -1049,8 +1023,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             builder.setAuthTokens(MASTER_TOKEN, null);
             
             // The message service tokens will include all unbound service
@@ -1081,8 +1054,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
             
             // The message service tokens will include all unbound service
@@ -1113,8 +1085,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             builder.setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
             
             // The message service tokens will include all unbound service
@@ -1134,8 +1105,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void setNullMasterToken() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setAuthTokens(null, null);
             final MessageHeader header = builder.getHeader();
             assertNotNull(header);
@@ -1146,15 +1116,13 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setMismatchedAuthTokens() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setAuthTokens(MASTER_TOKEN, PEER_USER_ID_TOKEN);
         }
         
         @Test
         public void setUser() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             builder.setUser(USER_ID_TOKEN.getUser());
             final UserIdToken userIdToken = builder.getUserIdToken();
             assertNotNull(userIdToken);
@@ -1163,22 +1131,19 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setUserNoMasterToken() throws MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, null, null);
             builder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test(expected = MslInternalException.class)
         public void setUserHasUserIdToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test
         public void setPeerUser() throws MslMessageException, MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, null, null);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, null);
             builder.setUser(PEER_USER_ID_TOKEN.getUser());
             final UserIdToken userIdToken = builder.getPeerUserIdToken();
@@ -1188,29 +1153,25 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setPeerUserNoPeerMasterToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, null, null);
             builder.setUser(PEER_USER_ID_TOKEN.getUser());
         }
         
         @Test(expected = MslInternalException.class)
         public void setPeerUserHasPeerUserIdToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder builder = new MessageBuilder();
-            builder.createRequest(p2pCtx, null, null);
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, null, null);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             builder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test(expected = MslInternalException.class)
         public void negativeMessageId() throws MslException {
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createRequest(trustedNetCtx, null, null, -1);
+            MessageBuilder bldr = messageFactory.createRequest(trustedNetCtx, null, null, -1);
         }
         
         @Test(expected = MslInternalException.class)
         public void tooLargeMessageId() throws MslException {
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 1);
+            MessageBuilder bldr = messageFactory.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 1);
         }
     }
     
@@ -1222,8 +1183,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void ctor() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-            final MessageBuilder bldr = new MessageBuilder();
-            final ErrorHeader errorHeader = bldr.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
+            final ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
             assertNotNull(errorHeader);
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
@@ -1233,8 +1193,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void nullRecipient() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-            final MessageBuilder bldr = new MessageBuilder();
-            final ErrorHeader errorHeader = bldr.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
+            final ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE);
             assertNotNull(errorHeader);
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
@@ -1245,8 +1204,7 @@ public class MessageBuilderSuite {
         @Test
         public void maxMessageId() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
             final Long messageId = MslConstants.MAX_LONG_VALUE;
-            final MessageBuilder bldr = new MessageBuilder();
-            final ErrorHeader errorHeader = bldr.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
+            final ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
             assertNotNull(errorHeader);
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
@@ -1256,8 +1214,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void nullMessageId() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-            final MessageBuilder bldr = new MessageBuilder();
-            final ErrorHeader errorHeader = bldr.createErrorResponse(trustedNetCtx, null, MSL_ERROR, USER_MESSAGE);
+            final ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, null, MSL_ERROR, USER_MESSAGE);
             assertNotNull(errorHeader);
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
@@ -1268,14 +1225,12 @@ public class MessageBuilderSuite {
         @Test(expected = MslInternalException.class)
         public void negativeMessageId() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
             final Long messageId = -12L;
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
+            ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
         }
         
         @Test
         public void nullUserMessage() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
-            final MessageBuilder bldr = new MessageBuilder();
-            final ErrorHeader errorHeader = bldr.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, null);
+            final ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, null);
             assertNotNull(errorHeader);
             assertEquals(MSL_ERROR.getResponseCode(), errorHeader.getErrorCode());
             assertEquals(MSL_ERROR.getMessage(), errorHeader.getErrorMessage());
@@ -1337,15 +1292,13 @@ public class MessageBuilderSuite {
         public void createNullResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslException {
             // This will not exercise any of the complex logic, so no key
             // request data, entity auth data, or user auth data. Just tokens.
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final ServiceToken serviceToken : serviceTokens)
                 requestBuilder.addServiceToken(serviceToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             assertTrue(responseBuilder.willEncryptHeader());
             assertTrue(responseBuilder.willEncryptPayloads());
             assertEquals(serviceTokens, responseBuilder.getServiceTokens());
@@ -1375,8 +1328,7 @@ public class MessageBuilderSuite {
         public void createNullPeerResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
             // This will not exercise any of the complex logic, so no key
             // request data, entity auth data, or user auth data. Just tokens.
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             requestBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -1387,8 +1339,7 @@ public class MessageBuilderSuite {
             final MessageHeader request = requestBuilder.getHeader();
             
             // The tokens should be swapped.
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             assertTrue(responseBuilder.willEncryptHeader());
             assertTrue(responseBuilder.willEncryptPayloads());
             assertEquals(serviceTokens, responseBuilder.getPeerServiceTokens());
@@ -1415,15 +1366,13 @@ public class MessageBuilderSuite {
         
         @Test
         public void createEntityAuthResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, null, null);
             for (final ServiceToken serviceToken : serviceTokens)
                 requestBuilder.addServiceToken(serviceToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             assertTrue(responseBuilder.willEncryptHeader());
             assertTrue(responseBuilder.willEncryptPayloads());
             assertEquals(serviceTokens, responseBuilder.getServiceTokens());
@@ -1452,8 +1401,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void createEntityAuthPeerResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             requestBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, null, null);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -1464,8 +1412,7 @@ public class MessageBuilderSuite {
             final MessageHeader request = requestBuilder.getHeader();
             
             // The tokens should be swapped.
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             assertTrue(responseBuilder.willEncryptHeader());
             assertTrue(responseBuilder.willEncryptPayloads());
             assertEquals(serviceTokens, responseBuilder.getPeerServiceTokens());
@@ -1492,12 +1439,10 @@ public class MessageBuilderSuite {
         
         @Test
         public void createResponse() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setNonReplayable(true);
             responseBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
@@ -1532,12 +1477,10 @@ public class MessageBuilderSuite {
         
         @Test
         public void createPeerResponse() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslMessageException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, null, null);
             for (final ServiceToken serviceToken : serviceTokens)
                 responseBuilder.addServiceToken(serviceToken);
@@ -1573,15 +1516,13 @@ public class MessageBuilderSuite {
         public void createHandshakeResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslException {
             // This will not exercise any of the complex logic, so no key
             // request data, entity auth data, or user auth data. Just tokens.
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final ServiceToken serviceToken : serviceTokens)
                 requestBuilder.addServiceToken(serviceToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setNonReplayable(true);
             responseBuilder.setRenewable(false);
             responseBuilder.setHandshake(true);
@@ -1614,8 +1555,7 @@ public class MessageBuilderSuite {
         public void createPeerHandshakeResponse() throws MslEncodingException, MslCryptoException, MslMessageException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
             // This will not exercise any of the complex logic, so no key
             // request data, entity auth data, or user auth data. Just tokens.
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             requestBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final ServiceToken serviceToken : serviceTokens)
@@ -1626,8 +1566,7 @@ public class MessageBuilderSuite {
             final MessageHeader request = requestBuilder.getHeader();
             
             // The tokens should be swapped.
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             responseBuilder.setNonReplayable(true);
             responseBuilder.setRenewable(false);
             responseBuilder.setHandshake(true);
@@ -1659,12 +1598,10 @@ public class MessageBuilderSuite {
         @Test
         public void willEncryptX509EntityAuth() throws MslException {
             final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(x509Ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(x509Ctx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(x509Ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(x509Ctx, request);
             assertFalse(responseBuilder.willEncryptHeader());
             assertFalse(responseBuilder.willEncryptPayloads());
         }
@@ -1672,23 +1609,20 @@ public class MessageBuilderSuite {
         @Test
         public void willEncryptX509EntityAuthKeyExchange() throws MslException {
             final MslContext x509Ctx = new MockMslContext(EntityAuthenticationScheme.X509, false);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(x509Ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(x509Ctx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(x509Ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(x509Ctx, request);
             assertFalse(responseBuilder.willEncryptHeader());
             assertTrue(responseBuilder.willEncryptPayloads());
         }
         
         @Test
         public void storedServiceTokens() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             assertTrue(request.getServiceTokens().isEmpty());
             
@@ -1703,8 +1637,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             
             // The message will include all unbound service tokens.
             final Set<ServiceToken> updatedServiceTokens = new HashSet<ServiceToken>(serviceTokens);
@@ -1722,8 +1655,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void storedPeerServiceTokens() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             assertTrue(request.getServiceTokens().isEmpty());
             assertTrue(request.getPeerServiceTokens().isEmpty());
@@ -1739,8 +1671,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             
             // Update the set of expected peer service tokens with any unbound
             // service tokens.
@@ -1767,16 +1698,14 @@ public class MessageBuilderSuite {
         
         @Test
         public void keyxAddServiceToken() throws MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             assertNull(responseBuilder.getMasterToken());
             final UserIdToken userIdToken = responseBuilder.getUserIdToken();
             assertNotNull(userIdToken);
@@ -1795,12 +1724,10 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             assertNull(responseBuilder.getMasterToken());
             assertNull(responseBuilder.getKeyExchangeData());
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, null);
@@ -1813,15 +1740,13 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             assertNull(responseBuilder.getMasterToken());
             assertNotNull(responseBuilder.getKeyExchangeData());
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, null);
@@ -1834,16 +1759,14 @@ public class MessageBuilderSuite {
             thrown.expect(MslMessageException.class);
             thrown.expectMslError(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH);
 
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             assertNull(responseBuilder.getMasterToken());
             assertNull(responseBuilder.getUserIdToken());
             assertNotNull(responseBuilder.getKeyExchangeData());
@@ -1859,8 +1782,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(trustedNetCtx, null, MASTER_TOKEN, headerData, peerData);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(0, response.getMessageId());
         }
@@ -1870,15 +1792,13 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(requestMasterToken, response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -1894,15 +1814,13 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expirationWindow = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(p2pCtx, renewalWindow, expirationWindow, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             assertEquals(requestMasterToken, response.getPeerMasterToken());
@@ -1919,15 +1837,13 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expirationWindow = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expirationWindow, MslConstants.MAX_LONG_VALUE, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             final MasterToken responseMasterToken = response.getMasterToken();
             assertEquals(requestMasterToken.getIdentity(), responseMasterToken.getIdentity());
@@ -1946,15 +1862,13 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
             final Date expirationWindow = new Date(System.currentTimeMillis() + 20000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expirationWindow, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             final MasterToken responseMasterToken = response.getMasterToken();
             assertEquals(requestMasterToken.getIdentity(), responseMasterToken.getIdentity());
@@ -1969,15 +1883,13 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
             final Date expirationWindow = new Date(System.currentTimeMillis() - 10000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expirationWindow, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(requestMasterToken, response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -1993,13 +1905,11 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() + 10000);
             final Date expirationWindow = new Date(System.currentTimeMillis() + 20000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expirationWindow, MslConstants.MAX_LONG_VALUE, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, null);
             requestBuilder.setNonReplayable(true);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(requestMasterToken, response.getMasterToken());
             assertNull(response.getKeyResponseData());
@@ -2022,8 +1932,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(trustedNetCtx, null, requestMasterToken, headerData, peerData);
                         
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createResponse(ctx, request);
+            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
         }
         
         @Test
@@ -2036,8 +1945,7 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expirationWindow = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(ctx, renewalWindow, expirationWindow, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, requestMasterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, requestMasterToken, null);
             requestBuilder.setRenewable(true);
             // This should place the supported key exchange scheme in the
             // middle, guaranteeing that we will have to skip one unsupported
@@ -2047,8 +1955,7 @@ public class MessageBuilderSuite {
             requestBuilder.addKeyRequestData(new AsymmetricWrappedExchange.RequestData(KEY_PAIR_ID, Mechanism.RSA, RSA_PUBLIC_KEY, RSA_PRIVATE_KEY));
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(requestMasterToken, response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2096,27 +2003,23 @@ public class MessageBuilderSuite {
             // MSL crypto context.
             final MessageHeader untrustedRequest = (MessageHeader)Header.parseHeader(ctx, mo, CRYPTO_CONTEXTS);
 
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createResponse(ctx, untrustedRequest);
+            MessageBuilder bldr = messageFactory.createResponse(ctx, untrustedRequest);
         }
         
         @Test
         public void keyResponseData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder localRequestBuilder = new MessageBuilder();
-            localRequestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder localRequestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             localRequestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 localRequestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader localRequest = localRequestBuilder.getHeader();
             
-            final MessageBuilder remoteResponseBuilder = new MessageBuilder();
-            remoteResponseBuilder.createResponse(trustedNetCtx, localRequest);
+            final MessageBuilder remoteResponseBuilder = messageFactory.createResponse(trustedNetCtx, localRequest);
             final MessageHeader remoteResponse = remoteResponseBuilder.getHeader();
             final KeyResponseData keyResponseData = remoteResponse.getKeyResponseData();
             assertNotNull(keyResponseData);
             
-            final MessageBuilder localResponseBuilder = new MessageBuilder();
-            localResponseBuilder.createResponse(trustedNetCtx, remoteResponse);
+            final MessageBuilder localResponseBuilder = messageFactory.createResponse(trustedNetCtx, remoteResponse);
             final MessageHeader localResponse = localResponseBuilder.getHeader();
             final MasterToken localMasterToken = localResponse.getMasterToken();
             assertNotNull(localMasterToken);
@@ -2125,31 +2028,27 @@ public class MessageBuilderSuite {
         
         @Test
         public void peerKeyResponseData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder localRequestBuilder = new MessageBuilder();
-            localRequestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder localRequestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             localRequestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 localRequestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader localRequest = localRequestBuilder.getHeader();
             
-            final MessageBuilder remoteResponseBuilder = new MessageBuilder();
-            remoteResponseBuilder.createResponse(p2pCtx, localRequest);
+            final MessageBuilder remoteResponseBuilder = messageFactory.createResponse(p2pCtx, localRequest);
             final MessageHeader remoteResponse = remoteResponseBuilder.getHeader();
             assertNull(remoteResponse.getMasterToken());
             assertNull(remoteResponse.getPeerMasterToken());
             final KeyResponseData keyResponseData = remoteResponse.getKeyResponseData();
             assertNotNull(keyResponseData);
             
-            final MessageBuilder localResponseBuilder = new MessageBuilder();
-            localResponseBuilder.createResponse(p2pCtx, remoteResponse);
+            final MessageBuilder localResponseBuilder = messageFactory.createResponse(p2pCtx, remoteResponse);
             final MessageHeader localResponse = localResponseBuilder.getHeader();
             final MasterToken localMasterToken = localResponse.getMasterToken();
             assertNotNull(localMasterToken);
             assertEquals(keyResponseData.getMasterToken(), localMasterToken);
             assertNull(localResponse.getPeerMasterToken());
             
-            final MessageBuilder remoteSecondResponseBuilder = new MessageBuilder();
-            remoteSecondResponseBuilder.createResponse(p2pCtx, localResponse);
+            final MessageBuilder remoteSecondResponseBuilder = messageFactory.createResponse(p2pCtx, localResponse);
             final MessageHeader remoteSecondResponse = remoteSecondResponseBuilder.getHeader();
             assertNull(remoteResponse.getMasterToken());
             final MasterToken remotePeerMasterToken = remoteSecondResponse.getPeerMasterToken();
@@ -2159,14 +2058,12 @@ public class MessageBuilderSuite {
         
         @Test
         public void entityAuthDataNotRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             assertEquals(trustedNetCtx.getEntityAuthenticationData(null), response.getEntityAuthenticationData());
@@ -2175,15 +2072,13 @@ public class MessageBuilderSuite {
         
         @Test
         public void entityAuthDataRenewable() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2194,15 +2089,13 @@ public class MessageBuilderSuite {
         
         @Test
         public void peerEntityAuthDataRenewable() throws MslKeyExchangeException, MslMasterTokenException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             assertNull(response.getPeerMasterToken());
@@ -2227,8 +2120,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(ctx, ctx.getEntityAuthenticationData(null), null, headerData, peerData);
             
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createResponse(ctx, request);
+            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
         }
         
         @Test
@@ -2238,8 +2130,7 @@ public class MessageBuilderSuite {
                 ctx.removeKeyExchangeFactories(scheme);
             ctx.addKeyExchangeFactory(new AsymmetricWrappedExchange(new MockAuthenticationUtils()));
             
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null);
             requestBuilder.setRenewable(true);
             // This should place the supported key exchange scheme in the
             // middle, guaranteeing that we will have to skip one unsupported
@@ -2249,8 +2140,7 @@ public class MessageBuilderSuite {
             requestBuilder.addKeyRequestData(new SymmetricWrappedExchange.RequestData(KeyId.PSK));
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNotNull(response.getKeyResponseData());
         }
@@ -2260,13 +2150,11 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
             requestBuilder.setRenewable(true);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getMasterToken());
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2282,12 +2170,10 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getMasterToken());
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2304,13 +2190,11 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 10000);
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final UserIdToken requestUserIdToken = new UserIdToken(p2pCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken);
             requestBuilder.setRenewable(true);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getPeerMasterToken());
             assertNull(response.getUserIdToken());
@@ -2327,13 +2211,11 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
             final Date expiration = new Date(System.currentTimeMillis() - 10000);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
             requestBuilder.setRenewable(true);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getMasterToken());
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2349,12 +2231,10 @@ public class MessageBuilderSuite {
             final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
             final Date expiration = new Date(System.currentTimeMillis() - 10000);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, MASTER_TOKEN, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getMasterToken());
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2380,12 +2260,10 @@ public class MessageBuilderSuite {
             // Now rebuild the user ID token and the build the request.
             final MslObject userIdTokenMo = MslTestUtils.toMslObject(encoder, requestUserIdToken);
             final UserIdToken unverifiedUserIdToken = new UserIdToken(ctx, userIdTokenMo, MASTER_TOKEN);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(MASTER_TOKEN, response.getMasterToken());
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2403,15 +2281,13 @@ public class MessageBuilderSuite {
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(requestMasterToken, response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2433,13 +2309,11 @@ public class MessageBuilderSuite {
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
             final UserIdToken requestUserIdToken = new UserIdToken(trustedNetCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken);
             requestBuilder.setRenewable(true);
             final MessageHeader request = requestBuilder.getHeader();
 
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             final MasterToken responseMasterToken = response.getMasterToken();
             final UserIdToken responseUserIdToken = response.getUserIdToken();
@@ -2458,15 +2332,13 @@ public class MessageBuilderSuite {
             final Date expiration = new Date(System.currentTimeMillis() + 10000);
             final MasterToken requestMasterToken = new MasterToken(p2pCtx, renewalWindow, expiration, 1L, 1L, null, MockPresharedAuthenticationFactory.PSK_ESN, MockPresharedAuthenticationFactory.KPE, MockPresharedAuthenticationFactory.KPH);
             final UserIdToken requestUserIdToken = new UserIdToken(p2pCtx, renewalWindow, expiration, requestMasterToken, 1L, ISSUER_DATA, USER);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, requestMasterToken, requestUserIdToken);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, requestMasterToken, requestUserIdToken);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             assertEquals(requestMasterToken, response.getPeerMasterToken());
@@ -2486,14 +2358,12 @@ public class MessageBuilderSuite {
         
         @Test
         public void masterTokenUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             final UserIdToken userIdToken = response.getUserIdToken();
             assertNotNull(userIdToken);
@@ -2504,8 +2374,7 @@ public class MessageBuilderSuite {
         public void masterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, MASTER_TOKEN, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
@@ -2518,8 +2387,7 @@ public class MessageBuilderSuite {
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, moRequest);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             final UserIdToken userIdToken = response.getUserIdToken();
             assertNotNull(userIdToken);
@@ -2528,14 +2396,12 @@ public class MessageBuilderSuite {
         
         @Test
         public void peerMasterTokenUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getUserIdToken());
             final UserIdToken userIdToken = response.getPeerUserIdToken();
@@ -2547,8 +2413,7 @@ public class MessageBuilderSuite {
         public void peerMasterTokenUserAuthenticated() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
             
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, MASTER_TOKEN, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
@@ -2561,8 +2426,7 @@ public class MessageBuilderSuite {
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, moRequest);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             final UserIdToken userIdToken = response.getPeerUserIdToken();
             assertNotNull(userIdToken);
@@ -2571,16 +2435,14 @@ public class MessageBuilderSuite {
         
         @Test
         public void entityAuthDataUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2597,8 +2459,7 @@ public class MessageBuilderSuite {
         public void entityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
@@ -2613,8 +2474,7 @@ public class MessageBuilderSuite {
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, moRequest);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2629,14 +2489,12 @@ public class MessageBuilderSuite {
         
         @Test
         public void entityUserAuthNoKeyRequestData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             assertNull(response.getUserIdToken());
@@ -2646,16 +2504,14 @@ public class MessageBuilderSuite {
         
         @Test
         public void peerEntityAuthDataUserAuthData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2672,8 +2528,7 @@ public class MessageBuilderSuite {
         public void peerEntityAuthDataUserAuthenticatedData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslKeyExchangeException, MslUserAuthException, MslException, MslEncoderException {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, true);
             
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null);
             requestBuilder.setRenewable(true);
             requestBuilder.setUserAuthenticationData(USER_AUTH_DATA);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
@@ -2688,8 +2543,7 @@ public class MessageBuilderSuite {
             // does not perform it.
             ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.getScheme());
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, moRequest);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, moRequest);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMasterToken());
             final KeyResponseData keyResponseData = response.getKeyResponseData();
@@ -2716,14 +2570,12 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(ctx, null, MASTER_TOKEN, headerData, peerData);
             
-            MessageBuilder bldr = new MessageBuilder();
-            bldr.createResponse(ctx, request);
+            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
         }
         
         @Test
         public void setMasterToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
             final MslStore store = trustedNetCtx.getMslStore();
@@ -2736,8 +2588,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, null);
             final MessageHeader messageHeader = responseBuilder.getHeader();
             
@@ -2754,8 +2605,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void setExistingMasterToken() throws MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             final MessageHeader request = requestBuilder.getHeader();
             
             final MslStore store = trustedNetCtx.getMslStore();
@@ -2768,8 +2618,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, null);
             final MessageHeader messageHeader = responseBuilder.getHeader();
             
@@ -2786,8 +2635,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void setAuthTokens() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
             final MslStore store = trustedNetCtx.getMslStore();
@@ -2800,8 +2648,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader messageHeader = responseBuilder.getHeader();
             
@@ -2818,8 +2665,7 @@ public class MessageBuilderSuite {
         
         @Test
         public void setExistingAuthTokens() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             
             final MslStore store = trustedNetCtx.getMslStore();
@@ -2832,8 +2678,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader messageHeader = responseBuilder.getHeader();
             
@@ -2850,12 +2695,10 @@ public class MessageBuilderSuite {
         
         @Test
         public void setNullMasterToken() throws MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(null, null);
             final MessageHeader response = responseBuilder.getHeader();
             
@@ -2865,12 +2708,10 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setMismatchedAuthTokens() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, PEER_USER_ID_TOKEN);
         }
         
@@ -2885,22 +2726,19 @@ public class MessageBuilderSuite {
             final SecretKey hmacKey = MockPresharedAuthenticationFactory.KPH;
             final MasterToken masterToken = new MasterToken(trustedNetCtx, renewalWindow, expiration, 1, 1, null, identity, encryptionKey, hmacKey);
                 
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, masterToken, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, masterToken, null);
             requestBuilder.setRenewable(true);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setAuthTokens(MASTER_TOKEN, null);
         }
         
         @Test
         public void setMasterTokenHasPeerKeyExchangeData() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             for (final KeyRequestData keyRequestData : KEY_REQUEST_DATA)
                 requestBuilder.addKeyRequestData(keyRequestData);
             final MessageHeader request = requestBuilder.getHeader();
@@ -2916,8 +2754,7 @@ public class MessageBuilderSuite {
             final Set<ServiceToken> peerServiceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
             store.addServiceTokens(peerServiceTokens);
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             responseBuilder.setAuthTokens(PEER_MASTER_TOKEN, null);
             final MessageHeader response = responseBuilder.getHeader();
             
@@ -2944,12 +2781,10 @@ public class MessageBuilderSuite {
         
         @Test
         public void setUser() throws MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
             final UserIdToken userIdToken = responseBuilder.getUserIdToken();
             assertNotNull(userIdToken);
@@ -2958,34 +2793,28 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setUserNoMasterToken() throws MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test(expected = MslInternalException.class)
         public void setUserHasUserIdToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(trustedNetCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(trustedNetCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test
         public void setPeerUser() throws MslMessageException, MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
             final UserIdToken userIdToken = responseBuilder.getPeerUserIdToken();
             assertNotNull(userIdToken);
@@ -2994,23 +2823,19 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void setPeerUserNoPeerMasterToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
         }
         
         @Test(expected = MslInternalException.class)
         public void setPeerUserHasPeerUserIdToken() throws MslEncodingException, MslCryptoException, MslException {
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final MessageHeader request = requestBuilder.getHeader();
             
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(p2pCtx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(p2pCtx, request);
             responseBuilder.setUser(USER_ID_TOKEN.getUser());
         }
         
@@ -3025,14 +2850,12 @@ public class MessageBuilderSuite {
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             final MessageCapabilities caps = new MessageCapabilities(gzipOnly, null, null);
             ctx.setMessageCapabilities(caps);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             assertEquals(caps, request.getMessageCapabilities());
             
             ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertEquals(caps, response.getMessageCapabilities());
         }
@@ -3045,14 +2868,12 @@ public class MessageBuilderSuite {
             
             final MockMslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
             ctx.setMessageCapabilities(null);
-            final MessageBuilder requestBuilder = new MessageBuilder();
-            requestBuilder.createRequest(ctx, null, null);
+            final MessageBuilder requestBuilder = messageFactory.createRequest(ctx, null, null);
             final MessageHeader request = requestBuilder.getHeader();
             assertNull(request.getMessageCapabilities());
             
             ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
-            final MessageBuilder responseBuilder = new MessageBuilder();
-            responseBuilder.createResponse(ctx, request);
+            final MessageBuilder responseBuilder = messageFactory.createResponse(ctx, request);
             final MessageHeader response = responseBuilder.getHeader();
             assertNull(response.getMessageCapabilities());
         }
