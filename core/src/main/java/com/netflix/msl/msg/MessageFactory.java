@@ -157,24 +157,7 @@ public class MessageFactory {
         final ResponseCode errorCode = error.getResponseCode();
         final int internalCode = error.getInternalCode();
         final String errorMsg = error.getMessage();
-        return constructErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
-    }
-
-    /**
-     * Construct a new error header
-     *
-     * @param ctx MSL context.
-     * @param entityAuthData the entity authentication data.
-     * @param messageId the message ID.
-     * @param errorCode the error code.
-     * @param internalCode the internal code. Negative to indicate no code.
-     * @param errorMsg the error message. May be null.
-     * @param userMsg the user message. May be null.
-     * @throws MslMessageException if no entity authentication data is
-     *         provided.
-     */
-    protected ErrorHeader constructErrorHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final long messageId, final ResponseCode errorCode, final int internalCode, final String errorMsg, final String userMsg) throws MslMessageException {
-        return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg);
+        return new ErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
     }
 
     /**

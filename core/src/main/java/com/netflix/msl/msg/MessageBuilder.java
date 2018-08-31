@@ -84,7 +84,14 @@ public class MessageBuilder {
         return (messageId == 0) ? MslConstants.MAX_LONG_VALUE : messageId - 1;
     }
 
-    protected MessageBuilder() {}
+    /**
+     * <p>Create a new message builder.</p>
+     *
+     * @param ctx MSL context.
+     */
+    protected MessageBuilder(final MslContext ctx) {
+        this.ctx = ctx;
+    }
 
     /**
      * <p>Create a new message builder that will craft a new message with the
@@ -99,6 +106,7 @@ public class MessageBuilder {
      *         corresponding master token.
      */
     public MessageBuilder(final MslContext ctx, final MasterToken masterToken, final UserIdToken userIdToken, final long messageId) throws MslException {
+        this.ctx = ctx;
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
         final MessageCapabilities capabilities = ctx.getMessageCapabilities();
@@ -147,7 +155,6 @@ public class MessageBuilder {
             throw new MslInternalException("Cannot set peer master token or peer user ID token when not in peer-to-peer mode.");
         
         // Set the primary fields.
-        this.ctx = ctx;
         this.messageId = messageId;
         this.capabilities = capabilities;
         this.masterToken = masterToken;
@@ -297,11 +304,12 @@ public class MessageBuilder {
         final Set<ServiceToken> peerTokens = new HashSet<ServiceToken>(peerServiceTokens.values());
         final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerTokens);
 
-        return constructMessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
+        return createMessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
     }
 
     /**
      * Construct a new message header
+     *
      * @param ctx MSL context.
      * @param entityAuthData entity authentication data. Null if a master token is provided.
      * @param masterToken master token to renew. Null if the identity is provided.
@@ -309,7 +317,7 @@ public class MessageBuilder {
      * @param peerData message header peer data container.
      * @return the message header.
      */ 
-    protected MessageHeader constructMessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslException, MslCryptoException {
+    protected MessageHeader createMessageHeader(final MslContext ctx, final EntityAuthenticationData entityAuthData, final MasterToken masterToken, final HeaderData headerData, final HeaderPeerData peerData) throws MslException, MslCryptoException {
         return new MessageHeader(ctx, entityAuthData, masterToken, headerData, peerData);
     }
 
@@ -817,8 +825,7 @@ public class MessageBuilder {
     }
 
     /** MSL context. */
-    protected MslContext ctx;
-
+    private final MslContext ctx;
     /** Message header master token. */
     protected MasterToken masterToken;
     /** Header data message ID. */

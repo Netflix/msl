@@ -46,6 +46,7 @@ public class IdempotentResponseMessageBuilder extends MessageBuilder {
      *         to its master token.
      */
     public IdempotentResponseMessageBuilder(final MslContext ctx, final MessageHeader requestHeader) throws MslCryptoException, MslException {
+        super(ctx);
         final MasterToken masterToken = requestHeader.getMasterToken();
         final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
         final UserIdToken userIdToken = requestHeader.getUserIdToken();

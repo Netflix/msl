@@ -380,7 +380,7 @@
                 for (var peerName in this._peerServiceTokens)
                     peerTokens.push(this._peerServiceTokens[peerName]);
                 var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
-                this.constructMessageHeader(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
+                this.createMessageHeader(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
         },
 
@@ -408,7 +408,7 @@
          * @throws MslMessageException if no entity authentication data or master
          *         token is provided.
          */
-        constructMessageHeader: function constructMessageHeader(ctx, entityAuthData, masterToken, headerData, peerData, callback) {
+        createMessageHeader: function createMessageHeader(ctx, entityAuthData, masterToken, headerData, peerData, callback) {
             MessageHeader.create(ctx, entityAuthData, masterToken, headerData, peerData, callback);
         },
 

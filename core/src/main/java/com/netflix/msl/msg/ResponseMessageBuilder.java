@@ -149,6 +149,7 @@ public class ResponseMessageBuilder extends MessageBuilder {
      *         creating or renewing the master token.
      */
     public ResponseMessageBuilder(final MslContext ctx, final MessageHeader requestHeader) throws MslKeyExchangeException, MslCryptoException, MslMasterTokenException, MslUserAuthException, MslException {
+        super(ctx);
         final MasterToken masterToken = requestHeader.getMasterToken();
         final EntityAuthenticationData entityAuthData = requestHeader.getEntityAuthenticationData();
         UserIdToken userIdToken = requestHeader.getUserIdToken();

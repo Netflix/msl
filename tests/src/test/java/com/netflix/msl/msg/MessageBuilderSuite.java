@@ -1166,12 +1166,12 @@ public class MessageBuilderSuite {
         
         @Test(expected = MslInternalException.class)
         public void negativeMessageId() throws MslException {
-            MessageBuilder bldr = messageFactory.createRequest(trustedNetCtx, null, null, -1);
+            messageFactory.createRequest(trustedNetCtx, null, null, -1);
         }
         
         @Test(expected = MslInternalException.class)
         public void tooLargeMessageId() throws MslException {
-            MessageBuilder bldr = messageFactory.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 1);
+            messageFactory.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 1);
         }
     }
     
@@ -1932,7 +1932,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(trustedNetCtx, null, requestMasterToken, headerData, peerData);
                         
-            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
+            messageFactory.createResponse(ctx, request);
         }
         
         @Test
@@ -2003,7 +2003,7 @@ public class MessageBuilderSuite {
             // MSL crypto context.
             final MessageHeader untrustedRequest = (MessageHeader)Header.parseHeader(ctx, mo, CRYPTO_CONTEXTS);
 
-            MessageBuilder bldr = messageFactory.createResponse(ctx, untrustedRequest);
+            messageFactory.createResponse(ctx, untrustedRequest);
         }
         
         @Test
@@ -2120,7 +2120,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(ctx, ctx.getEntityAuthenticationData(null), null, headerData, peerData);
             
-            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
+            messageFactory.createResponse(ctx, request);
         }
         
         @Test
@@ -2570,7 +2570,7 @@ public class MessageBuilderSuite {
             final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
             final MessageHeader request = new MessageHeader(ctx, null, MASTER_TOKEN, headerData, peerData);
             
-            MessageBuilder bldr = messageFactory.createResponse(ctx, request);
+            messageFactory.createResponse(ctx, request);
         }
         
         @Test

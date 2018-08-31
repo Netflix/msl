@@ -205,36 +205,12 @@
                             var errorCode = error.responseCode;
                             var internalCode = error.internalCode;
                             var errorMsg = error.message;
-                            this.constructErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
+                            ErrorHeader.create(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
                         }, self);
                     },
                     error: callback.error,
                 });
             }, self);
         },
-
-        /**
-         * <p>Construct a new error header.</p>
-         *
-         * @param {MslContext} ctx MSL context.
-         * @param {EntityAuthenticationData} entityAuthData the entity authentication data.
-         * @param {number} messageId the message ID.
-         * @param {MslConstants.ResponseCode} errorCode the error code.
-         * @param {number} internalCode the internal code. Negative to indicate no code.
-         * @param {?string} errorMsg the error message. May be null.
-         * @param {?string} userMsg the user message. May be null.
-         * @param {?CreationData} creationData optional creation data.
-         * @throws MslEncodingException if there is an error encoding the JSON
-         *         data.
-         * @throws MslCryptoException if there is an error encrypting or signing
-         *         the message.
-         * @throws MslEntityAuthException if there is an error with the entity
-         *         authentication data.
-         * @throws MslMessageException if no entity authentication data is
-         *         provided.
-         */
-        constructErrorHeader: function constructErrorHeader(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, callback) {
-            ErrorHeader.create(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMsg, callback);
-        }
 	});
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MessageFactory'));
