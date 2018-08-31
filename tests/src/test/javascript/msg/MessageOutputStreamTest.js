@@ -38,7 +38,7 @@ describe("MessageOutputStream", function() {
     var MslObject = require('msl-core/io/MslObject.js');
     var Arrays = require('msl-core/util/Arrays.js');
     var InterruptibleExecutor = require('msl-core/util/InterruptibleExecutor.js');
-    var MessageBuilder = require('msl-core/msg/MessageBuilder.js');
+    var MessageFactory = require('msl-core/msg/MessageFactory.js');
     var MessageCapabilities = require('msl-core/msg/MessageCapabilities.js');
     var MslInternalException = require('msl-core/MslInternalException.js');
     var MslError = require('msl-core/MslError.js');
@@ -50,6 +50,9 @@ describe("MessageOutputStream", function() {
 
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
+
+    /** Message factory. */
+    var messageFactory = new MessageFactory();
 
     /** Maximum number of payload chunks to generate. */
     var MAX_PAYLOAD_CHUNKS = 10;
@@ -1767,7 +1770,7 @@ describe("MessageOutputStream", function() {
 
             // The intersection of compression algorithms is computed when a
             // response header is generated.
-            MessageBuilder.createResponse(ctx, MESSAGE_HEADER, {
+            messageFactory.createResponse(ctx, MESSAGE_HEADER, {
                 result: function(x) { responseBuilder = x; },
                 error: function(e) { expect(function() { throw e; }).not.toThrow(); },
             });

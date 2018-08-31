@@ -34,7 +34,9 @@ describe("MessageBuilder", function() {
     var Header = require('msl-core/msg/Header.js');
     var MessageHeader = require('msl-core/msg/MessageHeader.js');
     var MslConstants = require('msl-core/MslConstants.js');
+    var MessageFactory = require('msl-core/msg/MessageFactory.js');
     var MessageBuilder = require('msl-core/msg/MessageBuilder.js');
+    var ResopnseMessageBuilder = require('msl-core/msg/ResponseMessageBuilder.js');
     var MslInternalException = require('msl-core/MslInternalException.js');
     var Arrays = require('msl-core/util/Arrays.js');
     var ServiceToken = require('msl-core/tokens/ServiceToken.js');
@@ -62,6 +64,9 @@ describe("MessageBuilder", function() {
 	var USER_ID = "userid";
 	var PEER_USER_ID = "peeruserid";
 	var PARAMETERS_ID = "1";
+
+    /** Message factory. */
+    var messageFactory = new MessageFactory();
 
 	/** Random. */
 	var random = new Random();
@@ -264,7 +269,7 @@ describe("MessageBuilder", function() {
 		it("create null request", function() {
 			var builder;
 			runs(function() {
-				MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+				messageFactory.createRequest(trustedNetCtx, null, null, null, {
 					result: function(b) { builder = b; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -309,7 +314,7 @@ describe("MessageBuilder", function() {
 		it("p2p create null request", function() {
 			var builder;
 			runs(function() {
-				MessageBuilder.createRequest(p2pCtx, null, null, null, {
+				messageFactory.createRequest(p2pCtx, null, null, null, {
 					result: function(b) { builder = b; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -365,7 +370,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -421,7 +426,7 @@ describe("MessageBuilder", function() {
 			var messageId = 17;
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, messageId, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, messageId, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -497,7 +502,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -556,7 +561,7 @@ describe("MessageBuilder", function() {
 		it("create handshake request", function() {
 		    var builder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -603,7 +608,7 @@ describe("MessageBuilder", function() {
 		it("p2p create handshake request", function() {
 		    var builder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, null, null, null, {
+                messageFactory.createRequest(p2pCtx, null, null, null, {
                     result: function(b) { builder = b; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -659,7 +664,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(rsaCtx, null, null, null, {
+			    messageFactory.createRequest(rsaCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -686,7 +691,7 @@ describe("MessageBuilder", function() {
             
             var builder;
             runs(function() {
-                MessageBuilder.createRequest(noneCtx, null, null, null, {
+                messageFactory.createRequest(noneCtx, null, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -734,7 +739,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-				MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+				messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 					result: function(x) { builder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -794,7 +799,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-				MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+				messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 					result: function(x) { builder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -832,7 +837,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -893,7 +898,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -951,7 +956,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1001,7 +1006,7 @@ describe("MessageBuilder", function() {
 		it("overwrite key request data", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1048,7 +1053,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1093,7 +1098,7 @@ describe("MessageBuilder", function() {
 		it("non-replayable with null master token", function() {
 		    var builder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1130,7 +1135,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1159,7 +1164,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1201,7 +1206,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, userIdTokenA, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1230,7 +1235,7 @@ describe("MessageBuilder", function() {
 			
             var builder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+                messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -1257,7 +1262,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1307,7 +1312,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1351,7 +1356,7 @@ describe("MessageBuilder", function() {
 		it("delete unknown service token", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1389,7 +1394,7 @@ describe("MessageBuilder", function() {
 		it("trusted network create peer request", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1407,7 +1412,7 @@ describe("MessageBuilder", function() {
 		it("p2p create peer request with missing peer master token", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1425,7 +1430,7 @@ describe("MessageBuilder", function() {
 		it("p2p create peer request with mismatched peer master token", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1452,7 +1457,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1479,7 +1484,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1506,7 +1511,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1534,7 +1539,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1575,7 +1580,7 @@ describe("MessageBuilder", function() {
 
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1603,7 +1608,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1655,7 +1660,7 @@ describe("MessageBuilder", function() {
 			
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1700,7 +1705,7 @@ describe("MessageBuilder", function() {
 		it("delete unknown peer service token", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1760,7 +1765,7 @@ describe("MessageBuilder", function() {
 				store.addServiceTokens(serviceTokens);
 				store.addServiceTokens(peerServiceTokens);
 
-				MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+				messageFactory.createRequest(trustedNetCtx, null, null, null, {
 					result: function(x) { builder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1815,7 +1820,7 @@ describe("MessageBuilder", function() {
 		    	store.addServiceTokens(serviceTokens);
 		    	store.addServiceTokens(peerServiceTokens);
 
-		    	MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+		    	messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 		    		result: function(x) { builder = x; },
 		    		error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    	});
@@ -1871,7 +1876,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
 
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			    	result: function(x) { builder = x; },
 			    	error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1927,7 +1932,7 @@ describe("MessageBuilder", function() {
 				store.addServiceTokens(serviceTokens);
 				store.addServiceTokens(peerServiceTokens);
 
-				MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+				messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 					result: function(x) { builder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1961,7 +1966,7 @@ describe("MessageBuilder", function() {
 		it("set null master token", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -1990,7 +1995,7 @@ describe("MessageBuilder", function() {
 		it("set mismatched authentication tokens", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2008,7 +2013,7 @@ describe("MessageBuilder", function() {
 		it("set user", function() {
 			var builder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 			        result: function(x) { builder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2034,7 +2039,7 @@ describe("MessageBuilder", function() {
         it("set user with no master token", function() {
             var builder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2059,7 +2064,7 @@ describe("MessageBuilder", function() {
         it("set user with existing user ID token", function() {
     		var builder;
     		runs(function() {
-    		    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+    		    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
     		        result: function(x) { builder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -2084,7 +2089,7 @@ describe("MessageBuilder", function() {
         it("p2p set user", function() {
             var builder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, null, null, null, {
+                messageFactory.createRequest(p2pCtx, null, null, null, {
                     result: function(x) { builder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2111,7 +2116,7 @@ describe("MessageBuilder", function() {
         it("p2p set user with no peer master token", function() {
     		var builder;
     		runs(function() {
-    		    MessageBuilder.createRequest(p2pCtx, null, null, null, {
+    		    messageFactory.createRequest(p2pCtx, null, null, null, {
     		        result: function(x) { builder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -2136,7 +2141,7 @@ describe("MessageBuilder", function() {
         it("p2p set user with existing peer user ID token", function() {
     		var builder;
     		runs(function() {
-    		    MessageBuilder.createRequest(p2pCtx, null, null, null, {
+    		    messageFactory.createRequest(p2pCtx, null, null, null, {
     		        result: function(x) { builder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -2162,7 +2167,7 @@ describe("MessageBuilder", function() {
 		it("negative message ID", function() {
 			var exception;
 			runs(function() {
-				MessageBuilder.createRequest(trustedNetCtx, null, null, -1, {
+				messageFactory.createRequest(trustedNetCtx, null, null, -1, {
 					result: function() {},
 					error: function(e) { exception = e; }
 				});
@@ -2178,7 +2183,7 @@ describe("MessageBuilder", function() {
 		it("too large message ID", function() {
 			var exception;
 			runs(function() {
-				MessageBuilder.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 2, {
+				messageFactory.createRequest(trustedNetCtx, null, null, MslConstants.MAX_LONG_VALUE + 2, {
 					result: function() {},
 					error: function(e) { exception = e; }
 				});
@@ -2201,7 +2206,7 @@ describe("MessageBuilder", function() {
 		it("ctor", function() {
 			var errorHeader;
 			runs(function() {
-			    MessageBuilder.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE, {
+			    messageFactory.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, USER_MESSAGE, {
 			        result: function(x) { errorHeader = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2221,7 +2226,7 @@ describe("MessageBuilder", function() {
 			var messageId = MslConstants.MAX_LONG_VALUE;
 			var errorHeader;
 			runs(function() {
-			    MessageBuilder.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE, {
+			    messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE, {
 			        result: function(x) { errorHeader = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2240,7 +2245,7 @@ describe("MessageBuilder", function() {
 		it("null message ID", function() {
 			var errorHeader;
 			runs(function() {
-			    MessageBuilder.createErrorResponse(trustedNetCtx, null, MSL_ERROR, USER_MESSAGE, {
+			    messageFactory.createErrorResponse(trustedNetCtx, null, MSL_ERROR, USER_MESSAGE, {
 			        result: function(x) { errorHeader = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2260,7 +2265,7 @@ describe("MessageBuilder", function() {
 			var exception;
 			runs(function() {
 				var messageId = -12;
-				MessageBuilder.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE, {
+				messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE, {
 					result: function() {},
 					error: function(err) { exception = err; }
 				});
@@ -2276,7 +2281,7 @@ describe("MessageBuilder", function() {
 		it("null user message", function() {
             var errorHeader;
             runs(function() {
-                MessageBuilder.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, null, {
+                messageFactory.createErrorResponse(trustedNetCtx, REQUEST_MESSAGE_ID, MSL_ERROR, null, {
                     result: function(x) { errorHeader = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2352,7 +2357,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2374,7 +2379,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2436,7 +2441,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2462,7 +2467,7 @@ describe("MessageBuilder", function() {
 			// The tokens should be swapped.
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2517,7 +2522,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2539,7 +2544,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2603,7 +2608,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, null, null, null, {
+                messageFactory.createRequest(p2pCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2629,7 +2634,7 @@ describe("MessageBuilder", function() {
             // The tokens should be swapped.
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(p2pCtx, request, {
+                messageFactory.createResponse(p2pCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2680,7 +2685,7 @@ describe("MessageBuilder", function() {
 		it("create response", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2698,7 +2703,89 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
+			        result: function(x) { responseBuilder = x; },
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return responseBuilder; }, "responseBuilder not received", 200);
+
+			var serviceTokens;
+			runs(function() {
+			    MslTestUtils.getServiceTokens(trustedNetCtx, null, null, {
+			        result: function(t) { serviceTokens = t; },
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
+
+			var response;
+			runs(function() {
+				responseBuilder.setNonReplayable(true);
+				responseBuilder.setRenewable(true);
+				KEY_REQUEST_DATA.forEach(function(keyRequestData) {
+					responseBuilder.addKeyRequestData(keyRequestData);
+				}, this);
+				
+				serviceTokens.forEach(function(serviceToken) {
+					responseBuilder.addServiceToken(serviceToken);
+				}, this);
+				responseBuilder.setUserAuthenticationData(USER_AUTH_DATA);
+				expect(responseBuilder.willEncryptHeader()).toBeTruthy();
+				expect(responseBuilder.willEncryptPayloads()).toBeTruthy();
+				expect(Arrays.containEachOther(responseBuilder.getServiceTokens(), serviceTokens)).toBeTruthy();
+				expect(responseBuilder.getPeerServiceTokens().length).toEqual(0);
+				
+			    responseBuilder.getHeader({
+			        result: function(x) { response = x; },
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return response; }, "response not received", MslTestConstants.TIMEOUT);
+			
+			runs(function() {
+				expect(response).not.toBeNull();
+				expect(response.nonReplayableId).not.toBeNull();
+				expect(response.isRenewable()).toBeTruthy();
+                expect(response.isHandshake()).toBeFalsy();
+				expect(response.cryptoContext).not.toBeNull();
+				expect(response.entityAuthenticationData).toBeNull();
+				expect(Arrays.containEachOther(response.keyRequestData, KEY_REQUEST_DATA)).toBeTruthy();
+				expect(response.keyResponseData).toBeNull();
+				expect(response.masterToken).toEqual(MASTER_TOKEN);
+				expect(response.messageId).toEqual(incrementLong(request.messageId));
+				expect(response.messageCapabilities).toEqual(trustedNetCtx.getMessageCapabilities());
+				expect(response.peerMasterToken).toBeNull();
+				expect(response.peerServiceTokens.length).toEqual(0);
+				expect(response.peerUserIdToken).toBeNull();
+				expect(Arrays.containEachOther(response.serviceTokens, serviceTokens)).toBeTruthy();
+				expect(response.userAuthenticationData).toEqual(USER_AUTH_DATA);
+				expect(response.userIdToken).toEqual(USER_ID_TOKEN);
+			});
+		});
+
+		it("create idempotent response", function() {
+			var requestBuilder;
+			runs(function() {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			        result: function(x) { requestBuilder = x; },
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return requestBuilder; }, "requestBuilder not received", MslTestConstants.TIMEOUT);
+			
+			var request;
+			runs(function() {
+			    requestBuilder.getHeader({
+			        result: function(x) { request = x; },
+			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+			    });
+			});
+			waitsFor(function() { return request; }, "request not received", MslTestConstants.TIMEOUT);
+
+			var responseBuilder;
+			runs(function() {
+			    messageFactory.createIdempotentResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2762,7 +2849,7 @@ describe("MessageBuilder", function() {
 		it("p2p create response", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2780,7 +2867,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -2856,7 +2943,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2878,7 +2965,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2943,7 +3030,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -2969,7 +3056,7 @@ describe("MessageBuilder", function() {
             // The tokens should be swapped.
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(p2pCtx, request, {
+                messageFactory.createResponse(p2pCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3027,7 +3114,7 @@ describe("MessageBuilder", function() {
 			
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(rsaCtx, null, null, null, {
+			    messageFactory.createRequest(rsaCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3045,7 +3132,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(rsaCtx, request, {
+			    messageFactory.createResponse(rsaCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3071,7 +3158,7 @@ describe("MessageBuilder", function() {
 			
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(rsaCtx, null, null, null, {
+			    messageFactory.createRequest(rsaCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3094,7 +3181,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(rsaCtx, request, {
+			    messageFactory.createResponse(rsaCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3110,7 +3197,7 @@ describe("MessageBuilder", function() {
 		it("stored service tokens", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3151,7 +3238,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
 
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3183,7 +3270,7 @@ describe("MessageBuilder", function() {
 		it("stored peer service tokens", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3225,7 +3312,7 @@ describe("MessageBuilder", function() {
 				store.addServiceTokens(serviceTokens);
 				store.addServiceTokens(peerServiceTokens);
 
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3266,7 +3353,7 @@ describe("MessageBuilder", function() {
 		it("add service token with key response data", function() {
 		    var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3290,7 +3377,7 @@ describe("MessageBuilder", function() {
             
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3331,7 +3418,7 @@ describe("MessageBuilder", function() {
         it("add service token with no key exchange data", function() {
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3349,7 +3436,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3381,7 +3468,7 @@ describe("MessageBuilder", function() {
         it("add service token with mismatched key exchange data master token", function() {
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3404,7 +3491,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3436,7 +3523,7 @@ describe("MessageBuilder", function() {
         it("p2p add service token with mismatched key exchange data master token", function() {
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, null, null, null, {
+                messageFactory.createRequest(p2pCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3460,7 +3547,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(p2pCtx, request, {
+                messageFactory.createResponse(p2pCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3505,7 +3592,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3540,7 +3627,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3563,7 +3650,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3604,7 +3691,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(p2pCtx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3627,7 +3714,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3669,7 +3756,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3692,7 +3779,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3736,7 +3823,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, null, null, {
+                messageFactory.createRequest(trustedNetCtx, requestMasterToken, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3759,7 +3846,7 @@ describe("MessageBuilder", function() {
 
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -3799,7 +3886,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3822,7 +3909,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3863,7 +3950,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3882,7 +3969,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -3943,7 +4030,7 @@ describe("MessageBuilder", function() {
 			        if (scheme)
 			            ctx.removeKeyExchangeFactories(scheme);
 			    }
-				MessageBuilder.createResponse(ctx, request, {
+				messageFactory.createResponse(ctx, request, {
 					result: function() {},
 					error: function(err) { exception = err; }
 				});
@@ -3979,7 +4066,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, requestMasterToken, null, null, {
+			    messageFactory.createRequest(ctx, requestMasterToken, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4012,7 +4099,7 @@ describe("MessageBuilder", function() {
                 }
 				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange(new MockAuthenticationUtils()));
 				
-			    MessageBuilder.createResponse(ctx, request, {
+			    messageFactory.createResponse(ctx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4124,7 +4211,7 @@ describe("MessageBuilder", function() {
 
 			var exception;
 			runs(function() {
-				MessageBuilder.createResponse(ctx, untrustedRequest, {
+				messageFactory.createResponse(ctx, untrustedRequest, {
 					result: function(x) {},
 					error: function(err) { exception = err; }
 				});
@@ -4140,7 +4227,7 @@ describe("MessageBuilder", function() {
 		it("create response to request with key response data", function() {
 			var localRequestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { localRequestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4162,7 +4249,7 @@ describe("MessageBuilder", function() {
             
 			var remoteResponse;
 			runs(function() {
-				MessageBuilder.createResponse(trustedNetCtx, localRequest, {
+				messageFactory.createResponse(trustedNetCtx, localRequest, {
 					result: function(remoteResponseBuilder) {
 						remoteResponseBuilder.getHeader({
 							result: function(x) { remoteResponse = x; },
@@ -4179,7 +4266,7 @@ describe("MessageBuilder", function() {
 	            keyResponseData = remoteResponse.keyResponseData;
 	            expect(keyResponseData).not.toBeNull();
 	            
-	            MessageBuilder.createResponse(trustedNetCtx, remoteResponse, {
+	            messageFactory.createResponse(trustedNetCtx, remoteResponse, {
 	            	result: function(localResponseBuilder) {
 	            		localResponseBuilder.getHeader({
 	            			result: function(x) { localResponse = x; },
@@ -4201,7 +4288,7 @@ describe("MessageBuilder", function() {
 		it("p2p create response to request with key response data", function() {
 			var localRequestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, null, null, null, {
+			    messageFactory.createRequest(p2pCtx, null, null, null, {
 			        result: function(x) { localRequestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4223,7 +4310,7 @@ describe("MessageBuilder", function() {
             
 			var remoteResponse;
 			runs(function() {
-				MessageBuilder.createResponse(p2pCtx, localRequest, {
+				messageFactory.createResponse(p2pCtx, localRequest, {
 					result: function(remoteResponseBuilder) {
 						remoteResponseBuilder.getHeader({
 							result: function(x) { remoteResponse = x; },
@@ -4242,7 +4329,7 @@ describe("MessageBuilder", function() {
 	            keyResponseData = remoteResponse.keyResponseData;
 	            expect(keyResponseData).not.toBeNull();
 	            
-	            MessageBuilder.createResponse(p2pCtx, remoteResponse, {
+	            messageFactory.createResponse(p2pCtx, remoteResponse, {
 	            	result: function(localResponseBuilder) {
 	            		localResponseBuilder.getHeader({
 	            			result: function(x) { localResponse = x; },
@@ -4261,7 +4348,7 @@ describe("MessageBuilder", function() {
 	            expect(localMasterToken.equals(keyResponseData.masterToken)).toBeTruthy();
 	            expect(localResponse.peerMasterToken).toBeNull();
 	            
-	            MessageBuilder.createResponse(p2pCtx, localResponse, {
+	            messageFactory.createResponse(p2pCtx, localResponse, {
 	            	result: function(remoteSecondResponseBuilder) {
 	            		remoteSecondResponseBuilder.getHeader({
 	            			result: function(x) { remoteSecondResponse = x; },
@@ -4284,7 +4371,7 @@ describe("MessageBuilder", function() {
 		it("not renewable request with entity authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			   MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			   messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4305,7 +4392,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4331,7 +4418,7 @@ describe("MessageBuilder", function() {
 		it("renewable request with entity authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4353,7 +4440,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4381,7 +4468,7 @@ describe("MessageBuilder", function() {
 		it("p2p renewable request with entity authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, null, null, null, {
+			    messageFactory.createRequest(p2pCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4403,7 +4490,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4467,7 +4554,7 @@ describe("MessageBuilder", function() {
                     if (scheme)
                         ctx.removeKeyExchangeFactories(scheme);
                 }
-				MessageBuilder.createResponse(ctx, request, {
+				messageFactory.createResponse(ctx, request, {
 					result: function() {},
 					error: function(err) { exception = err; }
 				});
@@ -4492,7 +4579,7 @@ describe("MessageBuilder", function() {
 			
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, null, null, null, {
+			    messageFactory.createRequest(ctx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4524,7 +4611,7 @@ describe("MessageBuilder", function() {
                 }
 				ctx.addKeyExchangeFactory(new SymmetricWrappedExchange(new MockAuthenticationUtils()));
 
-			    MessageBuilder.createResponse(ctx, request, {
+			    messageFactory.createResponse(ctx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4559,7 +4646,7 @@ describe("MessageBuilder", function() {
 			
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4578,7 +4665,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4619,7 +4706,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4637,7 +4724,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4679,7 +4766,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4698,7 +4785,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4740,7 +4827,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4759,7 +4846,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4800,7 +4887,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4818,7 +4905,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4891,7 +4978,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken, null, {
+			    messageFactory.createRequest(ctx, MASTER_TOKEN, unverifiedUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4909,7 +4996,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(ctx, request, {
+			    messageFactory.createResponse(ctx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4961,7 +5048,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -4983,7 +5070,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5039,7 +5126,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, null, {
+			    messageFactory.createRequest(trustedNetCtx, requestMasterToken, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5058,7 +5145,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5109,7 +5196,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, requestMasterToken, requestUserIdToken, null, {
+			    messageFactory.createRequest(p2pCtx, requestMasterToken, requestUserIdToken, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5131,7 +5218,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5168,7 +5255,7 @@ describe("MessageBuilder", function() {
 		it("master token with user authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5188,7 +5275,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5223,7 +5310,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(ctx, MASTER_TOKEN, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5260,7 +5347,7 @@ describe("MessageBuilder", function() {
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-					    MessageBuilder.createResponse(ctx, moRequest, {
+					    messageFactory.createResponse(ctx, moRequest, {
 					        result: function(x) { responseBuilder = x; },
 					        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 					    });
@@ -5289,7 +5376,7 @@ describe("MessageBuilder", function() {
 		it("p2p master token with user authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5309,7 +5396,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5345,7 +5432,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(ctx, MASTER_TOKEN, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5382,7 +5469,7 @@ describe("MessageBuilder", function() {
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-						MessageBuilder.createResponse(ctx, moRequest, {
+						messageFactory.createResponse(ctx, moRequest, {
 							result: function(x) { responseBuilder = x; },
 							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 						});
@@ -5411,7 +5498,7 @@ describe("MessageBuilder", function() {
 		it("entity authentication data and user authentication data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5435,7 +5522,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5476,7 +5563,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(ctx, null, null, null, {
+			    messageFactory.createRequest(ctx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5517,7 +5604,7 @@ describe("MessageBuilder", function() {
 						// does not perform it.
 						ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-						MessageBuilder.createResponse(ctx, moRequest, {
+						messageFactory.createResponse(ctx, moRequest, {
 							result: function(x) { responseBuilder = x; },
 							error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 						});
@@ -5552,7 +5639,7 @@ describe("MessageBuilder", function() {
 		it("entity authentication data and user authentication data with no key request data", function() {
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, null, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5572,7 +5659,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5599,7 +5686,7 @@ describe("MessageBuilder", function() {
 		it("p2p entity authentication data and user authentication data", function() {
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(p2pCtx, null, null, null, {
+                messageFactory.createRequest(p2pCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -5622,7 +5709,7 @@ describe("MessageBuilder", function() {
 
 			var responseBuilder;
 			runs(function() {
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5663,7 +5750,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(ctx, null, null, null, {
+                messageFactory.createRequest(ctx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -5703,7 +5790,7 @@ describe("MessageBuilder", function() {
                 		// does not perform it.
                 		ctx.removeUserAuthenticationFactory(USER_AUTH_DATA.scheme);
 
-                		MessageBuilder.createResponse(ctx, moRequest, {
+                		messageFactory.createResponse(ctx, moRequest, {
                 			result: function(x) { responseBuilder = x; },
                 			error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 		});
@@ -5764,7 +5851,7 @@ describe("MessageBuilder", function() {
                         ctx.removeUserAuthenticationFactory(scheme);
                 }
 
-				MessageBuilder.createResponse(ctx, request, {
+				messageFactory.createResponse(ctx, request, {
 				    result: function() {},
 				    error: function(e) { exception = e; }
 				});
@@ -5792,7 +5879,7 @@ describe("MessageBuilder", function() {
 
             var requestBuilder;
             runs(function() {
-                MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+                messageFactory.createRequest(trustedNetCtx, null, null, null, {
                     result: function(x) { requestBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -5817,7 +5904,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
 			    
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5860,7 +5947,7 @@ describe("MessageBuilder", function() {
 
 			var requestBuilder;
 			runs(function() {
-			    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+			    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
 			        result: function(x) { requestBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5885,7 +5972,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
 			    
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5928,7 +6015,7 @@ describe("MessageBuilder", function() {
 
         	var requestBuilder;
         	runs(function() {
-        	    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+        	    messageFactory.createRequest(trustedNetCtx, null, null, null, {
         	        result: function(x) { requestBuilder = x; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -5953,7 +6040,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
                 
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -5996,7 +6083,7 @@ describe("MessageBuilder", function() {
 
         	var requestBuilder;
         	runs(function() {
-        	    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+        	    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
         	        result: function(x) { requestBuilder = x; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -6021,7 +6108,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
                 
-			    MessageBuilder.createResponse(trustedNetCtx, request, {
+			    messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -6051,7 +6138,7 @@ describe("MessageBuilder", function() {
 		it("set null master token", function() {
         	var requestBuilder;
         	runs(function() {
-        	    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+        	    messageFactory.createRequest(trustedNetCtx, null, null, null, {
         	        result: function(x) { requestBuilder = x; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -6069,7 +6156,7 @@ describe("MessageBuilder", function() {
 		    
 			var responseBuilder;
 			runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -6095,7 +6182,7 @@ describe("MessageBuilder", function() {
 		it("set mismatched authentication tokens", function() {
         	var requestBuilder;
         	runs(function() {
-        	    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+        	    messageFactory.createRequest(trustedNetCtx, null, null, null, {
         	        result: function(x) { requestBuilder = x; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -6113,7 +6200,7 @@ describe("MessageBuilder", function() {
             
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -6147,7 +6234,7 @@ describe("MessageBuilder", function() {
 
         	var requestBuilder;
         	runs(function() {
-        	    MessageBuilder.createRequest(trustedNetCtx, masterToken, null, null, {
+        	    messageFactory.createRequest(trustedNetCtx, masterToken, null, null, {
         	        result: function(x) { requestBuilder = x; },
         	        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
         	    });
@@ -6169,7 +6256,7 @@ describe("MessageBuilder", function() {
 		
             var responseBuilder;
             runs(function() {
-                MessageBuilder.createResponse(trustedNetCtx, request, {
+                messageFactory.createResponse(trustedNetCtx, request, {
                     result: function(x) { responseBuilder = x; },
                     error: function(e) { expect(function() { throw e; }).not.toThrow(); }
                 });
@@ -6187,7 +6274,7 @@ describe("MessageBuilder", function() {
 		it("p2p set master token when key exchange data exists", function() {
 		    var requestBuilder;
 		    runs(function() {
-		        MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+		        messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
 		            result: function(x) { requestBuilder = x; },
 		            error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		        });
@@ -6229,7 +6316,7 @@ describe("MessageBuilder", function() {
 			    store.addServiceTokens(serviceTokens);
 			    store.addServiceTokens(peerServiceTokens);
 
-			    MessageBuilder.createResponse(p2pCtx, request, {
+			    messageFactory.createResponse(p2pCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -6264,7 +6351,7 @@ describe("MessageBuilder", function() {
         it("set user", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
+    		    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, null, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6282,7 +6369,7 @@ describe("MessageBuilder", function() {
         	
         	var responseBuilder;
 			runs(function() {
-            	MessageBuilder.createResponse(trustedNetCtx, request, {
+            	messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -6308,7 +6395,7 @@ describe("MessageBuilder", function() {
         it("set user with no master token", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(trustedNetCtx, null, null, null, {
+    		    messageFactory.createRequest(trustedNetCtx, null, null, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6326,7 +6413,7 @@ describe("MessageBuilder", function() {
         	
         	var responseBuilder;
 			runs(function() {
-				MessageBuilder.createResponse(trustedNetCtx, request, {
+				messageFactory.createResponse(trustedNetCtx, request, {
 			        result: function(x) { responseBuilder = x; },
 			        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			    });
@@ -6351,7 +6438,7 @@ describe("MessageBuilder", function() {
         it("set user with existing user ID token", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+    		    messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6369,7 +6456,7 @@ describe("MessageBuilder", function() {
 
         	var responseBuilder;
 			runs(function() {
-				MessageBuilder.createResponse(trustedNetCtx, request, {
+				messageFactory.createResponse(trustedNetCtx, request, {
 					result: function(x) { responseBuilder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -6394,7 +6481,7 @@ describe("MessageBuilder", function() {
         it("p2p set user", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, null, null, {
+    		    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, null, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6412,7 +6499,7 @@ describe("MessageBuilder", function() {
 
         	var responseBuilder;
 			runs(function() {
-				MessageBuilder.createResponse(p2pCtx, request, {
+				messageFactory.createResponse(p2pCtx, request, {
 					result: function(x) { responseBuilder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -6438,7 +6525,7 @@ describe("MessageBuilder", function() {
         it("p2p set user with no peer master token", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(p2pCtx, null, null, null, {
+    		    messageFactory.createRequest(p2pCtx, null, null, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6456,7 +6543,7 @@ describe("MessageBuilder", function() {
         	
         	var responseBuilder;
 			runs(function() {
-				MessageBuilder.createResponse(p2pCtx, request, {
+				messageFactory.createResponse(p2pCtx, request, {
 					result: function(x) { responseBuilder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -6481,7 +6568,7 @@ describe("MessageBuilder", function() {
         it("p2p set user with existing peer user ID token", function() {
     		var requestBuilder;
     		runs(function() {
-    		    MessageBuilder.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+    		    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
     		        result: function(x) { requestBuilder = x; },
     		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
     		    });
@@ -6499,7 +6586,7 @@ describe("MessageBuilder", function() {
 
         	var responseBuilder;
 			runs(function() {
-				MessageBuilder.createResponse(p2pCtx, request, {
+				messageFactory.createResponse(p2pCtx, request, {
 					result: function(x) { responseBuilder = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -6538,7 +6625,7 @@ describe("MessageBuilder", function() {
             var request;
             runs(function() {
                 ctx.setMessageCapabilities(caps);
-                MessageBuilder.createRequest(ctx, null, null, null, {
+                messageFactory.createRequest(ctx, null, null, null, {
                     result: function(requestBuilder) {
                         requestBuilder.getHeader({
                             result: function(x) { request = x; },
@@ -6555,7 +6642,7 @@ describe("MessageBuilder", function() {
                 expect(request.messageCapabilities).toEqual(caps);
                 
                 ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
-                MessageBuilder.createResponse(ctx, request, {
+                messageFactory.createResponse(ctx, request, {
                     result: function(responseBuilder) {
                         responseBuilder.getHeader({
                             result: function(x) { response = x; },
@@ -6587,7 +6674,7 @@ describe("MessageBuilder", function() {
             var request;
             runs(function() {
                 ctx.setMessageCapabilities(null);
-                MessageBuilder.createRequest(ctx, null, null, null, {
+                messageFactory.createRequest(ctx, null, null, null, {
                     result: function(requestBuilder) {
                         requestBuilder.getHeader({
                             result: function(x) { request = x; },
@@ -6604,7 +6691,7 @@ describe("MessageBuilder", function() {
                 expect(request.messageCapabilities).toBeNull();
                 
                 ctx.setMessageCapabilities(new MessageCapabilities(algos, null, null));
-                MessageBuilder.createResponse(ctx, request, {
+                messageFactory.createResponse(ctx, request, {
                     result: function(responseBuilder) {
                         responseBuilder.getHeader({
                             result: function(x) { response = x; },
