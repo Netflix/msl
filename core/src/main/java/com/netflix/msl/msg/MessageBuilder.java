@@ -128,7 +128,7 @@ public class MessageBuilder {
     }
 
     /**
-     * Create a new message builder with the provided tokens and key exchange
+     * Initialize a message builder with the provided tokens and key exchange
      * data if a master token was issued or renewed.
      * 
      * @param ctx MSL context.

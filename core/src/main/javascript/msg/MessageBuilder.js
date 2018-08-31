@@ -115,7 +115,7 @@
         },
 
         /**
-         * Create a new message builder with the provided tokens and key exchange
+         * initialize a message builder with the provided tokens and key exchange
          * data if a master token was issued or renewed.
          *
          * @param {MslContext} ctx MSL context.
@@ -123,11 +123,11 @@
          * @param {MessageCapabilities} message capabilities.
          * @param {EntityAuthenticationData} entityAuthData entity
          *        authentication data.
-         * @param {MsaterToken} masterToken master token. May be null unless a user ID token is
+         * @param {MasterToken} masterToken master token. May be null unless a user ID token is
          *        provided.
          * @param {UserIdToken} userIdToken user ID token. May be null.
          * @param {Array.<ServiceToken>} serviceTokens initial set of service tokens. May be null.
-         * @param {MasterToken }peerMasterToken peer master token. May be null unless a peer user
+         * @param {MasterToken} peerMasterToken peer master token. May be null unless a peer user
          *        ID token is provided.
          * @param {UserIdToken} peerUserIdToken peer user ID token. May be null.
          * @param {Array.<ServiceToken>} peerServiceTokens initial set of peer service tokens.
