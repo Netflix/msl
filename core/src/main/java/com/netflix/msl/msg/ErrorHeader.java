@@ -341,12 +341,12 @@ public class ErrorHeader extends Header {
     }
 
     /** MSL context. */
-    private final MslContext ctx;
+    protected final MslContext ctx;
     
     /** Entity authentication data. */
-    private final EntityAuthenticationData entityAuthData;
+    protected final EntityAuthenticationData entityAuthData;
     /** Error data. */
-    private final MslObject errordata;
+    protected final MslObject errordata;
     
     /** Timestamp in seconds since the epoch. */
     private final Long timestamp;
@@ -362,5 +362,5 @@ public class ErrorHeader extends Header {
     private final String userMsg;
     
     /** Cached encodings. */
-    private final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
+    protected final Map<MslEncoderFormat,byte[]> encodings = new HashMap<MslEncoderFormat,byte[]>();
 }

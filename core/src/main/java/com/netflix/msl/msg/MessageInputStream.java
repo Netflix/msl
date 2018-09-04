@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -363,6 +363,23 @@ public class MessageInputStream extends InputStream {
     }
 
     /**
+     * Create a new payload chunk
+     *
+     * @param ctx the MSL context.
+     * @param payloadChunkMo the MSL object.
+     * @param cryptoContext the crypto context.
+     * @throws MslCryptoException if there is a problem decrypting or verifying
+     *         the payload chunk.
+     * @throws MslEncodingException if there is a problem parsing the data.
+     * @throws MslMessageException if the compression algorithm is not known,
+     *         or the payload data is corrupt or missing.
+     * @throws MslException if there is an error uncompressing the data.
+     */
+    protected PayloadChunk createPayloadChunk(final MslContext ctx, final MslObject mo, final ICryptoContext cryptoContext) throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        return new PayloadChunk(ctx, mo, cryptoContext);
+    }
+
+    /**
      * Retrieve the next payload chunk data.
      *
      * @return the next payload chunk data or null if none remaining.
@@ -387,7 +404,7 @@ public class MessageInputStream extends InputStream {
         // Otherwise read the next payload.
         final MslObject mo = nextMslObject();
         if (mo == null) return null;
-        final PayloadChunk payload = new PayloadChunk(ctx, mo, cryptoContext);
+        final PayloadChunk payload = createPayloadChunk(ctx, mo, cryptoContext);
 
         // Make sure the payload belongs to this message and is the one we are
         // expecting.

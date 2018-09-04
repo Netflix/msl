@@ -103,6 +103,7 @@ public class MessageOutputStreamTest {
     /** Header service token crypto contexts. */
     private static Map<String,ICryptoContext> cryptoContexts = new HashMap<String,ICryptoContext>();
     
+    private static MessageFactory messageFactory = new MessageFactory();
     private static EntityAuthenticationData ENTITY_AUTH_DATA;
     private static MessageHeader MESSAGE_HEADER;
     private static ErrorHeader ERROR_HEADER;
@@ -657,7 +658,8 @@ public class MessageOutputStreamTest {
         
         // The intersection of compression algorithms is computed when a
         // response header is generated.
-        final MessageHeader responseHeader = MessageBuilder.createResponse(ctx, MESSAGE_HEADER).getHeader();
+        final MessageBuilder builder = messageFactory.createResponse(ctx, MESSAGE_HEADER);
+        final MessageHeader responseHeader = builder.getHeader();
 
         final MessageOutputStream mos = new MessageOutputStream(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT);
         assertFalse(mos.setCompressionAlgorithm(CompressionAlgorithm.GZIP));

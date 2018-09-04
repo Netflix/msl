@@ -45,6 +45,7 @@ import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.keyx.KeyRequestData;
 import com.netflix.msl.msg.MessageBuilder;
+import com.netflix.msl.msg.MessageFactory;
 import com.netflix.msl.msg.MessageHeader;
 import com.netflix.msl.msg.MessageInputStream;
 import com.netflix.msl.msg.MessageOutputStream;
@@ -92,6 +93,7 @@ public class BaseTestClass {
     private String remoteEntityUrl;
     protected ClientConfiguration clientConfig;
     protected ICryptoContext serverMslCryptoContext;
+    private static MessageFactory messageFactory = new MessageFactory();
 
     public void setServerMslCryptoContext() {
         final SecretKey mslEncryptionKey = new SecretKeySpec(MSL_ENCRYPTION_KEY, JcaAlgorithm.AES);
@@ -243,7 +245,7 @@ public class BaseTestClass {
     public MessageInputStream sendReceive(final OutputStream out, final InputStream in,
                                           final MasterToken masterToken, final UserIdToken userIdToken, final Set<ServiceToken> serviceTokens,
                                           final boolean isRenewable, final boolean addKeyRequestData) throws MslException, IOException {
-        final MessageBuilder builder = MessageBuilder.createRequest(clientConfig.getMslContext(), masterToken, userIdToken);
+        final MessageBuilder builder = messageFactory.createRequest(clientConfig.getMslContext(), masterToken, userIdToken);
         builder.setRenewable(isRenewable);
         builder.setNonReplayable(clientConfig.getMessageContext().isNonReplayable());
 

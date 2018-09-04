@@ -21,7 +21,7 @@
  */
 (function(require, module) {
 	"use strict";
-	
+
 	var MslConstants = require('../MslConstants.js');
 	var MslInternalException = require('../MslInternalException.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
@@ -37,7 +37,7 @@
 	var ServiceToken = require('../tokens/ServiceToken.js');
 	var NullCryptoContext = require('../crypto/NullCryptoContext.js');
 	var MslUtils = require('../util/MslUtils.js');
-	
+
     /**
      * Empty service token data.
      * @const
@@ -67,480 +67,55 @@
      * @return {number} the message ID - 1.
      * @throws MslInternalException if the provided message ID is out of range.
      */
-    var MessageBuilder$decrementMessageId = function MessageBuilder$incrementMessageId(messageId) {
+    var MessageBuilder$decrementMessageId = function MessageBuilder$decrementMessageId(messageId) {
         if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
             throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
         return (messageId == 0) ? MslConstants.MAX_LONG_VALUE : messageId - 1;
     };
 
-    /**
-     * Issue a new master token for the specified identity or renew an existing
-     * master token.
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MslEncoderFormat} format MSL encoder format.
-     * @param {Array.<KeyRequestData>} keyRequestData available key request data.
-     * @param {MasterToken} masterToken master token to renew. Null if the identity is
-     *        provided.
-     * @param {EntityAuthenticationData} entityAuthData entity authentication data. Null if a master token
-     *        is provided.
-     * @param {{result: function(KeyExchangeData), error: function(Error)}}
-     *        callback the callback that will receive the key exchange data, or
-     *        null if the factory chooses not to perform key exchange, or any
-     *        thrown exceptions.
-     * @throws MslCryptoException if the crypto context cannot be created.
-     * @throws MslKeyExchangeException if there is an error with the key
-     *         request data or the key response data cannot be created or none
-     *         of the key exchange schemes are supported.
-     * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslEncodingException if there is an error parsing or encoding
-     *         the JSON.
-     * @throws MslEntityAuthException if there is a problem with the master
-     *         token identity or entity identity.
-     * @throws MslException if there is an error creating or renewing the
-     *         master token.
-     */
-    function issueMasterToken(ctx, format, keyRequestData, masterToken, entityAuthData, callback) {
-        var factoryIndex = 0, requestIndex = 0;
-        var factories = ctx.getKeyExchangeFactories();
-        var keyxException;
-        var entityToken = (masterToken) ? masterToken : entityAuthData;
-
-        // Attempt key exchange in the preferred order.
-        function nextExchange() {
-            AsyncExecutor(callback, function() {
-                // If we've reached the end of the key request data, try them all
-                // again with the next factory.
-                if (requestIndex >= keyRequestData.length) {
-                    requestIndex = 0;
-                    ++factoryIndex;
-                }
-
-                // If we've reached the end of the factories then stop.
-                if (factoryIndex >= factories.length) {
-                    // We did not perform a successful key exchange. If we caught an
-                    // exception then throw that exception now.
-                    if (keyxException)
-                        throw keyxException;
-
-                    // If we didn't find any then we're unable to perform key exchange.
-                    throw new MslKeyExchangeException(MslError.KEYX_FACTORY_NOT_FOUND, keyRequestData);
-                }
-
-                // Grab this iteration's factory and request.
-                var factory = factories[factoryIndex];
-                var request = keyRequestData[requestIndex];
-                if (factory.scheme != request.keyExchangeScheme) {
-                    // Try the next request.
-                    ++requestIndex;
-                    nextExchange();
-                    return;
-                }
-
-                // Attempt the key exchange.
-                factory.generateResponse(ctx, format, request, entityToken, {
-                    result: function(keyExchangeData) {
-                        // Deliver the result.
-                        callback.result(keyExchangeData);
-                    },
-                    error: function(e) {
-                        AsyncExecutor(callback, function() {
-                            // Immediately deliver anything that's not a MslException.
-                            if (!(e instanceof MslException))
-                                throw e;
-
-                            // Otherwise save this exception and try the next
-                            // combination.
-                            keyxException = e;
-                            ++requestIndex;
-                            nextExchange();
-                        });
-                    }
-                });
-            });
-        }
-
-        nextExchange();
-    }
-
-    /**
-     * Performs key exchange for the request message header if key exchange
-     * should occur.
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MslEncoderFormat} format MSL encoder format.
-     * @param {MessageHeader} requestHeader message with which to attempt key exchange.
-     * @param {?EntityAuthenticationData} entityAuthData message header entity authentication data.
-     * @param {?MasterToken} message header master token.
-     * @param {{result: function(KeyExchangeData), error: function(Error)}}
-     *        callback the callback that will receive the key exchange data or
-     *        any thrown exceptions.
-     * @throws MslCryptoException if the crypto context cannot be created.
-     * @throws MslKeyExchangeException if there is an error with the key
-     *         request data or the key response data cannot be created or none
-     *         of the key exchange schemes are supported.
-     * @throws MslMasterTokenException if the master token is not trusted.
-     * @throws MslEncodingException if there is an error parsing or encoding
-     *         the JSON.
-     * @throws MslEntityAuthException if there is a problem with the master
-     *         token identity or entity identity.
-     * @throws MslException if there is an error creating or renewing the
-     *         master token.
-     */
-    function performKeyExchange(ctx, format, requestHeader, entityAuthData, masterToken, callback) {
-        AsyncExecutor(callback, function() {
-            // If the message contains key request data and is renewable...
-            var keyRequestData = requestHeader.keyRequestData;
-            if (requestHeader.isRenewable() && keyRequestData.length > 0) {
-                // If the message contains a master token...
-                if (masterToken) {
-                    // If the master token is renewable or expired then renew
-                    // the master token.
-                    if (masterToken.isRenewable(null) || masterToken.isExpired(null)) {
-                        issueMasterToken(ctx, format, keyRequestData, masterToken, null, callback);
-                    } else {
-                        return null;
-                    }
-                }
-
-                // Otherwise use the entity authentication data to issue a
-                // master token.
-                else {
-                    // The message header is already authenticated via the
-                    // entity authentication data's crypto context so we can
-                    // simply proceed with the master token issuance.
-                    issueMasterToken(ctx, format, keyRequestData, null, entityAuthData, callback);
-                }
-            }
-
-            // If the message does not contain key request data there is no key
-            // exchange for us to do.
-            else {
-                return null;
-            }
-        });
-    }
-
-    /**
-     * <p>Create a new message builder that will craft a new message. If a
-     * message ID is provided it will be used for the new message's message ID.
-     * Otherwise a random message ID will be generated.</p>
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MasterToken} masterToken master token. May be null unless a user ID token is
-     *        provided.
-     * @param {UserIdToken} userIdToken user ID token. May be null.
-     * @param {?number} messageId the message ID to use. Must be within range.
-     * @param {{result: function(MessageBuilder), error: function(Error)}}
-     *        callback the callback that will receive the message builder or
-     *        any thrown exceptions.
-     * @throws MslException if a user ID token is not bound to its
-     *         corresponding master token.
-     */
-    var MessageBuilder$createRequest = function MessageBuilder$createRequest(ctx, masterToken, userIdToken, messageId, callback) {
-        AsyncExecutor(callback, function() {
-            if (messageId == undefined || messageId == null) {
-                messageId = MslUtils.getRandomLong(ctx);
-            } else {
-                if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
-                    throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
-            }
-
-            // Grab the local entity authentication data.
-            ctx.getEntityAuthenticationData(null, {
-                result: function(entityAuthData) {
-                    AsyncExecutor(callback, function() {
-                        var capabilities = ctx.getMessageCapabilities();
-                        return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
-                    });
-                },
-                error: callback.error,
-            });
-        });
-    };
-
-    /**
-     * Return the user ID token that should be included in the message header
-     * creating in response to a request. The request's user ID token may be
-     * renewed or a new user ID token issued if user authentication data is
-     * provided.
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MessageHeader} requestHeader request message header.
-     * @param {MasterToken} masterToken master token to verify/bind the user ID
-     *        token against.
-     * @param {{result: function(UserIdToken), error: function(Error)}} callback
-     *        the callback that will receive the user ID token or any thrown
-     *        exceptions.
-     * @throws MslUserAuthException if the user authentication scheme is not
-     *         supported.
-     */
-    function getUserIdToken(ctx, requestHeader, masterToken, callback) {
-        AsyncExecutor(callback, function() {
-            var userIdToken = requestHeader.userIdToken;
-            var userAuthData = requestHeader.userAuthenticationData;
-            var requestMessageId = requestHeader.messageId;
-            var tokenFactory = ctx.getTokenFactory();
-
-            // If the message contains a user ID token issued by the local
-            // entity...
-            if (userIdToken && userIdToken.isVerified()) {
-                // If the user ID token is renewable and the message is
-                // renewable, or it is expired, or it needs to be rebound
-                // to the new master token then renew the user ID token.
-                if ((userIdToken.isRenewable(null) && requestHeader.isRenewable()) ||
-                    userIdToken.isExpired(null) ||
-                    !userIdToken.isBoundTo(masterToken))
-                {
-                    tokenFactory.renewUserIdToken(ctx, userIdToken, masterToken, callback);
-                    return;
-                }
-            }
-
-            // If the message is renewable and contains user authentication
-            // data and a master token then we need to attempt user
-            // authentication and issue a user ID token.
-            else if (requestHeader.isRenewable() && masterToken && userAuthData) {
-                // If this request was parsed then its user authentication data
-                // should have been authenticated and the user will exist. If
-                // it was not parsed, then we need to perform user
-                // authentication now.
-                var user = requestHeader.user;
-                if (!user) {
-                    var scheme = userAuthData.scheme;
-                    var factory = ctx.getUserAuthenticationFactory(scheme);
-                    if (!factory) {
-                        throw new MslUserAuthException(MslError.USERAUTH_FACTORY_NOT_FOUND, scheme)
-	                        .setMasterToken(masterToken)
-	                        .setUserAuthenticationData(userAuthData)
-	                        .setMessageId(requestMessageId);
-                    }
-                    factory.authenticate(ctx, masterToken.identity, userAuthData, null, {
-                        result: function(user) {
-                            tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
-                        },
-                        error: callback.error,
-                    });
-                } else {
-                    tokenFactory.createUserIdToken(ctx, user, masterToken, callback);
-                }
-                return;
-            }
-
-            // Otherwise return the header's user ID token (may be null).
-            return userIdToken;
-        });
-    }
-
-    /**
-     * Create a new message builder that will craft a new message in response
-     * to another message. The constructed message may be used as a request.
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {MessageHeader} requestHeader message header to respond to.
-     * @param {{result: function(MessageBuilder), error: function(Error)}}
-     *        callback the callback that will receive the message builder or
-     *        any thrown exceptions.
-     * @throws MslMasterTokenException if the provided message's master token
-     *         is not trusted.
-     * @throws MslCryptoException if the crypto context from a key exchange
-     *         cannot be created.
-     * @throws MslKeyExchangeException if there is an error with the key
-     *         request data or the key response data cannot be created.
-     * @throws MslUserAuthException if there is an error with the user
-     *         authentication data or the user ID token cannot be created.
-     * @throws MslException if a user ID token in the message header is not
-     *         bound to its corresponding master token or there is an error
-     *         creating or renewing the master token.
-     */
-    var MessageBuilder$createResponse = function MessageBuilder$createResponse(ctx, requestHeader, callback) {
-        AsyncExecutor(callback, function() {
-            var masterToken = requestHeader.masterToken;
-            var entityAuthData = requestHeader.entityAuthenticationData;
-            var userIdToken = requestHeader.userIdToken;
-            var userAuthData = requestHeader.userAuthenticationData;
-
-            // The response message ID must be equal to the request message ID + 1.
-            var requestMessageId = requestHeader.messageId;
-            var messageId = MessageBuilder$incrementMessageId(requestMessageId);
-            
-            // Compute the intersection of the request and response message
-            // capabilities.
-            var capabilities = MessageCapabilities.intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
-            
-            // Identify the response format.
-            var encoder = ctx.getMslEncoderFactory();
-            var formats = (capabilities) ? capabilities.encoderFormats : null;
-            var format = encoder.getPreferredFormat(formats);
-
-            // Perform key exchange.
-            performKeyExchange(ctx, format, requestHeader, entityAuthData, masterToken, {
-                result: function(keyExchangeData) {
-                    AsyncExecutor(callback, function() {
-                        // If we successfully performed key exchange, use the new master
-                        // token for user authentication.
-                        var userAuthMasterToken = (keyExchangeData)
-                            ? keyExchangeData.keyResponseData.masterToken
-                            : userAuthMasterToken = masterToken;
-
-                        // Grab the local entity authentication data.
-                        ctx.getEntityAuthenticationData(null, {
-                            result: function(entityAuthData) {
-                                AsyncExecutor(callback, function() {
-                                    // Grab the user ID token for this response.
-                                    getUserIdToken(ctx, requestHeader, userAuthMasterToken, {
-                                        result: function(token) {
-                                            AsyncExecutor(callback, function() {
-                                                userIdToken = token;
-                                                
-                                                // Create the message builder.
-                                                //
-                                                // Peer-to-peer responses swap the tokens.
-                                                var keyResponseData = requestHeader.keyResponseData;
-                                                var serviceTokens = requestHeader.serviceTokens;
-                                                if (ctx.isPeerToPeer()) {
-                                                    var peerMasterToken = (keyResponseData) ? keyResponseData.masterToken : requestHeader.peerMasterToken;
-                                                    var peerUserIdToken = requestHeader.peerUserIdToken;
-                                                    var peerServiceTokens = requestHeader.peerServiceTokens;
-                                                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
-                                                } else {
-                                                    var localMasterToken = (keyResponseData) ? keyResponseData.masterToken : masterToken;
-                                                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, keyExchangeData);
-                                                }
-                                            });
-                                        },
-                                        error: handleError,
-                                    });
-                                });
-                            },
-                            error: handleError,
-                        });
-                    });
-                },
-                error: handleError,
-            });
-
-            function handleError(e) {
-                AsyncExecutor(callback, function() {
-                    if (e instanceof MslException) {
-                        e.setMasterToken(masterToken);
-                        e.setEntityAuthenticationData(entityAuthData);
-                        e.setUserIdToken(userIdToken);
-                        e.setUserAuthenticationData(userAuthData);
-                        e.setMessageId(requestMessageId);
-                    }
-                    throw e;
-                });
-            }
-        });
-    };
-
-    /**
-     * Create a new message builder that will craft a new message in response
-     * to another message without issuing or renewing any master tokens or user
-     * ID tokens. The constructed message may be used as a request.
-     * 
-     * @param {MslContext} ctx MSL context.
-     * @param {MessageHeader} requestHeader message header to respond to.
-     * @param {{result: function(MessageBuilder), error: function(Error)}}
-     *        callback the callback that will receive the message builder or
-     *        any thrown exceptions.
-     * @throws MslCryptoException if there is an error accessing the remote
-     *         entity identity.
-     * @throws MslException if any of the request's user ID tokens is not bound
-     *         to its master token.
-     */
-    var MessageBuilder$createIdempotentResponse = function MessageBuilder$createIdempotentResponse(ctx, requestHeader, callback) {
-        AsyncExecutor(callback, function() {
-            var masterToken = requestHeader.masterToken;
-            var entityAuthData = requestHeader.entityAuthenticationData;
-            var userIdToken = requestHeader.userIdToken;
-            var userAuthData = requestHeader.userAuthenticationData;
-            
-            // The response message ID must be equal to the request message ID + 1.
-            var requestMessageId = requestHeader.messageId;
-            var messageId = MessageBuilder$incrementMessageId(requestMessageId);
-            
-            // Compute the intersection of the request and response message
-            // capabilities.
-            var capabilities = MessageCapabilities.intersection(requestHeader.messageCapabilities, ctx.getMessageCapabilities());
-            
-            // Create the message builder.
-            //
-            // Peer-to-peer responses swap the tokens.
-            try {
-                var keyResponseData = requestHeader.keyResponseData;
-                var serviceTokens = requestHeader.serviceTokens;
-                if (ctx.isPeerToPeer()) {
-                    var peerMasterToken = (keyResponseData) ? keyResponseData.masterToken : requestHeader.peerMasterToken;
-                    var peerUserIdToken = requestHeader.peerUserIdToken;
-                    var peerServiceTokens = requestHeader.peerServiceTokens;
-                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, null);
-                } else {
-                    var localMasterToken = (keyResponseData) ? keyResponseData.masterToken : masterToken;
-                    return new MessageBuilder(ctx, messageId, capabilities, entityAuthData, localMasterToken, userIdToken, serviceTokens, null, null, null, null);
-                }
-            } catch (e) {
-                if (e instanceof MslException) {
-                    e.setMasterToken(masterToken);
-                    e.setEntityAuthenticationData(entityAuthData);
-                    e.setUserIdToken(userIdToken);
-                    e.setUserAuthenticationData(userAuthData);
-                    e.setMessageId(requestMessageId);
-                }
-                throw e;
-            }
-        });
-    };
-
-    /**
-     * <p>Create a new message builder that will craft a new error message in
-     * response to another message. If the message ID of the request is not
-     * specified (i.e. unknown) then a random message ID will be generated.</p>
-     *
-     * @param {MslContext} ctx MSL context.
-     * @param {?number} requestMessageId message ID of request. May be null.
-     * @param {MslError} error the MSL error.
-     * @param {string} userMessage localized user-consumable error message. May be null.
-     * @param {{result: function(ErrorHeader), error: function(Error)}}
-     *        callback the callback that will receive the error header or any
-     *        thrown exceptions.
-     * @throws MslCryptoException if there is an error encrypting or signing
-     *         the message.
-     * @throws MslEntityAuthException if there is an error with the entity
-     *         authentication data.
-     * @throws MslMessageException if no entity authentication data was
-     *         returned by the MSL context.
-     */
-    var MessageBuilder$createErrorResponse = function MessageBuilder$createErrorResponse(ctx, requestMessageId, error, userMessage, callback) {
-        AsyncExecutor(callback, function() {
-            ctx.getEntityAuthenticationData(null, {
-                result: function(entityAuthData) {
-                    AsyncExecutor(callback, function() {
-                        // If we have the request message ID then the error response message ID
-                        // must be equal to the request message ID + 1.
-                        var messageId;
-                        if (requestMessageId != undefined && requestMessageId != null) {
-                            messageId = MessageBuilder$incrementMessageId(requestMessageId);
-                        }
-                        // Otherwise use a random message ID.
-                        else {
-                            messageId = MslUtils.getRandomLong(ctx);
-                        }
-                        var errorCode = error.responseCode;
-                        var internalCode = error.internalCode;
-                        var errorMsg = error.message;
-                        ErrorHeader.create(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage, callback);
-                    });
-                },
-                error: callback.error,
-            });
-        });
-    };
-
     var MessageBuilder = module.exports = Class.create({
         /**
-         * Create a new message builder with the provided tokens and key exchange
+         * <p>Create a new message builder that will craft a new message. If a
+         * message ID is provided it will be used for the new message's message ID.
+         * Otherwise a random message ID will be generated.</p>
+         *
+         * @param {MslContext} ctx MSL context.
+         * @param {MasterToken} masterToken master token. May be null unless a user ID token is
+         *        provided.
+         * @param {UserIdToken} userIdToken user ID token. May be null.
+         * @param {?number} messageId the message ID to use. Must be within range.
+         * @param {{result: function(MessageBuilder), error: function(Error)}}
+         *        callback the callback that will receive the message builder or
+         *        any thrown exceptions.
+         * @throws MslException if a user ID token is not bound to its
+         *         corresponding master token.
+         */
+        init: function init(ctx, masterToken, userIdToken, messageId, callback) {
+            var self = this;
+            AsyncExecutor(callback, function() {
+                if (messageId == undefined || messageId == null) {
+                    messageId = MslUtils.getRandomLong(ctx);
+                } else {
+                    if (messageId < 0 || messageId > MslConstants.MAX_LONG_VALUE)
+                        throw new MslInternalException("Message ID " + messageId + " is outside the valid range.");
+                }
+
+                // Grab the local entity authentication data.
+                ctx.getEntityAuthenticationData(null, {
+                    result: function(entityAuthData) {
+                        AsyncExecutor(callback, function() {
+                            var capabilities = ctx.getMessageCapabilities();
+                            this.initializeMessageBuilder(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, null, null, null, null, null);
+                            return this;
+                        }, self);
+                    },
+                    error: callback.error,
+                });
+            }, self);
+        },
+
+        /**
+         * initialize a message builder with the provided tokens and key exchange
          * data if a master token was issued or renewed.
          *
          * @param {MslContext} ctx MSL context.
@@ -548,11 +123,11 @@
          * @param {MessageCapabilities} message capabilities.
          * @param {EntityAuthenticationData} entityAuthData entity
          *        authentication data.
-         * @param {MsaterToken} masterToken master token. May be null unless a user ID token is
+         * @param {MasterToken} masterToken master token. May be null unless a user ID token is
          *        provided.
          * @param {UserIdToken} userIdToken user ID token. May be null.
          * @param {Array.<ServiceToken>} serviceTokens initial set of service tokens. May be null.
-         * @param {MasterToken }peerMasterToken peer master token. May be null unless a peer user
+         * @param {MasterToken} peerMasterToken peer master token. May be null unless a peer user
          *        ID token is provided.
          * @param {UserIdToken} peerUserIdToken peer user ID token. May be null.
          * @param {Array.<ServiceToken>} peerServiceTokens initial set of peer service tokens.
@@ -564,7 +139,7 @@
          * @throws MslException if a user ID token is not bound to its master
          *         token.
          */
-        init: function init(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, serviceTokens, peerMasterToken, peerUserIdToken, peerServiceTokens, keyExchangeData) {
+        initializeMessageBuilder: function initializeMessageBuilder(ctx, messageId, capabilities, entityAuthData, masterToken, userIdToken, serviceTokens, peerMasterToken, peerUserIdToken, peerServiceTokens, keyExchangeData) {
             // Primary and peer token combinations will be verified when the
             // message header is constructed. So delay those checks in favor of
             // avoiding duplicate code.
@@ -688,14 +263,14 @@
         getMessageId: function getMessageId() {
             return this._messageId;
         },
-        
+
         /**
          * <p>Set the message ID.</p>
-         * 
+         *
          * <p>This method will override the message ID that was computed when the
          * message builder was created, and should not need to be called in most
          * cases.</p>
-         * 
+         *
          * @param {number} messageId the message ID.
          * @return {MessageBuilder} this.
          * @throws MslInternalException if the message ID is out of range.
@@ -805,8 +380,36 @@
                 for (var peerName in this._peerServiceTokens)
                     peerTokens.push(this._peerServiceTokens[peerName]);
                 var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
-                MessageHeader.create(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
+                this.createMessageHeader(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
+        },
+
+        /**
+         * <p>Construct a new message header.</p>
+         *
+         * @param {MslContext} ctx MSL context.
+         * @param {EntityAuthenticationData} entityAuthData the entity authentication data. May be null if a
+         *        master token is provided.
+         * @param {MaterToken} masterToken the master token. May be null if entity
+         *        authentication data is provided.
+         * @param {HeaderData} headerData message header data container.
+         * @param {HeaderPeerData} peerData message header peer data container.
+         * @param {{result: function(MessageHeader), error: function(Error)}}
+         *        callback the callback functions that will receive the message
+         *        header or any thrown exceptions.
+         * @throws MslEncodingException if there is an error encoding the JSON
+         *         data.
+         * @throws MslCryptoException if there is an error encrypting or signing
+         *         the message.
+         * @throws MslMasterTokenException if the header master token is not
+         *         trusted and needs to be to accept this message header.
+         * @throws MslEntityAuthException if there is an error with the entity
+         *         authentication data.
+         * @throws MslMessageException if no entity authentication data or master
+         *         token is provided.
+         */
+        createMessageHeader: function createMessageHeader(ctx, entityAuthData, masterToken, headerData, peerData, callback) {
+            MessageHeader.create(ctx, entityAuthData, masterToken, headerData, peerData, callback);
         },
 
         /**
@@ -1344,12 +947,29 @@
             return tokens;
         },
     });
-    
+
+    /**
+     * <p>Create a new message builder that will craft a new message. If a
+     * message ID is provided it will be used for the new message's message ID.
+     * Otherwise a random message ID will be generated.</p>
+     *
+     * @param {MslContext} ctx MSL context.
+     * @param {MasterToken} masterToken master token. May be null unless a user ID token is
+     *        provided.
+     * @param {UserIdToken} userIdToken user ID token. May be null.
+     * @param {?number} messageId the message ID to use. Must be within range.
+     * @param {{result: function(MessageBuilder), error: function(Error)}}
+     *        callback the callback that will receive the message builder or
+     *        any thrown exceptions.
+     * @throws MslException if a user ID token is not bound to its
+     *         corresponding master token.
+     */
+    var MessageBuilder$create = function MessageBuilder$create(ctx, masterToken, userIdToken, messageId, callback) {
+        new MessageBuilder(ctx, masterToken, userIdToken, messageId, callback);
+    };
+
     // Exports.
+    module.exports.create = MessageBuilder$create;
     module.exports.incrementMessageId = MessageBuilder$incrementMessageId;
     module.exports.decrementMessageId = MessageBuilder$decrementMessageId;
-    module.exports.createRequest = MessageBuilder$createRequest;
-    module.exports.createResponse = MessageBuilder$createResponse;
-    module.exports.createIdempotentResponse = MessageBuilder$createIdempotentResponse;
-    module.exports.createErrorResponse = MessageBuilder$createErrorResponse;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('MessageBuilder'));
