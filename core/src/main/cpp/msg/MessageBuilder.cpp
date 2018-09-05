@@ -69,105 +69,8 @@ typedef vector<uint8_t> ByteArray;
 namespace msg {
 
 namespace {
-
 /** Empty service token data. */
 shared_ptr<ByteArray> EMPTY_DATA = make_shared<ByteArray>();
-
-/**
- * Issue a new master token for the specified identity or renew an existing
- * master token.
- *
- * @param ctx MSL context.
- * @param format MSL encoder format.
- * @param keyRequestData available key request data.
- * @param masterToken master token to renew. Null if the identity is
- *        provided.
- * @param entityAuthData entity authentication data. Null if a master token
- *        is provided.
- * @return the new master token and crypto context or {@code} null if the
- *         factory chooses not to perform key exchange.
- * @throws MslCryptoException if the crypto context cannot be created.
- * @throws MslKeyExchangeException if there is an error with the key
- *         request data or the key response data cannot be created or none
- *         of the key exchange schemes are supported.
- * @throws MslMasterTokenException if the master token is not trusted.
- * @throws MslEncodingException if there is an error parsing or encoding
- *         the JSON.
- * @throws MslEntityAuthException if there is a problem with the master
- *         token identity or entity identity.
- * @throws MslException if there is an error creating or renewing the
- *         master token.
- */
-shared_ptr<KeyExchangeData> issueMasterToken(shared_ptr<MslContext> ctx,
-		const MslEncoderFormat& format,
-		set<shared_ptr<KeyRequestData>> keyRequestData,
-		shared_ptr<MasterToken> masterToken,
-		shared_ptr<EntityAuthenticationData> entityAuthData)
-{
-	// Attempt key exchange in the preferred order.
-	shared_ptr<IException> keyxException;
-	set<shared_ptr<KeyExchangeFactory>> factorySet = ctx->getKeyExchangeFactories();
-	for (set<shared_ptr<KeyExchangeFactory>>::iterator factories = factorySet.begin();
-		 factories != factorySet.end();
-		 ++factories)
-	{
-		shared_ptr<KeyExchangeFactory> factory = *factories;
-		set<shared_ptr<KeyRequestData>>::iterator requests = keyRequestData.begin();
-		while (requests != keyRequestData.end()) {
-			shared_ptr<KeyRequestData> request = *requests;
-			if (factory->getScheme() != request->getKeyExchangeScheme()) {
-			    requests++;
-				continue;
-			}
-
-			// Attempt the key exchange, but if it fails try with the next
-			// combination before giving up.
-			try {
-				if (masterToken)
-					return factory->generateResponse(ctx, format, request, masterToken);
-				else
-					return factory->generateResponse(ctx, format, request, entityAuthData);
-			} catch (const MslCryptoException& e) {
-				if (requests == keyRequestData.end()) throw e;
-				keyxException = e.clone();
-			} catch (const MslKeyExchangeException& e) {
-				if (requests == keyRequestData.end()) throw e;
-				keyxException = e.clone();
-			} catch (const MslEncodingException& e) {
-				if (requests == keyRequestData.end()) throw e;
-				keyxException = e.clone();
-			} catch (const MslMasterTokenException& e) {
-				if (requests == keyRequestData.end()) throw e;
-				keyxException = e.clone();
-			} catch (const MslEntityAuthException& e) {
-				if (requests == keyRequestData.end()) throw e;
-				keyxException = e.clone();
-			}
-
-			requests++;
-		}
-	}
-
-	// We did not perform a successful key exchange. If we caught an
-	// exception then throw that exception now.
-	if (keyxException) {
-		MslUtils::rethrow(keyxException);
-		throw MslInternalException("Unexpected exception caught during key exchange.", *keyxException);
-	}
-
-	// If we didn't find any then we're unable to perform key exchange.
-	stringstream ss;
-	ss << "[ ";
-	for (set<shared_ptr<KeyRequestData>>::iterator keyRequests = keyRequestData.begin();
-		 keyRequests != keyRequestData.end();
-		 ++keyRequests)
-	{
-		ss << *keyRequests << " ";
-	}
-	ss << "]";
-	throw MslKeyExchangeException(MslError::KEYX_FACTORY_NOT_FOUND, ss.str());
-}
-
 } // namespace anonymous
 
 int64_t MessageBuilder::incrementMessageId(const int64_t messageId) {
@@ -188,10 +91,12 @@ int64_t MessageBuilder::decrementMessageId(const int64_t messageId) {
 	return (messageId == 0) ? MslConstants::MAX_LONG_VALUE : messageId - 1;
 }
 
-shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> ctx,
+MessageBuilder::MessageBuilder(
+        shared_ptr<MslContext> ctx,
         shared_ptr<MasterToken> masterToken,
         shared_ptr<UserIdToken> userIdToken,
         int64_t messageId)
+    : MessageBuilder(ctx)
 {
 	if (messageId < 0 || messageId > MslConstants::MAX_LONG_VALUE) {
 		stringstream ss;
@@ -199,209 +104,20 @@ shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> 
 		throw MslInternalException(ss.str());
 	}
 	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
-	return make_shared<MessageBuilder>(ctx, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
-}
-
-shared_ptr<MessageBuilder> MessageBuilder::createRequest(shared_ptr<MslContext> ctx,
-        shared_ptr<MasterToken> masterToken,
-        shared_ptr<UserIdToken> userIdToken)
-{
-	const int64_t messageId = MslUtils::getRandomLong(ctx);
-	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
-	return make_shared<MessageBuilder>(ctx, messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
-}
-
-shared_ptr<MessageBuilder> MessageBuilder::createResponse(shared_ptr<MslContext> ctx,
-        shared_ptr<MessageHeader> requestHeader)
-{
-	shared_ptr<MasterToken> masterToken = requestHeader->getMasterToken();
-	shared_ptr<EntityAuthenticationData> entityAuthData = requestHeader->getEntityAuthenticationData();
-	shared_ptr<UserIdToken> userIdToken = requestHeader->getUserIdToken();
-	shared_ptr<UserAuthenticationData> userAuthData = requestHeader->getUserAuthenticationData();
-
-	// The response message ID must be equal to the request message ID + 1.
-	const int64_t requestMessageId = requestHeader->getMessageId();
-	const int64_t messageId = incrementMessageId(requestMessageId);
-
-	// Compute the intersection of the request and response message
-	// capabilities.
-	shared_ptr<MessageCapabilities> capabilities = MessageCapabilities::intersection(requestHeader->getMessageCapabilities(), ctx->getMessageCapabilities());
-
-	// Identify the response format.
-	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
-	set<MslEncoderFormat> formats;
-	if (capabilities) formats = capabilities->getEncoderFormats();
-	const MslEncoderFormat format = encoder->getPreferredFormat(formats);
-
-	try {
-		// If the message contains key request data and is renewable...
-		shared_ptr<KeyExchangeData> keyExchangeData;
-		set<shared_ptr<KeyRequestData>> keyRequestData = requestHeader->getKeyRequestData();
-		if (requestHeader->isRenewable() && !keyRequestData.empty()) {
-			// If the message contains a master token...
-			if (masterToken) {
-				// If the master token is renewable or expired then renew
-				// the master token.
-				if (masterToken->isRenewable() || masterToken->isExpired())
-					keyExchangeData = issueMasterToken(ctx, format, keyRequestData, masterToken, shared_ptr<EntityAuthenticationData>());
-				// Otherwise we don't need to do anything special.
-				else
-					keyExchangeData.reset();
-			}
-
-			// Otherwise use the entity authentication data to issue a
-			// master token.
-			else {
-				// The message header is already authenticated via the
-				// entity authentication data's crypto context so we can
-				// simply proceed with the master token issuance.
-				keyExchangeData = issueMasterToken(ctx, format, keyRequestData, shared_ptr<MasterToken>(), entityAuthData);
-			}
-		}
-
-		// If the message does not contain key request data there is no key
-		// exchange for us to do.
-		else {
-			keyExchangeData.reset();
-		}
-
-		// If we successfully performed key exchange, use the new master
-		// token for user authentication.
-		shared_ptr<MasterToken> userAuthMasterToken;
-		if (keyExchangeData) {
-			userAuthMasterToken = keyExchangeData->keyResponseData->getMasterToken();
-		} else {
-			userAuthMasterToken = masterToken;
-		}
-
-		// If the message contains a user ID token issued by the local
-		// entity...
-		if (userIdToken && userIdToken->isVerified()) {
-			// If the user ID token is renewable and the message is
-			// renewable, or it is expired, or it needs to be rebound
-			// to the new master token then renew the user ID token.
-			if ((userIdToken->isRenewable() && requestHeader->isRenewable()) ||
-					userIdToken->isExpired() ||
-					!userIdToken->isBoundTo(userAuthMasterToken))
-			{
-				shared_ptr<TokenFactory> tokenFactory = ctx->getTokenFactory();
-				userIdToken = tokenFactory->renewUserIdToken(ctx, userIdToken, userAuthMasterToken);
-			}
-		}
-
-		// If the message is renewable and contains user authentication
-		// data and a master token then we need to attempt user
-		// authentication and issue a user ID token.
-		else if (requestHeader->isRenewable() && userAuthMasterToken && userAuthData) {
-			// If this request was parsed then its user authentication data
-			// should have been authenticated and the user will exist. If
-			// it was not parsed, then we need to perform user
-			// authentication now.
-			shared_ptr<MslUser> user = requestHeader->getUser();
-			if (!user) {
-				const UserAuthenticationScheme scheme = userAuthData->getScheme();
-				shared_ptr<UserAuthenticationFactory> factory = ctx->getUserAuthenticationFactory(scheme);
-				if (!factory) {
-					throw MslUserAuthException(MslError::USERAUTH_FACTORY_NOT_FOUND, scheme.name())
-					.setMasterToken(masterToken)
-					.setUserAuthenticationData(userAuthData)
-					.setMessageId(requestMessageId);
-				}
-				user = factory->authenticate(ctx, userAuthMasterToken->getIdentity(), userAuthData, shared_ptr<UserIdToken>());
-			}
-			shared_ptr<TokenFactory> tokenFactory = ctx->getTokenFactory();
-			userIdToken = tokenFactory->createUserIdToken(ctx, user, userAuthMasterToken);
-		}
-
-		// Create the message builder.
-		//
-		// Peer-to-peer responses swap the tokens.
-		shared_ptr<KeyResponseData> keyResponseData = requestHeader->getKeyResponseData();
-		set<shared_ptr<ServiceToken>> serviceTokens = requestHeader->getServiceTokens();
-		if (ctx->isPeerToPeer()) {
-			shared_ptr<MasterToken> peerMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : requestHeader->getPeerMasterToken();
-			shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
-			set<shared_ptr<ServiceToken>> peerServiceTokens = requestHeader->getPeerServiceTokens();
-			return make_shared<MessageBuilder>(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, keyExchangeData);
-		} else {
-			shared_ptr<MasterToken> localMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : masterToken;
-			return make_shared<MessageBuilder>(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), keyExchangeData);
-		}
-	} catch (MslException& e) {
-		e.setMasterToken(masterToken);
-		e.setEntityAuthenticationData(entityAuthData);
-		e.setUserIdToken(userIdToken);
-		e.setUserAuthenticationData(userAuthData);
-		e.setMessageId(requestMessageId);
-		MslUtils::rethrow(e);
-		throw e;
-	}
-}
-
-shared_ptr<MessageBuilder> MessageBuilder::createIdempotentResponse(shared_ptr<MslContext> ctx,
-        shared_ptr<MessageHeader> requestHeader)
-{
-    shared_ptr<MasterToken> masterToken = requestHeader->getMasterToken();
-    shared_ptr<EntityAuthenticationData> entityAuthData = requestHeader->getEntityAuthenticationData();
-    shared_ptr<UserIdToken> userIdToken = requestHeader->getUserIdToken();
-    shared_ptr<UserAuthenticationData> userAuthData = requestHeader->getUserAuthenticationData();
-
-    // The response message ID must be equal to the request message ID + 1.
-    const int64_t requestMessageId = requestHeader->getMessageId();
-    const int64_t messageId = incrementMessageId(requestMessageId);
-
-    // Compute the intersection of the request and response message
-    // capabilities.
-    shared_ptr<MessageCapabilities> capabilities = MessageCapabilities::intersection(requestHeader->getMessageCapabilities(), ctx->getMessageCapabilities());
-
-    // Create the message builder.
-    //
-    // Peer-to-peer responses swap the tokens.
-    try {
-        shared_ptr<KeyResponseData> keyResponseData = requestHeader->getKeyResponseData();
-        set<shared_ptr<ServiceToken>> serviceTokens = requestHeader->getServiceTokens();
-        if (ctx->isPeerToPeer()) {
-            shared_ptr<MasterToken> peerMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : requestHeader->getPeerMasterToken();
-            shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
-            set<shared_ptr<ServiceToken>> peerServiceTokens = requestHeader->getPeerServiceTokens();
-            return make_shared<MessageBuilder>(ctx, messageId, capabilities, peerMasterToken, peerUserIdToken, peerServiceTokens, masterToken, userIdToken, serviceTokens, shared_ptr<KeyExchangeData>());
-        } else {
-            shared_ptr<MasterToken> localMasterToken = (keyResponseData) ? keyResponseData->getMasterToken() : masterToken;
-            return make_shared<MessageBuilder>(ctx, messageId, capabilities, localMasterToken, userIdToken, serviceTokens, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
-        }
-    } catch (MslException& e) {
-        e.setMasterToken(masterToken);
-        e.setEntityAuthenticationData(entityAuthData);
-        e.setUserIdToken(userIdToken);
-        e.setUserAuthenticationData(userAuthData);
-        e.setMessageId(requestMessageId);
-        throw e;
-    }
-}
-
-shared_ptr<ErrorHeader> MessageBuilder::createErrorResponse(shared_ptr<MslContext> ctx,
-		int64_t requestMessageId,
-		MslError error,
-		string userMessage)
-{
-	shared_ptr<EntityAuthenticationData> entityAuthData = ctx->getEntityAuthenticationData();
-	// If we have the request message ID then the error response message ID
-	// must be equal to the request message ID + 1.
-	int64_t messageId;
-	if (requestMessageId != -1) {
-		messageId = incrementMessageId(requestMessageId);
-	}
-	// Otherwise use a random message ID.
-	else {
-	    messageId = MslUtils::getRandomLong(ctx);
-	}
-	const ResponseCode errorCode = error.getResponseCode();
-	const int32_t internalCode = error.getInternalCode();
-	const string errorMsg = error.getMessage();
-	return make_shared<ErrorHeader>(ctx, entityAuthData, messageId, errorCode, internalCode, errorMsg, userMessage);
+	initializeMessageBuilder(messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
 }
 
 MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
+        shared_ptr<MasterToken> masterToken,
+        shared_ptr<UserIdToken> userIdToken)
+    : MessageBuilder(ctx)
+{
+	const int64_t messageId = MslUtils::getRandomLong(ctx);
+	shared_ptr<MessageCapabilities> capabilities = ctx->getMessageCapabilities();
+	initializeMessageBuilder(messageId, capabilities, masterToken, userIdToken, set<shared_ptr<ServiceToken>>(), shared_ptr<MasterToken>(), shared_ptr<UserIdToken>(), set<shared_ptr<ServiceToken>>(), shared_ptr<KeyExchangeData>());
+}
+
+void MessageBuilder::initializeMessageBuilder(
         int64_t messageId,
         shared_ptr<MessageCapabilities> capabilities,
         shared_ptr<MasterToken> masterToken,
@@ -411,23 +127,23 @@ MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
         shared_ptr<UserIdToken> peerUserIdToken,
         set<shared_ptr<ServiceToken>> peerServiceTokens,
         shared_ptr<KeyExchangeData> keyExchangeData)
-	: ctx_(ctx)
-	, masterToken_(masterToken)
-	, messageId_(messageId)
-	, keyExchangeData_(keyExchangeData)
-	, capabilities_(capabilities)
-	, userIdToken_(userIdToken)
 {
+    masterToken_ = masterToken;
+    messageId_ = messageId;
+    keyExchangeData_ = keyExchangeData;
+    capabilities_ = capabilities;
+    userIdToken_ = userIdToken;
+
 	// Primary and peer token combinations will be verified when the
 	// message header is constructed. So delay those checks in favor of
 	// avoiding duplicate code.
-	if (!ctx->isPeerToPeer() && (peerMasterToken || peerUserIdToken))
+	if (!ctx_->isPeerToPeer() && (peerMasterToken || peerUserIdToken))
 		throw MslInternalException("Cannot set peer master token or peer user ID token when not in peer-to-peer mode.");
 
 	// If key exchange data is provided and we are not in peer-to-peer mode
 	// then its master token should be used for querying service tokens.
 	shared_ptr<MasterToken> serviceMasterToken;
-	if (keyExchangeData && !ctx->isPeerToPeer()) {
+	if (keyExchangeData && !ctx_->isPeerToPeer()) {
 		serviceMasterToken = keyExchangeData->keyResponseData->getMasterToken();
 	} else {
 		serviceMasterToken = masterToken;
@@ -435,7 +151,7 @@ MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
 
 	// Set the initial service tokens based on the MSL store and provided
 	// service tokens.
-	set<shared_ptr<ServiceToken>> tokens = ctx->getMslStore()->getServiceTokens(serviceMasterToken, userIdToken);
+	set<shared_ptr<ServiceToken>> tokens = ctx_->getMslStore()->getServiceTokens(serviceMasterToken, userIdToken);
 	for (set<shared_ptr<ServiceToken>>::iterator token = tokens.begin();
 		 token != tokens.end();
 		 ++token)
@@ -451,7 +167,7 @@ MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
 	}
 
 	// Set the peer-to-peer data.
-	if (ctx->isPeerToPeer()) {
+	if (ctx_->isPeerToPeer()) {
 		peerMasterToken_ = peerMasterToken;
 		peerUserIdToken_ = peerUserIdToken;
 
@@ -465,7 +181,7 @@ MessageBuilder::MessageBuilder(shared_ptr<MslContext> ctx,
 
 		// Set the initial peer service tokens based on the MSL store and
 		// provided peer service tokens.
-		set<shared_ptr<ServiceToken>> peerTokens = ctx->getMslStore()->getServiceTokens(peerServiceMasterToken, peerUserIdToken);
+		set<shared_ptr<ServiceToken>> peerTokens = ctx_->getMslStore()->getServiceTokens(peerServiceMasterToken, peerUserIdToken);
 		for (set<shared_ptr<ServiceToken>>::iterator peerToken = peerTokens.begin();
 				peerToken != peerTokens.end();
 				++peerToken)
@@ -538,7 +254,17 @@ shared_ptr<MessageHeader> MessageBuilder::getHeader()
 	}
 	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(peerMasterToken_, peerUserIdToken_, peerTokens);
 
-	return make_shared<MessageHeader>(ctx_, ctx_->getEntityAuthenticationData(), masterToken_, headerData, peerData);
+	return createMessageHeader(ctx_, ctx_->getEntityAuthenticationData(), masterToken_, headerData, peerData);
+}
+
+shared_ptr<MessageHeader> MessageBuilder::createMessageHeader(
+        std::shared_ptr<util::MslContext> ctx,
+        std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData,
+        std::shared_ptr<tokens::MasterToken> masterToken,
+        std::shared_ptr<HeaderData> headerData,
+        std::shared_ptr<HeaderPeerData> peerData)
+{
+	return make_shared<MessageHeader>(ctx, entityAuthData, masterToken, headerData, peerData);
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::setMessageId(int64_t messageId)

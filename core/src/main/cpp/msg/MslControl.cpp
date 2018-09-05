@@ -44,7 +44,7 @@
 #include <msg/MessageInputStream.h>
 #include <msg/MessageOutputStream.h>
 #include <msg/MessageServiceTokenBuilder.h>
-#include <msg/MessageStreamFactory.h>
+#include <msg/MessageFactory.h>
 #include <msg/PayloadChunk.h>
 #include <tokens/MslUser.h>
 #include <tokens/TokenFactory.h>
@@ -547,8 +547,8 @@ MslControl::MslControl(int32_t numThreads)
     init(numThreads);
 }
 
-MslControl::MslControl(int32_t numThreads, shared_ptr<MessageStreamFactory> streamFactory, shared_ptr<ErrorMessageRegistry> messageRegistry)
-: streamFactory(streamFactory)
+MslControl::MslControl(int32_t numThreads, shared_ptr<MessageFactory> messageFactory, shared_ptr<ErrorMessageRegistry> messageRegistry)
+: messageFactory(messageFactory)
 , messageRegistry(messageRegistry)
 {
     init(numThreads);
@@ -751,7 +751,7 @@ shared_ptr<MessageBuilder> MslControl::buildRequest(shared_ptr<MslContext> ctx,
             userIdToken = nullptr;
         }
 
-        shared_ptr<MessageBuilder> builder = MessageBuilder::createRequest(ctx, masterToken, userIdToken);
+        shared_ptr<MessageBuilder> builder = messageFactory->createRequest(ctx, masterToken, userIdToken);
         builder->setNonReplayable(msgCtx->isNonReplayable());
         return builder;
     } catch (const MslException& e) {
@@ -769,7 +769,7 @@ shared_ptr<MessageBuilder> MslControl::buildResponse(shared_ptr<MslContext> ctx,
         shared_ptr<MessageContext> msgCtx, shared_ptr<MessageHeader> request)
 {
     // Create the response->
-    shared_ptr<MessageBuilder> builder = MessageBuilder::createResponse(ctx, request);
+    shared_ptr<MessageBuilder> builder = messageFactory->createResponse(ctx, request);
     builder->setNonReplayable(msgCtx->isNonReplayable());
 
     // Trusted network clients should use the newest master token. Trusted
@@ -821,7 +821,7 @@ shared_ptr<MessageBuilder> MslControl::buildDetachedResponse(shared_ptr<MslConte
         shared_ptr<MessageHeader> request)
 {
     // Create an idempotent response. Assign a random message ID.
-    shared_ptr<MessageBuilder> builder = MessageBuilder::createIdempotentResponse(ctx, request);
+    shared_ptr<MessageBuilder> builder = messageFactory->createIdempotentResponse(ctx, request);
     builder->setNonReplayable(msgCtx->isNonReplayable());
     builder->setMessageId(MslUtils::getRandomLong(ctx));
     return builder;
@@ -854,7 +854,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = messageFactory->createRequest(ctx, nullptr, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -888,7 +888,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, nullptr, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = messageFactory->createRequest(ctx, masterToken, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -904,7 +904,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Make sure the use the error header message ID + 1.
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, nullptr, nullptr, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = messageFactory->createRequest(ctx, nullptr, nullptr, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -938,7 +938,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Resend the request->
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = messageFactory->createRequest(ctx, masterToken, userIdToken, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -981,7 +981,7 @@ shared_ptr<MslControl::ErrorResult> MslControl::buildErrorResponse(shared_ptr<Ms
             // Resend the request->
             const int64_t messageId = MessageBuilder::incrementMessageId(errorHeader->getMessageId());
             shared_ptr<MessageContext> resendMsgCtx = make_shared<ResendMessageContext>(payloads, msgCtx);
-            shared_ptr<MessageBuilder> requestBuilder = MessageBuilder::createRequest(ctx, masterToken, userIdToken, messageId);
+            shared_ptr<MessageBuilder> requestBuilder = messageFactory->createRequest(ctx, masterToken, userIdToken, messageId);
             if (ctx->isPeerToPeer()) {
                 shared_ptr<MasterToken> peerMasterToken = requestHeader->getPeerMasterToken();
                 shared_ptr<UserIdToken> peerUserIdToken = requestHeader->getPeerUserIdToken();
@@ -1151,7 +1151,7 @@ shared_ptr<MslControl::SendResult> MslControl::send(shared_ptr<MslContext> ctx, 
 
     // Send the request.
     shared_ptr<OutputStream> os = (filterFactory) ? filterFactory->getOutputStream(out) : out;
-    shared_ptr<MessageOutputStream> request = streamFactory->createOutputStream(ctx, os, requestHeader, payloadCryptoContext);
+    shared_ptr<MessageOutputStream> request = messageFactory->createOutputStream(ctx, os, requestHeader, payloadCryptoContext);
     request->closeDestination(closeDestination);
 
     // If it is okay to write the data then ask the application to write it
@@ -1174,7 +1174,7 @@ shared_ptr<MessageInputStream> MslControl::receive(shared_ptr<MslContext> ctx,
         keyRequestData = request->getKeyRequestData();
     map<string,shared_ptr<crypto::ICryptoContext>> cryptoContexts = msgCtx->getCryptoContexts();
     shared_ptr<InputStream> is = (filterFactory) ? filterFactory->getInputStream(in) : in;
-    shared_ptr<MessageInputStream> response = streamFactory->createInputStream(ctx, is, keyRequestData, cryptoContexts);
+    shared_ptr<MessageInputStream> response = messageFactory->createInputStream(ctx, is, keyRequestData, cryptoContexts);
 
     // Deliver the received header to the debug context.
     shared_ptr<MessageHeader> responseHeader = response->getMessageHeader();
@@ -1589,7 +1589,7 @@ void MslControl::sendError(shared_ptr<MslContext> ctx, shared_ptr<MessageDebugCo
         const MslError& error, const string& userMessage, shared_ptr<OutputStream> out)
 {
     // Create error header->
-    shared_ptr<ErrorHeader> errorHeader = MessageBuilder::createErrorResponse(ctx, messageId, error, userMessage);
+    shared_ptr<ErrorHeader> errorHeader = messageFactory->createErrorResponse(ctx, messageId, error, userMessage);
     if (debugCtx) debugCtx->sentHeader(errorHeader);
 
     // Determine encoder format.
@@ -1601,7 +1601,7 @@ void MslControl::sendError(shared_ptr<MslContext> ctx, shared_ptr<MessageDebugCo
     const MslEncoderFormat format = encoder->getPreferredFormat(formats);
 
     // Send error response->
-    shared_ptr<MessageOutputStream> response = streamFactory->createOutputStream(ctx, out, errorHeader, format);
+    shared_ptr<MessageOutputStream> response = messageFactory->createOutputStream(ctx, out, errorHeader, format);
     response->close();
 }
 

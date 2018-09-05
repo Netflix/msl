@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,6 +157,13 @@ public:
     /** @inheritDoc */
     bool equals(std::shared_ptr<const PayloadChunk> other) const;
 
+protected:
+    /** Payload crypto context. */
+    std::shared_ptr<crypto::ICryptoContext> cryptoContext;
+
+    /** Cached encodings. */
+    mutable std::map<io::MslEncoderFormat,std::shared_ptr<ByteArray>> encodings;
+
 private:
     /** Payload. */
     std::shared_ptr<io::MslObject> payload;
@@ -171,12 +178,6 @@ private:
     MslConstants::CompressionAlgorithm compressionAlgo;
     /** The application data. */
     std::shared_ptr<ByteArray> data;
-
-    /** Payload crypto context. */
-    std::shared_ptr<crypto::ICryptoContext> cryptoContext;
-
-    /** Cached encodings. */
-    mutable std::map<io::MslEncoderFormat,std::shared_ptr<ByteArray>> encodings;
 };
 
 /*

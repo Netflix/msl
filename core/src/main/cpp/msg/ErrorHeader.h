@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,16 +149,18 @@ public:
      */
     virtual bool equals(std::shared_ptr<const Header> other) const;
 
-private:
-    ErrorHeader(); // not implemented
-
+protected:
     /** MSL context. */
     std::shared_ptr<util::MslContext> ctx_;
-
     /** Entity authentication data. */
     std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData_;
     /** Error data. */
     std::shared_ptr<io::MslObject> errordata_;
+    /** Cached encodings. */
+    mutable std::map<io::MslEncoderFormat, std::shared_ptr<ByteArray>> encodings_;
+
+private:
+    ErrorHeader(); // not implemented
 
     /** Timestamp in seconds since the epoch. */
     int64_t timestamp_;
@@ -172,9 +174,6 @@ private:
     std::string errorMsg_; // Note: empty means java null
     /** User message. */
     std::string userMsg_; // Note: empty means java null
-
-    /** Cached encodings. */
-    mutable std::map<io::MslEncoderFormat, std::shared_ptr<ByteArray>> encodings_;
 
     friend std::ostream& operator<<(std::ostream& os, const ErrorHeader& header);
 };

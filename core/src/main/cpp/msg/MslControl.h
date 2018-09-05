@@ -39,7 +39,7 @@ class MessageHeader;
 class MessageInputStream;
 class MessageOutputStream;
 class MessageContext;
-class MessageStreamFactory;
+class MessageFactory;
 class MslContextMasterTokenKey;
     
 /**
@@ -185,10 +185,10 @@ public:
      * cause all operations to execute on the calling thread.
      *
      * @param numThreads number of worker threads to create.
-     * @param streamFactory message stream factory. May be {@code null}.
+     * @param messageFactory message factory. May be {@code null}.
      * @param messageRegistry error message registry. May be {@code null}.
      */
-    MslControl(int32_t numThreads, std::shared_ptr<MessageStreamFactory> streamFactory,
+    MslControl(int32_t numThreads, std::shared_ptr<MessageFactory> messageFactory,
             std::shared_ptr<ErrorMessageRegistry> messageRegistry);
 
     /**
@@ -1075,8 +1075,8 @@ private: // attributes
     /** MSL executor. */
     std::shared_ptr<util::Executor> executor;
 
-    /** Message stream factory. */
-    std::shared_ptr<MessageStreamFactory> streamFactory;
+    /** Message factory. */
+    std::shared_ptr<MessageFactory> messageFactory;
     /** Error message registry. */
     std::shared_ptr<ErrorMessageRegistry> messageRegistry;
     /** Filter stream factory. May be null. */

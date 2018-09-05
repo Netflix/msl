@@ -23,6 +23,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <msg/MessageHeader.h>
 
 namespace netflix {
 namespace msl {
@@ -32,7 +33,7 @@ namespace tokens { class MasterToken; class UserIdToken; class ServiceToken; cla
 namespace userauth { class UserAuthenticationData; }
 namespace util { class MslContext; }
 namespace msg {
-class ErrorHeader; class MessageHeader; class MessageCapabilities;
+class ErrorHeader; class MessageCapabilities;
 
 /**
  * <p>A message builder provides methods for building messages.</p>
@@ -63,6 +64,13 @@ public:
     static int64_t decrementMessageId(const int64_t messageId);
 
     /**
+     * <p>Minimal constructor that sets the MSL context</p>
+     *
+     * @param ctx MSL context.
+     */
+    MessageBuilder(std::shared_ptr<util::MslContext> ctx) : ctx_(ctx) {}
+
+    /**
      * <p>Create a new message builder that will craft a new message with the
      * specified message ID.</p>
      * 
@@ -71,14 +79,14 @@ public:
      *        provided.
      * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
      * @param messageId the message ID to use. Must be within range.
-     * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    static std::shared_ptr<MessageBuilder> createRequest(std::shared_ptr<util::MslContext> ctx,
-                                                         std::shared_ptr<tokens::MasterToken> masterToken,
-                                                         std::shared_ptr<tokens::UserIdToken> userIdToken,
-                                                         int64_t messageId);
+    MessageBuilder(std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<tokens::UserIdToken> userIdToken,
+            int64_t messageId);
+
     /**
      * <p>Create a new message builder that will craft a new message.</p>
      * 
@@ -86,105 +94,12 @@ public:
      * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
      *        provided.
      * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
-     * @return the message builder.
      * @throws MslException if a user ID token is not bound to its
      *         corresponding master token.
      */
-    static std::shared_ptr<MessageBuilder> createRequest(std::shared_ptr<util::MslContext> ctx,
-                                                         std::shared_ptr<tokens::MasterToken> masterToken,
-                                                         std::shared_ptr<tokens::UserIdToken> userIdToken);
-    /**
-     * Create a new message builder that will craft a new message in response
-     * to another message. The constructed message may be used as a request.
-     * 
-     * @param ctx MSL context.
-     * @param requestHeader message header to respond to.
-     * @return the message builder.
-     * @throws MslMasterTokenException if the provided message's master token
-     *         is not trusted.
-     * @throws MslCryptoException if the crypto context from a key exchange
-     *         cannot be created.
-     * @throws MslKeyExchangeException if there is an error with the key
-     *         request data or the key response data cannot be created.
-     * @throws MslUserAuthException if there is an error with the user
-     *         authentication data or the user ID token cannot be created.
-     * @throws MslException if a user ID token in the message header is not
-     *         bound to its corresponding master token or there is an error
-     *         creating or renewing the master token.
-     */
-    static std::shared_ptr<MessageBuilder> createResponse(std::shared_ptr<util::MslContext> ctx,
-                                                          std::shared_ptr<MessageHeader> requestHeader);
-
-    /**
-     * Create a new message builder that will craft a new message in response
-     * to another message without issuing or renewing any master tokens or user
-     * ID tokens. The constructed message may be used as a request.
-     *
-     * @param ctx MSL context.
-     * @param requestHeader message header to respond to.
-     * @return the message builder.
-     * @throws MslCryptoException if there is an error accessing the remote
-     *         entity identity.
-     * @throws MslException if any of the request's user ID tokens is not bound
-     *         to its master token.
-     */
-    static std::shared_ptr<MessageBuilder> createIdempotentResponse(std::shared_ptr<util::MslContext> ctx,
-                                                                    std::shared_ptr<MessageHeader> requestHeader);
-
-    /**
-     * <p>Create a new message builder that will craft a new error message in
-     * response to another message. If the message ID of the request is not
-     * specified (i.e. unknown); then a random message ID will be generated.</p>
-     * 
-     * @param ctx MSL context.
-     * @param requestMessageId message ID of request. May be null.
-     * @param error the MSL error.
-     * @param userMessage localized user-consumable error message. May be null.
-     * @return the error header.
-     * @throws MslEncodingException if there is an error encoding the JSON
-     *         data.
-     * @throws MslCryptoException if there is an error encrypting or signing
-     *         the message.
-     * @throws MslEntityAuthException if there is an error with the entity
-     *         authentication data.
-     * @throws MslMessageException if no entity authentication data was
-     *         returned by the MSL context.
-     */
-    static std::shared_ptr<ErrorHeader> createErrorResponse(std::shared_ptr<util::MslContext> ctx,
-                                                            int64_t requestMessageId,
-                                                            MslError error,
-                                                            std::string userMessage);
-    
-    /**
-     * Create a new message builder with the provided tokens and key exchange
-     * data if a master token was issued or renewed.
-     * 
-     * @param ctx MSL context.
-     * @param messageId message ID.
-     * @param capabilities message capabilities.
-     * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
-     *        provided.
-     * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
-     * @param serviceTokens initial set of service tokens. May be null.
-     * @param peerstd::shared_ptr<tokens::MasterToken> peer master token. May be null unless a peer user
-     *        ID token is provided.
-     * @param peerstd::shared_ptr<tokens::UserIdToken> peer user ID token. May be null.
-     * @param peerServiceTokens initial set of peer service tokens.
-     *        May be null.
-     * @param keyExchangeData key exchange data. May be null.
-     * @throws MslException if a user ID token is not bound to its master
-     *         token.
-     */
     MessageBuilder(std::shared_ptr<util::MslContext> ctx,
-                   int64_t messageId,
-                   std::shared_ptr<msg::MessageCapabilities> capabilities,
-                   std::shared_ptr<tokens::MasterToken> masterToken,
-                   std::shared_ptr<tokens::UserIdToken> userIdToken,
-                   std::set<std::shared_ptr<tokens::ServiceToken>> serviceTokens,
-                   std::shared_ptr<tokens::MasterToken> peerMasterToken,
-                   std::shared_ptr<tokens::UserIdToken> peerUserIdToken,
-                   std::set<std::shared_ptr<tokens::ServiceToken>> peerServiceTokens,
-                   std::shared_ptr<keyx::KeyExchangeFactory::KeyExchangeData> keyExchangeData);
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<tokens::UserIdToken> userIdToken);
 
     /**
      * @return the message ID the builder will use.
@@ -519,9 +434,72 @@ public:
      */
     std::set<std::shared_ptr<tokens::ServiceToken>> getPeerServiceTokens();
 
-private:
+protected:
+    /**
+     * initialize a message builder with the provided tokens and key exchange
+     * data if a master token was issued or renewed.
+     * 
+     * @param messageId message ID.
+     * @param capabilities message capabilities.
+     * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
+     *        provided.
+     * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
+     * @param serviceTokens initial set of service tokens. May be null.
+     * @param peerstd::shared_ptr<tokens::MasterToken> peer master token. May be null unless a peer user
+     *        ID token is provided.
+     * @param peerstd::shared_ptr<tokens::UserIdToken> peer user ID token. May be null.
+     * @param peerServiceTokens initial set of peer service tokens.
+     *        May be null.
+     * @param keyExchangeData key exchange data. May be null.
+     * @throws MslException if a user ID token is not bound to its master
+     *         token.
+     */
+    void initializeMessageBuilder(
+            int64_t messageId,
+            std::shared_ptr<msg::MessageCapabilities> capabilities,
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<tokens::UserIdToken> userIdToken,
+            std::set<std::shared_ptr<tokens::ServiceToken>> serviceTokens,
+            std::shared_ptr<tokens::MasterToken> peerMasterToken,
+            std::shared_ptr<tokens::UserIdToken> peerUserIdToken,
+            std::set<std::shared_ptr<tokens::ServiceToken>> peerServiceTokens,
+            std::shared_ptr<keyx::KeyExchangeFactory::KeyExchangeData> keyExchangeData);
+    /**
+     * <p>Construct a new message header with the provided message data.</p>
+     *
+     * <p>Headers are encrypted and signed. If a master token is provided, it
+     * will be used for this purpose. Otherwise the crypto context appropriate
+     * for the entity authentication scheme will be used. N.B. Either the
+     * entity authentication data or the master token must be provided.</p>
+     *
+     * <p>Peer tokens are only processed if operating in peer-to-peer mode.</p>
+     *
+     * @param ctx MSL context.
+     * @param entityAuthData the entity authentication data. May be null if a
+     *        master token is provided.
+     * @param masterToken the master token. May be null if entity
+     *        authentication data is provided.
+     * @param headerData message header data container.
+     * @param peerData message header peer data container.
+     * @throws MslEncodingException if there is an error encoding the JSON
+     *         data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the message.
+     * @throws MslMasterTokenException if the header master token is not
+     *         trusted and needs to be to accept this message header.
+     * @throws MslEntityAuthException if there is an error with the entity
+     *         authentication data.
+     */
+    std::shared_ptr<MessageHeader> createMessageHeader(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData,
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<MessageHeader::HeaderData> headerData,
+            std::shared_ptr<MessageHeader::HeaderPeerData> peerData);
+
+protected:
     /** MSL context. */
-    std::shared_ptr<util::MslContext> ctx_;
+    const std::shared_ptr<util::MslContext> ctx_;
 
     /** Message header master token. */
     std::shared_ptr<tokens::MasterToken> masterToken_;

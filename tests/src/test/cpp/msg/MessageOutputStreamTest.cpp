@@ -40,6 +40,7 @@
 #include <keyx/KeyResponseData.h>
 #include <msg/ErrorHeader.h>
 #include <msg/MessageBuilder.h>
+#include <msg/MessageFactory.h>
 #include <msg/MessageHeader.h>
 #include <msg/MessageOutputStream.h>
 #include <msg/PayloadChunk.h>
@@ -104,6 +105,8 @@ const set<shared_ptr<ServiceToken>> EMPTY_SERVICE_TOKENS;
 const shared_ptr<MslObject> NULL_ISSUER_DATA;
 const vector<string> EMPTY_LANGUAGES;
 const set<MslEncoderFormat> EMPTY_FORMATS;
+const shared_ptr<MessageFactory> messageFactory = make_shared<MessageFactory>();
+
 
 } // namespace anonymous
 
@@ -639,7 +642,7 @@ TEST_F(MessageOutputStreamTest, noCtxCompressionAlgorithm)
 
 	// The intersection of compression algorithms is computed when a
 	// response header is generated.
-	shared_ptr<MessageHeader> responseHeader = MessageBuilder::createResponse(ctx, MESSAGE_HEADER)->getHeader();
+	shared_ptr<MessageHeader> responseHeader = messageFactory->createResponse(ctx, MESSAGE_HEADER)->getHeader();
 
 	shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, responseHeader, PAYLOAD_CRYPTO_CONTEXT);
 	EXPECT_FALSE(mos->setCompressionAlgorithm(CompressionAlgorithm::GZIP));

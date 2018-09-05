@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef SRC_MSG_MESSAGESTREAMFACTORY_H_
-#define SRC_MSG_MESSAGESTREAMFACTORY_H_
+#ifndef SRC_MSG_MESSAGEFACTORY_H_
+#define SRC_MSG_MESSAGEFACTORY_H_
 
 #include <io/MslEncoderFormat.h>
+#include <MslError.h>
+#include <msg/MessageBuilder.h>
 #include <map>
 #include <memory>
 #include <set>
@@ -34,14 +36,14 @@ class ErrorHeader; class MessageHeader;
 class MessageInputStream; class MessageOutputStream;
 
 /**
- * <p>A message stream factory is used to create message streams.</p>
+ * <p>A message factory is used to create message streams and builders.</p>
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
-class MessageStreamFactory
+class MessageFactory
 {
 public:
-	virtual ~MessageStreamFactory() {}
+	virtual ~MessageFactory() {}
 
     /**
      * <p>Construct a new message input stream. The header is parsed.</p>
@@ -126,8 +128,110 @@ public:
 			std::shared_ptr<io::OutputStream> destination,
 			std::shared_ptr<MessageHeader> header,
 			std::shared_ptr<crypto::ICryptoContext> cryptoContext);
+
+    /**
+     * <p>Create a new error message in response to another message. If the message ID
+     * of the request is not specified (i.e. unknown); then a random message ID will
+     * be generated.</p>
+     * 
+     * @param ctx MSL context.
+     * @param requestMessageId message ID of request. May be null.
+     * @param error the MSL error.
+     * @param userMessage localized user-consumable error message. May be null.
+     * @return the error header.
+     * @throws MslEncodingException if there is an error encoding the JSON
+     *         data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the message.
+     * @throws MslEntityAuthException if there is an error with the entity
+     *         authentication data.
+     * @throws MslMessageException if no entity authentication data was
+     *         returned by the MSL context.
+     */
+    virtual std::shared_ptr<ErrorHeader> createErrorResponse(
+           std::shared_ptr<util::MslContext> ctx,
+           int64_t requestMessageId,
+           MslError error,
+           std::string userMessage);
+
+    /**
+     * <p>Create a new message builder that will craft a new request message with the
+     * specified message ID.</p>
+     * 
+     * @param ctx MSL context.
+     * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
+     *        provided.
+     * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
+     * @param messageId the message ID to use. Must be within range.
+     * @return the message builder.
+     * @throws MslException if a user ID token is not bound to its
+     *         corresponding master token.
+     */
+    std::shared_ptr<MessageBuilder> createRequest(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<tokens::UserIdToken> userIdToken,
+            int64_t messageId);
+
+    /**
+     * <p>Create a new message builder that will craft a new message.</p>
+     * 
+     * @param ctx MSL context.
+     * @param std::shared_ptr<tokens::MasterToken> master token. May be null unless a user ID token is
+     *        provided.
+     * @param std::shared_ptr<tokens::UserIdToken> user ID token. May be null.
+     * @return the message builder.
+     * @throws MslException if a user ID token is not bound to its
+     *         corresponding master token.
+     */
+    std::shared_ptr<MessageBuilder> createRequest(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<tokens::MasterToken> masterToken,
+            std::shared_ptr<tokens::UserIdToken> userIdToken);
+
+    /**
+     * Create a new message builder that will craft a new message in response
+     * to another message. The constructed message may be used as a request.
+     *
+     * @param ctx MSL context.
+     * @param requestHeader message header to respond to.
+     * @return the message builder.
+     * @throws MslMasterTokenException if the provided message's master token
+     *         is not trusted.
+     * @throws MslCryptoException if the crypto context from a key exchange
+     *         cannot be created.
+     * @throws MslKeyExchangeException if there is an error with the key
+     *         request data or the key response data cannot be created.
+     * @throws MslUserAuthException if there is an error with the user
+     *         authentication data or the user ID token cannot be created.
+     * @throws MslException if a user ID token in the message header is not
+     *         bound to its corresponding master token or there is an error
+     *         creating or renewing the master token.
+     */
+    std::shared_ptr<MessageBuilder> createResponse(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageHeader> requestHeader);
+
+
+    /**
+     * Create a new message builder that will craft a new message in response
+     * to another message without issuing or renewing any master tokens or user
+     * ID tokens. The constructed message may be used as a request.
+     *
+     * @param ctx MSL context.
+     * @param requestHeader message header to respond to.
+     * @return the message builder.
+     * @throws MslCryptoException if there is an error accessing the remote
+     *         entity identity.
+     * @throws MslException if any of the request's user ID tokens is not bound
+     *         to its master token.
+     */
+    std::shared_ptr<MessageBuilder> createIdempotentResponse(
+            std::shared_ptr<util::MslContext> ctx,
+            std::shared_ptr<MessageHeader> requestHeader);
+
 };
 
 }}} // namespace netflix::msl::msg
 
-#endif /* SRC_MSG_MESSAGESTREAMFACTORY_H_ */
+#endif /* SRC_MSG_MESSAGEFACTORY_H_ */
