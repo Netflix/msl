@@ -382,6 +382,14 @@ shared_ptr<ByteArrayInputStream> MessageInputStream::nextData()
 	return data;
 }
 
+shared_ptr<PayloadChunk> MessageInputStream::createPayloadChunk(
+                shared_ptr<MslContext> ctx,
+                shared_ptr<MslObject> mo,
+                shared_ptr<ICryptoContext> cryptoContext)
+{
+	return make_shared<PayloadChunk>(ctx, mo, cryptoContext);
+}
+
 bool MessageInputStream::isHandshake()
 {
 	shared_ptr<MessageHeader> messageHeader = getMessageHeader();

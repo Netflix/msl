@@ -1,3 +1,19 @@
+/**
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #ifndef _MESSAGEHEADER_H_
 #define _MESSAGEHEADER_H_
 
@@ -377,14 +393,19 @@ public:
                   std::shared_ptr<ByteArray> signature,
                   const std::map<std::string, std::shared_ptr<crypto::ICryptoContext>>& cryptoContexts);
 
-private:
+protected:
     /** Entity authentication data. */
     std::shared_ptr<entityauth::EntityAuthenticationData> entityAuthData;
     /** Master token. */
     std::shared_ptr<tokens::MasterToken> masterToken;
     /** Header data. */
     std::shared_ptr<io::MslObject> headerdata;
+    /** Message crypto context. */
+    std::shared_ptr<crypto::ICryptoContext> messageCryptoContext;
+    /** Cached encodings. */
+    mutable std::map<io::MslEncoderFormat, std::shared_ptr<ByteArray>> encodings;
 
+private:
     /** Timestamp in seconds since the epoch. */
     int64_t timestamp;   // Note: this is -1 where 'null' is used in java
     /** Message ID. */
@@ -417,12 +438,6 @@ private:
 
     /** User (if authenticated). */
     std::shared_ptr<tokens::MslUser> user;
-
-    /** Message crypto context. */
-    std::shared_ptr<crypto::ICryptoContext> messageCryptoContext;
-
-    /** Cached encodings. */
-    mutable std::map<io::MslEncoderFormat, std::shared_ptr<ByteArray>> encodings;
 
     friend std::ostream& operator<<(std::ostream& os, const MessageHeader& header);
 };

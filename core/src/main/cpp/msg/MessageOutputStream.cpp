@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,7 +205,8 @@ bool MessageOutputStream::flush(int timeout)
 	// payload with the end of message flag set.
 	try {
 		shared_ptr<ByteArray> data = currentPayload_->toByteArray();
-		shared_ptr<PayloadChunk> chunk = make_shared<PayloadChunk>(ctx_, payloadSequenceNumber_, messageHeader->getMessageId(), closed_, compressionAlgo_, data, cryptoContext_);
+		shared_ptr<PayloadChunk> chunk = createPayloadChunk(ctx_, payloadSequenceNumber_,
+                        messageHeader->getMessageId(), closed_, compressionAlgo_, data, cryptoContext_);
 		if (caching_) payloads_.push_back(chunk);
 		shared_ptr<MslEncoderFactory> encoder = ctx_->getMslEncoderFactory();
 		shared_ptr<ByteArray> encoding = chunk->toMslEncoding(encoder, encoderFormat_);
@@ -238,6 +239,30 @@ bool MessageOutputStream::flush(int timeout)
 
 	// Success.
 	return true;
+}
+
+/**
+ * <p>Create new payload chunk.</p>
+ *
+ * @param ctx the MSL context.
+ * @param sequenceNumber sequence number.
+ * @param messageId the message ID.
+ * @param endofmsg true if this is the last payload chunk of the message.
+ * @param compressionAlgo the compression algorithm. May be {@code null}
+ *        for no compression.
+ * @param data the payload chunk application data.
+ * @param cryptoContext the crypto context.
+ * @throws MslEncodingException if there is an error encoding the data.
+ * @throws MslCryptoException if there is an error encrypting or signing
+ *         the payload chunk.
+ * @throws MslException if there is an error compressing the data.
+ */
+std::shared_ptr<PayloadChunk> MessageOutputStream::createPayloadChunk(std::shared_ptr<util::MslContext> ctx,
+			int64_t sequenceNumber, int64_t messageId, bool endofmsg,
+			MslConstants::CompressionAlgorithm compressionAlgo, std::shared_ptr<ByteArray> data,
+			std::shared_ptr<crypto::ICryptoContext> cryptoContext)
+{
+	return make_shared<PayloadChunk>(ctx, sequenceNumber, messageId, endofmsg, compressionAlgo, data, cryptoContext);
 }
 
 size_t MessageOutputStream::write(const ByteArray& data, size_t off, size_t len, int timeout)

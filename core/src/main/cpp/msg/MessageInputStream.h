@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <set>
 #include <string>
 #include <vector>
+#include <msg/PayloadChunk.h>
 
 namespace netflix {
 namespace msl {
@@ -207,6 +208,23 @@ protected:
      * @throws MslException if there is an error uncompressing the data.
      */
     std::shared_ptr<io::ByteArrayInputStream> nextData();
+
+    /**
+     * <p>Create new payload chunk.</p>
+     *
+     * @param ctx the MSL context.
+     * @param payloadChunkMo the MSL object.
+     * @param cryptoContext the crypto context.
+     * @throws MslCryptoException if there is a problem decrypting or verifying
+     *         the payload chunk.
+     * @throws MslEncodingException if there is a problem parsing the data.
+     * @throws MslMessageException if the compression algorithm is not known,
+     *         or the payload data is corrupt or missing.
+     * @throws MslException if there is an error uncompressing the data.
+     */
+    std::shared_ptr<PayloadChunk> createPayloadChunk(std::shared_ptr<util::MslContext> ctx,
+    		std::shared_ptr<io::MslObject> payloadChunkMo,
+    		std::shared_ptr<crypto::ICryptoContext> cryptoContext);
 
 private:
     /** MSL context. */

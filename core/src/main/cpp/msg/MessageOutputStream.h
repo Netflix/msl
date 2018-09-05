@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,6 +160,29 @@ public:
     
     /** @inheritDoc */
     virtual bool flush(int timeout = -1);
+
+protected:
+
+    /**
+     * <p>Create new payload chunk.</p>
+     *
+     * @param ctx the MSL context.
+     * @param sequenceNumber sequence number.
+     * @param messageId the message ID.
+     * @param endofmsg true if this is the last payload chunk of the message.
+     * @param compressionAlgo the compression algorithm. May be {@code null}
+     *        for no compression.
+     * @param data the payload chunk application data.
+     * @param cryptoContext the crypto context.
+     * @throws MslEncodingException if there is an error encoding the data.
+     * @throws MslCryptoException if there is an error encrypting or signing
+     *         the payload chunk.
+     * @throws MslException if there is an error compressing the data.
+     */
+    std::shared_ptr<msg::PayloadChunk> createPayloadChunk(std::shared_ptr<util::MslContext> ctx,
+            int64_t sequenceNumber, int64_t messageId, bool endofmsg,
+            MslConstants::CompressionAlgorithm compressionAlgo, std::shared_ptr<ByteArray> data,
+            std::shared_ptr<crypto::ICryptoContext> cryptoContext);
 
 private:
     /** MSL context. */
