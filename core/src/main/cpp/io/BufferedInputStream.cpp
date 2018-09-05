@@ -52,7 +52,7 @@ void BufferedInputStream::mark(size_t readlimit)
 
 void BufferedInputStream::reset()
 {
-    if (readlimit_ == -1)
+    if (readlimit_ == (size_t)-1)
         throw IOException("Cannot reset before input stream has been marked or if mark has been invalidated.");
 
     // Start reading from the beginning of the buffer.
