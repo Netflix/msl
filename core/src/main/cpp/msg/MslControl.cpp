@@ -1943,7 +1943,7 @@ private:
 
             // If the maximum message count was hit or if there is no new
             // response then return the original error response.
-            if (maxMessagesHit || (newChannel && newChannel->input()))
+            if (maxMessagesHit || (newChannel && !(newChannel->input())))
                 return make_shared<MslChannel>(response, nullptr);
 
             // Return the new channel, which may contain an error or be
