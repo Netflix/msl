@@ -101,7 +101,7 @@ private:
      * Requested maximum number of bytes before the mark is invalidated. Will
      * be -1 if the mark is not active.
      */
-    size_t readlimit_ = -1;
+    int readlimit_ = -1;
     /** True if stream is closed. */
     bool closed_ = false;
 };

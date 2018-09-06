@@ -67,7 +67,7 @@ int ByteArrayInputStream::skip(size_t n, int /*timeout*/)
 
     const size_t originalPosition = currentPosition_;
     currentPosition_ = std::min(currentPosition_ + n, data_->size());
-    return currentPosition_ - originalPosition;
+    return static_cast<int>(currentPosition_ - originalPosition);
 }
 
 }}} // namespace netflix::msl::io
