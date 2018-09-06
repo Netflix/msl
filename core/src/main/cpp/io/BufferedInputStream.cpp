@@ -49,7 +49,9 @@ void BufferedInputStream::mark(size_t readlimit)
     // Otherwise the existing buffer contains the correct data.
     //
     // Regardless set the new read limit.
-    readlimit_ = CheckedNumeric<int>(readlimit).ValueOrDefault(-1);
+    // if input readlimit exceeds the maximum value of int this 
+    // will throw an exception.
+    readlimit_ = CheckedNumeric<int>(readlimit).ValueOrDie();
 }
 
 void BufferedInputStream::reset()
