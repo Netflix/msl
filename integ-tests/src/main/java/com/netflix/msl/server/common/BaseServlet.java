@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2014-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2014-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class BaseServlet extends HttpServlet {
      */
     protected void configure() throws Exception {
         /** MSL control configuration. */
-        mslCtrl = new MslControl(numThreads);
+        mslCtrl = new MslControl(numThreads, null, null);
         if(setConsoleFilterStreamFactory) {
             mslCtrl.setFilterFactory(new ConsoleFilterStreamFactory());
         }
