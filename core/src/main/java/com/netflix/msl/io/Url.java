@@ -73,7 +73,7 @@ public interface Url {
     /**
      * Open a new connection to the target location.
      *
-     * @return a {@link #Connection} linking to the URL.
+     * @return a {@link Connection} linking to the URL.
      * @throws IOException if an I/O exception occurs.
      */
     public Connection openConnection() throws IOException;

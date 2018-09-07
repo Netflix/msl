@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class JsonMslObject extends MslObject implements JSONString {
      * Create a new {@code JsonMslObject} from the given {@code JSONObject}.
      * 
      * @param encoder the encoder factory.
-     * @param o the {@code JSONObject}.
+     * @param jo the {@code JSONObject}.
      * @throws MslEncoderException if the JSON object contains an unsupported
      *         type.
      */

@@ -366,7 +366,7 @@ public class MessageInputStream extends InputStream {
      * Create a new payload chunk
      *
      * @param ctx the MSL context.
-     * @param payloadChunkMo the MSL object.
+     * @param mo the MSL object.
      * @param cryptoContext the crypto context.
      * @throws MslCryptoException if there is a problem decrypting or verifying
      *         the payload chunk.

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /**
- * <p>An abstract factory class for producing {@link MslTokener},
+ * <p>An abstract factory class for producing {@link MslTokenizer},
  * {@link MslObject}, and {@link MslArray} instances of various encoder
  * formats.</p>
  * 

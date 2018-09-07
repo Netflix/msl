@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,6 @@ public class MockEmailPasswordAuthenticationFactory extends UserAuthenticationFa
 
     /**
      * Create a new test email/password authentication factory.
-     * 
-     * @param authmgr the authentication manager.
      */
     public MockEmailPasswordAuthenticationFactory() {
         super(UserAuthenticationScheme.EMAIL_PASSWORD);

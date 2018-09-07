@@ -17,7 +17,7 @@
 /**
  * Test message context.
  * 
- * The {@link #updateServiceTokens(MessageServiceTokenBuilder)} and
+ * The {@link #updateServiceTokens(MessageServiceTokenBuilder, boolean)} and
  * {@link #write(MessageOutputStream)} methods do nothing. Unit tests should
  * override those methods for the specific test.
  * 

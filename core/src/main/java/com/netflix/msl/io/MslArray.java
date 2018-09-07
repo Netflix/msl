@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2015-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2015-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -345,7 +345,6 @@ public class MslArray {
      * of the correct type.
      * 
      * @param index the index.
-     * @param defaultValue the default value.
      * @return the value.
      * @throws ArrayIndexOutOfBoundsException if the index is negative or
      *         exceeds the number of elements in the array.

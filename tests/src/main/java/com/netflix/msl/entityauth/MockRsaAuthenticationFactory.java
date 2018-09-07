@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,8 +87,6 @@ public class MockRsaAuthenticationFactory extends EntityAuthenticationFactory {
 
     /**
      * Create a new test RSA authentication factory.
-     * 
-     * @param store RSA key store.
      */
     public MockRsaAuthenticationFactory() {
         super(EntityAuthenticationScheme.RSA);
