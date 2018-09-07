@@ -64,13 +64,6 @@ public:
     static int64_t decrementMessageId(const int64_t messageId);
 
     /**
-     * <p>Minimal constructor that sets the MSL context</p>
-     *
-     * @param ctx MSL context.
-     */
-    MessageBuilder(std::shared_ptr<util::MslContext> ctx) : ctx_(ctx) {}
-
-    /**
      * <p>Create a new message builder that will craft a new message with the
      * specified message ID.</p>
      * 
@@ -435,6 +428,14 @@ public:
     std::set<std::shared_ptr<tokens::ServiceToken>> getPeerServiceTokens();
 
 protected:
+
+    /**
+     * <p>Minimal constructor that sets the MSL context</p>
+     *
+     * @param ctx MSL context.
+     */
+    MessageBuilder(std::shared_ptr<util::MslContext> ctx) : ctx_(ctx) {}
+
     /**
      * initialize a message builder with the provided tokens and key exchange
      * data if a master token was issued or renewed.
@@ -464,6 +465,7 @@ protected:
             std::shared_ptr<tokens::UserIdToken> peerUserIdToken,
             std::set<std::shared_ptr<tokens::ServiceToken>> peerServiceTokens,
             std::shared_ptr<keyx::KeyExchangeFactory::KeyExchangeData> keyExchangeData);
+
     /**
      * <p>Construct a new message header with the provided message data.</p>
      *
@@ -499,7 +501,7 @@ protected:
 
 protected:
     /** MSL context. */
-    const std::shared_ptr<util::MslContext> ctx_;
+    std::shared_ptr<util::MslContext> ctx_;
 
     /** Message header master token. */
     std::shared_ptr<tokens::MasterToken> masterToken_;
@@ -531,7 +533,7 @@ protected:
     /** Header peer data service tokens keyed off token name. */
     std::map<std::string,std::shared_ptr<tokens::ServiceToken>> peerServiceTokens_;
 };
-    
+
 }}} // namespace netflix::msl::msg
 
 #endif /* SRC_MSG_MESSAGE_BUILDER_H_ */
