@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public:
      * reason the non-replayable ID was rejected. The response code associated
      * with the error will be honored. If the master token entity cannot be
      * expected to recover if the message is sent with a new non-replayable ID
-     * then the response code {@link ResponseCode.ENTITYDATA_REAUTH} should be
+     * then the response code {@link ResponseCode#ENTITYDATA_REAUTH} should be
      * used.</p>
      *
      * @param ctx MSL context.
@@ -104,8 +104,8 @@ public:
      * @throws MslException if there is an error comparing or updating the non-
      *         replayable ID associated with this master token.
      * @see #createMasterToken(MslContext, EntityAuthenticationData, SecretKey, SecretKey, MslObject)
-     * @see MslError.MESSAGE_REPLAYED
-     * @see MslError.MESSAGE_REPLAYED_UNRECOVERABLE
+     * @see MslError#MESSAGE_REPLAYED
+     * @see MslError#MESSAGE_REPLAYED_UNRECOVERABLE
      */
     virtual MslError acceptNonReplayableId(std::shared_ptr<util::MslContext> ctx,
              std::shared_ptr<MasterToken> masterToken, int64_t nonReplayableId) = 0;
@@ -140,7 +140,7 @@ public:
 
     /**
      * <p>Check if the master token would be renewed by a call to
-     * {@link #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey)}.</p>
+     * {@link #renewMasterToken(MslContext, MasterToken, SecretKey, SecretKey, MslObject)}.</p>
      *
      * <p>This method should return the exact {@link MslError} identifying the
      * reason the master token will not be renewed.</p>

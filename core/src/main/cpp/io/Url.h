@@ -36,17 +36,16 @@ public:
     virtual ~Url() {};
 
     /**
-     * Open a new connection to the target location.
+     * Set the connection timeout for open and read operations.
      *
-     * @return a {@link #Connection} linking to the URL.
-     * @throws IOException if an I/O exception occurs.
+     * @param timeout connection timeout in milliseconds.
      */
     virtual void setTimeout(int64_t timeout) = 0;
 
     /**
      * Open a new connection to the target location.
      *
-     * @return a {@link #Connection} linking to the URL.
+     * @return a {@link Connection} linking to the URL.
      * @throws IOException if an I/O exception occurs.
      */
     virtual std::shared_ptr<Connection> openConnection() = 0;

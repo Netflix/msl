@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public:
      * @throws MslCryptoException if there is an error processing the signature
      *         envelope.
      * @throws MslEncodingException if there is an error parsing the envelope.
-     * @see #getBytes()
+     * @see #getBytes(MslEncoderFactory, MslEncoderFormat)
      */
     static
     MslSignatureEnvelope parse(std::shared_ptr<ByteArray> envelope, std::shared_ptr<io::MslEncoderFactory> encoder,
@@ -153,7 +153,7 @@ public:
      * @throws MslCryptoException if there is an error processing the signature
      *         envelope.
      * @throws MslEncodingException if there is an error parsing the envelope.
-     * @see #getBytes()
+     * @see #getBytes(MslEncoderFactory, MslEncoderFormat)
      */
     static
     MslSignatureEnvelope parse(std::shared_ptr<ByteArray> envelope, std::shared_ptr<io::MslEncoderFactory> encoder);

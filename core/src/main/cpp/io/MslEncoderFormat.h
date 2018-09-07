@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ public:
     }
 
     /**
-     * @param name the encoder format identifier.
+     * @param identifier the encoder format identifier.
      * @return the encoder format identified by the specified identifier or
      *         INVALID if there is none.
      */
