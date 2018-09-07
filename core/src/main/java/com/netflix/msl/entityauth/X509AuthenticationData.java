@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,6 @@ public class X509AuthenticationData extends EntityAuthenticationData {
      * Construct a new X.509 asymmetric keys authentication data instance from
      * the provided X.509 certificate.
      * 
-     * @param ctx MSL context.
      * @param x509cert entity X.509 certificate.
      * @throws MslCryptoException if the X.509 certificate data cannot be
      *         parsed.
@@ -73,7 +72,6 @@ public class X509AuthenticationData extends EntityAuthenticationData {
      * Construct a new X.509 asymmetric keys authentication data instance from
      * the provided MSL object.
      * 
-     * @param ctx MSL context.
      * @param x509AuthMo the authentication data MSL object.
      * @throws MslCryptoException if the X.509 certificate data cannot be
      *         parsed.

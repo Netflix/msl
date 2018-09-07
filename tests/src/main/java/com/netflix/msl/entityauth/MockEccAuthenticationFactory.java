@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,8 +83,6 @@ public class MockEccAuthenticationFactory extends EntityAuthenticationFactory {
 
     /**
      * Create a new test ECC authentication factory.
-     * 
-     * @param store ECC key store.
      */
     public MockEccAuthenticationFactory() {
         super(EntityAuthenticationScheme.ECC);

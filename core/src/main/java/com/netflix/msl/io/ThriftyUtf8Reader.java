@@ -53,7 +53,7 @@ public class ThriftyUtf8Reader extends Reader {
      * Create a new thrifty UTF-8 reader that will read data off the provided
      * input stream.
      *
-     * @param fInputStream the underlying input stream.
+     * @param inputStream the underlying input stream.
      */
     public ThriftyUtf8Reader(final InputStream inputStream) {
         fInputStream = inputStream;

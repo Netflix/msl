@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import com.netflix.msl.util.MslContext;
 /**
  * Test message context.
  * 
- * The {@link #updateServiceTokens(MessageServiceTokenBuilder)} and
+ * The {@link #updateServiceTokens(MessageServiceTokenBuilder, boolean)} and
  * {@link #write(MessageOutputStream)} methods do nothing. Unit tests should
  * override those methods for the specific test.
  * 
