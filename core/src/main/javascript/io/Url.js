@@ -25,7 +25,7 @@
  */
 (function(require, module) {
 	"use strict";
-	
+
 	var Class = require('../util/Class.js');
 	var OutputStream = require('../io/OutputStream.js');
 	var InputStream = require('../io/InputStream.js');
@@ -39,7 +39,7 @@
 	var MslEncoderFormat = require('../io/MslEncoderFormat.js');
 	var TextEncoding = require('../util/TextEncoding.js');
 	var MslConstants = require('../MslConstants.js');
-	
+
     /**
      * Interface for getting an HTTP response given a request.
      */
@@ -221,7 +221,8 @@
                 _exception: { value: undefined, writable: true, enumerable: false, configurable: false },
                 _timedout: { value: false, writable: true, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
-                _json: { value: undefined, writable: true, enumerable: false, configurable: false }
+                _json: { value: undefined, writable: true, enumerable: false, configurable: false },
+                _headers: { value: undefined, writable: true, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
@@ -269,14 +270,23 @@
          * return undefined until read() is first called, and may still return
          * undefined afterwards if the JSON cannot be accessed in this
          * manner.</p>
-         * 
+         *
          * <p>If read() does result in JSON becoming available via this method,
          * then read() will return zero bytes of data.</p>
-         * 
+         *
          * @return {?Array{*}} an array of JSON values or undefined.
          */
         getJSON: function getJSON() {
             return this._json;
+        },
+
+        /**
+        * <p>Returns an array of HTTP response headers, or undefined.</p>
+        *
+        * @return {?Array{string}} an array of HTTP response headers or undefined.
+        */
+        getHttpHeaders: function getHttpHeaders() {
+            return this._headers;
         },
 
         /** @inheritDoc */
@@ -323,7 +333,7 @@
                         result: function(result) {
                             InterruptibleExecutor(callback, function() {
                                 var content;
-                                
+
                                 if (result.isTimeout) {
                                     this._timedout = true;
                                     callback.timeout();
@@ -341,6 +351,9 @@
                                     throw this._exception;
                                 }
 
+                                // Capture headers
+                                this._headers = result.response.headers;
+
                                 // This is a platform hack that allows the
                                 // stream to return already-parsed JSON.
                                 //
@@ -353,7 +366,7 @@
                                     this._json = result.response.json;
                                     content = new Uint8Array([MslEncoderFormat.JSON.identifier]);
                                 }
-                                
+
                                 // Retrieve the raw bytes if available,
                                 // otherwise convert the string value to bytes.
                                 else if (result.response.content instanceof Uint8Array)
@@ -362,7 +375,7 @@
                                     content = TextEncoding.getBytes(result.response.body, MslConstants.DEFAULT_CHARSET);
                                 else
                                     throw new MslIoException("Missing HTTP response content.");
-                                
+
                                 // Read from the response.
                                 this._buffer = new ByteArrayInputStream(content);
                                 if (this._readlimit != -1)
@@ -407,7 +420,7 @@
 
         /**
          * <p>Open a new connection to the target location.</p>
-         * 
+         *
          * <p>The returned input stream must support
          * {@link InputStream#mark(int)}, {@link InputStream#reset()}, and
          * {@link InputStream#skip(long)} if you wish to use it for more than
@@ -428,7 +441,7 @@
             return {input: input, output: output};
         },
     });
-    
+
     // Exports.
     module.exports.IHttpLocation = IHttpLocation;
 })(require, (typeof module !== 'undefined') ? module : mkmodule('Url'));
