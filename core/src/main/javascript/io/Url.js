@@ -99,7 +99,7 @@
         /**
          * Return the response. This blocks until a response is available.
          *
-         * @param {{result: function({=response: {=body: string, =content: Uint8Array}, =isTimeout: boolean, =isError: boolean}), error: function(Error)}}
+         * @param {{result: function({=response: {=body: string, =content: Uint8Array, =headers: ?Array<string>}, =isTimeout: boolean, =isError: boolean}), error: function(Error)}}
          *        callback the callback will receive the HTTP response or
          *        undefined if the HTTP transaction was aborted and notified of
          *        any thrown exceptions.
@@ -222,7 +222,7 @@
                 _timedout: { value: false, writable: true, enumerable: false, configurable: false },
                 _aborted: { value: false, writable: true, enumerable: false, configurable: false },
                 _json: { value: undefined, writable: true, enumerable: false, configurable: false },
-                _headers: { value: undefined, writable: true, enumerable: false, configurable: false }
+                _headers: { value: [], writable: true, enumerable: false, configurable: false }
             };
             Object.defineProperties(this, props);
         },
@@ -281,9 +281,9 @@
         },
 
         /**
-        * <p>Returns an array of HTTP response headers, or undefined.</p>
+        * <p>Returns an array of HTTP response headers.</p>
         *
-        * @return {?Array{string}} an array of HTTP response headers or undefined.
+        * @return {Array{string}} an array of HTTP response headers.
         */
         getHttpHeaders: function getHttpHeaders() {
             return this._headers;
