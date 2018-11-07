@@ -1,6 +1,6 @@
 {
   "name": "msl-example-client",
-  "version": "1.2224.0",
+  "version": "1.2225.0",
   "description": "Message Security Layer Simple Example Client",
   "keywords": [
     "msl",
@@ -21,7 +21,7 @@
     "version": "echo `git describe --dirty`"
   },
   "dependencies": {
-    "msl-core": "^1.2224.0"
+    "msl-core": "^1.2225.0"
   },
   "devDependencies": {
     "clarinet": "^0.11.0",
