@@ -1,5 +1,10 @@
+plugins {
+    id "me.champeau.gradle.jmh" version "0.4.6"
+}
+
 apply plugin: 'java'
 apply plugin: 'eclipse-wtp'
+apply plugin: 'me.champeau.gradle.jmh'
 
 targetCompatibility = '1.7' // Android maximum supported language level
 sourceCompatibility = '1.7' // Android maximum supported language level
@@ -83,4 +88,14 @@ task javadoc_public(type: Javadoc) {
         "**/UserAuthenticationScheme.java",
         "**/UserIdToken.java"
     ]
+}
+
+jmh {
+    warmupIterations = 1
+    iterations = 1
+    profilers = ["gc"]
+}
+
+dependencies {
+    jmh "commons-io:commons-io:2.5"
 }
