@@ -1,6 +1,6 @@
 {
   "name": "msl-core",
-  "version": "1.2225.0",
+  "version": "1.2226.0",
   "description": "Message Security Layer",
   "keywords": [
     "msl",
@@ -23,6 +23,7 @@
   },
   "jshintConfig": {
     "sub": true,
+    "esversion": 5,
     "expr": true,
     "undef": true,
     "typed": true,
