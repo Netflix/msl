@@ -351,7 +351,7 @@
                         }, self);
                     },
                     error: handleError,
-                },);
+                });
 
                 function handleError(e) {
                     AsyncExecutor(callback, function() {
