@@ -277,8 +277,13 @@ public class MessageInputStream extends InputStream {
                 if (masterToken.isExpired(null)) {
                     // If the message is not renewable or does not contain key
                     // request data then reject the message.
-                    if (!messageHeader.isRenewable() || messageHeader.getKeyRequestData().isEmpty())
-                        throw new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader.toString());
+                    if (!messageHeader.isRenewable()) {
+                        throw new MslMessageException(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE, messageHeader.toString());
+                    }
+                    else if (messageHeader.getKeyRequestData().isEmpty()) {
+                        throw new MslMessageException(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA, messageHeader.toString());
+                    }
+
 
                     // If the master token will not be renewed by the token
                     // factory then reject the message.
