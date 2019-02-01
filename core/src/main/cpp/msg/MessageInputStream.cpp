@@ -236,10 +236,15 @@ MessageInputStream::MessageInputStream(shared_ptr<MslContext> ctx,
 			if (masterToken->isExpired(shared_ptr<Date>())) {
 				// If the message is not renewable or does not contain key
 				// request data then reject the message.
-				if (!messageHeader->isRenewable() || messageHeader->getKeyRequestData().empty()) {
+				if (!messageHeader->isRenewable()) {
 					stringstream ss;
 					ss << messageHeader;
-					throw MslMessageException(MslError::MESSAGE_EXPIRED, ss.str());
+					throw MslMessageException(MslError::MESSAGE_EXPIRED_NOT_RENEWABLE, ss.str());
+				}
+				else if (messageHeader->getKeyRequestData().empty()) {
+					stringstream ss;
+					ss << messageHeader;
+					throw MslMessageException(MslError::MESSAGE_EXPIRED_NO_KEYREQUEST_DATA, ss.str());
 				}
 
 				// If the master token will not be renewed by the token
