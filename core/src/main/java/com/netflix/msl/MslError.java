@@ -240,6 +240,8 @@ public class MslError {
     public static final MslError UNEXPECTED_LOCAL_MESSAGE_SENDER = new MslError(6041, ResponseCode.FAIL, "Message sender is equal to the local entity.");
     public static final MslError UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA = new MslError(6042, ResponseCode.FAIL, "User authentication data included in unencrypted message header.");
     public static final MslError MESSAGE_SENDER_MISMATCH = new MslError(6043, ResponseCode.FAIL, "Message sender entity identity does not match expected identity.");
+    public static final MslError MESSAGE_EXPIRED_NOT_RENEWABLE = new MslError(6044, ResponseCode.EXPIRED, "Message expired and not renewable. Rejected.");
+    public static final MslError MESSAGE_EXPIRED_NO_KEYREQUEST_DATA = new MslError(6045, ResponseCode.EXPIRED, "Message expired and missing key request data. Rejected.");
 
     // 7 Key Exchange
     public static final MslError UNIDENTIFIED_KEYX_SCHEME = new MslError(7000, ResponseCode.FAIL, "Unable to identify key exchange scheme.");

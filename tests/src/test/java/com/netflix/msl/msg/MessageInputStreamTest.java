@@ -638,7 +638,7 @@ public class MessageInputStreamTest {
     @Test
     public void expiredNotRenewableClientMessage() throws IOException, MslUserAuthException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.MESSAGE_EXPIRED);
+        thrown.expectMslError(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE);
         thrown.expectMessageId(MSG_ID);
 
         // Expired messages received by a trusted network server should be
@@ -658,7 +658,7 @@ public class MessageInputStreamTest {
     @Test
     public void expiredNoKeyRequestDataClientMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.MESSAGE_EXPIRED);
+        thrown.expectMslError(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA);
         thrown.expectMessageId(MSG_ID);
 
         // Expired renewable messages received by a trusted network server
@@ -709,7 +709,7 @@ public class MessageInputStreamTest {
     @Test
     public void expiredNoKeyRequestDataPeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.MESSAGE_EXPIRED);
+        thrown.expectMslError(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA);
         thrown.expectMessageId(MSG_ID);
 
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);
@@ -727,7 +727,7 @@ public class MessageInputStreamTest {
     @Test
     public void expiredNotRenewablePeerMessage() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslUserAuthException, MslKeyExchangeException, IOException, MslException, MslEncoderException {
         thrown.expect(MslMessageException.class);
-        thrown.expectMslError(MslError.MESSAGE_EXPIRED);
+        thrown.expectMslError(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE);
         thrown.expectMessageId(MSG_ID);
 
         final Date renewalWindow = new Date(System.currentTimeMillis() - 20000);

@@ -1827,7 +1827,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE), MSG_ID);
         });
     });
 
@@ -1887,7 +1887,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA), MSG_ID);
         });
     });
 
@@ -2031,7 +2031,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA), MSG_ID);
         });
     });
 
@@ -2089,7 +2089,7 @@ describe("MessageInputStream", function() {
 
         runs(function() {
             var f = function() { throw exception; };
-            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED), MSG_ID);
+            expect(f).toThrow(new MslMessageException(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE), MSG_ID);
         });
     });
 

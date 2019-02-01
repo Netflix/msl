@@ -269,6 +269,8 @@
 	    UNEXPECTED_LOCAL_MESSAGE_SENDER : new MslError(6041, MslConstants.ResponseCode.FAIL, "Message sender is equal to the local entity."),
 	    UNENCRYPTED_MESSAGE_WITH_USERAUTHDATA : new MslError(6042, MslConstants.ResponseCode.FAIL, "User authentication data included in unencrypted message header."),
 	    MESSAGE_SENDER_MISMATCH : new MslError(6043, MslConstants.ResponseCode.FAIL, "Message sender entity identity does not match expected identity."),
+        MESSAGE_EXPIRED_NOT_RENEWABLE : new MslError(6044, MslConstants.ResponseCode.EXPIRED, "Message expired and not renewable. Rejected."),
+        MESSAGE_EXPIRED_NO_KEYREQUEST_DATA : new MslError(6045, MslConstants.ResponseCode.EXPIRED, "Message expired and missing key request data. Rejected."),
 
 	    // 7 Key Exchange
 	    UNIDENTIFIED_KEYX_SCHEME : new MslError(7000, MslConstants.ResponseCode.FAIL, "Unable to identify key exchange scheme."),
