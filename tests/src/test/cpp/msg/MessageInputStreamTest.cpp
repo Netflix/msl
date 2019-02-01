@@ -656,7 +656,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewableClientMessage)
 		make_shared<MessageInputStream>(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslMessageException& e) {
-		EXPECT_EQ(MslError::MESSAGE_EXPIRED, e.getError());
+		EXPECT_EQ(MslError::MESSAGE_EXPIRED_NOT_RENEWABLE, e.getError());
 		EXPECT_EQ(MSG_ID, e.getMessageId());
 	}
 }
@@ -677,7 +677,7 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataClientMessage)
 		make_shared<MessageInputStream>(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslMessageException& e) {
-		EXPECT_EQ(MslError::MESSAGE_EXPIRED, e.getError());
+		EXPECT_EQ(MslError::MESSAGE_EXPIRED_NO_KEYREQUEST_DATA, e.getError());
 		EXPECT_EQ(MSG_ID, e.getMessageId());
 	}
 }
@@ -727,7 +727,7 @@ TEST_F(MessageInputStreamTest, expiredNoKeyRequestDataPeerMessage)
 		make_shared<MessageInputStream>(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslMessageException& e) {
-		EXPECT_EQ(MslError::MESSAGE_EXPIRED, e.getError());
+		EXPECT_EQ(MslError::MESSAGE_EXPIRED_NO_KEYREQUEST_DATA, e.getError());
 		EXPECT_EQ(MSG_ID, e.getMessageId());
 	}
 }
@@ -746,7 +746,7 @@ TEST_F(MessageInputStreamTest, expiredNotRenewablePeerMessage)
 		make_shared<MessageInputStream>(p2pCtx, is, KEY_REQUEST_DATA, cryptoContexts);
 		ADD_FAILURE() << "Should have thrown";
 	} catch (const MslMessageException& e) {
-		EXPECT_EQ(MslError::MESSAGE_EXPIRED, e.getError());
+		EXPECT_EQ(MslError::MESSAGE_EXPIRED_NOT_RENEWABLE, e.getError());
 		EXPECT_EQ(MSG_ID, e.getMessageId());
 	}
 }
