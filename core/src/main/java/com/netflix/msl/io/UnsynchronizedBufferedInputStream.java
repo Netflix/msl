@@ -98,7 +98,7 @@ public class UnsynchronizedBufferedInputStream extends FilterInputStream {
 
         // Read any remaining data requested.
         final int remaining = len - copied;
-        final int numread = in.read(b, copied, remaining);
+        final int numread = in.read(b, off + copied, remaining);
 
         // If we were unable to read, return the number of bytes copied or -1
         // to indicate end-of-stream if we also didn't copy any bytes.
