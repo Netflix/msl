@@ -533,8 +533,17 @@
                     if (masterToken.isExpired(null)) {
                         // If the message is not renewable or does not contain key
                         // request data then reject the message.
-                        if (!messageHeader.isRenewable() || messageHeader.keyRequestData.length == 0) {
-                            self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED, messageHeader)
+                        if (!messageHeader.isRenewable()) {
+                            self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED_NOT_RENEWABLE, messageHeader)
+                            .setMasterToken(masterToken)
+                            .setUserIdToken(messageHeader.userIdToken)
+                            .setUserAuthenticationData(messageHeader.userAuthenticationData)
+                            .setMessageId(messageHeader.messageId);
+                            ready();
+                            return;
+                        }
+                        else if (messageHeader.keyRequestData.length == 0) {
+                            self._errored = new MslMessageException(MslError.MESSAGE_EXPIRED_NO_KEYREQUEST_DATA, messageHeader)
                             .setMasterToken(masterToken)
                             .setUserIdToken(messageHeader.userIdToken)
                             .setUserAuthenticationData(messageHeader.userAuthenticationData)
