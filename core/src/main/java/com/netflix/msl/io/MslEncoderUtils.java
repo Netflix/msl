@@ -110,12 +110,14 @@ public class MslEncoderUtils {
      * <code>String</code>, <code>null</code>, or turn any
      * <code>MslEncodable</code> into a <code>MslObject</code>.
      * 
+     * @param ctx MSL context.
+     * @param format MSL encoder format.
      * @param c a collection of MSL encoding-compatible objects.
      * @return the constructed MSL array.
      * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
      *         encoded properly or an unsupported object is encountered.
      */
-    public static MslArray createArray(final MslContext ctx, final Collection<?> c) throws MslEncoderException {
+    public static MslArray createArray(final MslContext ctx, final MslEncoderFormat format, final Collection<?> c) throws MslEncoderException {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
         final MslArray array = encoder.createArray();
         for (final Object o : c) {
@@ -134,7 +136,7 @@ public class MslEncoderUtils {
                 array.put(-1, o);
             } else if (o instanceof MslEncodable) {
                 final MslEncodable me = (MslEncodable)o;
-                final byte[] encode = me.toMslEncoding(encoder, encoder.getPreferredFormat(null));
+                final byte[] encode = me.toMslEncoding(encoder, format);
                 final MslObject mo = encoder.parseObject(encode);
                 array.put(-1, mo);
             } else {

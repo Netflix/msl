@@ -397,7 +397,7 @@ describe("MessageHeader", function() {
 					result: function(x) { PEER_USER_ID_TOKEN_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA, {
+				MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, KEY_REQUEST_DATA, {
 					result: function(x) { KEY_REQUEST_DATA_MA = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -405,7 +405,7 @@ describe("MessageHeader", function() {
 					result: function(x) { KEY_RESPONSE_DATA_MO = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
-				MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA, {
+				MslEncoderUtils.createArray(p2pCtx, ENCODER_FORMAT, PEER_KEY_REQUEST_DATA, {
 					result: function(x) { PEER_KEY_REQUEST_DATA_MA = x; },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -614,7 +614,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -713,7 +713,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -924,11 +924,11 @@ describe("MessageHeader", function() {
 		var serviceTokensMa, peerServiceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MslEncoderUtils.createArray(p2pCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(p2pCtx, ENCODER_FORMAT, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1029,11 +1029,11 @@ describe("MessageHeader", function() {
 		var serviceTokensMa, peerServiceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
-			MslEncoderUtils.createArray(p2pCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(p2pCtx, ENCODER_FORMAT, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1177,7 +1177,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1329,7 +1329,7 @@ describe("MessageHeader", function() {
 		var serviceTokensMa;
 		runs(function() {
 			var serviceTokens = builder.getServiceTokens();
-			MslEncoderUtils.createArray(trustedNetCtx, serviceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens, {
 				result: function(x) { serviceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});
@@ -1338,7 +1338,7 @@ describe("MessageHeader", function() {
 		
 		var peerServiceTokensMa;
 		runs(function() {
-			MslEncoderUtils.createArray(trustedNetCtx, peerServiceTokens, {
+			MslEncoderUtils.createArray(trustedNetCtx, ENCODER_FORMAT, peerServiceTokens, {
 				result: function(x) { peerServiceTokensMa = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 			});

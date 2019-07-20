@@ -30,6 +30,8 @@
      * <code>String</code>, <code>null</code>, or turn any
      * <code>MslEncodable</code> into a <code>MslObject</code>.
      * 
+     * @param {MslContext} ctx MSL context.
+     * @param {MslEncoderFormat} format MSL encoder format.
      * @param {Array<*>} c a collection of MSL encoding-compatible objects.
      * @param {{result: function(MslArray), error: function(Error)}} callback
      *        the callback that will receive the constructed MSL array or any
@@ -37,7 +39,7 @@
      * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
      *         encoded properly or an unsupported object is encountered.
      */
-    var MslEncoderUtils$createArray = function MslEncoderUtils$createArray(ctx, c, callback) {
+    var MslEncoderUtils$createArray = function MslEncoderUtils$createArray(ctx, format, c, callback) {
     	function add(encoder, array, i, callback) {
 	    	AsyncExecutor(callback, function() {
 	    		if (i >= c.length) return array;
@@ -59,7 +61,7 @@
 	    			add(encoder, array, i+1, callback);
 	    		} else if (o instanceof MslEncodable) {
 	    			var me = o;
-	    			me.toMslEncoding(encoder, encoder.getPreferredFormat(null), {
+	    			me.toMslEncoding(encoder, format, {
 	    				result: function(encode) {
 	    					AsyncExecutor(callback, function() {
 	    						var mo = encoder.parseObject(encode);
