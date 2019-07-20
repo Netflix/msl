@@ -21,6 +21,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <io/MslEncoderFormat.h>
 
 namespace netflix {
 namespace msl {
@@ -66,12 +67,14 @@ namespace MslEncoderUtils
 	 * <code>String</code>, <code>null</code>, or turn any
 	 * <code>MslEncodable</code> into a <code>MslObject</code>.
 	 *
+	 * @param ctx MSL context.
+	 * @param format MSL encoder format.
 	 * @param c a collection of MSL encoding-compatible objects.
 	 * @return the constructed MSL array.
 	 * @throws MslEncoderException if a <code>MslEncodable</code> cannot be
 	 *         encoded properly or an unsupported object is encountered.
 	 */
-	std::shared_ptr<MslArray> createArray(std::shared_ptr<util::MslContext> ctx, const std::vector<Variant>& c);
+	std::shared_ptr<MslArray> createArray(std::shared_ptr<util::MslContext> ctx, const MslEncoderFormat& format, const std::vector<Variant>& c);
 
 	/**
 	 * Performs a deep comparison of two MSL objects for equivalence. MSL

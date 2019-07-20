@@ -164,7 +164,7 @@ bool isAboutNowSeconds(int64_t seconds)
 // Create a new MslArray out of a set of shared_ptr's, each of which point to an
 // instance of type T. T must be derived from MslEncodable.
 template <typename T>
-shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const set<shared_ptr<T>>& s)
+shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const MslEncoderFormat& format, const set<shared_ptr<T>>& s)
 {
     vector<Variant> result;
     for (typename set<shared_ptr<T>>::const_iterator it = s.begin(); it != s.end(); ++it)
@@ -174,7 +174,7 @@ shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const set<shared_pt
         Variant variant = VariantFactory::create(mslEncodable);
         result.push_back(variant);
     }
-    return MslEncoderUtils::createArray(ctx, result);
+    return MslEncoderUtils::createArray(ctx, format, result);
 }
 
 // Compare two sets of shared_ptrs of type T. T must support equals(). Since
@@ -543,14 +543,14 @@ TEST_F(MessageHeaderTest, entityAuthDataMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -586,14 +586,14 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayableMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -698,14 +698,14 @@ TEST_F(MessageHeaderTest, entityAuthDataPeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_FALSE(headerdata->has(KEY_USER_ID_TOKEN));
 }
@@ -742,14 +742,14 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayablePeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_FALSE(headerdata->has(KEY_USER_ID_TOKEN));
 }
@@ -815,14 +815,14 @@ TEST_F(MessageHeaderTest, masterTokenMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -896,14 +896,14 @@ TEST_F(MessageHeaderTest, masterTokenPeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, ENCODER_FORMAT, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -2314,7 +2314,7 @@ TEST_F(MessageHeaderTest, serviceTokenMismatchedMasterTokenParseHeader)
     set<shared_ptr<ServiceToken>> serviceTokens = builder.getServiceTokens();
     set<shared_ptr<ServiceToken>> st = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, shared_ptr<UserIdToken>());
     serviceTokens.insert(st.begin(), st.end());
-    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, serviceTokens));
+    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens));
     shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
@@ -2354,7 +2354,7 @@ TEST_F(MessageHeaderTest, serviceTokenMismatchedUserIdTokenParseHeader)
     shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     set<shared_ptr<ServiceToken>> st = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken);
     serviceTokens.insert(st.begin(), st.end());
-    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, serviceTokens));
+    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, ENCODER_FORMAT, serviceTokens));
     shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
