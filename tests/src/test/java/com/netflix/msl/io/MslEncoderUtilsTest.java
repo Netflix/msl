@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2019 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -129,7 +129,7 @@ public class MslEncoderUtilsTest {
                     mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
                     break;
                 case 5:
-                    mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslArray(random));
+                    mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
                     break;
             }
         }
@@ -190,7 +190,7 @@ public class MslEncoderUtilsTest {
                     ma.put(-1, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
                     break;
                 case 5:
-                    ma.put(-1, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslArray(random));
+                    ma.put(-1, (depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
                     break;
             }
         }
