@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2019 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ describe("MslEncoderUtils", function() {
 	                mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
 	                break;
 	            case 5:
-	                mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslArray(random));
+	                mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
 	                break;
             }
         }
