@@ -284,7 +284,7 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
         throw MslEncodingException(MslError::MSL_ENCODE_ERROR, "headerdata", e)
             .setMasterToken(masterToken)
             .setEntityAuthenticationData(entityAuthData)
-            .setUserIdToken(peerUserIdToken)
+            .setUserIdToken(userIdToken)
             .setUserAuthenticationData(userAuthData)
             .setMessageId(messageId);
     }
