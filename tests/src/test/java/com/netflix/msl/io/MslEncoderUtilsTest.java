@@ -59,7 +59,6 @@ public class MslEncoderUtilsTest {
     private static final String KEY_BOOLEAN = "boolean";
     private static final String KEY_NUMBER = "number";
     private static final String KEY_STRING = "string";
-    private static final String KEY_NULL = "null";
     private static final String KEY_OBJECT = "object";
     private static final String KEY_ARRAY = "array";
     
@@ -84,7 +83,7 @@ public class MslEncoderUtilsTest {
     private static MslObject createFlatMslObject(final Random random) throws MslEncoderException {
         final MslObject mo = new MslObject();
         for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
-            switch (random.nextInt(4)) {
+            switch (random.nextInt(3)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
                     break;
@@ -93,9 +92,6 @@ public class MslEncoderUtilsTest {
                     break;
                 case 2:
                     mo.put(KEY_STRING + i, randomString(random));
-                    break;
-                case 3:
-                    mo.put(KEY_NULL + i, null);
                     break;
             }
         }
@@ -112,7 +108,7 @@ public class MslEncoderUtilsTest {
     private static MslObject createDeepMslObject(final Random random, final int depth) throws MslEncoderException {
         final MslObject mo = new MslObject();
         for (int i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
-            switch (random.nextInt(6)) {
+            switch (random.nextInt(5)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
                     break;
@@ -121,9 +117,6 @@ public class MslEncoderUtilsTest {
                     break;
                 case 2:
                     mo.put(KEY_STRING + i, randomString(random));
-                    break;
-                case 3:
-                    mo.put(KEY_NULL + i, null);
                     break;
                 case 4:
                     mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
