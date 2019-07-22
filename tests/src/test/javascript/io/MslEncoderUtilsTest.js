@@ -23,7 +23,6 @@ describe("MslEncoderUtils", function() {
     var KEY_BOOLEAN = "boolean";
     var KEY_NUMBER = "number";
     var KEY_STRING = "string";
-    var KEY_NULL = "null";
     var KEY_OBJECT = "object";
     var KEY_ARRAY = "array";
     
@@ -48,7 +47,7 @@ describe("MslEncoderUtils", function() {
     function createFlatMslObject(random) {
         var mo = new MslObject();
         for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
-            switch (random.nextInt(4)) {
+            switch (random.nextInt(3)) {
                 case 0:
                     mo.put(KEY_BOOLEAN + i, random.nextBoolean());
                     break;
@@ -57,9 +56,6 @@ describe("MslEncoderUtils", function() {
                     break;
                 case 2:
                     mo.put(KEY_STRING + i, randomString(random));
-                    break;
-                case 3:
-                    mo.put(KEY_NULL + i, null);
                     break;
             }
         }
@@ -75,7 +71,7 @@ describe("MslEncoderUtils", function() {
     function createDeepMslObject(random, depth) {
         var mo = new MslObject();
         for (var i = 1 + random.nextInt(MAX_ELEMENTS - 1); i > 0; --i) {
-            switch (random.nextInt(6)) {
+            switch (random.nextInt(5)) {
 	            case 0:
 	                mo.put(KEY_BOOLEAN + i, random.nextBoolean());
 	                break;
@@ -84,9 +80,6 @@ describe("MslEncoderUtils", function() {
 	                break;
 	            case 2:
 	                mo.put(KEY_STRING + i, randomString(random));
-	                break;
-	            case 3:
-	                mo.put(KEY_NULL + i, null);
 	                break;
 	            case 4:
 	                mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
