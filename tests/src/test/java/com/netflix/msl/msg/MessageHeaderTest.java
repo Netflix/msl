@@ -90,9 +90,6 @@ import com.netflix.msl.util.MslTestUtils;
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MessageHeaderTest {
-	/** MSL encoder format. */
-	private static final MslEncoderFormat ENCODER_FORMAT = MslEncoderFormat.JSON;
-
     /** Milliseconds per second. */
     private static final long MILLISECONDS_PER_SECOND = 1000;
     
@@ -187,6 +184,8 @@ public class MessageHeaderTest {
     private static MslContext p2pCtx;
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
+    /** MSL encoder format. */
+    private static MslEncoderFormat format;
     
     /**
      * A helper class for building message header data.
@@ -300,12 +299,13 @@ public class MessageHeaderTest {
         ALGOS.add(CompressionAlgorithm.LZW);
         FORMATS.add(MslEncoderFormat.JSON);
         CAPABILITIES = new MessageCapabilities(ALGOS, LANGUAGES, FORMATS);
+        format = encoder.getPreferredFormat(CAPABILITIES.getEncoderFormats());
         
         MASTER_TOKEN = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
         
         final KeyRequestData keyRequestData = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxData = factory.generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
         KEY_REQUEST_DATA.add(keyRequestData);
         KEY_RESPONSE_DATA = keyxData.keyResponseData;
         
@@ -317,13 +317,14 @@ public class MessageHeaderTest {
         
         final KeyRequestData peerKeyRequestData = new SymmetricWrappedExchange.RequestData(KeyId.PSK);
         final KeyExchangeFactory peerFactory = p2pCtx.getKeyExchangeFactory(peerKeyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData peerKeyxData = peerFactory.generateResponse(p2pCtx, ENCODER_FORMAT, peerKeyRequestData, PEER_MASTER_TOKEN);
+        final KeyExchangeData peerKeyxData = peerFactory.generateResponse(p2pCtx, format, peerKeyRequestData, PEER_MASTER_TOKEN);
         PEER_KEY_REQUEST_DATA.add(peerKeyRequestData);
         PEER_KEY_RESPONSE_DATA = peerKeyxData.keyResponseData;
     }
     
     @AfterClass
     public static void teardown() {
+        format = null;
         encoder = null;
         p2pCtx = null;
         trustedNetCtx = null;
@@ -438,7 +439,7 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
@@ -446,7 +447,7 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
@@ -482,7 +483,7 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
@@ -490,7 +491,7 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
@@ -599,15 +600,15 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
@@ -644,15 +645,15 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertFalse(headerdata.has(KEY_USER_ID_TOKEN));
     }
@@ -720,7 +721,7 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
@@ -728,7 +729,7 @@ public class MessageHeaderTest {
         assertFalse(headerdata.has(KEY_PEER_SERVICE_TOKENS));
         assertFalse(headerdata.has(KEY_PEER_USER_ID_TOKEN));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(trustedNetCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
@@ -804,15 +805,15 @@ public class MessageHeaderTest {
         assertEquals(RENEWABLE, headerdata.getBoolean(KEY_RENEWABLE));
         assertEquals(HANDSHAKE, headerdata.getBoolean(KEY_HANDSHAKE));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, CAPABILITIES), headerdata.getMslObject(KEY_CAPABILITIES, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata.getMslArray(KEY_KEY_REQUEST_DATA)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata.getMslObject(KEY_KEY_RESPONSE_DATA, encoder)));
         assertTrue(isAboutNowSeconds(headerdata.getLong(KEY_TIMESTAMP)));
         assertEquals(MESSAGE_ID, headerdata.getLong(KEY_MESSAGE_ID));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_MASTER_TOKEN), headerdata.getMslObject(KEY_PEER_MASTER_TOKEN, encoder)));
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, peerServiceTokens), headerdata.getMslArray(KEY_PEER_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata.getMslObject(KEY_PEER_USER_ID_TOKEN, encoder)));
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
-        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
+        assertTrue(MslEncoderUtils.equalArrays(MslEncoderUtils.createArray(p2pCtx, format, serviceTokens), headerdata.getMslArray(KEY_SERVICE_TOKENS)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_AUTH_DATA), headerdata.getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder)));
         assertTrue(MslEncoderUtils.equalObjects(MslTestUtils.toMslObject(encoder, USER_ID_TOKEN), headerdata.getMslObject(KEY_USER_ID_TOKEN, encoder)));
     }
@@ -1785,11 +1786,11 @@ public class MessageHeaderTest {
         headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
         headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
         headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -1886,11 +1887,11 @@ public class MessageHeaderTest {
         headerdataMo.put(KEY_KEY_REQUEST_DATA, encoder.createArray());
         headerdataMo.put(KEY_SERVICE_TOKENS, encoder.createArray());
         headerdataMo.put(KEY_PEER_SERVICE_TOKENS, encoder.createArray());
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         final Header header = Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -1954,11 +1955,11 @@ public class MessageHeaderTest {
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
         headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -1986,11 +1987,11 @@ public class MessageHeaderTest {
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory.USER);
         headerdataMo.put(KEY_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2020,11 +2021,11 @@ public class MessageHeaderTest {
         // After modifying the header data we need to encrypt it.
         final UserAuthenticationData userAuthData = new EmailPasswordAuthenticationData(MockEmailPasswordAuthenticationFactory.EMAIL_2, MockEmailPasswordAuthenticationFactory.PASSWORD_2);
         headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2052,11 +2053,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_PEER_MASTER_TOKEN));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2081,11 +2082,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2113,12 +2114,12 @@ public class MessageHeaderTest {
         // After modifying the header data we need to encrypt it.
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
         serviceTokens.addAll(MslTestUtils.getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, null));
-        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, serviceTokens));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, format, serviceTokens));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2147,12 +2148,12 @@ public class MessageHeaderTest {
         final Set<ServiceToken> serviceTokens = builder.getServiceTokens();
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
         serviceTokens.addAll(MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken));
-        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, serviceTokens));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(trustedNetCtx, format, serviceTokens));
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2180,11 +2181,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_PEER_MASTER_TOKEN));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2212,11 +2213,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_PEER_MASTER_TOKEN, MASTER_TOKEN);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2245,11 +2246,11 @@ public class MessageHeaderTest {
         // After modifying the header data we need to encrypt it.
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory.USER);
         headerdataMo.put(KEY_PEER_USER_ID_TOKEN, userIdToken);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2274,11 +2275,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_TIMESTAMP));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2306,11 +2307,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_TIMESTAMP, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(trustedNetCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2338,11 +2339,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_MESSAGE_ID));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2370,11 +2371,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_MESSAGE_ID, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2424,11 +2425,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_MESSAGE_ID, -1);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2456,11 +2457,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_MESSAGE_ID, MslConstants.MAX_LONG_VALUE + 1);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2489,11 +2490,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_NON_REPLAYABLE_ID, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2522,11 +2523,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_RENEWABLE));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2555,11 +2556,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_RENEWABLE, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2590,11 +2591,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         assertNotNull(headerdataMo.remove(KEY_HANDSHAKE));
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         // FIXME For now a missing handshake flag will result in a false value.
@@ -2627,11 +2628,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_HANDSHAKE, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2660,11 +2661,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_CAPABILITIES, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2692,11 +2693,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_KEY_REQUEST_DATA, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2726,11 +2727,11 @@ public class MessageHeaderTest {
         final MslArray a = encoder.createArray();
         a.put(-1, "x");
         headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2758,11 +2759,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_SERVICE_TOKENS, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2792,11 +2793,11 @@ public class MessageHeaderTest {
         final MslArray a = encoder.createArray();
         a.put(-1, "x");
         headerdataMo.put(KEY_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2824,11 +2825,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_PEER_SERVICE_TOKENS, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2858,11 +2859,11 @@ public class MessageHeaderTest {
         final MslArray a = encoder.createArray();
         a.put(-1, "x");
         headerdataMo.put(KEY_PEER_SERVICE_TOKENS, a);
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2890,11 +2891,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_PEER_MASTER_TOKEN, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2922,11 +2923,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_PEER_USER_ID_TOKEN, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2954,11 +2955,11 @@ public class MessageHeaderTest {
         
         // After modifying the header data we need to encrypt it.
         headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, "x");
-        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+        final byte[] headerdata = cryptoContext.encrypt(encoder.encodeObject(headerdataMo, format), encoder, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2995,13 +2996,13 @@ public class MessageHeaderTest {
         final byte[] plaintext = messageHeaderMo.getBytes(KEY_HEADERDATA);
         final MslObject headerdataMo = encoder.parseObject(plaintext);
         headerdataMo.put(KEY_USER_AUTHENTICATION_DATA, USER_AUTH_DATA);
-        final byte[] headerdata = encoder.encodeObject(headerdataMo, ENCODER_FORMAT);
+        final byte[] headerdata = encoder.encodeObject(headerdataMo, format);
         messageHeaderMo.put(KEY_HEADERDATA, headerdata);
         
         // The header data must be signed or it will not be processed.
         final EntityAuthenticationFactory factory = x509Ctx.getEntityAuthenticationFactory(entityAuthData.getScheme());
         final ICryptoContext cryptoContext = factory.getCryptoContext(x509Ctx, entityAuthData);
-        final byte[] signature = cryptoContext.sign(headerdata, encoder, ENCODER_FORMAT);
+        final byte[] signature = cryptoContext.sign(headerdata, encoder, format);
         messageHeaderMo.put(KEY_SIGNATURE, signature);
         
         Header.parseHeader(x509Ctx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -3286,9 +3287,9 @@ public class MessageHeaderTest {
         final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final KeyRequestData keyRequestData = KEY_REQUEST_DATA.toArray(new KeyRequestData[0])[0];
         final KeyExchangeFactory factory = trustedNetCtx.getKeyExchangeFactory(keyRequestData.getKeyExchangeScheme());
-        final KeyExchangeData keyxDataA = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxDataA = factory.generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
         final KeyResponseData keyResponseDataA = keyxDataA.keyResponseData;
-        final KeyExchangeData keyxDataB = factory.generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+        final KeyExchangeData keyxDataB = factory.generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
         final KeyResponseData keyResponseDataB = keyxDataB.keyResponseData;
         final HeaderData headerDataA = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_KEY_RESPONSE_DATA, keyResponseDataA).build();
         final HeaderData headerDataB = new HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).set(KEY_KEY_RESPONSE_DATA, keyResponseDataB).build();

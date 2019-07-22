@@ -356,6 +356,8 @@ public class MessageHeader extends Header {
         // Construct the header data.
         try {
             final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+            final Set<MslEncoderFormat> formats = (capabilities != null) ? capabilities.getEncoderFormats() : null;
+            final MslEncoderFormat format = encoder.getPreferredFormat(formats);
             headerdata = encoder.createObject();
             if (sender != null) headerdata.put(KEY_SENDER, sender);
             headerdata.put(KEY_TIMESTAMP, this.timestamp);
@@ -365,14 +367,14 @@ public class MessageHeader extends Header {
             headerdata.put(KEY_RENEWABLE, this.renewable);
             headerdata.put(KEY_HANDSHAKE, this.handshake);
             if (this.capabilities != null) headerdata.put(KEY_CAPABILITIES, this.capabilities);
-            if (this.keyRequestData.size() > 0) headerdata.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, this.keyRequestData));
+            if (this.keyRequestData.size() > 0) headerdata.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, format, this.keyRequestData));
             if (this.keyResponseData != null) headerdata.put(KEY_KEY_RESPONSE_DATA, this.keyResponseData);
             if (this.userAuthData != null) headerdata.put(KEY_USER_AUTHENTICATION_DATA, this.userAuthData);
             if (this.userIdToken != null) headerdata.put(KEY_USER_ID_TOKEN, this.userIdToken);
-            if (this.serviceTokens.size() > 0) headerdata.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, this.serviceTokens));
+            if (this.serviceTokens.size() > 0) headerdata.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, format, this.serviceTokens));
             if (this.peerMasterToken != null) headerdata.put(KEY_PEER_MASTER_TOKEN, this.peerMasterToken);
             if (this.peerUserIdToken != null) headerdata.put(KEY_PEER_USER_ID_TOKEN, this.peerUserIdToken);
-            if (this.peerServiceTokens.size() > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, this.peerServiceTokens));
+            if (this.peerServiceTokens.size() > 0) headerdata.put(KEY_PEER_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, format, this.peerServiceTokens));
         } catch (final MslEncoderException e) {
             throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
                 .setMasterToken(this.masterToken)
