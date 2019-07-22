@@ -379,7 +379,7 @@ public class MessageHeader extends Header {
             throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
                 .setMasterToken(this.masterToken)
                 .setEntityAuthenticationData(this.entityAuthData)
-                .setUserIdToken(this.peerUserIdToken)
+                .setUserIdToken(this.userIdToken)
                 .setUserAuthenticationData(this.userAuthData)
                 .setMessageId(this.messageId);
         }
