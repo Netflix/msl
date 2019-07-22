@@ -664,7 +664,7 @@
                                 throw new MslEncodingException(MslError.MSL_ENCODE_ERROR, "headerdata", e)
                                     .setMasterToken(masterToken)
                                     .setEntityAuthenticationData(entityAuthData)
-                                    .setUserIdToken(peerUserIdToken)
+                                    .setUserIdToken(userIdToken)
                                     .setUserAuthenticationData(userAuthData)
                                     .setMessageId(messageId);
                             }
