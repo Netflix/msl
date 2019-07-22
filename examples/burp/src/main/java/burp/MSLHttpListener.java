@@ -33,6 +33,7 @@ import com.netflix.msl.entityauth.EntityAuthenticationFactory;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
+import com.netflix.msl.io.MslEncoderFormat;
 import com.netflix.msl.io.MslEncoderUtils;
 import com.netflix.msl.io.MslObject;
 import com.netflix.msl.msg.ErrorHeader;
@@ -210,6 +211,7 @@ public class MSLHttpListener implements IHttpListener {
 
     protected String processMslMessage(final String body) throws WiretapException {
         final MslEncoderFactory encoder = ctx.getMslEncoderFactory();
+        final MslEncoderFormat format = encoder.getPreferredFormat(null);
         final StringBuilder retData = new StringBuilder("");
 
         WiretapMessageInputStream mis;
@@ -298,7 +300,7 @@ public class MSLHttpListener implements IHttpListener {
                 headerdataMo.put(KEY_HANDSHAKE, messageHeader.isHandshake());
                 headerdataMo.put(KEY_CAPABILITIES, messageHeader.getMessageCapabilities());
                 if(!messageHeader.getKeyRequestData().isEmpty())
-                    headerdataMo.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, messageHeader.getKeyRequestData()));
+                    headerdataMo.put(KEY_KEY_REQUEST_DATA, MslEncoderUtils.createArray(ctx, format, messageHeader.getKeyRequestData()));
                 if(messageHeader.getKeyResponseData() != null) {
                     final MslObject keyResponseDataMo = MslTestUtils.toMslObject(encoder, messageHeader.getKeyResponseData());
                     if(messageHeader.getKeyResponseData().getMasterToken() != null) {
@@ -315,7 +317,7 @@ public class MSLHttpListener implements IHttpListener {
                     headerdataMo.put(KEY_USER_ID_TOKEN, parseUserIdToken(messageHeader.getUserIdToken(), masterToken));
                 }
                 if(!messageHeader.getServiceTokens().isEmpty())
-                    headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, messageHeader.getServiceTokens()));
+                    headerdataMo.put(KEY_SERVICE_TOKENS, MslEncoderUtils.createArray(ctx, format, messageHeader.getServiceTokens()));
 
                 // Add headerdata in clear
                 msgHeaderMo.put(KEY_HEADERDATA, headerdataMo);

@@ -164,7 +164,7 @@ bool isAboutNowSeconds(int64_t seconds)
 // Create a new MslArray out of a set of shared_ptr's, each of which point to an
 // instance of type T. T must be derived from MslEncodable.
 template <typename T>
-shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const set<shared_ptr<T>>& s)
+shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const MslEncoderFormat& format, const set<shared_ptr<T>>& s)
 {
     vector<Variant> result;
     for (typename set<shared_ptr<T>>::const_iterator it = s.begin(); it != s.end(); ++it)
@@ -174,7 +174,7 @@ shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const set<shared_pt
         Variant variant = VariantFactory::create(mslEncodable);
         result.push_back(variant);
     }
-    return MslEncoderUtils::createArray(ctx, result);
+    return MslEncoderUtils::createArray(ctx, format, result);
 }
 
 // Compare two sets of shared_ptrs of type T. T must support equals(). Since
@@ -207,8 +207,7 @@ class MessageHeaderTest : public ::testing::Test
 {
 public:
     MessageHeaderTest()
-    : ENCODER_FORMAT(MslEncoderFormat::JSON)
-    , trustedNetCtx(getTrustedNetCtx())
+    : trustedNetCtx(getTrustedNetCtx())
     , p2pCtx(getP2pCtx())
     , encoder(trustedNetCtx->getMslEncoderFactory())
     {
@@ -218,12 +217,13 @@ public:
         ALGOS.insert(MslConstants::CompressionAlgorithm::LZW);
         FORMATS.insert(MslEncoderFormat::JSON);
         CAPABILITIES = make_shared<MessageCapabilities>(ALGOS, LANGUAGES, FORMATS);
+        format = encoder->getPreferredFormat(CAPABILITIES->getEncoderFormats());
 
         MASTER_TOKEN = MslTestUtils::getMasterToken(trustedNetCtx, 1, 1);
 
         shared_ptr<KeyRequestData> keyRequestData = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK);
         shared_ptr<KeyExchangeFactory> factory = trustedNetCtx->getKeyExchangeFactory(keyRequestData->getKeyExchangeScheme());
-        shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxData = factory->generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+        shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxData = factory->generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
         KEY_REQUEST_DATA.insert(keyRequestData);
         KEY_RESPONSE_DATA = keyxData->keyResponseData;
 
@@ -235,13 +235,14 @@ public:
 
         shared_ptr<KeyRequestData> peerKeyRequestData = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK);
         shared_ptr<KeyExchangeFactory> peerFactory = p2pCtx->getKeyExchangeFactory(peerKeyRequestData->getKeyExchangeScheme());
-        shared_ptr<KeyExchangeFactory::KeyExchangeData> peerKeyxData = peerFactory->generateResponse(p2pCtx, ENCODER_FORMAT, peerKeyRequestData, PEER_MASTER_TOKEN);
+        shared_ptr<KeyExchangeFactory::KeyExchangeData> peerKeyxData = peerFactory->generateResponse(p2pCtx, format, peerKeyRequestData, PEER_MASTER_TOKEN);
         PEER_KEY_REQUEST_DATA.insert(peerKeyRequestData);
         PEER_KEY_RESPONSE_DATA = peerKeyxData->keyResponseData;
     }
     ~MessageHeaderTest()
     {
         // Must clear out static members to release shared_ptr's
+        format = MslEncoderFormat::INVALID;
         CAPABILITIES.reset();
         KEY_REQUEST_DATA.clear();
         KEY_RESPONSE_DATA.reset();
@@ -392,15 +393,14 @@ public:
     };
 
 protected:
-    /** MSL encoder format. */
-    const MslEncoderFormat ENCODER_FORMAT;
-
     /** MSL trusted network context. */
     shared_ptr<MockMslContext> trustedNetCtx;
     /** MSL peer-to-peer context. */
     shared_ptr<MockMslContext> p2pCtx;
     /** MSL encoder factory. */
     shared_ptr<MslEncoderFactory> encoder;
+    /** MSL encoder format. */
+    MslEncoderFormat format;
 
     set<MslConstants::CompressionAlgorithm> ALGOS;
     vector<string> LANGUAGES;
@@ -543,14 +543,14 @@ TEST_F(MessageHeaderTest, entityAuthDataMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -586,14 +586,14 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayableMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -698,14 +698,14 @@ TEST_F(MessageHeaderTest, entityAuthDataPeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_FALSE(headerdata->has(KEY_USER_ID_TOKEN));
 }
@@ -742,14 +742,14 @@ TEST_F(MessageHeaderTest, entityAuthDataReplayablePeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_FALSE(headerdata->has(KEY_USER_ID_TOKEN));
 }
@@ -815,14 +815,14 @@ TEST_F(MessageHeaderTest, masterTokenMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(trustedNetCtx, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(trustedNetCtx, format, KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_FALSE(headerdata->has(KEY_PEER_MASTER_TOKEN));
     EXPECT_FALSE(headerdata->has(KEY_PEER_SERVICE_TOKENS));
     EXPECT_FALSE(headerdata->has(KEY_PEER_USER_ID_TOKEN));
-    EXPECT_EQ(createArray(trustedNetCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(trustedNetCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -896,14 +896,14 @@ TEST_F(MessageHeaderTest, masterTokenPeerMslObject)
     EXPECT_EQ(RENEWABLE, headerdata->getBoolean(KEY_RENEWABLE));
     EXPECT_EQ(HANDSHAKE, headerdata->getBoolean(KEY_HANDSHAKE));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, CAPABILITIES), headerdata->getMslObject(KEY_CAPABILITIES, encoder));
-    EXPECT_EQ(createArray(p2pCtx, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
+    EXPECT_EQ(createArray(p2pCtx, format, PEER_KEY_REQUEST_DATA), headerdata->getMslArray(KEY_KEY_REQUEST_DATA));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_KEY_RESPONSE_DATA), headerdata->getMslObject(KEY_KEY_RESPONSE_DATA, encoder));
     EXPECT_TRUE(isAboutNowSeconds(headerdata->getLong(KEY_TIMESTAMP)));
     EXPECT_EQ(MESSAGE_ID, headerdata->getLong(KEY_MESSAGE_ID));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_MASTER_TOKEN), headerdata->getMslObject(KEY_PEER_MASTER_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, peerServiceTokens), headerdata->getMslArray(KEY_PEER_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, PEER_USER_ID_TOKEN), headerdata->getMslObject(KEY_PEER_USER_ID_TOKEN, encoder));
-    EXPECT_EQ(createArray(p2pCtx, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
+    EXPECT_EQ(createArray(p2pCtx, format, builder.getServiceTokens()), headerdata->getMslArray(KEY_SERVICE_TOKENS));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_AUTH_DATA), headerdata->getMslObject(KEY_USER_AUTHENTICATION_DATA, encoder));
     EXPECT_EQ(MslTestUtils::toMslObject(encoder, USER_ID_TOKEN), headerdata->getMslObject(KEY_USER_ID_TOKEN, encoder));
 }
@@ -1963,11 +1963,11 @@ TEST_F(MessageHeaderTest, emptyArraysEntityAuthParseHeader)
     headerdataMo->put(KEY_KEY_REQUEST_DATA, encoder->createArray());
     headerdataMo->put(KEY_SERVICE_TOKENS, encoder->createArray());
     headerdataMo->put(KEY_PEER_SERVICE_TOKENS, encoder->createArray());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     shared_ptr<Header> header = Header::parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2064,11 +2064,11 @@ TEST_F(MessageHeaderTest, emptyArraysMasterTokenParseHeader)
     headerdataMo->put(KEY_KEY_REQUEST_DATA, encoder->createArray());
     headerdataMo->put(KEY_SERVICE_TOKENS, encoder->createArray());
     headerdataMo->put(KEY_PEER_SERVICE_TOKENS, encoder->createArray());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     shared_ptr<Header> header = Header::parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS);
@@ -2132,11 +2132,11 @@ TEST_F(MessageHeaderTest, userIdTokenNullMasterTokenParseHeader)
     // After modifying the header data we need to encrypt it.
     shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 1, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_USER_ID_TOKEN, userIdToken);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2169,11 +2169,11 @@ TEST_F(MessageHeaderTest, userIdTokenMismatchedMasterTokenParseHeader)
     // After modifying the header data we need to encrypt it.
     shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, PEER_MASTER_TOKEN, 1ll, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_USER_ID_TOKEN, userIdToken);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2208,11 +2208,11 @@ TEST_F(MessageHeaderTest, userIdTokenMismatchedUserAuthDataParseHeader)
     // After modifying the header data we need to encrypt it.
     shared_ptr<MslEncodable> userAuthData = make_shared<EmailPasswordAuthenticationData>(MockEmailPasswordAuthenticationFactory::EMAIL_2, MockEmailPasswordAuthenticationFactory::PASSWORD_2);
     headerdataMo->put(KEY_USER_AUTHENTICATION_DATA, userAuthData);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2246,11 +2246,11 @@ TEST_F(MessageHeaderTest, peerUserIdTokenMissingPeerMasterTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->remove(KEY_PEER_MASTER_TOKEN);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2281,11 +2281,11 @@ TEST_F(MessageHeaderTest, peerUserIdTokenMismatchedPeerMasterTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put(KEY_PEER_MASTER_TOKEN, dynamic_pointer_cast<MslEncodable>(MASTER_TOKEN));
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     EXPECT_THROW(Header::parseHeader(p2pCtx, messageHeaderMo, CRYPTO_CONTEXTS), MslException);
@@ -2314,12 +2314,12 @@ TEST_F(MessageHeaderTest, serviceTokenMismatchedMasterTokenParseHeader)
     set<shared_ptr<ServiceToken>> serviceTokens = builder.getServiceTokens();
     set<shared_ptr<ServiceToken>> st = MslTestUtils::getServiceTokens(trustedNetCtx, PEER_MASTER_TOKEN, shared_ptr<UserIdToken>());
     serviceTokens.insert(st.begin(), st.end());
-    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, serviceTokens));
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, format, serviceTokens));
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2354,12 +2354,12 @@ TEST_F(MessageHeaderTest, serviceTokenMismatchedUserIdTokenParseHeader)
     shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(trustedNetCtx, MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     set<shared_ptr<ServiceToken>> st = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, userIdToken);
     serviceTokens.insert(st.begin(), st.end());
-    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, serviceTokens));
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    headerdataMo->put(KEY_SERVICE_TOKENS, createArray(trustedNetCtx, format, serviceTokens));
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2392,11 +2392,11 @@ TEST_F(MessageHeaderTest, peerServiceTokenMissingPeerMasterTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->remove(KEY_PEER_MASTER_TOKEN);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2429,11 +2429,11 @@ TEST_F(MessageHeaderTest, peerServiceTokenMismatchedPeerMasterTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put(KEY_PEER_MASTER_TOKEN, dynamic_pointer_cast<MslEncodable>(MASTER_TOKEN));
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2467,11 +2467,11 @@ TEST_F(MessageHeaderTest, peerServiceTokenMismatchedPeerUserIdTokenParseHeader)
     // After modifying the header data we need to encrypt it.
     shared_ptr<MslEncodable> userIdToken = MslTestUtils::getUserIdToken(p2pCtx, PEER_MASTER_TOKEN, 2, MockEmailPasswordAuthenticationFactory::USER());
     headerdataMo->put(KEY_PEER_USER_ID_TOKEN, userIdToken);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2501,11 +2501,11 @@ TEST_F(MessageHeaderTest, missingTimestamp)
 
     // After modifying the header data we need to encrypt it.
     EXPECT_FALSE(headerdataMo->remove(KEY_TIMESTAMP).isNull());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     // FIXME: Is this test supposed to throw or something?
@@ -2534,11 +2534,11 @@ TEST_F(MessageHeaderTest, invalidTimestamp)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_TIMESTAMP, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2571,11 +2571,11 @@ TEST_F(MessageHeaderTest, missingMessageIdParseHeader)
 
     // After modifying the header data we need to encrypt it.
     EXPECT_FALSE(headerdataMo->remove(KEY_MESSAGE_ID).isNull());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2608,11 +2608,11 @@ TEST_F(MessageHeaderTest, invalidMessageIdParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_MESSAGE_ID, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2669,11 +2669,11 @@ TEST_F(MessageHeaderTest, negativeMessageIdParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put(KEY_MESSAGE_ID, -1);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2706,11 +2706,11 @@ TEST_F(MessageHeaderTest, tooLargeMessageIdParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put(KEY_MESSAGE_ID, MslConstants::MAX_LONG_VALUE + 1);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2744,11 +2744,11 @@ TEST_F(MessageHeaderTest, invalidNonReplayableParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_NON_REPLAYABLE_ID, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2783,11 +2783,11 @@ TEST_F(MessageHeaderTest, missingRenewableParseHeader)
 
     // After modifying the header data we need to encrypt it.
     EXPECT_FALSE(headerdataMo->remove(KEY_RENEWABLE).isNull());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2822,11 +2822,11 @@ TEST_F(MessageHeaderTest, invalidRenewableParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_RENEWABLE, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2862,11 +2862,11 @@ TEST_F(MessageHeaderTest, missingHandshakeParseHeader)
 
     // After modifying the header data we need to encrypt it.
     EXPECT_FALSE(headerdataMo->remove(KEY_HANDSHAKE).isNull());
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     // FIXME For now a missing handshake flag will result in a false value.
@@ -2899,11 +2899,11 @@ TEST_F(MessageHeaderTest, invalidHandshakeParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_HANDSHAKE, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2938,11 +2938,11 @@ TEST_F(MessageHeaderTest, invalidCapabilities)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_CAPABILITIES, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -2976,11 +2976,11 @@ TEST_F(MessageHeaderTest, invalidKeyRequestDataArrayParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_KEY_REQUEST_DATA, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3015,11 +3015,11 @@ TEST_F(MessageHeaderTest, invalidKeyRequestDataParseHeader)
     shared_ptr<MslArray> a = encoder->createArray();
     a->put<string>(-1, "x");
     headerdataMo->put(KEY_PEER_SERVICE_TOKENS, a);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3052,11 +3052,11 @@ TEST_F(MessageHeaderTest, invalidServiceTokensArrayParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_SERVICE_TOKENS, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3091,11 +3091,11 @@ TEST_F(MessageHeaderTest, invalidServiceTokenParseHeader)
     shared_ptr<MslArray> a = encoder->createArray();
     a->put<string>(-1, "x");
     headerdataMo->put(KEY_SERVICE_TOKENS, a);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3128,11 +3128,11 @@ TEST_F(MessageHeaderTest, invalidPeerServiceTokensArrayParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_PEER_SERVICE_TOKENS, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3167,11 +3167,11 @@ TEST_F(MessageHeaderTest, invalidPeerServiceTokenParseHeader)
     shared_ptr<MslArray> a = encoder->createArray();
     a->put<string>(-1, "x");
     headerdataMo->put(KEY_PEER_SERVICE_TOKENS, a);
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3204,11 +3204,11 @@ TEST_F(MessageHeaderTest, invalidPeerMasterTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_PEER_MASTER_TOKEN, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3241,11 +3241,11 @@ TEST_F(MessageHeaderTest, invalidPeerUserIdTokenParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_PEER_USER_ID_TOKEN, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3278,11 +3278,11 @@ TEST_F(MessageHeaderTest, invalidUserAuthParseHeader)
 
     // After modifying the header data we need to encrypt it.
     headerdataMo->put<string>(KEY_USER_AUTHENTICATION_DATA, "x");
-    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, ENCODER_FORMAT), encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = cryptoContext->encrypt(encoder->encodeObject(headerdataMo, format), encoder, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3323,13 +3323,13 @@ TEST_F(MessageHeaderTest, unencryptedUserAuthDataParseHeader)
     shared_ptr<ByteArray> plaintext = messageHeaderMo->getBytes(KEY_HEADERDATA);
     shared_ptr<MslObject> headerdataMo = encoder->parseObject(plaintext);
     headerdataMo->put(KEY_USER_AUTHENTICATION_DATA, dynamic_pointer_cast<MslEncodable>(USER_AUTH_DATA));
-    shared_ptr<ByteArray> headerdata = encoder->encodeObject(headerdataMo, ENCODER_FORMAT);
+    shared_ptr<ByteArray> headerdata = encoder->encodeObject(headerdataMo, format);
     messageHeaderMo->put(KEY_HEADERDATA, headerdata);
 
     // The header data must be signed or it will not be processed.
     shared_ptr<EntityAuthenticationFactory> factory = rsaCtx->getEntityAuthenticationFactory(entityAuthData->getScheme());
     shared_ptr<ICryptoContext> cryptoContext = factory->getCryptoContext(rsaCtx, entityAuthData);
-    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, ENCODER_FORMAT);
+    shared_ptr<ByteArray> signature = cryptoContext->sign(headerdata, encoder, format);
     messageHeaderMo->put(KEY_SIGNATURE, signature);
 
     try {
@@ -3595,9 +3595,9 @@ TEST_F(MessageHeaderTest, equalsKeyResponseData)
     set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
     shared_ptr<KeyRequestData> keyRequestData = *KEY_REQUEST_DATA.begin();
     shared_ptr<keyx::KeyExchangeFactory> factory = trustedNetCtx->getKeyExchangeFactory(keyRequestData->getKeyExchangeScheme());
-    shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxDataA = factory->generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+    shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxDataA = factory->generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
     shared_ptr<KeyResponseData> keyResponseDataA = keyxDataA->keyResponseData;
-    shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxDataB = factory->generateResponse(trustedNetCtx, ENCODER_FORMAT, keyRequestData, MASTER_TOKEN);
+    shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxDataB = factory->generateResponse(trustedNetCtx, format, keyRequestData, MASTER_TOKEN);
     shared_ptr<KeyResponseData> keyResponseDataB = keyxDataB->keyResponseData;
     shared_ptr<MessageHeader::HeaderData> headerDataA = HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).setKEY_KEY_RESPONSE_DATA(keyResponseDataA).build();
     shared_ptr<MessageHeader::HeaderData> headerDataB = HeaderDataBuilder(trustedNetCtx, USER_ID_TOKEN, serviceTokens).setKEY_KEY_RESPONSE_DATA(keyResponseDataB).build();

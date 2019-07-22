@@ -75,7 +75,7 @@ shared_ptr<ByteArray> b64urlDecode(shared_ptr<string> data) {
 	return Base64::decode(modified);
 }
 
-shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const vector<Variant>& c) {
+shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const MslEncoderFormat& format, const vector<Variant>& c) {
 	shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
 	shared_ptr<MslArray> array = encoder->createArray();
 	for (vector<Variant>::const_iterator o = c.begin();
@@ -106,7 +106,7 @@ shared_ptr<MslArray> createArray(shared_ptr<MslContext> ctx, const vector<Varian
 			array->put(-1, *o);
 		} else if (o->isType<shared_ptr<MslEncodable>>()) {
 			const shared_ptr<MslEncodable> me = o->get<shared_ptr<MslEncodable>>();
-			shared_ptr<ByteArray> encode = me->toMslEncoding(encoder, encoder->getPreferredFormat());
+			shared_ptr<ByteArray> encode = me->toMslEncoding(encoder, format);
 			shared_ptr<MslObject> mo = encoder->parseObject(encode);
 			array->put(-1, mo);
 		} else {

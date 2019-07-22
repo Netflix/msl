@@ -253,6 +253,8 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
     // Construct the header data.
     try {
         shared_ptr<MslEncoderFactory> encoder = ctx->getMslEncoderFactory();
+        const set<MslEncoderFormat> formats = (capabilities) ? capabilities->getEncoderFormats() : set<MslEncoderFormat>();
+        const MslEncoderFormat format = encoder->getPreferredFormat(formats);
         headerdata = encoder->createObject();
         if (sender) headerdata->put(KEY_SENDER, *sender);
         headerdata->put(KEY_TIMESTAMP, timestamp);
@@ -265,7 +267,7 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
         if (capabilities)
             headerdata->put(KEY_CAPABILITIES, dynamic_pointer_cast<MslEncodable>(capabilities));
         if (keyRequestData.size() > 0)
-            headerdata->put(KEY_KEY_REQUEST_DATA, MslEncoderUtils::createArray(ctx, mslEncodableVector(keyRequestData)));
+            headerdata->put(KEY_KEY_REQUEST_DATA, MslEncoderUtils::createArray(ctx, format, mslEncodableVector(keyRequestData)));
         if (keyResponseData)
             headerdata->put(KEY_KEY_RESPONSE_DATA, dynamic_pointer_cast<MslEncodable>(keyResponseData));
         if (userAuthData)
@@ -273,13 +275,13 @@ MessageHeader::MessageHeader(shared_ptr<MslContext> ctx, shared_ptr<EntityAuthen
         if (userIdToken)
             headerdata->put(KEY_USER_ID_TOKEN, dynamic_pointer_cast<MslEncodable>(userIdToken));
         if (serviceTokens.size() > 0)
-            headerdata->put(KEY_SERVICE_TOKENS, MslEncoderUtils::createArray(ctx, mslEncodableVector(serviceTokens)));
+            headerdata->put(KEY_SERVICE_TOKENS, MslEncoderUtils::createArray(ctx, format, mslEncodableVector(serviceTokens)));
         if (peerMasterToken)
             headerdata->put(KEY_PEER_MASTER_TOKEN, dynamic_pointer_cast<MslEncodable>(peerMasterToken));
         if (peerUserIdToken)
             headerdata->put(KEY_PEER_USER_ID_TOKEN, dynamic_pointer_cast<MslEncodable>(peerUserIdToken));
         if (peerServiceTokens.size() > 0)
-            headerdata->put(KEY_PEER_SERVICE_TOKENS, MslEncoderUtils::createArray(ctx, mslEncodableVector(peerServiceTokens)));
+            headerdata->put(KEY_PEER_SERVICE_TOKENS, MslEncoderUtils::createArray(ctx, format, mslEncodableVector(peerServiceTokens)));
     } catch (const MslEncoderException& e) {
         throw MslEncodingException(MslError::MSL_ENCODE_ERROR, "headerdata", e)
             .setMasterToken(masterToken)
