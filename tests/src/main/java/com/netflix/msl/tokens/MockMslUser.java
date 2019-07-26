@@ -44,6 +44,13 @@ public class MockMslUser implements MslUser {
         }
     }
     
+    /**
+     * @return the user ID.
+     */
+    public Long getId() {
+        return id;
+    }
+    
     /* (non-Javadoc)
      * @see com.netflix.msl.tokens.MslUser#getEncoded()
      */

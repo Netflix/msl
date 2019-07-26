@@ -18,10 +18,15 @@
 #define SRC_IO_DEFAULTMSLENCODERFACTORY_H_
 
 #include <io/MslEncoderFactory.h>
+#include <io/MslEncoderFormat.h>
+#include <memory>
+#include <set>
 
 namespace netflix {
 namespace msl {
+typedef std::vector<uint8_t> ByteArray;
 namespace io {
+class InputStream; class MslObject; class MslTokenizer;
 
 /**
  * <p>Default {@link MslEncoderFactory} implementation that supports the
@@ -33,5 +38,27 @@ namespace io {
  *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
+class DefaultMslEncoderFactory : public MslEncoderFactory
+{
+public:
+	virtual ~DefaultMslEncoderFactory() {}
+	DefaultMslEncoderFactory() {}
+
+	/** @inheritDoc */
+	virtual MslEncoderFormat getPreferredFormat(const std::set<MslEncoderFormat>& formats = std::set<MslEncoderFormat>());
+
+protected:
+	/** @inheritDoc */
+	virtual std::shared_ptr<MslTokenizer> generateTokenizer(std::shared_ptr<InputStream> source, const MslEncoderFormat& format);
+
+public:
+	/** @inheritDoc */
+	virtual std::shared_ptr<MslObject> parseObject(std::shared_ptr<ByteArray> encoding);
+
+	/** @inheritDoc */
+	virtual std::shared_ptr<ByteArray> encodeObject(std::shared_ptr<MslObject> object, const MslEncoderFormat& format);
+};
 
 }}} // namespace netflix::msl::io
+
+#endif /* SRC_IO_DEFAULTMSLENCODERFACTORY_H_ */
