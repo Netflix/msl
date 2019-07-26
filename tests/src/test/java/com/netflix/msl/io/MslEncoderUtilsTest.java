@@ -1,6 +1,6 @@
 /**
  * Copyright (c) 2012-2019 Netflix, Inc.  All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -39,13 +39,13 @@ import com.netflix.msl.util.MslContext;
 
 /**
  * MSL utilities unit tests.
- * 
+ *
  * @author Wesley Miaw <wmiaw@netflix.com>
  */
 public class MslEncoderUtilsTest {
     /** Encoding charset. */
     private static final Charset UTF_8 = Charset.forName("UTF-8");
-    
+
     /** URL-safe Base64 examples. */
     private static final String[][] B64_URL_EXAMPLES = new String[][] {
         { "The long winded author is going for a walk while the light breeze bellows in his ears.",
@@ -55,17 +55,17 @@ public class MslEncoderUtilsTest {
         { "Even the restless dreamer enjoys home-cooked foods.",
           "RXZlbiB0aGUgcmVzdGxlc3MgZHJlYW1lciBlbmpveXMgaG9tZS1jb29rZWQgZm9vZHMu" }
     };
-    
+
     private static final String KEY_BOOLEAN = "boolean";
     private static final String KEY_NUMBER = "number";
     private static final String KEY_STRING = "string";
     private static final String KEY_OBJECT = "object";
     private static final String KEY_ARRAY = "array";
-    
+
     private static final int MAX_ELEMENTS = 12;
     private static final int MAX_DEPTH = 3;
     private static final int MAX_STRING_CHARS = 25;
-    
+
     /**
      * @param random random source.
      * @return a random string of random length.
@@ -74,7 +74,7 @@ public class MslEncoderUtilsTest {
         final byte[] raw = new byte[1 + random.nextInt(MAX_STRING_CHARS - 1)];
         return Base64.encode(raw);
     }
-    
+
     /**
      * @param random random source.
      * @return a MSL object containing no MSL objects or MSL arrays.
@@ -97,7 +97,7 @@ public class MslEncoderUtilsTest {
         }
         return mo;
     }
-    
+
     /**
      * @param random random source.
      * @param depth maximum depth. A depth of 1 indicates no children may have
@@ -118,17 +118,17 @@ public class MslEncoderUtilsTest {
                 case 2:
                     mo.put(KEY_STRING + i, randomString(random));
                     break;
-                case 4:
+                case 3:
                     mo.put(KEY_OBJECT + i, (depth > 1) ? createDeepMslObject(random, depth - 1) : createFlatMslObject(random));
                     break;
-                case 5:
+                case 4:
                     mo.put(KEY_ARRAY + i, (depth > 1) ? createDeepMslArray(random, depth - 1) : createFlatMslArray(random));
                     break;
             }
         }
         return mo;
     }
-    
+
     /**
      * @param random random source.
      * @return a MSL array containing no MSL objects or MSL arrays.
@@ -155,7 +155,7 @@ public class MslEncoderUtilsTest {
         return ma;
     }
 
-    
+
     /**
      * @param random random source.
      * @param depth maximum depth. A depth of 1 indicates no children may have
@@ -189,7 +189,7 @@ public class MslEncoderUtilsTest {
         }
         return ma;
     }
-    
+
     /**
      * @param o the object to change.
      * @return a new object with a changed value.
@@ -223,7 +223,7 @@ public class MslEncoderUtilsTest {
         }
         throw new MslEncoderException("Unknown object type " + o.getClass());
     }
-    
+
     /**
      * @param mo MSL object to create a changed version of.
      * @param name name of value to change.
@@ -238,19 +238,19 @@ public class MslEncoderUtilsTest {
         newMo.put(name, changeValue(o));
         return newMo;
     }
-    
+
     private static MslArray changeValue(final MslArray ma, final int index) throws MslEncoderException {
         final MslArray newMa = encoder.createArray(ma.getCollection());
         final Object o = newMa.opt(index);
         newMa.put(index, changeValue(o));
         return newMa;
     }
-    
+
     @BeforeClass
     public static void setup() throws MslEncoderException, MslEncodingException, MslCryptoException {
         final MslContext ctx = new MockMslContext(EntityAuthenticationScheme.PSK, false);
         encoder = ctx.getMslEncoderFactory();
-        
+
         random = new Random();
         flatMo = createFlatMslObject(random);
         deepMo = createDeepMslObject(random, MAX_DEPTH);
@@ -259,7 +259,7 @@ public class MslEncoderUtilsTest {
         deepMa = createDeepMslArray(random, MAX_DEPTH);
         nullMa = null;
     }
-    
+
     @AfterClass
     public static void teardown() {
         flatMo = null;
@@ -267,16 +267,16 @@ public class MslEncoderUtilsTest {
         flatMa = null;
         deepMa = null;
         random = null;
-        
+
         encoder = null;
     }
-    
+
     @Test
     public void b64url() {
         for (final String[] example : B64_URL_EXAMPLES) {
             final String text = example[0];
             final String base64 = example[1];
-            
+
             // Encode the text as bytes and as a string.
             {
                 final String encoded = MslEncoderUtils.b64urlEncode(text.getBytes(UTF_8));
@@ -284,7 +284,7 @@ public class MslEncoderUtilsTest {
                 assertEquals(base64, encoded);
                 assertEquals(base64, encodedString);
             }
-            
+
             // Decode the base64 to bytes and to a string.
             {
                 final byte[] decoded = MslEncoderUtils.b64urlDecode(base64);
@@ -292,7 +292,7 @@ public class MslEncoderUtilsTest {
             }
         }
     }
-    
+
     @Test
     public void mslObjectEqual() throws MslEncoderException {
         assertTrue(MslEncoderUtils.equalObjects(flatMo, flatMo));
@@ -301,7 +301,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(flatMo, mo));
         assertEquals(MslEncoderUtils.hashObject(flatMo), MslEncoderUtils.hashObject(mo));
     }
-    
+
     @Test
     public void mslObjectInequal() throws MslEncoderException {
         final Set<String> names = flatMo.getKeys();
@@ -311,7 +311,7 @@ public class MslEncoderUtilsTest {
             assertNotEquals(MslEncoderUtils.hashObject(flatMo), MslEncoderUtils.hashObject(mo));
         }
     }
-    
+
     @Test
     public void mslObjectNull() throws MslEncoderException {
         assertFalse(MslEncoderUtils.equalObjects(null, new MslObject()));
@@ -319,7 +319,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(nullMo, nullMo));
         assertEquals(MslEncoderUtils.hashObject(nullMo), MslEncoderUtils.hashObject(nullMo));
     }
-    
+
     @Test
     public void mslObjectChildrenEqual() throws MslEncoderException {
         assertTrue(MslEncoderUtils.equalObjects(deepMo, deepMo));
@@ -327,7 +327,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(deepMo, mo));
         assertEquals(MslEncoderUtils.hashObject(deepMo), MslEncoderUtils.hashObject(mo));
     }
-    
+
     @Test
     public void mslObjectChildrenInequal() throws MslEncoderException {
         final Set<String> names = deepMo.getKeys();
@@ -337,7 +337,7 @@ public class MslEncoderUtilsTest {
             assertNotEquals(MslEncoderUtils.hashObject(deepMo), MslEncoderUtils.hashObject(mo));
         }
     }
-    
+
     @Test
     public void mslArrayEqual() throws MslEncoderException {
         assertTrue(MslEncoderUtils.equalArrays(flatMa, flatMa));
@@ -346,7 +346,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalArrays(flatMa, ma));
         assertEquals(MslEncoderUtils.hashArray(flatMa), MslEncoderUtils.hashArray(ma));
     }
-    
+
     @Test
     public void mslArrayInequal() throws MslEncoderException {
         final Random random = new Random();
@@ -366,7 +366,7 @@ public class MslEncoderUtilsTest {
             assertNotEquals(MslEncoderUtils.hashArray(flatMa), MslEncoderUtils.hashArray(ma3));
         }
     }
-    
+
     @Test
     public void mslArrayNull() throws MslEncoderException {
         assertFalse(MslEncoderUtils.equalArrays(null, new MslArray()));
@@ -374,7 +374,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalArrays(nullMa, nullMa));
         assertEquals(MslEncoderUtils.hashArray(nullMa), MslEncoderUtils.hashArray(nullMa));
     }
-    
+
     @Test
     public void mslArrayChildrenEqual() throws MslEncoderException {
         assertTrue(MslEncoderUtils.equalArrays(deepMa, deepMa));
@@ -383,7 +383,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalArrays(deepMa, ma));
         assertEquals(MslEncoderUtils.hashArray(deepMa), MslEncoderUtils.hashArray(ma));
     }
-    
+
     @Test
     public void mslArrayChildrenInequal() throws MslEncoderException {
         final Random random = new Random();
@@ -403,7 +403,7 @@ public class MslEncoderUtilsTest {
             assertNotEquals(MslEncoderUtils.hashArray(deepMa), MslEncoderUtils.hashArray(ma3));
         }
     }
-    
+
     @Test
     public void mergeNulls() throws MslEncoderException {
         final MslObject mo1 = null;
@@ -411,7 +411,7 @@ public class MslEncoderUtilsTest {
         final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
         assertNull(merged);
     }
-    
+
     @Test
     public void mergeFirstNull() throws MslEncoderException {
         final MslObject mo1 = null;
@@ -420,7 +420,7 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(merged, mo2));
         assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(mo2));
     }
-    
+
     @Test
     public void mergeSecondNull() throws MslEncoderException {
         final MslObject mo1 = deepMo;
@@ -429,18 +429,18 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(merged, mo1));
         assertEquals(MslEncoderUtils.hashObject(merged), MslEncoderUtils.hashObject(mo1));
     }
-    
+
     @Test
     public void mergeOverwriting() throws MslEncoderException {
         final MslObject mo1 = createFlatMslObject(random);
         final MslObject mo2 = createFlatMslObject(random);
-        
+
         // Insert some shared keys.
         mo1.put("key1", true);
         mo2.put("key1", "value1");
         mo1.put("key2", 17);
         mo2.put("key2", 34);
-        
+
         // Ensure second overwrites first.
         final MslObject merged = MslEncoderUtils.merge(mo1, mo2);
         for (final String key : merged.getKeys()) {
@@ -454,14 +454,14 @@ public class MslEncoderUtilsTest {
             }
         }
     }
-    
+
     @Test
     public void objectHash() throws MslEncoderException {
         final MslObject mo1 = deepMo;
         final MslObject mo2 = new MslObject(mo1.getMap());
         assertTrue(MslEncoderUtils.equalObjects(mo1, mo2));
         assertEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
-        
+
         final String[] keys = mo1.getKeys().toArray(new String[0]);
         final String key = keys[0];
         final Object value = mo1.get(key);
@@ -476,10 +476,10 @@ public class MslEncoderUtilsTest {
         assertTrue(MslEncoderUtils.equalObjects(mo1, mo2));
         assertEquals(MslEncoderUtils.hashObject(mo2), MslEncoderUtils.hashObject(mo1));
     }
-    
+
     /** MSL encoder factory. */
     private static MslEncoderFactory encoder;
-    
+
     private static Random random;
     private static MslObject flatMo, deepMo, nullMo;
     private static MslArray flatMa, deepMa, nullMa;
