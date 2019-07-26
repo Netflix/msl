@@ -9,7 +9,7 @@ dependencies {
     compile 'org.json:json:20140107'
 }
 
-task javadoc(type: Javadoc, overwrite: true) {
+task my_javadoc(type: Javadoc) {
     options.overview = "overview.html"
     options.links = [
         "http://docs.oracle.com/javase/7/docs/api/",
@@ -19,7 +19,7 @@ task javadoc(type: Javadoc, overwrite: true) {
     source = sourceSets.main.allJava
 }
 
-task javadoc_public(type: Javadoc) {
+task my_javadoc_public(type: Javadoc) {
     destinationDir = file("$docsDir/javadoc-public")
     options.overview = "overview-public.html"
     options.links = [
