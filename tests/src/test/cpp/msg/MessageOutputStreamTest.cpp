@@ -29,6 +29,9 @@
 #include <crypto/Random.h>
 #include <entityauth/EntityAuthenticationData.h>
 #include <entityauth/EntityAuthenticationScheme.h>
+#include <entityauth/PresharedAuthenticationData.h>
+#include <entityauth/RsaAuthenticationData.h>
+#include <entityauth/UnauthenticatedAuthenticationData.h>
 #include <io/ByteArrayInputStream.h>
 #include <io/ByteArrayOutputStream.h>
 #include <io/MslEncoderException.h>
@@ -36,8 +39,10 @@
 #include <io/MslEncoderFormat.h>
 #include <io/MslObject.h>
 #include <io/MslTokenizer.h>
+#include <keyx/KeyExchangeFactory.h>
 #include <keyx/KeyRequestData.h>
 #include <keyx/KeyResponseData.h>
+#include <keyx/SymmetricWrappedExchange.h>
 #include <msg/ErrorHeader.h>
 #include <msg/MessageBuilder.h>
 #include <msg/MessageFactory.h>
@@ -57,8 +62,13 @@
 #include <string>
 #include <vector>
 
+
 #include <gtest/gtest.h>
 #include <util/MockMslContext.h>
+
+#include "../entityauth/MockPresharedAuthenticationFactory.h"
+#include "../entityauth/MockRsaAuthenticationFactory.h"
+#include "../util/MslTestUtils.h"
 
 using namespace std;
 using namespace testing;
@@ -107,6 +117,8 @@ const vector<string> EMPTY_LANGUAGES;
 const set<MslEncoderFormat> EMPTY_FORMATS;
 const shared_ptr<MessageFactory> messageFactory = make_shared<MessageFactory>();
 
+const string UNAUTHENTICATED_ESN = "MOCKUNAUTH-ESN";
+
 
 } // namespace anonymous
 
@@ -139,6 +151,13 @@ public:
 		PAYLOAD_CRYPTO_CONTEXT = MESSAGE_HEADER->getCryptoContext();
 
 		ERROR_HEADER = make_shared<ErrorHeader>(ctx, ENTITY_AUTH_DATA, 1, ResponseCode::FAIL, 3, "errormsg", "usermsg");
+
+		shared_ptr<KeyRequestData> keyRequest = make_shared<SymmetricWrappedExchange::RequestData>(SymmetricWrappedExchange::KeyId::PSK);
+		KEY_REQUEST_DATA.insert(keyRequest);
+		shared_ptr<KeyExchangeFactory> factory = ctx->getKeyExchangeFactory(keyRequest->getKeyExchangeScheme());
+		shared_ptr<KeyExchangeFactory::KeyExchangeData> keyxData = factory->generateResponse(ctx, format, keyRequest, ENTITY_AUTH_DATA);
+		KEY_RESPONSE_DATA = keyxData->keyResponseData;
+		KEYX_CRYPTO_CONTEXT = keyxData->cryptoContext;
 	}
 
 protected:
@@ -161,6 +180,9 @@ protected:
     shared_ptr<EntityAuthenticationData> ENTITY_AUTH_DATA;
     shared_ptr<MessageHeader> MESSAGE_HEADER;
     shared_ptr<ErrorHeader> ERROR_HEADER;
+    set<shared_ptr<KeyRequestData>> KEY_REQUEST_DATA;
+    shared_ptr<KeyResponseData> KEY_RESPONSE_DATA;
+    shared_ptr<ICryptoContext> KEYX_CRYPTO_CONTEXT;
 };
 
 TEST_F(MessageOutputStreamTest, messageHeader)
@@ -238,6 +260,156 @@ TEST_F(MessageOutputStreamTest, errorHeader)
 
     // Close tokenizer.
     tokenizer->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeEncrypts)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<PresharedAuthenticationData>(MockPresharedAuthenticationFactory::PSK_ESN);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_TRUE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeDoesNotEncrypt)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<RsaAuthenticationData>(MockRsaAuthenticationFactory::RSA_ESN, MockRsaAuthenticationFactory::RSA_PUBKEY_ID);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_FALSE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeIntegrityProtects)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<RsaAuthenticationData>(MockRsaAuthenticationFactory::RSA_ESN, MockRsaAuthenticationFactory::RSA_PUBKEY_ID);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_TRUE(mos->protectsPayloadIntegrity());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeDoesNotIntegrityProtect)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<UnauthenticatedAuthenticationData>(UNAUTHENTICATED_ESN);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_FALSE(mos->protectsPayloadIntegrity());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeKeyxEncrypts)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<PresharedAuthenticationData>(MockPresharedAuthenticationFactory::PSK_ESN);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeKeyxIntegrityProtects)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<RsaAuthenticationData>(MockRsaAuthenticationFactory::RSA_ESN, MockRsaAuthenticationFactory::RSA_PUBKEY_ID);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->protectsPayloadIntegrity());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeDoesNotKeyxEncrypts)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<RsaAuthenticationData>(MockRsaAuthenticationFactory::RSA_ESN, MockRsaAuthenticationFactory::RSA_PUBKEY_ID);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, entityAuthSchemeDoesNotKeyxIntegrityProtects)
+{
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<EntityAuthenticationData> entityAuthData = make_shared<UnauthenticatedAuthenticationData>(UNAUTHENTICATED_ESN);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, entityAuthData, NULL_MASTER_TOKEN, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->protectsPayloadIntegrity());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, masterTokenEncrypts)
+{
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_TRUE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, masterTokenIntegrityProtects)
+{
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, NULL_KEYX_RESPONSE, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
+
+    shared_ptr<ICryptoContext> cryptoContext = messageHeader->getCryptoContext();
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, cryptoContext);
+    EXPECT_TRUE(mos->protectsPayloadIntegrity());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, masterTokenKeyxEncrypts)
+{
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->encryptsPayloads());
+    mos->close();
+}
+
+TEST_F(MessageOutputStreamTest, masterTokenKeyxIntegrityProtects)
+{
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<HeaderData> headerData = make_shared<HeaderData>(1, REPLAYABLE_ID, false, false, ctx->getMessageCapabilities(), EMPTY_KEYX_REQUESTS, KEY_RESPONSE_DATA, NULL_USERAUTH_DATA, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, EMPTY_SERVICE_TOKENS);
+    shared_ptr<MessageHeader> messageHeader = make_shared<MessageHeader>(ctx, NULL_ENTITYAUTH_DATA, masterToken, headerData, peerData);
+
+    shared_ptr<MessageOutputStream> mos = make_shared<MessageOutputStream>(ctx, destination, messageHeader, KEYX_CRYPTO_CONTEXT);
+    EXPECT_TRUE(mos->protectsPayloadIntegrity());
+    mos->close();
 }
 
 TEST_F(MessageOutputStreamTest, writeOffsets)
