@@ -23,19 +23,25 @@
 #include <MslException.h>
 #include <MslInternalException.h>
 #include <crypto/ICryptoContext.h>
+#include <entityauth/EntityAuthenticationData.h>
 #include <io/ByteArrayOutputStream.h>
 #include <io/MslEncoderFactory.h>
+#include <keyx/KeyResponseData.h>
 #include <msg/ErrorHeader.h>
 #include <msg/Header.h>
 #include <msg/MessageCapabilities.h>
 #include <msg/MessageHeader.h>
 #include <msg/PayloadChunk.h>
+#include <tokens/MasterToken.h>
 #include <util/MslContext.h>
 
 using namespace std;
 using namespace netflix::msl::crypto;
+using namespace netflix::msl::entityauth;
 using namespace netflix::msl::io;
+using namespace netflix::msl::keyx;
 using namespace netflix::msl::msg;
+using namespace netflix::msl::tokens;
 using namespace netflix::msl::util;
 using namespace netflix::msl::MslConstants;
 
@@ -148,6 +154,61 @@ shared_ptr<ErrorHeader> MessageOutputStream::getErrorHeader() {
 	if (dynamic_pointer_cast<ErrorHeader>(header_))
 		return dynamic_pointer_cast<ErrorHeader>(header_);
 	return shared_ptr<ErrorHeader>();
+}
+
+bool MessageOutputStream::encryptsPayloads()
+{
+    // Return false for error messages.
+    shared_ptr<MessageHeader> messageHeader = getMessageHeader();
+    if (!messageHeader)
+        return false;
+
+    // If the message uses entity authentication data for an entity
+    // authentication scheme that provides encryption, return true.
+    shared_ptr<EntityAuthenticationData> entityAuthData = messageHeader->getEntityAuthenticationData();
+    if (entityAuthData && entityAuthData->getScheme().encrypts())
+        return true;
+
+    // If the message uses a master token, return true.
+    shared_ptr<MasterToken> masterToken = messageHeader->getMasterToken();
+    if (masterToken)
+        return true;
+
+    // If the message includes key response data, return true.
+    shared_ptr<KeyResponseData> keyResponseData = messageHeader->getKeyResponseData();
+    if (keyResponseData)
+        return true;
+
+    // Otherwise return false.
+    return false;
+}
+
+bool MessageOutputStream::protectsPayloadIntegrity()
+{
+    // Return false for error messages.
+    shared_ptr<MessageHeader> messageHeader = getMessageHeader();
+    if (!messageHeader)
+        return false;
+
+    // If the message uses entity authentication data for an entity
+    // authentication scheme that provides integrity protection, return
+    // true.
+    shared_ptr<EntityAuthenticationData> entityAuthData = messageHeader->getEntityAuthenticationData();
+    if (entityAuthData && entityAuthData->getScheme().protectsIntegrity())
+        return true;
+
+    // If the message uses a master token, return true.
+    shared_ptr<MasterToken> masterToken = messageHeader->getMasterToken();
+    if (masterToken)
+        return true;
+
+    // If the message includes key response data, return true.
+    shared_ptr<KeyResponseData> keyResponseData = messageHeader->getKeyResponseData();
+    if (keyResponseData)
+        return true;
+
+    // Otherwise return false.
+    return false;
 }
 
 void MessageOutputStream::stopCaching()

@@ -68,6 +68,10 @@ import com.netflix.msl.crypto.SymmetricCryptoContext;
 import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.entityauth.EntityAuthenticationScheme;
 import com.netflix.msl.entityauth.MockPresharedAuthenticationFactory;
+import com.netflix.msl.entityauth.MockRsaAuthenticationFactory;
+import com.netflix.msl.entityauth.PresharedAuthenticationData;
+import com.netflix.msl.entityauth.RsaAuthenticationData;
+import com.netflix.msl.entityauth.UnauthenticatedAuthenticationData;
 import com.netflix.msl.entityauth.UnauthenticatedAuthenticationFactory;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
@@ -132,6 +136,8 @@ public class MessageInputStreamTest {
     private static final long MSG_ID = 42;
     private static final boolean END_OF_MSG = true;
     private static final byte[] DATA = new byte[32];
+
+    private static final String UNAUTHENTICATED_ESN = "MOCKUNAUTH-ESN";
 
     /**
      * A crypto context that always returns false for verify. The other crypto
@@ -1010,6 +1016,162 @@ public class MessageInputStreamTest {
         // If there's nothing left we'll receive end of message anyway.
         assertEquals(-1, mis.read(buffer));
 
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeEncrypts() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeDoesNotEncrypt() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertFalse(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeIntegrityProtects() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.protectsPayloadIntegrity());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeDoesNotIntegrityProtect() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertFalse(mis.protectsPayloadIntegrity());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeKeyxEncrypts() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeKeyxIntegrityProtects() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.protectsPayloadIntegrity());
+        mis.close();
+    }
+    
+    @Test
+    public void entitAuthSchemeDoesNotKeyxEncrypts() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void entityAuthSchemeDoesNotKeyxIntegrityProtects() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final EntityAuthenticationData entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, entityAuthData, null, headerData, peerData);
+        
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.protectsPayloadIntegrity());
+        mis.close();
+    }
+    
+    @Test
+    public void masterTokenEncrypts() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
+
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void masterTokenIntegrityProtects() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
+
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.protectsPayloadIntegrity());
+        mis.close();
+    }
+    
+    @Test
+    public void masterTokenKeyxEncrypts() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
+
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.encryptsPayloads());
+        mis.close();
+    }
+    
+    @Test
+    public void masterTokenKeyxIntegrityProtects() throws IOException, MslEncoderException, MslUserAuthException, MslMessageException, MslKeyExchangeException, MslUserIdTokenException, MslException {
+        final MasterToken masterToken = MslTestUtils.getMasterToken(trustedNetCtx, 1, 1);
+        final HeaderData headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+        final HeaderPeerData peerData = new HeaderPeerData(null, null, null);
+        final MessageHeader messageHeader = new MessageHeader(trustedNetCtx, null, masterToken, headerData, peerData);
+
+        final InputStream is = generateInputStream(messageHeader, payloads);
+        final MessageInputStream mis = new MessageInputStream(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts);
+        assertTrue(mis.protectsPayloadIntegrity());
         mis.close();
     }
 

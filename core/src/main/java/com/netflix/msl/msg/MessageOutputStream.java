@@ -29,9 +29,12 @@ import com.netflix.msl.MslEncodingException;
 import com.netflix.msl.MslException;
 import com.netflix.msl.MslInternalException;
 import com.netflix.msl.crypto.ICryptoContext;
+import com.netflix.msl.entityauth.EntityAuthenticationData;
 import com.netflix.msl.io.MslEncoderException;
 import com.netflix.msl.io.MslEncoderFactory;
 import com.netflix.msl.io.MslEncoderFormat;
+import com.netflix.msl.keyx.KeyResponseData;
+import com.netflix.msl.tokens.MasterToken;
 import com.netflix.msl.util.MslContext;
 
 /**
@@ -198,6 +201,77 @@ public class MessageOutputStream extends OutputStream {
         if (header instanceof ErrorHeader)
             return (ErrorHeader)header;
         return null;
+    }
+    
+    /**
+     * Returns true if the payload application data is encrypted. This will be
+     * true if the entity authentication scheme provides encryption or if
+     * session keys were used. Returns false for error messages which do not
+     * have any payload chunks.
+     * 
+     * @return true if the payload application data is encrypted. Will be false
+     *         for error messages.
+     */
+    public boolean encryptsPayloads() {
+        // Return false for error messages.
+        final MessageHeader messageHeader = getMessageHeader();
+        if (messageHeader == null)
+            return false;
+        
+        // If the message uses entity authentication data for an entity
+        // authentication scheme that provides encryption, return true.
+        final EntityAuthenticationData entityAuthData = messageHeader.getEntityAuthenticationData();
+        if (entityAuthData != null && entityAuthData.getScheme().encrypts())
+            return true;
+        
+        // If the message uses a master token, return true.
+        final MasterToken masterToken = messageHeader.getMasterToken();
+        if (masterToken != null)
+            return true;
+        
+        // If the message includes key response data, return true.
+        final KeyResponseData keyResponseData = messageHeader.getKeyResponseData();
+        if (keyResponseData != null)
+            return true;
+        
+        // Otherwise return false.
+        return false;
+    }
+    
+    /**
+     * Returns true if the payload application data is integrity protected.
+     * This will be true if the entity authentication scheme provides integrity
+     * protection or if session keys were used. Returns false for error
+     * messages which do not have any payload chunks.
+     * 
+     * @return true if the payload application data is integrity protected.
+     *         Will be false for error messages.
+     */
+    public boolean protectsPayloadIntegrity() {
+        // Return false for error messages.
+        final MessageHeader messageHeader = getMessageHeader();
+        if (messageHeader == null)
+            return false;
+        
+        // If the message uses entity authentication data for an entity
+        // authentication scheme that provides integrity protection, return
+        // true.
+        final EntityAuthenticationData entityAuthData = messageHeader.getEntityAuthenticationData();
+        if (entityAuthData != null && entityAuthData.getScheme().protectsIntegrity())
+            return true;
+        
+        // If the message uses a master token, return true.
+        final MasterToken masterToken = messageHeader.getMasterToken();
+        if (masterToken != null)
+            return true;
+        
+        // If the message includes key response data, return true.
+        final KeyResponseData keyResponseData = messageHeader.getKeyResponseData();
+        if (keyResponseData != null)
+            return true;
+        
+        // Otherwise return false.
+        return false;
     }
 
     /**
