@@ -9,7 +9,7 @@ dependencies {
     compile 'org.json:json:20140107'
 }
 
-task javadoc(type: Javadoc, overwrite: true) {
+javadoc {
     options.overview = "overview.html"
     options.links = [
         "http://docs.oracle.com/javase/7/docs/api/",
