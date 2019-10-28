@@ -31,6 +31,9 @@ describe("MessageInputStream", function() {
     var ByteArrayOutputStream = require('msl-core/io/ByteArrayOutputStream.js');
     var ByteArrayInputStream = require('msl-core/io/ByteArrayInputStream.js');
     var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var PresharedAuthenticationData = require('msl-core/entityauth/PresharedAuthenticationData.js');
+    var RsaAuthenticationData = require('msl-core/entityauth/RsaAuthenticationData.js');
+    var UnauthenticatedAuthenticationData = require('msl-core/entityauth/UnauthenticatedAuthenticationData.js');
     var ErrorHeader = require('msl-core/msg/ErrorHeader.js');
     var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
     var SymmetricCryptoContext = require('msl-core/crypto/SymmetricCryptoContext.js');
@@ -56,6 +59,7 @@ describe("MessageInputStream", function() {
     var MockTokenFactory = require('msl-tests/tokens/MockTokenFactory.js');
     var MockEmailPasswordAuthenticationFactory = require('msl-tests/userauth/MockEmailPasswordAuthenticationFactory.js');
     var MockPresharedAuthenticationFactory = require('msl-tests/entityauth/MockPresharedAuthenticationFactory.js');
+    var MockRsaAuthenticationFactory = require('msl-tests/entityauth/MockRsaAuthenticationFactory.js');
 
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;
@@ -96,6 +100,8 @@ describe("MessageInputStream", function() {
     var END_OF_MSG = true;
     var DATA = new Uint8Array(32);
     random.nextBytes(DATA);
+
+    var UNAUTHENTICATED_ESN = "MOCKUNAUTH-ESN";
 
     // Shortcuts.
     var HeaderData = MessageHeader.HeaderData;
@@ -2909,6 +2915,690 @@ describe("MessageInputStream", function() {
             // If there's nothing left we'll receive end of message anyway.
             expect(buffer).toBeNull();
 
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme encrypts", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme does not encrypt", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeFalsy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme integrity protects", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme does not integrity protect", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeFalsy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme with keyx encrypts", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new PresharedAuthenticationData(MockPresharedAuthenticationFactory.PSK_ESN);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme with keyx integrity protects", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme does not but keyx encrypts", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new RsaAuthenticationData(MockRsaAuthenticationFactory.RSA_ESN, MockRsaAuthenticationFactory.RSA_PUBKEY_ID);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("entity authentication scheme does not but keyx integrity protects", function() {
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, entityAuthData, null, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("master token encrypts", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+                result: function(x) { masterToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT)
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("master token integrity protects", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+                result: function(x) { masterToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT)
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, null, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("master token with keyx encrypts", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+                result: function(x) { masterToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT)
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.encryptsPayloads()).toBeTruthy();
+            mis.close(TIMEOUT, {
+                result: function(x) { closed = x; },
+                timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return closed; }, "closed", MslTestConstants.TIMEOUT);
+    });
+    
+    it("master token with keyx integrity protects", function() {
+        var masterToken;
+        runs(function() {
+            MslTestUtils.getMasterToken(trustedNetCtx, 1, 1, {
+                result: function(x) { masterToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterToken; }, "master token", MslTestConstants.TIMEOUT)
+        
+        var messageHeader;
+        runs(function() {
+            var headerData = new HeaderData(MSG_ID, null, false, false, null, null, KEY_RESPONSE_DATA, null, null, null);
+            var peerData = new HeaderPeerData(null, null, null);
+            var entityAuthData = new UnauthenticatedAuthenticationData(UNAUTHENTICATED_ESN);
+            MessageHeader.create(trustedNetCtx, null, masterToken, headerData, peerData, {
+                result: function(x) { messageHeader = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return messageHeader; }, "message header", MslTestConstants.TIMEOUT)
+        
+        var is;
+        runs(function() {
+            generateInputStream(messageHeader, payloads, {
+                result: function(x) { is = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return is; }, "is", MslTestConstants.TIMEOUT);
+        
+        var mis;
+        runs(function() {
+            MessageInputStream.create(trustedNetCtx, is, KEY_REQUEST_DATA, cryptoContexts, TIMEOUT, {
+                result: function(x) { mis = x; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return mis; }, "mis", MslTestConstants.TIMEOUT);
+
+        var ready = false;
+        runs(function() {
+            mis.isReady({
+                result: function(r) { ready = r; },
+                timeout: function() { expect(function() { throw new Error("Timed out waiting for mis ready."); }).not.toThrow(); },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return ready; }, "mis ready", MslTestConstants.TIMEOUT);
+        
+        var closed;
+        runs(function() {
+            expect(mis.protectsPayloadIntegrity()).toBeTruthy();
             mis.close(TIMEOUT, {
                 result: function(x) { closed = x; },
                 timeout: function() { expect(function() { throw new Error('timedout'); }).not.toThrow(); },

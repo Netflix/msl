@@ -565,6 +565,77 @@ public class MessageInputStream extends InputStream {
     public ICryptoContext getKeyExchangeCryptoContext() {
         return keyxCryptoContext;
     }
+    
+    /**
+     * Returns true if the payload application data is encrypted. This will be
+     * true if the entity authentication scheme provides encryption or if
+     * session keys were used. Returns false for error messages which do not
+     * have any payload chunks.
+     * 
+     * @return true if the payload application data is encrypted. Will be false
+     *         for error messages.
+     */
+    public boolean encryptsPayloads() {
+        // Return false for error messages.
+        final MessageHeader messageHeader = getMessageHeader();
+        if (messageHeader == null)
+            return false;
+        
+        // If the message uses entity authentication data for an entity
+        // authentication scheme that provides encryption, return true.
+        final EntityAuthenticationData entityAuthData = messageHeader.getEntityAuthenticationData();
+        if (entityAuthData != null && entityAuthData.getScheme().encrypts())
+            return true;
+        
+        // If the message uses a master token, return true.
+        final MasterToken masterToken = messageHeader.getMasterToken();
+        if (masterToken != null)
+            return true;
+        
+        // If the message includes key response data, return true.
+        final KeyResponseData keyResponseData = messageHeader.getKeyResponseData();
+        if (keyResponseData != null)
+            return true;
+        
+        // Otherwise return false.
+        return false;
+    }
+    
+    /**
+     * Returns true if the payload application data is integrity protected.
+     * This will be true if the entity authentication scheme provides integrity
+     * protection or if session keys were used. Returns false for error
+     * messages which do not have any payload chunks.
+     * 
+     * @return true if the payload application data is integrity protected.
+     *         Will be false for error messages.
+     */
+    public boolean protectsPayloadIntegrity() {
+        // Return false for error messages.
+        final MessageHeader messageHeader = getMessageHeader();
+        if (messageHeader == null)
+            return false;
+        
+        // If the message uses entity authentication data for an entity
+        // authentication scheme that provides integrity protection, return
+        // true.
+        final EntityAuthenticationData entityAuthData = messageHeader.getEntityAuthenticationData();
+        if (entityAuthData != null && entityAuthData.getScheme().protectsIntegrity())
+            return true;
+        
+        // If the message uses a master token, return true.
+        final MasterToken masterToken = messageHeader.getMasterToken();
+        if (masterToken != null)
+            return true;
+        
+        // If the message includes key response data, return true.
+        final KeyResponseData keyResponseData = messageHeader.getKeyResponseData();
+        if (keyResponseData != null)
+            return true;
+        
+        // Otherwise return false.
+        return false;
+    }
 
     /* (non-Javadoc)
      * @see java.io.InputStream#available()

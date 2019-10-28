@@ -460,6 +460,61 @@ shared_ptr<MslUser> MessageInputStream::getUser()
 	return messageHeader->getUser();
 }
 
+bool MessageInputStream::encryptsPayloads()
+{
+    // Return false for error messages.
+    shared_ptr<MessageHeader> messageHeader = getMessageHeader();
+    if (!messageHeader)
+        return false;
+
+    // If the message uses entity authentication data for an entity
+    // authentication scheme that provides encryption, return true.
+    shared_ptr<EntityAuthenticationData> entityAuthData = messageHeader->getEntityAuthenticationData();
+    if (entityAuthData && entityAuthData->getScheme().encrypts())
+        return true;
+
+    // If the message uses a master token, return true.
+    shared_ptr<MasterToken> masterToken = messageHeader->getMasterToken();
+    if (masterToken)
+        return true;
+
+    // If the message includes key response data, return true.
+    shared_ptr<KeyResponseData> keyResponseData = messageHeader->getKeyResponseData();
+    if (keyResponseData)
+        return true;
+
+    // Otherwise return false.
+    return false;
+}
+
+bool MessageInputStream::protectsPayloadIntegrity()
+{
+    // Return false for error messages.
+    shared_ptr<MessageHeader> messageHeader = getMessageHeader();
+    if (!messageHeader)
+        return false;
+
+    // If the message uses entity authentication data for an entity
+    // authentication scheme that provides integrity protection, return
+    // true.
+    shared_ptr<EntityAuthenticationData> entityAuthData = messageHeader->getEntityAuthenticationData();
+    if (entityAuthData && entityAuthData->getScheme().protectsIntegrity())
+        return true;
+
+    // If the message uses a master token, return true.
+    shared_ptr<MasterToken> masterToken = messageHeader->getMasterToken();
+    if (masterToken)
+        return true;
+
+    // If the message includes key response data, return true.
+    shared_ptr<KeyResponseData> keyResponseData = messageHeader->getKeyResponseData();
+    if (keyResponseData)
+        return true;
+
+    // Otherwise return false.
+    return false;
+}
+
 void MessageInputStream::abort()
 {
 	aborted_ = true;

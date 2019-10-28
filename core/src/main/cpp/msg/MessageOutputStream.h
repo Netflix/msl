@@ -111,17 +111,39 @@ public:
      * @throws MslInternalException if writing an error message.
      * @see #flush()
      */
-    bool setCompressionAlgorithm(const MslConstants::CompressionAlgorithm& compressionAlgo);
+    virtual bool setCompressionAlgorithm(const MslConstants::CompressionAlgorithm& compressionAlgo);
 
     /**
      * @return the message header. Will be null for error messages.
      */
-    std::shared_ptr<MessageHeader> getMessageHeader();
+    virtual std::shared_ptr<MessageHeader> getMessageHeader();
 
     /**
      * @return the error header. Will be null except for error messages.
      */
-    std::shared_ptr<ErrorHeader> getErrorHeader();
+    virtual std::shared_ptr<ErrorHeader> getErrorHeader();
+
+    /**
+     * Returns true if the payload application data is encrypted. This will be
+     * true if the entity authentication scheme provides encryption or if
+     * session keys were used. Returns false for error messages which do not
+     * have any payload chunks.
+     *
+     * @return true if the payload application data is encrypted. Will be false
+     *         for error messages.
+     */
+    virtual bool encryptsPayloads();
+
+    /**
+     * Returns true if the payload application data is integrity protected.
+     * This will be true if the entity authentication scheme provides integrity
+     * protection or if session keys were used. Returns false for error
+     * messages which do not have any payload chunks.
+     *
+     * @return true if the payload application data is integrity protected.
+     *         Will be false for error messages.
+     */
+    virtual bool protectsPayloadIntegrity();
 
     /**
      * Returns the payloads sent so far. Once payload caching is turned off
@@ -129,12 +151,12 @@ public:
      *
      * @return an immutable ordered list of the payloads sent so far.
      */
-    std::vector<std::shared_ptr<PayloadChunk>> getPayloads() { return payloads_; }
+    virtual std::vector<std::shared_ptr<PayloadChunk>> getPayloads() { return payloads_; }
 
     /**
      * Turns off caching of any message data (e.g. payloads).
      */
-    void stopCaching();
+    virtual void stopCaching();
 
     /**
      * By default the destination output stream is not closed when this message
@@ -144,7 +166,7 @@ public:
      * @param close true if the destination output stream should be closed,
      *        false if it should not.
      */
-    void closeDestination(bool close) { closeDestination_ = close; }
+    virtual void closeDestination(bool close) { closeDestination_ = close; }
 
     /** @inheritDoc */
     virtual void abort();

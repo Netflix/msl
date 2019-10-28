@@ -342,10 +342,81 @@
         /**
          * @return {ErrorHeader} the error header. Will be null except for error messages.
          */
-        getErrorMessage: function getErrorHeader() {
+        getErrorHeader: function getErrorHeader() {
             if (this._header instanceof ErrorHeader)
                 return this._header;
             return null;
+        },
+        
+        /**
+         * Returns true if the payload application data is encrypted. This will be
+         * true if the entity authentication scheme provides encryption or if
+         * session keys were used. Returns false for error messages which do not
+         * have any payload chunks.
+         * 
+         * @return {boolean} true if the payload application data is encrypted. Will be false
+         *         for error messages.
+         */
+        encryptsPayloads: function encryptsPayloads() {
+            // Return false for error messages.
+            var messageHeader = this.getMessageHeader();
+            if (!messageHeader)
+                return false;
+            
+            // If the message uses entity authentication data for an entity
+            // authentication scheme that provides encryption, return true.
+            var entityAuthData = messageHeader.entityAuthenticationData;
+            if (entityAuthData && entityAuthData.scheme.encrypts)
+                return true;
+            
+            // If the message uses a master token, return true.
+            var masterToken = messageHeader.masterToken;
+            if (masterToken)
+                return true;
+            
+            // If the message includes key response data, return true.
+            var keyResponseData = messageHeader.keyResponseData;
+            if (keyResponseData)
+                return true;
+            
+            // Otherwise return false.
+            return false;
+        },
+        
+        /**
+         * Returns true if the payload application data is integrity protected.
+         * This will be true if the entity authentication scheme provides integrity
+         * protection or if session keys were used. Returns false for error
+         * messages which do not have any payload chunks.
+         * 
+         * @return {boolean} true if the payload application data is integrity protected.
+         *         Will be false for error messages.
+         */
+        protectsPayloadIntegrity: function protectsPayloadIntegrity() {
+            // Return false for error messages.
+            var messageHeader = this.getMessageHeader();
+            if (!messageHeader)
+                return false;
+            
+            // If the message uses entity authentication data for an entity
+            // authentication scheme that provides integrity protection, return
+            // true.
+            var entityAuthData = messageHeader.entityAuthenticationData;
+            if (entityAuthData && entityAuthData.scheme.protectsIntegrity)
+                return true;
+            
+            // If the message uses a master token, return true.
+            var masterToken = messageHeader.masterToken;
+            if (masterToken)
+                return true;
+            
+            // If the message includes key response data, return true.
+            var keyResponseData = messageHeader.keyResponseData;
+            if (keyResponseData)
+                return true;
+            
+            // Otherwise return false.
+            return false;
         },
 
         /**

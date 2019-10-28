@@ -156,6 +156,28 @@ public:
     virtual std::shared_ptr<crypto::ICryptoContext> getKeyExchangeCryptoContext() { return keyxCryptoContext_; }
 
     /**
+     * Returns true if the payload application data is encrypted. This will be
+     * true if the entity authentication scheme provides encryption or if
+     * session keys were used. Returns false for error messages which do not
+     * have any payload chunks.
+     *
+     * @return true if the payload application data is encrypted. Will be false
+     *         for error messages.
+     */
+    virtual bool encryptsPayloads();
+
+    /**
+     * Returns true if the payload application data is integrity protected.
+     * This will be true if the entity authentication scheme provides integrity
+     * protection or if session keys were used. Returns false for error
+     * messages which do not have any payload chunks.
+     *
+     * @return true if the payload application data is integrity protected.
+     *         Will be false for error messages.
+     */
+    virtual bool protectsPayloadIntegrity();
+
+    /**
      * By default the source input stream is not closed when this message input
      * stream is closed. If it should be closed then this method can be used to
      * dictate the desired behavior.
