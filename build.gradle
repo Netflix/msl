@@ -1,6 +1,5 @@
 plugins {
     id 'nebula.netflixoss' version '5.1.1'
-    id 'com.github.spotbugs' version '2.0.0'
 }
 
 subprojects {
@@ -14,8 +13,8 @@ subprojects {
     apply plugin: 'nebula.javadoc-jar'
     apply plugin: 'nebula.source-jar'
 
-    apply plugin: 'com.github.spotbugs'
-    spotbugs {
+    apply plugin: 'findbugs'
+    findbugs {
         excludeFilter = rootProject.file("findbugs-exclude.xml")
         ignoreFailures = true
     }
