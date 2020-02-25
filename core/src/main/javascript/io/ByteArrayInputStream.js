@@ -51,7 +51,7 @@
             InterruptibleExecutor(callback, function() {
                 this._closed = true;
                 return true;
-            });
+            }, this);
         },
 
         /** @inheritDoc */
