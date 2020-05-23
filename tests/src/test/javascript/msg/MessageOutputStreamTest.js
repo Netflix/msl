@@ -30,6 +30,9 @@ describe("MessageOutputStream", function() {
     var MessageHeader = require('msl-core/msg/MessageHeader.js');
     var MslConstants = require('msl-core/MslConstants.js');
     var EntityAuthenticationScheme = require('msl-core/entityauth/EntityAuthenticationScheme.js');
+    var UnauthenticatedAuthenticationData = require('msl-core/entityauth/UnauthenticatedAuthenticationData.js');
+    var PresharedAuthenticationData = require('msl-core/entityauth/PresharedAuthenticationData.js');
+    var RsaAuthenticationData = require('msl-core/entityauth/RsaAuthenticationData.js');
     var ErrorHeader = require('msl-core/msg/ErrorHeader.js');
     var MessageOutputStream = require('msl-core/msg/MessageOutputStream.js');
     var ByteArrayInputStream = require('msl-core/io/ByteArrayInputStream.js');
@@ -44,9 +47,13 @@ describe("MessageOutputStream", function() {
     var MslError = require('msl-core/MslError.js');
     var MslIoException = require('msl-core/MslIoException.js');
     var TextEncoding = require('msl-core/util/TextEncoding.js');
+    var SymmetricWrappedExchange = require('msl-core/keyx/SymmetricWrappedExchange.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
+    var MockRsaAuthenticationFactory = require('msl-tests/entityauth/MockRsaAuthenticationFactory.js');
+    var MockPresharedAuthenticationFactory = require('msl-tests/entityauth/MockPresharedAuthenticationFactory.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
+    var MslTestUtils = require('msl-tests/util/MslTestUtils.js');
 
     /** MSL encoder format. */
     var ENCODER_FORMAT = MslEncoderFormat.JSON;

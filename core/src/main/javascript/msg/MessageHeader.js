@@ -77,6 +77,7 @@
 	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 	var MslEntityAuthException = require('../MslEntityAuthException.js');
 	var MslEncodable = require('../io/MslEncodable.js');
+	var MslEncoderUtils = require('../io/MslEncoderUtils.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
 	var MslConstants = require('../MslConstants.js');
 	var MslInternalException = require('../MslInternalException.js');
