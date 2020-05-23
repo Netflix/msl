@@ -836,6 +836,194 @@ TEST_F(SimpleMslStoreTest, removeNamedServiceTokens)
 	EXPECT_TRUE(MslTestUtils::equal(storedUnboundTokens, MslTestUtils::remove(storedUnboundTokens, removedTokens)));
 }
 
+TEST_F(SimpleMslStoreTest, replaceUnboundWithMasterServiceToken)
+{
+    const string name = "unbound2master";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> unboundServiceToken = make_shared<ServiceToken>(ctx, name, data, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> unboundServiceTokens;
+    unboundServiceTokens.insert(unboundServiceToken);
+
+    shared_ptr<ServiceToken> masterServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> masterServiceTokens;
+    masterServiceTokens.insert(masterServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+
+    // The store should contain only the unbound service token.
+    store->addServiceTokens(unboundServiceTokens);
+    set<shared_ptr<ServiceToken>> unboundSet = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
+    EXPECT_EQ(1, unboundSet.size());
+    EXPECT_TRUE(unboundSet.find(unboundServiceToken) != unboundSet.end());
+
+    // The store should contain only the master-bound service token.
+    store->addServiceTokens(masterServiceTokens);
+    set<shared_ptr<ServiceToken>> masterSet = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
+    EXPECT_EQ(1, masterSet.size());
+    EXPECT_TRUE(masterSet.find(masterServiceToken) != masterSet.end());
+}
+
+TEST_F(SimpleMslStoreTest, replaceUnboundWithUserServiceToken)
+{
+    const string name = "unbound2user";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> unboundServiceToken = make_shared<ServiceToken>(ctx, name, data, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> unboundServiceTokens;
+    unboundServiceTokens.insert(unboundServiceToken);
+
+    shared_ptr<ServiceToken> userServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> userServiceTokens;
+    userServiceTokens.insert(userServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+    store->addUserIdToken(USER_ID, userIdToken);
+
+    // The store should contain only the unbound service token.
+    store->addServiceTokens(unboundServiceTokens);
+    set<shared_ptr<ServiceToken>> unboundSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, unboundSet.size());
+    EXPECT_TRUE(unboundSet.find(unboundServiceToken) != unboundSet.end());
+
+    // The store should contain only the user-bound service token.
+    store->addServiceTokens(userServiceTokens);
+    set<shared_ptr<ServiceToken>> userSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, userSet.size());
+    EXPECT_TRUE(userSet.find(userServiceToken) != userSet.end());
+}
+
+TEST_F(SimpleMslStoreTest, replaceMasterWithUnboundServiceToken)
+{
+    const string name = "master2unbound";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> unboundServiceToken = make_shared<ServiceToken>(ctx, name, data, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> unboundServiceTokens;
+    unboundServiceTokens.insert(unboundServiceToken);
+
+    shared_ptr<ServiceToken> masterServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> masterServiceTokens;
+    masterServiceTokens.insert(masterServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+
+    // The store should contain only the master-bound service token.
+    store->addServiceTokens(masterServiceTokens);
+    set<shared_ptr<ServiceToken>> masterSet = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
+    EXPECT_EQ(1, masterSet.size());
+    EXPECT_TRUE(masterSet.find(masterServiceToken) != masterSet.end());
+
+    // The store should contain only the unbound service token.
+    store->addServiceTokens(unboundServiceTokens);
+    set<shared_ptr<ServiceToken>> unboundSet = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
+    EXPECT_EQ(1, unboundSet.size());
+    EXPECT_TRUE(unboundSet.find(unboundServiceToken) != unboundSet.end());
+}
+
+TEST_F(SimpleMslStoreTest, replaceMasterWithUserServiceToken)
+{
+    const string name = "master2user";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> masterServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> masterServiceTokens;
+    masterServiceTokens.insert(masterServiceToken);
+
+    shared_ptr<ServiceToken> userServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> userServiceTokens;
+    userServiceTokens.insert(userServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+    store->addUserIdToken(USER_ID, userIdToken);
+
+    // The store should contain only the master-bound service token.
+    store->addServiceTokens(masterServiceTokens);
+    set<shared_ptr<ServiceToken>> masterSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, masterSet.size());
+    EXPECT_TRUE(masterSet.find(masterServiceToken) != masterSet.end());
+
+    // The store should contain only the user-bound service token.
+    store->addServiceTokens(userServiceTokens);
+    set<shared_ptr<ServiceToken>> userSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, userSet.size());
+    EXPECT_TRUE(userSet.find(userServiceToken) != userSet.end());
+}
+
+TEST_F(SimpleMslStoreTest, replaceUserWithUnboundServiceToken)
+{
+    const string name = "user2unbound";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> unboundServiceToken = make_shared<ServiceToken>(ctx, name, data, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> unboundServiceTokens;
+    unboundServiceTokens.insert(unboundServiceToken);
+
+    shared_ptr<ServiceToken> userServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> userServiceTokens;
+    userServiceTokens.insert(userServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+    store->addUserIdToken(USER_ID, userIdToken);
+
+    // The store should contain only the user-bound service token.
+    store->addServiceTokens(userServiceTokens);
+    set<shared_ptr<ServiceToken>> userSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, userSet.size());
+    EXPECT_TRUE(userSet.find(userServiceToken) != userSet.end());
+
+    // The store should contain only the unbound service token.
+    store->addServiceTokens(unboundServiceTokens);
+    set<shared_ptr<ServiceToken>> unboundSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, unboundSet.size());
+    EXPECT_TRUE(unboundSet.find(unboundServiceToken) != unboundSet.end());
+}
+
+TEST_F(SimpleMslStoreTest, replaceUserWithMasterServiceToken)
+{
+    const string name = "user2master";
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(0);
+    shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);
+    shared_ptr<UserIdToken> userIdToken = MslTestUtils::getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory::USER());
+    shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
+
+    shared_ptr<ServiceToken> masterServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, NULL_USER_ID_TOKEN, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> masterServiceTokens;
+    masterServiceTokens.insert(masterServiceToken);
+
+    shared_ptr<ServiceToken> userServiceToken = make_shared<ServiceToken>(ctx, name, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+    set<shared_ptr<ServiceToken>> userServiceTokens;
+    userServiceTokens.insert(userServiceToken);
+
+    store->setCryptoContext(masterToken, cryptoContext);
+    store->addUserIdToken(USER_ID, userIdToken);
+
+    // The store should contain only the user-bound service token.
+    store->addServiceTokens(userServiceTokens);
+    set<shared_ptr<ServiceToken>> userSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, userSet.size());
+    EXPECT_TRUE(userSet.find(userServiceToken) != userSet.end());
+
+    // The store should contain only the master-bound service token.
+    store->addServiceTokens(masterServiceTokens);
+    set<shared_ptr<ServiceToken>> masterSet = store->getServiceTokens(masterToken, userIdToken);
+    EXPECT_EQ(1, masterSet.size());
+    EXPECT_TRUE(masterSet.find(masterServiceToken) != masterSet.end());
+}
+
 TEST_F(SimpleMslStoreTest, clearServiceTokens)
 {
 	shared_ptr<MasterToken> masterToken = MslTestUtils::getMasterToken(ctx, 1, 1);

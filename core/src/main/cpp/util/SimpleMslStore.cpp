@@ -309,6 +309,10 @@ void SimpleMslStore::addServiceTokens(set<shared_ptr<ServiceToken>> tokens) {
 	{
 		const shared_ptr<ServiceToken>& token = *it;
 
+        // First remove any existing token with the same name.
+        shared_ptr<string> tokenName = make_shared<string>(token->getName());
+        removeServiceTokens(tokenName, shared_ptr<MasterToken>(), shared_ptr<UserIdToken>());
+
 		// Unbound?
 		if (token->isUnbound()) {
 			UnboundServiceTokensSet::iterator it = find_if(unboundServiceTokens_.begin(), unboundServiceTokens_.end(), MslUtils::sharedPtrEqual<UnboundServiceTokensSet>(token));

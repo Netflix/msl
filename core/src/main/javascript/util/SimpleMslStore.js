@@ -294,6 +294,9 @@
             
             // Add service tokens.
             tokens.forEach(function(token) {
+                // First remove any existing token with the same name.
+                this.removeServiceTokens(token.name, null, null);
+                
                 // Unbound?
                 if (token.isUnbound()) {
                     this.unboundServiceTokens[token.uniqueKey()] = token;

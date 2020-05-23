@@ -238,9 +238,10 @@ public class MslTestUtils {
         final ICryptoContext cryptoContext = new NullCryptoContext();
         final Set<ServiceToken> tokens = new HashSet<ServiceToken>();
         for (int count = random.nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
+            final String name = SERVICE_TOKEN_NAME + random.nextInt();
             final byte[] data = new byte[8];
             random.nextBytes(data);
-            final ServiceToken token = new ServiceToken(ctx, "masterbound" + count, data, masterToken, null, false, null, cryptoContext);
+            final ServiceToken token = new ServiceToken(ctx, name, data, masterToken, null, false, null, cryptoContext);
             tokens.add(token);
         }
         return tokens;
@@ -262,9 +263,10 @@ public class MslTestUtils {
         final ICryptoContext cryptoContext = new NullCryptoContext();
         final Set<ServiceToken> tokens = new HashSet<ServiceToken>();
         for (int count = random.nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
+            final String name = SERVICE_TOKEN_NAME + random.nextInt();
             final byte[] data = new byte[8];
             random.nextBytes(data);
-            final ServiceToken token = new ServiceToken(ctx, "userbound" + count, data, masterToken, userIdToken, false, null, cryptoContext);
+            final ServiceToken token = new ServiceToken(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext);
             tokens.add(token);
         }
         return tokens;

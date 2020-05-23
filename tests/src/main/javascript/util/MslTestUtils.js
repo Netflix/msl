@@ -374,10 +374,11 @@
 	    			callback.result(tokens);
 	    			return;
 	    		}
-	    		
+
+                var name = SERVICE_TOKEN_NAME + random.nextInt();
 	    		var data = new Uint8Array(8);
 	            random.nextBytes(data);
-	            ServiceToken.create(ctx, "masterbound" + count, data, masterToken, null, false, null, cryptoContext, {
+	            ServiceToken.create(ctx, name, data, masterToken, null, false, null, cryptoContext, {
 	            	result: function(token) {
 	            		tokens.push(token);
 	            		--count;
@@ -414,10 +415,11 @@
 	    			callback.result(tokens);
 	    			return;
 	    		}
-	    		
+
+                var name = SERVICE_TOKEN_NAME + random.nextInt();
 	    		var data = new Uint8Array(8);
 	            random.nextBytes(data);
-	            ServiceToken.create(ctx, "userbound" + count, data, masterToken, userIdToken, false, null, cryptoContext, {
+	            ServiceToken.create(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext, {
 	            	result: function(token) {
 	            		tokens.push(token);
 	            		--count;

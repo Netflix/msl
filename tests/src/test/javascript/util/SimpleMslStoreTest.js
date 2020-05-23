@@ -29,6 +29,9 @@ describe("SimpleMslStore", function() {
     var MslInternalException = require('msl-core/MslInternalException.js');
     var MslException = require('msl-core/MslException.js');
     var MslError = require('msl-core/MslError.js');
+    var MasterToken = require('msl-core/tokens/MasterToken.js');
+    var UserIdToken = require('msl-core/tokens/UserIdToken.js');
+    var ServiceToken = require('msl-core/tokens/ServiceToken.js');
 
     var MslTestConstants = require('msl-tests/MslTestConstants.js');
     var MockMslContext = require('msl-tests/util/MockMslContext.js');
@@ -1340,6 +1343,388 @@ describe("SimpleMslStore", function() {
             var storedUnboundTokens = store.getServiceTokens(null, null);
             expect(storedUnboundTokens).not.toBeNull();
             expect(serviceTokensContainsAny(storedUnboundTokens, removedTokens)).toBeFalsy();
+        });
+    });
+    
+    it("replace unbound service token with master-bound service token", function() {
+        var name = "unbound2master";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceToken, unboundServiceTokens;
+        runs(function() {
+            unboundServiceTokens = [];
+            ServiceToken.create(ctx, name, data, null, null, false, null, cryptoContext, {
+                result: function(token) {
+                    unboundServiceToken = token;
+                    unboundServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceToken; }, "unbound service token not received", MslTestConstants.TIMEOUT);
+        
+        var masterServiceToken, masterServiceTokens;
+        runs(function() {
+            masterServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, null, false, null, cryptoContext, {
+                result: function(token) {
+                    masterServiceToken = token;
+                    masterServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterServiceToken; }, "master-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            
+            // The store should contain only the unbound service token.
+            store.addServiceTokens(unboundServiceTokens);
+            var unboundSet = store.getServiceTokens(masterToken, null);
+            expect(unboundSet.length).toEqual(1);
+            expect(unboundSet[0].uniqueKey()).toEqual(unboundServiceToken.uniqueKey());
+            
+            // The store should contain only the master-bound service token.
+            store.addServiceTokens(masterServiceTokens);
+            var masterSet = store.getServiceTokens(masterToken, null);
+            expect(masterSet.length).toEqual(1);
+            expect(masterSet[0].uniqueKey()).toEqual(masterServiceToken.uniqueKey());
+        });
+    });
+    
+    it("replace unbound service token with user-bound service token", function() {
+        var name = "unbound2user";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "user ID token not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceToken, unboundServiceTokens;
+        runs(function() {
+            unboundServiceTokens = [];
+            ServiceToken.create(ctx, name, data, null, null, false, null, cryptoContext, {
+                result: function(token) {
+                    unboundServiceToken = token;
+                    unboundServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceToken; }, "unbound service token not received", MslTestConstants.TIMEOUT);
+        
+        var userServiceToken, userServiceTokens;
+        runs(function() {
+            userServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext, {
+                result: function(token) {
+                    userServiceToken = token;
+                    userServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userServiceToken; }, "user-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            store.addUserIdToken(USER_ID, userIdToken);
+            
+            // The store should contain only the unbound service token.
+            store.addServiceTokens(unboundServiceTokens);
+            var unboundSet = store.getServiceTokens(masterToken, userIdToken);
+            expect(unboundSet.length).toEqual(1);
+            expect(unboundSet[0].uniqueKey()).toEqual(unboundServiceToken.uniqueKey());
+            
+            // The store should contain only the user-bound service token.
+            store.addServiceTokens(userServiceTokens);
+            var userSet = store.getServiceTokens(masterToken, userIdToken);
+            expect(userSet.length).toEqual(1);
+            expect(userSet[0].uniqueKey()).toEqual(userServiceToken.uniqueKey());
+        });
+    });
+    
+    it("replace master-bound service token with unbound service token", function() {
+        var name = "master2unbound";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceToken, unboundServiceTokens;
+        runs(function() {
+            unboundServiceTokens = [];
+            ServiceToken.create(ctx, name, data, null, null, false, null, cryptoContext, {
+                result: function(token) {
+                    unboundServiceToken = token;
+                    unboundServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceToken; }, "unbound service token not received", MslTestConstants.TIMEOUT);
+        
+        var masterServiceToken, masterServiceTokens;
+        runs(function() {
+            masterServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, null, false, null, cryptoContext, {
+                result: function(token) {
+                    masterServiceToken = token;
+                    masterServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterServiceToken; }, "master-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            
+            // The store should contain only the master-bound service token.
+            store.addServiceTokens(masterServiceTokens);
+            var masterSet = store.getServiceTokens(masterToken, null);
+            expect(masterSet.length).toEqual(1);
+            expect(masterSet[0].uniqueKey()).toEqual(masterServiceToken.uniqueKey());
+            
+            // The store should contain only the unbound service token.
+            store.addServiceTokens(unboundServiceTokens);
+            var unboundSet = store.getServiceTokens(masterToken, null);
+            expect(unboundSet.length).toEqual(1);
+            expect(unboundSet[0].uniqueKey()).toEqual(unboundServiceToken.uniqueKey());
+        });
+    });
+    
+    it("replace master-bound service token with user-bound service token", function() {
+        var name = "master2user";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "user ID token not received", MslTestConstants.TIMEOUT);
+
+        var masterServiceToken, masterServiceTokens;
+        runs(function() {
+            masterServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, null, false, null, cryptoContext, {
+                result: function(token) {
+                    masterServiceToken = token;
+                    masterServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterServiceToken; }, "master-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        var userServiceToken, userServiceTokens;
+        runs(function() {
+            userServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext, {
+                result: function(token) {
+                    userServiceToken = token;
+                    userServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userServiceToken; }, "user-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            store.addUserIdToken(USER_ID, userIdToken);
+
+            // The store should contain only the master-bound service token.
+            store.addServiceTokens(masterServiceTokens);
+            var masterSet = store.getServiceTokens(masterToken, null);
+            expect(masterSet.length).toEqual(1);
+            expect(masterSet[0].uniqueKey()).toEqual(masterServiceToken.uniqueKey());
+            
+            // The store should contain only the user-bound service token.
+            store.addServiceTokens(userServiceTokens);
+            var userSet = store.getServiceTokens(masterToken, userIdToken);
+            expect(userSet.length).toEqual(1);
+            expect(userSet[0].uniqueKey()).toEqual(userServiceToken.uniqueKey());
+        });
+    });
+    
+    it("replace user-bound service token with unbound service token", function() {
+        var name = "user2unbound";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "user ID token not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceToken, unboundServiceTokens;
+        runs(function() {
+            unboundServiceTokens = [];
+            ServiceToken.create(ctx, name, data, null, null, false, null, cryptoContext, {
+                result: function(token) {
+                    unboundServiceToken = token;
+                    unboundServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceToken; }, "unbound service token not received", MslTestConstants.TIMEOUT);
+
+        var userServiceToken, userServiceTokens;
+        runs(function() {
+            userServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext, {
+                result: function(token) {
+                    userServiceToken = token;
+                    userServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userServiceToken; }, "user-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            store.addUserIdToken(USER_ID, userIdToken);
+            
+            // The store should contain only the user-bound service token.
+            store.addServiceTokens(userServiceTokens);
+            var userSet = store.getServiceTokens(masterToken, userIdToken);
+            expect(userSet.length).toEqual(1);
+            expect(userSet[0].uniqueKey()).toEqual(userServiceToken.uniqueKey());
+            
+            // The store should contain only the unbound service token.
+            store.addServiceTokens(unboundServiceTokens);
+            var unboundSet = store.getServiceTokens(masterToken, null);
+            expect(unboundSet.length).toEqual(1);
+            expect(unboundSet[0].uniqueKey()).toEqual(unboundServiceToken.uniqueKey());
+        });
+    });
+    
+    it("replace user-bound service token with master-bound service token", function() {
+        var name = "user2master";
+        var data = new Uint8Array(0);
+        
+        var masterToken, cryptoContext;
+        runs(function() {
+            MslTestUtils.getMasterToken(ctx, 1, 1, {
+                result: function(token) { masterToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+            cryptoContext = new NullCryptoContext();
+        });
+        waitsFor(function() { return masterToken; }, "master token not received", MslTestConstants.TIMEOUT);
+        
+        var userIdToken;
+        runs(function() {
+            MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER, {
+                result: function(token) { userIdToken = token; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userIdToken; }, "user ID token not received", MslTestConstants.TIMEOUT);
+
+        var masterServiceToken, masterServiceTokens;
+        runs(function() {
+            masterServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, null, false, null, cryptoContext, {
+                result: function(token) {
+                    masterServiceToken = token;
+                    masterServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterServiceToken; }, "master-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        var userServiceToken, userServiceTokens;
+        runs(function() {
+            userServiceTokens = [];
+            ServiceToken.create(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext, {
+                result: function(token) {
+                    userServiceToken = token;
+                    userServiceTokens.push(token);
+                },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userServiceToken; }, "user-bound service token not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            store.setCryptoContext(masterToken, cryptoContext);
+            store.addUserIdToken(USER_ID, userIdToken);
+            
+            // The store should contain only the user-bound service token.
+            store.addServiceTokens(userServiceTokens);
+            var userSet = store.getServiceTokens(masterToken, userIdToken);
+            expect(userSet.length).toEqual(1);
+            expect(userSet[0].uniqueKey()).toEqual(userServiceToken.uniqueKey());
+
+            // The store should contain only the master-bound service token.
+            store.addServiceTokens(masterServiceTokens);
+            var masterSet = store.getServiceTokens(masterToken, null);
+            expect(masterSet.length).toEqual(1);
+            expect(masterSet[0].uniqueKey()).toEqual(masterServiceToken.uniqueKey());
         });
     });
 

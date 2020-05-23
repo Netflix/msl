@@ -868,6 +868,194 @@ public class SimpleMslStoreTest {
     }
     
     @Test
+    public void replaceUnboundWithMasterServiceToken() throws MslException {
+        final String name = "unbound2master";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+
+        final ServiceToken unboundServiceToken = new ServiceToken(ctx, name, data, null, null, false, null, cryptoContext);
+        final Set<ServiceToken> unboundServiceTokens = new HashSet<ServiceToken>();
+        unboundServiceTokens.add(unboundServiceToken);
+        
+        final ServiceToken masterServiceToken = new ServiceToken(ctx, name, data, masterToken, null, false, null, cryptoContext);
+        final Set<ServiceToken> masterServiceTokens = new HashSet<ServiceToken>();
+        masterServiceTokens.add(masterServiceToken);
+        
+        store.setCryptoContext(masterToken, cryptoContext);
+        
+        // The store should contain only the unbound service token.
+        store.addServiceTokens(unboundServiceTokens);
+        final Set<ServiceToken> unboundSet = store.getServiceTokens(masterToken, null);
+        assertEquals(1, unboundSet.size());
+        assertTrue(unboundSet.contains(unboundServiceToken));
+        
+        // The store should contain only the master-bound service token.
+        store.addServiceTokens(masterServiceTokens);
+        final Set<ServiceToken> masterSet = store.getServiceTokens(masterToken, null);
+        assertEquals(1, masterSet.size());
+        assertTrue(masterSet.contains(masterServiceToken));
+    }
+    
+    @Test
+    public void replaceUnboundWithUserServiceToken() throws MslException {
+        final String name = "unbound2user";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+
+        final ServiceToken unboundServiceToken = new ServiceToken(ctx, name, data, null, null, false, null, cryptoContext);
+        final Set<ServiceToken> unboundServiceTokens = new HashSet<ServiceToken>();
+        unboundServiceTokens.add(unboundServiceToken);
+        
+        final ServiceToken userServiceToken = new ServiceToken(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext);
+        final Set<ServiceToken> userServiceTokens = new HashSet<ServiceToken>();
+        userServiceTokens.add(userServiceToken);
+
+        store.setCryptoContext(masterToken, cryptoContext);
+        store.addUserIdToken(USER_ID, userIdToken);
+        
+        // The store should contain only the unbound service token.
+        store.addServiceTokens(unboundServiceTokens);
+        final Set<ServiceToken> unboundSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, unboundSet.size());
+        assertTrue(unboundSet.contains(unboundServiceToken));
+        
+        // The store should contain only the user-bound service token.
+        store.addServiceTokens(userServiceTokens);
+        final Set<ServiceToken> userSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, userSet.size());
+        assertTrue(userSet.contains(userServiceToken));
+    }
+    
+    @Test
+    public void replaceMasterWithUnboundServiceToken() throws MslException {
+        final String name = "master2unbound";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+
+        final ServiceToken unboundServiceToken = new ServiceToken(ctx, name, data, null, null, false, null, cryptoContext);
+        final Set<ServiceToken> unboundServiceTokens = new HashSet<ServiceToken>();
+        unboundServiceTokens.add(unboundServiceToken);
+        
+        final ServiceToken masterServiceToken = new ServiceToken(ctx, name, data, masterToken, null, false, null, cryptoContext);
+        final Set<ServiceToken> masterServiceTokens = new HashSet<ServiceToken>();
+        masterServiceTokens.add(masterServiceToken);
+        
+        store.setCryptoContext(masterToken, cryptoContext);
+        
+        // The store should contain only the master-bound service token.
+        store.addServiceTokens(masterServiceTokens);
+        final Set<ServiceToken> masterSet = store.getServiceTokens(masterToken, null);
+        assertEquals(1, masterSet.size());
+        assertTrue(masterSet.contains(masterServiceToken));
+        
+        // The store should contain only the unbound service token.
+        store.addServiceTokens(unboundServiceTokens);
+        final Set<ServiceToken> unboundSet = store.getServiceTokens(masterToken, null);
+        assertEquals(1, unboundSet.size());
+        assertTrue(unboundSet.contains(unboundServiceToken));
+    }
+    
+    @Test
+    public void replaceMasterWithUserServiceToken() throws MslException {
+        final String name = "master2user";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+        
+        final ServiceToken masterServiceToken = new ServiceToken(ctx, name, data, masterToken, null, false, null, cryptoContext);
+        final Set<ServiceToken> masterServiceTokens = new HashSet<ServiceToken>();
+        masterServiceTokens.add(masterServiceToken);
+        
+        final ServiceToken userServiceToken = new ServiceToken(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext);
+        final Set<ServiceToken> userServiceTokens = new HashSet<ServiceToken>();
+        userServiceTokens.add(userServiceToken);
+        
+        store.setCryptoContext(masterToken, cryptoContext);
+        store.addUserIdToken(USER_ID, userIdToken);
+        
+        // The store should contain only the master-bound service token.
+        store.addServiceTokens(masterServiceTokens);
+        final Set<ServiceToken> masterSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, masterSet.size());
+        assertTrue(masterSet.contains(masterServiceToken));
+        
+        // The store should contain only the user-bound service token.
+        store.addServiceTokens(userServiceTokens);
+        final Set<ServiceToken> userSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, userSet.size());
+        assertTrue(userSet.contains(userServiceToken));
+    }
+    
+    @Test
+    public void replaceUserWithUnboundServiceToken() throws MslException {
+        final String name = "user2unbound";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+
+        final ServiceToken unboundServiceToken = new ServiceToken(ctx, name, data, null, null, false, null, cryptoContext);
+        final Set<ServiceToken> unboundServiceTokens = new HashSet<ServiceToken>();
+        unboundServiceTokens.add(unboundServiceToken);
+        
+        final ServiceToken userServiceToken = new ServiceToken(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext);
+        final Set<ServiceToken> userServiceTokens = new HashSet<ServiceToken>();
+        userServiceTokens.add(userServiceToken);
+        
+        store.setCryptoContext(masterToken, cryptoContext);
+        store.addUserIdToken(USER_ID, userIdToken);
+        
+        // The store should contain only the user-bound service token.
+        store.addServiceTokens(userServiceTokens);
+        final Set<ServiceToken> userSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, userSet.size());
+        assertTrue(userSet.contains(userServiceToken));
+        
+        // The store should contain only the unbound service token.
+        store.addServiceTokens(unboundServiceTokens);
+        final Set<ServiceToken> unboundSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, unboundSet.size());
+        assertTrue(unboundSet.contains(unboundServiceToken));
+    }
+    
+    @Test
+    public void replaceUserWithMasterServiceToken() throws MslException {
+        final String name = "user2master";
+        final byte[] data = new byte[0];
+        final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
+        final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);
+        final ICryptoContext cryptoContext = new NullCryptoContext();
+        
+        final ServiceToken masterServiceToken = new ServiceToken(ctx, name, data, masterToken, null, false, null, cryptoContext);
+        final Set<ServiceToken> masterServiceTokens = new HashSet<ServiceToken>();
+        masterServiceTokens.add(masterServiceToken);
+        
+        final ServiceToken userServiceToken = new ServiceToken(ctx, name, data, masterToken, userIdToken, false, null, cryptoContext);
+        final Set<ServiceToken> userServiceTokens = new HashSet<ServiceToken>();
+        userServiceTokens.add(userServiceToken);
+        
+        store.setCryptoContext(masterToken, cryptoContext);
+        store.addUserIdToken(USER_ID, userIdToken);
+        
+        // The store should contain only the user-bound service token.
+        store.addServiceTokens(userServiceTokens);
+        final Set<ServiceToken> userSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, userSet.size());
+        assertTrue(userSet.contains(userServiceToken));
+        
+        // The store should contain only the master-bound service token.
+        store.addServiceTokens(masterServiceTokens);
+        final Set<ServiceToken> masterSet = store.getServiceTokens(masterToken, userIdToken);
+        assertEquals(1, masterSet.size());
+        assertTrue(masterSet.contains(masterServiceToken));
+    }
+    
+    @Test
     public void clearServiceTokens() throws MslException {
         final MasterToken masterToken = MslTestUtils.getMasterToken(ctx, 1, 1);
         final UserIdToken userIdToken = MslTestUtils.getUserIdToken(ctx, masterToken, 1, MockEmailPasswordAuthenticationFactory.USER);

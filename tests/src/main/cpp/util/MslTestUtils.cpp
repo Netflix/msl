@@ -273,9 +273,12 @@ set<shared_ptr<ServiceToken>> getMasterBoundServiceTokens(shared_ptr<MslContext>
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> tokens;
 	for (int count = random->nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
+        stringstream ss;
+        ss << SERVICE_TOKEN_NAME << random->nextInt();
+        const string name = ss.str();
 		shared_ptr<ByteArray> data = make_shared<ByteArray>(8);
 		random->nextBytes(*data);
-		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + to_string(count), data, masterToken, shared_ptr<UserIdToken>(), false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, name, data, masterToken, shared_ptr<UserIdToken>(), false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
 		tokens.insert(token);
 	}
 	return tokens;
@@ -288,9 +291,12 @@ set<shared_ptr<ServiceToken>> getUserBoundServiceTokens(shared_ptr<MslContext> c
 	shared_ptr<ICryptoContext> cryptoContext = make_shared<NullCryptoContext>();
 	set<shared_ptr<ServiceToken>> tokens;
 	for (int count = random->nextInt(NUM_SERVICE_TOKENS); count >= 0; --count) {
+        stringstream ss;
+        ss << SERVICE_TOKEN_NAME << random->nextInt();
+        const string name = ss.str();
 		shared_ptr<ByteArray> data = make_shared<ByteArray>(8);
 		random->nextBytes(*data);
-		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, "masterbound" + to_string(count), data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
+		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx, name, data, masterToken, userIdToken, false, MslConstants::CompressionAlgorithm::NOCOMPRESSION, cryptoContext);
 		tokens.insert(token);
 	}
 	return tokens;

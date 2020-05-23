@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -258,10 +258,12 @@ public class SimpleMslStore implements MslStore {
         
         // Add service tokens.
         for (final ServiceToken token : tokens) {
+            // First remove any existing token with the same name.
+            removeServiceTokens(token.getName(), null, null);
+            
             // Unbound?
             if (token.isUnbound()) {
                 unboundServiceTokens.add(token);
-                continue;
             }
             
             // Master token bound?
