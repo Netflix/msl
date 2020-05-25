@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@
 	var SessionCryptoContext = require('../crypto/SessionCryptoContext.js');
 	var MslEntityAuthException = require('../MslEntityAuthException.js');
 	var MslEncodable = require('../io/MslEncodable.js');
+	var MslEncoderUtils = require('../io/MslEncoderUtils.js');
 	var AsyncExecutor = require('../util/AsyncExecutor.js');
 	var MslConstants = require('../MslConstants.js');
 	var MslInternalException = require('../MslInternalException.js');
