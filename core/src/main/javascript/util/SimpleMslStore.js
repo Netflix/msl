@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,23 +145,30 @@
 
         /** @inheritDoc */
         removeCryptoContext: function removeCryptoContext(masterToken) {
+            // We must perform the removal operations in reverse-dependency order.
+            // This ensures the store is in the correct state, allowing all logical
+            // and safety checks to pass.
+            //
+            // First any bound user ID tokens are removed (which first removes any
+            // service tokens bound to those user ID tokens), then bound service
+            // tokens, and finally the non-replayable ID and crypto context and
+            // master token pair.
             var keyToRemove = masterToken.uniqueKey();
             if (this.masterTokens[keyToRemove]) {
-                delete this.masterTokens[keyToRemove];
-                delete this.cryptoContexts[keyToRemove];
-
-                // Remove bound user ID tokens, service tokens, and the non-
-                // replayable ID if we no longer have a master token with the same
-                // serial number.
+                // Look for a second master token with the same serial number. If
+                // there is one, then just remove this master token and its crypto
+                // context but do not remove any bound user ID tokens, service
+                // tokens, or the non-replayable ID as those are still associated
+                // with the master token that remains.
                 var serialNumber = masterToken.serialNumber;
                 for (var key in this.masterTokens) {
                     var token = this.masterTokens[key];
-                    if (token.serialNumber == serialNumber)
+                    if (!token.equals(masterToken) && token.serialNumber == serialNumber) {
+                        delete this.masterTokens[keyToRemove];
+                        delete this.cryptoContexts[keyToRemove];
                         return;
+                    }
                 }
-
-                // Remove the non-replayable ID.
-                delete this.nonReplayableIds[serialNumber];
 
                 // Remove bound user ID tokens and service tokens.
                 var userIds = Object.keys(this.userIdTokens);
@@ -179,6 +186,13 @@
                         throw new MslInternalException("Unexpected exception while removing master token bound service tokens.", e);
                     throw e;
                 }
+
+                // Remove the non-replayable ID.
+                delete this.nonReplayableIds[serialNumber];
+                
+                // Finally remove the crypto context.
+                delete this.masterTokens[keyToRemove];
+                delete this.cryptoContexts[keyToRemove];
             }
         },
 
@@ -228,7 +242,6 @@
             var userIds = Object.keys(this.userIdTokens);
             userIds.forEach(function(userId) {
                 if (this.userIdTokens[userId].equals(userIdToken)) {
-                    delete this.userIdTokens[userId];
                     try {
                         this.removeServiceTokens(null, masterToken, userIdToken);
                     } catch (e) {
@@ -238,6 +251,7 @@
                             throw new MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
                         throw e;
                     }
+                    delete this.userIdTokens[userId];
                 }
             }, this);
         },
@@ -245,17 +259,8 @@
         /** @inheritDoc */
         clearUserIdTokens: function clearUserIdTokens() {
             for (var userId in this.userIdTokens) {
-                var userIdToken = this.userIdTokens[userId];
-                try {
-                    this.removeServiceTokens(null, null, userIdToken);
-                } catch (e) {
-                    if (e instanceof MslException)
-                        // This should not happen since we are only providing a user ID
-                        // token.
-                        throw new MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
-                    throw e;
-                }
-                delete this.userIdTokens[userId];
+                var token = this.userIdTokens[userId];
+                this.removeUserIdToken(token);
             }
         },
 
@@ -377,10 +382,14 @@
             var uitSerialNumber;
             
             // Validate arguments.
-            if (userIdToken && masterToken && !userIdToken.isBoundTo(masterToken))
+            if (userIdToken && masterToken &&
+                !userIdToken.isBoundTo(masterToken))
+            {
                 throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.mtSerialNumber + "; mt " + masterToken.serialNumber);
+            }
 
-            // If only a name was provided remove all tokens with that name.
+            // If only a name was provided remove all unbound tokens with that
+            // name.
             if (name && !masterToken && !userIdToken) {
                 // Remove all unbound tokens with the specified name.
                 var unboundKeys = Object.keys(this.unboundServiceTokens);
@@ -389,40 +398,6 @@
                     if (unboundToken.name == name)
                         delete this.unboundServiceTokens[key];
                 }, this);
-
-                // Remove all master bound tokens with the specified name.
-                for (var mtSerialNumber in this.mtServiceTokens) {
-                    mtTokenSet = this.mtServiceTokens[mtSerialNumber];
-                    mtBoundKeys = Object.keys(mtTokenSet);
-                    mtBoundKeys.forEach(function(key) {
-                        var token = mtTokenSet[key];
-
-                        // Skip if the name was provided and it does not match.
-                        if (token.name != name)
-                            return;
-
-                        // Remove the token.
-                        delete mtTokenSet[key];
-                    }, this);
-                    this.mtServiceTokens[mtSerialNumber] = mtTokenSet;
-                }
-
-                // Remove all user ID tokens with the specified name.
-                for (uitSerialNumber in this.uitServiceTokens) {
-                    uitTokenSet = this.uitServiceTokens[uitSerialNumber];
-                    uitBoundKeys = Object.keys(uitTokenSet);
-                    uitBoundKeys.forEach(function(key) {
-                        var token = uitTokenSet[key];
-
-                        // Skip if the name was provided and it does not match.
-                        if (token.name != name)
-                            return;
-
-                        // Remove the token.
-                        delete uitTokenSet[key];
-                    }, this);
-                    this.uitServiceTokens[uitSerialNumber] = uitTokenSet;
-                }
             }
 
             // If a master token was provided but no user ID token was provided,
@@ -444,34 +419,12 @@
                     }, this);
                     this.mtServiceTokens[masterToken.serialNumber] = mtTokenSet;
                 }
-
-                // Remove all user ID tokens (with the specified name if any).
-                for (uitSerialNumber in this.uitServiceTokens) {
-                    uitTokenSet = this.uitServiceTokens[uitSerialNumber];
-                    uitBoundKeys = Object.keys(uitTokenSet);
-                    uitBoundKeys.forEach(function(key) {
-                        var token = uitTokenSet[key];
-
-                        // Skip if the name was provided and it does not match.
-                        if (name && token.name != name)
-                            return;
-
-                        // Skip if the token is not bound to the master token.
-                        if (!token.isBoundTo(masterToken))
-                            return;
-
-                        // Remove the token.
-                        delete uitTokenSet[key];
-                    }, this);
-                    this.uitServiceTokens[uitSerialNumber] = uitTokenSet;
-                }
             }
 
             // If a user ID token was provided remove all tokens bound to the user
             // ID token. If a name was also provided then limit removal to tokens
-            // with the specified name. If a master token was also provided then
-            // limit removal to tokens bound to the master token.
-            if (userIdToken) {
+            // with the specified name.
+            if (masterToken && userIdToken) {
                 uitTokenSet = this.uitServiceTokens[userIdToken.serialNumber];
                 if (uitTokenSet) {
                     uitBoundKeys = Object.keys(uitTokenSet);
@@ -480,11 +433,6 @@
 
                         // Skip if the name was provided and it does not match.
                         if (name && token.name != name)
-                            return;
-
-                        // Skip if the master token was provided and the token is
-                        // not bound to it.
-                        if (masterToken && !token.isBoundTo(masterToken))
                             return;
 
                         // Remove the token.

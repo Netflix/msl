@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1250,6 +1250,94 @@ describe("MessageBuilder", function() {
             });
 		});
 
+		it("add named service tokens", function() {
+		    var builder;
+            runs(function() {
+                messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                    result: function(x) { builder = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
+            
+		    var data = new Uint8Array(1);
+		    random.nextBytes(data);
+		    
+		    var unboundServiceTokenA;
+            runs(function() {
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { unboundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return unboundServiceTokenA; }, "unboundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var unboundServiceTokenB;
+            runs(function() {
+                builder.addServiceToken(unboundServiceTokenA);
+                expect(builder.getServiceTokens().length).toEqual(1);
+                
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { unboundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return unboundServiceTokenB; }, "unboundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            var masterBoundServiceTokenA;
+            runs(function() {
+                builder.addServiceToken(unboundServiceTokenB);
+                expect(builder.getServiceTokens().length).toEqual(1);
+                
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { masterBoundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return masterBoundServiceTokenA; }, "masterBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var masterBoundServiceTokenB;
+            runs(function() {
+                builder.addServiceToken(masterBoundServiceTokenA);
+                expect(builder.getServiceTokens().length).toEqual(2);
+                
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { masterBoundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return masterBoundServiceTokenB; }, "masterBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            var userBoundServiceTokenA;
+            runs(function() {
+                builder.addServiceToken(masterBoundServiceTokenB);
+                expect(builder.getServiceTokens().length).toEqual(2);
+                
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                    result: function(x) { userBoundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return userBoundServiceTokenA; }, "userBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var userBoundServiceTokenB;
+            runs(function() {
+                builder.addServiceToken(userBoundServiceTokenA);
+                expect(builder.getServiceTokens().length).toEqual(3);
+                
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                    result: function(x) { userBoundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return userBoundServiceTokenB; }, "userBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            runs(function() {
+                builder.addServiceToken(userBoundServiceTokenB);
+                expect(builder.getServiceTokens().length).toEqual(3);
+            });
+		});
+
 		it("exclude service token", function() {
 			var serviceTokens;
 			runs(function() {
@@ -1281,7 +1369,7 @@ describe("MessageBuilder", function() {
 				    if (serviceTokens.length == 0)
 				        return;
 				    var token = serviceTokens[0];
-				    builder.excludeServiceToken(token.name);
+				    builder.excludeServiceToken(token.name, token.isMasterTokenBound(), token.isUserIdTokenBound());
 				    serviceTokens.splice(0, 1);
                     builder.getHeader({
                         result: function(messageHeader) {
@@ -1324,7 +1412,7 @@ describe("MessageBuilder", function() {
 				builder.addServiceToken(serviceToken);
 	
 				// Delete the service token.
-				builder.deleteServiceToken(SERVICE_TOKEN_NAME, {
+				builder.deleteServiceToken(SERVICE_TOKEN_NAME, true, true, {
 					result: function(x) { deleted = (x === builder); },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1365,7 +1453,7 @@ describe("MessageBuilder", function() {
 			
 			var deleted = false;
 			runs(function() {
-				builder.deleteServiceToken(SERVICE_TOKEN_NAME, {
+				builder.deleteServiceToken(SERVICE_TOKEN_NAME, true, true, {
 					result: function(x) { deleted = (x === builder); },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1385,9 +1473,12 @@ describe("MessageBuilder", function() {
 				var tokens = messageHeader.serviceTokens;
 				for (var i = 0; i < tokens.length; ++i) {
 				    var token = tokens[i];
-					if (token.name == SERVICE_TOKEN_NAME)
-						throw new Error("Deleted unknown service token.");
+					if (token.name == SERVICE_TOKEN_NAME) {
+					    expect(token.data.length).toEqual(0);
+					    return;
+					}
 				}
+                throw new Error("Deleted unknown service token.");
 			});
 		});
 
@@ -1595,6 +1686,95 @@ describe("MessageBuilder", function() {
 				expect(f).toThrow(new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH));
 			});
 		});
+		
+		it("add named peer service tokens", function() {
+            var builder;
+            runs(function() {
+                messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                    result: function(x) { builder = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
+            
+            var data, unboundServiceTokenA;
+            runs(function() {
+                builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+                data = new Uint8Array(1);
+                random.nextBytes(data);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { unboundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return unboundServiceTokenA; }, "unboundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var unboundServiceTokenB;
+            runs(function() {
+                builder.addPeerServiceToken(unboundServiceTokenA);
+                expect(builder.getPeerServiceTokens().length).toEqual(1);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { unboundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return unboundServiceTokenB; }, "unboundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            var masterBoundServiceTokenA;
+            runs(function() {
+                builder.addPeerServiceToken(unboundServiceTokenB);
+                expect(builder.getPeerServiceTokens().length).toEqual(1);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { masterBoundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return masterBoundServiceTokenA; }, "masterBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var masterBoundServiceTokenB;
+            runs(function() {
+                builder.addPeerServiceToken(masterBoundServiceTokenA);
+                expect(builder.getPeerServiceTokens().length).toEqual(2);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                    result: function(x) { masterBoundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return masterBoundServiceTokenB; }, "masterBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            var userBoundServiceTokenA;
+            runs(function() {
+                builder.addPeerServiceToken(masterBoundServiceTokenB);
+                expect(builder.getPeerServiceTokens().length).toEqual(2);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                    result: function(x) { userBoundServiceTokenA = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return userBoundServiceTokenA; }, "userBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+
+            var userBoundServiceTokenB;
+            runs(function() {
+                builder.addPeerServiceToken(userBoundServiceTokenA);
+                expect(builder.getPeerServiceTokens().length).toEqual(3);
+                
+                ServiceToken.create(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                    result: function(x) { userBoundServiceTokenB = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return userBoundServiceTokenB; }, "userBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+
+            runs(function() {
+                builder.addPeerServiceToken(userBoundServiceTokenB);
+                expect(builder.getPeerServiceTokens().length).toEqual(3);
+            });
+        });
 
 		it("exclude peer service token", function() {
 			var serviceTokens;
@@ -1628,7 +1808,7 @@ describe("MessageBuilder", function() {
                     if (serviceTokens.length == 0)
                         return;
                     var token = serviceTokens[0];
-                    builder.excludePeerServiceToken(token.name);
+                    builder.excludePeerServiceToken(token.name, token.isMasterTokenBound(), token.isUserIdTokenBound());
                     serviceTokens.splice(0, 1);
                     expect(Arrays.containEachOther(builder.getPeerServiceTokens(), serviceTokens)).toBeTruthy();
                     builder.getHeader({
@@ -1673,7 +1853,7 @@ describe("MessageBuilder", function() {
 				builder.addPeerServiceToken(serviceToken);
 	
 				// Delete the service token.
-				builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, {
+				builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, true, true, {
 					result: function(x) { deleted = (x === builder); },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1717,7 +1897,7 @@ describe("MessageBuilder", function() {
 				builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	
 				// Delete the service token.
-				builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, {
+				builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, true, true, {
 					result: function(x) { deleted = (x === builder); },
 					error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 				});
@@ -1736,9 +1916,13 @@ describe("MessageBuilder", function() {
 			runs(function() {
 				var tokens = messageHeader.peerServiceTokens;
 				for (var i = 0; i < tokens.length; ++i) {
-					if (tokens[i].name == SERVICE_TOKEN_NAME)
-						throw new Error("Deleted unknown service token.");
+				    var token = tokens[i];
+					if (token.name == SERVICE_TOKEN_NAME) {
+					    expect(token.data.length).toEqual(0);
+					    return;
+					}
 				}
+                throw new Error("Deleted unknown service token.");
 			});
 		});
 

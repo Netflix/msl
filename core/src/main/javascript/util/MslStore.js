@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,20 +157,20 @@
 	    getServiceTokens: function(masterToken, userIdToken) {},
 	
 	    /**
-	     * <p>Remove all service tokens matching all the specified parameters.</p>
-	     * 
-	     * <p>If a name is provided, only tokens with that name are removed. If a
-	     * master token is provided, only tokens bound to that master token are
-	     * removed. If a user ID token is provided, only tokens bound to that user
-	     * ID token are removed.</p>
+	     * <p>Remove all service tokens matching all the specified parameters. A
+	     * null value for the master token or user ID token restricts removal to
+	     * tokens that are not bound to a master token or not bound to a user ID
+	     * token respectively.</p>
 	     * 
 	     * <p>For example, if a name and master token is provided, only tokens with
-	     * that name and bound to that master token are removed.</p>
+	     * that name, bound to that master token, and not bound to a user ID token
+	     * are removed.</p>
 	     * 
 	     * <p>If no parameters are provided, no tokens are removed.</p>
 	     *
 	     * @param {String} name service token name. May be null.
-	     * @param {MasterToken} masterToken master token. May be null.
+	     * @param {MasterToken} masterToken master token. May be null unless a user ID token is
+	     *        also provided.
 	     * @param {UserIdToken} userIdToken user ID token. May be null.
 	     * @throws MslException if the user ID token is not bound to the master
 	     *         token.

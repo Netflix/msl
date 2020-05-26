@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,6 +276,37 @@ TEST_F(MessageServiceTokenBuilderTest, addPrimaryServiceToken)
 	EXPECT_EQ(serviceToken, builderServiceToken);
 }
 
+TEST_F(MessageServiceTokenBuilderTest, addNamedPrimaryServiceTokens)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_TRUE(tokenBuilder->getPrimaryServiceTokens().empty());
+
+    shared_ptr<ServiceToken> unboundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(unboundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+
+    shared_ptr<ServiceToken> unboundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(unboundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+
+    shared_ptr<ServiceToken> masterBoundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(masterBoundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(2), tokenBuilder->getPrimaryServiceTokens().size());
+
+    shared_ptr<ServiceToken> masterBoundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(masterBoundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(2), tokenBuilder->getPrimaryServiceTokens().size());
+
+    shared_ptr<ServiceToken> userBoundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(userBoundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(3), tokenBuilder->getPrimaryServiceTokens().size());
+
+    shared_ptr<ServiceToken> userBoundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(userBoundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(3), tokenBuilder->getPrimaryServiceTokens().size());
+}
+
 TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPrimaryServiceToken)
 {
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
@@ -331,6 +362,38 @@ TEST_F(MessageServiceTokenBuilderTest, addPeerServiceToken)
 	EXPECT_EQ(static_cast<size_t>(1), serviceTokens.size());
 	shared_ptr<ServiceToken> builderServiceToken = *serviceTokens.begin();
 	EXPECT_EQ(serviceToken, builderServiceToken);
+}
+
+TEST_F(MessageServiceTokenBuilderTest, addNamedPeerServiceTokens)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_TRUE(tokenBuilder->getPeerServiceTokens().empty());
+
+    shared_ptr<ServiceToken> unboundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(unboundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+
+    shared_ptr<ServiceToken> unboundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(unboundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+
+    shared_ptr<ServiceToken> masterBoundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(masterBoundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(2), tokenBuilder->getPeerServiceTokens().size());
+
+    shared_ptr<ServiceToken> masterBoundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(masterBoundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(2), tokenBuilder->getPeerServiceTokens().size());
+
+    shared_ptr<ServiceToken> userBoundServiceTokenA = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(userBoundServiceTokenA));
+    EXPECT_EQ(static_cast<size_t>(3), tokenBuilder->getPeerServiceTokens().size());
+
+    shared_ptr<ServiceToken> userBoundServiceTokenB = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(userBoundServiceTokenB));
+    EXPECT_EQ(static_cast<size_t>(3), tokenBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, mismatchedMasterTokenAddPeerServiceToken)
@@ -525,18 +588,70 @@ TEST_F(MessageServiceTokenBuilderTest, noCryptoContextAddUserBoundPrimaryService
 	EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
 }
 
-TEST_F(MessageServiceTokenBuilderTest, excludePrimaryServiceToken)
+TEST_F(MessageServiceTokenBuilderTest, excludeUnboundPrimaryServiceToken)
 {
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+	EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 
-	EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME));
-	EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+	EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, false));
+	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 
-	EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPrimaryServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPrimaryServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPrimaryServiceToken)
@@ -544,26 +659,38 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPrimaryServiceToken)
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME));
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
 }
 
-TEST_F(MessageServiceTokenBuilderTest, deletePrimaryServiceToken)
+TEST_F(MessageServiceTokenBuilderTest, deleteUnboundPrimaryServiceToken)
 {
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
-	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
 
-	EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, false));
+    EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, false, false));
 	set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPrimaryServiceTokens();
 	EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
 	shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
 	EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
 	EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
 	EXPECT_FALSE(builderServiceToken->isEncrypted());
-	EXPECT_TRUE(builderServiceToken->isBoundTo(MASTER_TOKEN));
-	EXPECT_TRUE(builderServiceToken->isBoundTo(USER_ID_TOKEN));
+	EXPECT_FALSE(builderServiceToken->isMasterTokenBound());
+	EXPECT_FALSE(builderServiceToken->isUserIdTokenBound());
 
 	set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getServiceTokens();
 	EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
@@ -571,8 +698,68 @@ TEST_F(MessageServiceTokenBuilderTest, deletePrimaryServiceToken)
 	EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
 	EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
 	EXPECT_FALSE(msgServiceToken->isEncrypted());
-	EXPECT_TRUE(msgServiceToken->isBoundTo(MASTER_TOKEN));
-	EXPECT_TRUE(msgServiceToken->isBoundTo(USER_ID_TOKEN));
+	EXPECT_FALSE(msgServiceToken->isMasterTokenBound());
+	EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPrimaryServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, false));
+    set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPrimaryServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
+    shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
+    EXPECT_FALSE(builderServiceToken->isEncrypted());
+    EXPECT_TRUE(builderServiceToken->isBoundTo(MASTER_TOKEN));
+    EXPECT_FALSE(builderServiceToken->isUserIdTokenBound());
+
+    set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
+    shared_ptr<ServiceToken> msgServiceToken = *msgServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
+    EXPECT_FALSE(msgServiceToken->isEncrypted());
+    EXPECT_TRUE(msgServiceToken->isBoundTo(MASTER_TOKEN));
+    EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPrimaryServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, false, false));
+    EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, false));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, true));
+    set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPrimaryServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
+    shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
+    EXPECT_FALSE(builderServiceToken->isEncrypted());
+    EXPECT_TRUE(builderServiceToken->isBoundTo(MASTER_TOKEN));
+    EXPECT_TRUE(builderServiceToken->isBoundTo(USER_ID_TOKEN));
+
+    set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
+    shared_ptr<ServiceToken> msgServiceToken = *msgServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
+    EXPECT_FALSE(msgServiceToken->isEncrypted());
+    EXPECT_TRUE(msgServiceToken->isBoundTo(MASTER_TOKEN));
+    EXPECT_TRUE(msgServiceToken->isBoundTo(USER_ID_TOKEN));
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPrimaryServiceToken)
@@ -580,7 +767,9 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPrimaryServiceToken)
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, false, false));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, false));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, true));
 }
 
 TEST_F(MessageServiceTokenBuilderTest, addUnboundPeerServiceToken)
@@ -751,19 +940,73 @@ TEST_F(MessageServiceTokenBuilderTest, trustedNetAddUserBoundPeerServiceToken)
 	EXPECT_FALSE(tokenBuilder->addUserBoundPeerServiceToken(TOKEN_NAME, DATA, ENCRYPT, COMPRESSION_ALGO));
 }
 
-TEST_F(MessageServiceTokenBuilderTest, excludePeerServiceToken)
+TEST_F(MessageServiceTokenBuilderTest, excludeUnboundPeerServiceToken)
 {
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addPeerServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+	EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 
-	EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME));
-	EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+	EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, false));
+	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 
-	EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+    EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPeerServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addPeerServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPeerServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addPeerServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPeerServiceToken)
@@ -772,27 +1015,39 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnknownPeerServiceToken)
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME));
+	EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+
+	EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, false));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+
+	EXPECT_FALSE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
 }
 
-TEST_F(MessageServiceTokenBuilderTest, deletePeerServiceToken)
+TEST_F(MessageServiceTokenBuilderTest, deleteUnboundPeerServiceToken)
 {
 	shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+	shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
 	msgBuilder->addPeerServiceToken(serviceToken);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
 
-	EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME));
+	EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, false));
+	EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, true));
+	EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, false, false));
 	set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPeerServiceTokens();
 	EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
 	shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
 	EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
 	EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
 	EXPECT_FALSE(builderServiceToken->isEncrypted());
-	EXPECT_TRUE(builderServiceToken->isBoundTo(PEER_MASTER_TOKEN));
-	EXPECT_TRUE(builderServiceToken->isBoundTo(PEER_USER_ID_TOKEN));
+	EXPECT_FALSE(builderServiceToken->isMasterTokenBound());
+	EXPECT_FALSE(builderServiceToken->isUserIdTokenBound());
 
 	set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getPeerServiceTokens();
 	EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
@@ -800,8 +1055,70 @@ TEST_F(MessageServiceTokenBuilderTest, deletePeerServiceToken)
 	EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
 	EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
 	EXPECT_FALSE(msgServiceToken->isEncrypted());
-	EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_MASTER_TOKEN));
-	EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_USER_ID_TOKEN));
+	EXPECT_FALSE(msgServiceToken->isMasterTokenBound());
+	EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPeerServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, NULL_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addPeerServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, false));
+    set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPeerServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
+    shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
+    EXPECT_FALSE(builderServiceToken->isEncrypted());
+    EXPECT_TRUE(builderServiceToken->isBoundTo(PEER_MASTER_TOKEN));
+    EXPECT_FALSE(builderServiceToken->isUserIdTokenBound());
+
+    set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getPeerServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
+    shared_ptr<ServiceToken> msgServiceToken = *msgServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
+    EXPECT_FALSE(msgServiceToken->isEncrypted());
+    EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_MASTER_TOKEN));
+    EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+}
+
+TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPeerServiceToken)
+{
+    shared_ptr<MessageBuilder> msgBuilder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, make_shared<NullCryptoContext>());
+    msgBuilder->addPeerServiceToken(serviceToken);
+    shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+
+    EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, false, false));
+    EXPECT_FALSE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, false));
+    EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(TOKEN_NAME, true, true));
+    set<shared_ptr<ServiceToken>> builderServiceTokens = tokenBuilder->getPeerServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), builderServiceTokens.size());
+    shared_ptr<ServiceToken> builderServiceToken = *builderServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, builderServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), builderServiceToken->getData()->size());
+    EXPECT_FALSE(builderServiceToken->isEncrypted());
+    EXPECT_TRUE(builderServiceToken->isBoundTo(PEER_MASTER_TOKEN));
+    EXPECT_TRUE(builderServiceToken->isBoundTo(PEER_USER_ID_TOKEN));
+
+    set<shared_ptr<ServiceToken>> msgServiceTokens = msgBuilder->getPeerServiceTokens();
+    EXPECT_EQ(static_cast<size_t>(1), msgServiceTokens.size());
+    shared_ptr<ServiceToken> msgServiceToken = *msgServiceTokens.begin();
+    EXPECT_EQ(TOKEN_NAME, msgServiceToken->getName());
+    EXPECT_EQ(static_cast<size_t>(0), msgServiceToken->getData()->size());
+    EXPECT_FALSE(msgServiceToken->isEncrypted());
+    EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_MASTER_TOKEN));
+    EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_USER_ID_TOKEN));
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPeerServiceToken)
@@ -810,7 +1127,9 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPeerServiceToken)
 	msgBuilder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 	shared_ptr<MessageServiceTokenBuilder> tokenBuilder = make_shared<MessageServiceTokenBuilder>(p2pCtx, p2pMsgCtx, msgBuilder);
 
-	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, false, false));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, false));
+	EXPECT_FALSE(tokenBuilder->deletePrimaryServiceToken(TOKEN_NAME, true, true));
 }
 
 }}} // namespace netflix::msl::msg

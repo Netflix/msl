@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -516,21 +516,30 @@
         },
 
         /**
-         * <p>Exclude a primary service token from the message.</p>
+         * <p>Exclude a primary service token from the message matching all
+         * specified parameters. A false value for the master token bound or user
+         * ID token bound parameters restricts exclusion to tokens that are not
+         * bound to a master token or not bound to a user ID token
+         * respectively.</p>
          *
          * <p>The service token will not be sent in the built message. This is not
          * the same as requesting the remote entity delete a service token.</p>
          *
          * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @return {boolean} true if the service token was found and therefore removed.
          */
-        excludePrimaryServiceToken: function excludePrimaryServiceToken(name) {
+        excludePrimaryServiceToken: function excludePrimaryServiceToken(name, masterTokenBound, userIdTokenBound) {
             // Exclude the service token if found.
             var serviceTokens = this.builder.getServiceTokens();
             for (var i = 0; i < serviceTokens.length; ++i) {
                 var serviceToken = serviceTokens[i];
-                if (serviceToken.name == name) {
-                    this.builder.excludeServiceToken(name);
+                if (serviceToken.name == name &&
+                    serviceToken.isMasterTokenBound() == masterTokenBound &&
+                    serviceToken.isUserIdTokenBound() == userIdTokenBound)
+                {
+                    this.builder.excludeServiceToken(name, masterTokenBound, userIdTokenBound);
                     return true;
                 }
             }
@@ -540,21 +549,29 @@
         },
 
         /**
-         * <p>Exclude a peer service token from the message.</p>
+         * <p>Exclude a peer service token from the message matching all specified
+         * parameters. A false value for the master token bound or user ID token
+         * bound parameters restricts exclusion to tokens that are not bound to a
+         * master token or not bound to a user ID token respectively.</p>
          *
          * <p>The service token will not be sent in the built message. This is not
          * the same as requesting the remote entity delete a service token.</p>
          *
          * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @return {boolean} true if the peer service token was found and therefore removed.
          */
-        excludePeerServiceToken: function excludePeerServiceToken(name) {
+        excludePeerServiceToken: function excludePeerServiceToken(name, masterTokenBound, userIdTokenBound) {
             // Exclude the service token if found.
             var peerServiceTokens = this.builder.getPeerServiceTokens();
             for (var i = 0; i < peerServiceTokens.length; ++i) {
                 var serviceToken = peerServiceTokens[i];
-                if (serviceToken.name == name) {
-                    this.builder.excludePeerServiceToken(name);
+                if (serviceToken.name == name &&
+                    serviceToken.isMasterTokenBound() == masterTokenBound &&
+                    serviceToken.isUserIdTokenBound() == userIdTokenBound)
+                {
+                    this.builder.excludePeerServiceToken(name, masterTokenBound, userIdTokenBound);
                     return true;
                 }
             }
@@ -564,25 +581,34 @@
         },
 
         /**
-         * <p>Mark a primary service token for deletion, if it exists.</p>
+         * <p>Mark a primary service token for deletion, if it exists, matching all
+         * specified parameters. A false value for the master token bound or user
+         * ID token bound parameters restricts exclusion to tokens that are not
+         * bound to a master token or not bound to a user ID token
+         * respectively.</p>
          *
          * <p>The service token will be sent in the built message with an empty
          * value. This is not the same as requesting that a service token be
          * excluded from the message.</p>
          *
          * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the service token exists
          *        and was marked for deletion, or any thrown exceptions.
          */
-        deletePrimaryServiceToken: function deletePrimaryServiceToken(name, callback) {
+        deletePrimaryServiceToken: function deletePrimaryServiceToken(name, masterTokenBound, userIdTokenBound, callback) {
             AsyncExecutor(callback, function() {
                 // Mark the service token for deletion if found.
                 var serviceTokens = this.builder.getServiceTokens();
                 for (var i = 0; i < serviceTokens.length; ++i) {
                     var serviceToken = serviceTokens[i];
-                    if (serviceToken.name == name) {
-                        this.builder.deleteServiceToken(name, {
+                    if (serviceToken.name == name &&
+                        serviceToken.isMasterTokenBound() == masterTokenBound &&
+                        serviceToken.isUserIdTokenBound() == userIdTokenBound)
+                    {
+                        this.builder.deleteServiceToken(name, masterTokenBound, userIdTokenBound, {
                             result: function() { callback.result(true); },
                             error: callback.error,
                         });
@@ -596,25 +622,34 @@
         },
 
         /**
-         * <p>Mark a peer service token for deletion, if it exists.</p>
+         * <p>Mark a peer service token for deletion, if it exists, matching all
+         * specified parameters. A false value for the master token bound or user
+         * ID token bound parameters restricts exclusion to tokens that are not
+         * bound to a master token or not bound to a user ID token
+         * respectively.</p>
          *
          * <p>The service token will be sent in the built message with an empty
          * value. This is not the same as requesting that a service token be
          * excluded from the message.</p>
          *
          * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the peer service token
          *        exists and was marked for deletion, or any thrown exceptions.
          */
-        deletePeerServiceToken: function deletePeerServiceToken(name, callback) {
+        deletePeerServiceToken: function deletePeerServiceToken(name, masterTokenBound, userIdTokenBound, callback) {
             AsyncExecutor(callback, function() {
                 // Mark the service token for deletion if found.
                 var peerServiceTokens = this.builder.getPeerServiceTokens();
                 for (var i = 0; i < peerServiceTokens.length; ++i) {
                     var serviceToken = peerServiceTokens[i];
-                    if (serviceToken.name == name) {
-                        this.builder.deletePeerServiceToken(name, {
+                    if (serviceToken.name == name &&
+                        serviceToken.isMasterTokenBound() == masterTokenBound &&
+                        serviceToken.isUserIdTokenBound() == userIdTokenBound)
+                    {
+                        this.builder.deletePeerServiceToken(name, masterTokenBound, userIdTokenBound, {
                             result: function() { callback.result(true); },
                             error: callback.error,
                         });

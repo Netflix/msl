@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,6 +268,37 @@ public class MessageServiceTokenBuilderTest {
     }
     
     @Test
+    public void addNamedPrimaryServiceTokens() throws MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertTrue(tokenBuilder.getPrimaryServiceTokens().isEmpty());
+        
+        final ServiceToken unboundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(unboundServiceTokenA));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        final ServiceToken unboundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(unboundServiceTokenB));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        final ServiceToken masterBoundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(masterBoundServiceTokenA));
+        assertEquals(2, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        final ServiceToken masterBoundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(masterBoundServiceTokenB));
+        assertEquals(2, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        final ServiceToken userBoundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(userBoundServiceTokenA));
+        assertEquals(3, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        final ServiceToken userBoundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPrimaryServiceToken(userBoundServiceTokenB));
+        assertEquals(3, tokenBuilder.getPrimaryServiceTokens().size());
+    }
+    
+    @Test
     public void mismatchedMasterTokenAddPrimaryServiceToken() throws MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
@@ -322,6 +353,38 @@ public class MessageServiceTokenBuilderTest {
         assertEquals(1, serviceTokens.size());
         final ServiceToken builderServiceToken = serviceTokens.toArray(new ServiceToken[0])[0];
         assertEquals(serviceToken, builderServiceToken);
+    }
+    
+    @Test
+    public void addNamedPeerServiceTokens() throws MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertTrue(tokenBuilder.getPeerServiceTokens().isEmpty());
+        
+        final ServiceToken unboundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(unboundServiceTokenA));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        
+        final ServiceToken unboundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(unboundServiceTokenB));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        
+        final ServiceToken masterBoundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(masterBoundServiceTokenA));
+        assertEquals(2, tokenBuilder.getPeerServiceTokens().size());
+        
+        final ServiceToken masterBoundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(masterBoundServiceTokenB));
+        assertEquals(2, tokenBuilder.getPeerServiceTokens().size());
+        
+        final ServiceToken userBoundServiceTokenA = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(userBoundServiceTokenA));
+        assertEquals(3, tokenBuilder.getPeerServiceTokens().size());
+        
+        final ServiceToken userBoundServiceTokenB = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
+        assertTrue(tokenBuilder.addPeerServiceToken(userBoundServiceTokenB));
+        assertEquals(3, tokenBuilder.getPeerServiceTokens().size());
     }
     
     @Test
@@ -513,36 +576,160 @@ public class MessageServiceTokenBuilderTest {
     }
     
     @Test
-    public void excludePrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+    public void excludeUnboundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
+    }
+    
+    @Test
+    public void excludeMasterBoundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
+    }
+    
+    @Test
+    public void excludeUserBoundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
         msgBuilder.addServiceToken(serviceToken);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
         
-        assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true));
         assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
-        
         assertEquals(0, msgBuilder.getServiceTokens().size());
     }
 
     @Test
-    public void excludeUnknownPrimaryServiceToken() throws MslException {
+    public void excludeUnknownUserBoundPrimaryServiceToken() throws MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         
-        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
     }
     
     @Test
-    public void deletePrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+    public void deleteUnboundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false));
+        final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+        assertEquals(1, builderServiceTokens.size());
+        final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, builderServiceToken.getName());
+        assertEquals(0, builderServiceToken.getData().length);
+        assertFalse(builderServiceToken.isEncrypted());
+        assertFalse(builderServiceToken.isMasterTokenBound());
+        assertFalse(builderServiceToken.isUserIdTokenBound());
+        
+        final Set<ServiceToken> msgServiceTokens = msgBuilder.getServiceTokens();
+        assertEquals(1, msgServiceTokens.size());
+        final ServiceToken msgServiceToken = msgServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, msgServiceToken.getName());
+        assertEquals(0, msgServiceToken.getData().length);
+        assertFalse(msgServiceToken.isEncrypted());
+        assertFalse(msgServiceToken.isMasterTokenBound());
+        assertFalse(msgServiceToken.isMasterTokenBound());
+    }
+    
+    @Test
+    public void deleteMasterBoundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false));
+        final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+        assertEquals(1, builderServiceTokens.size());
+        final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, builderServiceToken.getName());
+        assertEquals(0, builderServiceToken.getData().length);
+        assertFalse(builderServiceToken.isEncrypted());
+        assertTrue(builderServiceToken.isBoundTo(MASTER_TOKEN));
+        assertFalse(builderServiceToken.isUserIdTokenBound());
+        
+        final Set<ServiceToken> msgServiceTokens = msgBuilder.getServiceTokens();
+        assertEquals(1, msgServiceTokens.size());
+        final ServiceToken msgServiceToken = msgServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, msgServiceToken.getName());
+        assertEquals(0, msgServiceToken.getData().length);
+        assertFalse(msgServiceToken.isEncrypted());
+        assertTrue(msgServiceToken.isBoundTo(MASTER_TOKEN));
+        assertFalse(msgServiceToken.isUserIdTokenBound());
+    }
+    
+    @Test
+    public void deleteUserBoundPrimaryServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
         msgBuilder.addServiceToken(serviceToken);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
         
-        assertTrue(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true));
         final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
         assertEquals(1, builderServiceTokens.size());
         final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
@@ -567,7 +754,9 @@ public class MessageServiceTokenBuilderTest {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         
-        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true));
     }
     
     @Test
@@ -735,18 +924,72 @@ public class MessageServiceTokenBuilderTest {
     }
     
     @Test
-    public void excludePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+    public void excludeUnboundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addPeerServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+    }
+    
+    @Test
+    public void excludeMasterBoundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addPeerServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+    }
+    
+    @Test
+    public void excludeUserBoundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
         msgBuilder.addPeerServiceToken(serviceToken);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
         
-        assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true));
         assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
-        
-        assertEquals(0, msgBuilder.getServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
     }
 
     @Test
@@ -755,11 +998,83 @@ public class MessageServiceTokenBuilderTest {
         msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         
-        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
     }
     
     @Test
-    public void deletePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+    public void deleteUnboundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addPeerServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false));
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, true));
+        assertTrue(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false));
+        final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+        assertEquals(1, builderServiceTokens.size());
+        final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, builderServiceToken.getName());
+        assertEquals(0, builderServiceToken.getData().length);
+        assertFalse(builderServiceToken.isEncrypted());
+        assertFalse(builderServiceToken.isMasterTokenBound());
+        assertFalse(builderServiceToken.isUserIdTokenBound());
+        
+        final Set<ServiceToken> msgServiceTokens = msgBuilder.getPeerServiceTokens();
+        assertEquals(1, msgServiceTokens.size());
+        final ServiceToken msgServiceToken = msgServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, msgServiceToken.getName());
+        assertEquals(0, msgServiceToken.getData().length);
+        assertFalse(msgServiceToken.isEncrypted());
+        assertFalse(msgServiceToken.isMasterTokenBound());
+        assertFalse(msgServiceToken.isUserIdTokenBound());
+    }
+    
+    @Test
+    public void deleteMasterBoundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
+        final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+        msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+        final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
+        msgBuilder.addPeerServiceToken(serviceToken);
+        final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, true));
+        assertTrue(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false));
+        final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+        assertEquals(1, builderServiceTokens.size());
+        final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, builderServiceToken.getName());
+        assertEquals(0, builderServiceToken.getData().length);
+        assertFalse(builderServiceToken.isEncrypted());
+        assertTrue(builderServiceToken.isBoundTo(PEER_MASTER_TOKEN));
+        assertFalse(builderServiceToken.isUserIdTokenBound());
+        
+        final Set<ServiceToken> msgServiceTokens = msgBuilder.getPeerServiceTokens();
+        assertEquals(1, msgServiceTokens.size());
+        final ServiceToken msgServiceToken = msgServiceTokens.toArray(new ServiceToken[0])[0];
+        assertEquals(TOKEN_NAME, msgServiceToken.getName());
+        assertEquals(0, msgServiceToken.getData().length);
+        assertFalse(msgServiceToken.isEncrypted());
+        assertTrue(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN));
+        assertFalse(msgServiceToken.isUserIdTokenBound());
+    }
+    
+    @Test
+    public void deleteUserBoundPeerServiceToken() throws MslEncodingException, MslCryptoException, MslMessageException, MslException {
         final MessageBuilder msgBuilder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
         msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final ServiceToken serviceToken = new ServiceToken(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext());
@@ -767,7 +1082,9 @@ public class MessageServiceTokenBuilderTest {
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
         
-        assertTrue(tokenBuilder.deletePeerServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false));
+        assertTrue(tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, true));
         final Set<ServiceToken> builderServiceTokens = tokenBuilder.getPeerServiceTokens();
         assertEquals(1, builderServiceTokens.size());
         final ServiceToken builderServiceToken = builderServiceTokens.toArray(new ServiceToken[0])[0];
@@ -793,6 +1110,8 @@ public class MessageServiceTokenBuilderTest {
         msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
         final MessageServiceTokenBuilder tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
         
-        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false));
+        assertFalse(tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true));
     }
 }

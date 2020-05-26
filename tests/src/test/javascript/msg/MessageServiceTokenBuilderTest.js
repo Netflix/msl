@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,6 +396,94 @@ describe("MessageServiceTokenBuilder", function() {
         });
 	});
 	
+	it("add named primary service tokens", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder, unboundServiceTokenA;
+        runs(function() {
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext(), {
+                result: function(x) { unboundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceTokenA; }, "unboundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(unboundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext(), {
+                result: function(x) { unboundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceTokenB; }, "unboundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        var masterBoundServiceTokenA;
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(unboundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                result: function(x) { masterBoundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterBoundServiceTokenA; }, "masterBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var masterBoundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(masterBoundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(2);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                result: function(x) { masterBoundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterBoundServiceTokenB; }, "masterBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        var userBoundServiceTokenA;
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(masterBoundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(2);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                result: function(x) { userBoundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userBoundServiceTokenA; }, "userBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var userBoundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(userBoundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(3);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                result: function(x) { userBoundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userBoundServiceTokenB; }, "userBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(tokenBuilder.addPrimaryServiceToken(userBoundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(3);
+        });
+	});
+	
 	it("add primary service token with mismatched master token", function() {
         var msgBuilder, serviceToken;
         runs(function() {
@@ -514,6 +602,95 @@ describe("MessageServiceTokenBuilder", function() {
             expect(serviceToken.equals(builderServiceToken)).toBeTruthy();
         });
 	});
+	
+    it("add named peer service tokens", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder, unboundServiceTokenA;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext(), {
+                result: function(x) { unboundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceTokenA; }, "unboundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var unboundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(unboundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, false, null, new NullCryptoContext(), {
+                result: function(x) { unboundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return unboundServiceTokenB; }, "unboundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        var masterBoundServiceTokenA;
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(unboundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                result: function(x) { masterBoundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterBoundServiceTokenA; }, "masterBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var masterBoundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(masterBoundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(2);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext(), {
+                result: function(x) { masterBoundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return masterBoundServiceTokenB; }, "masterBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        var userBoundServiceTokenA;
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(masterBoundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(2);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                result: function(x) { userBoundServiceTokenA = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userBoundServiceTokenA; }, "userBoundServiceTokenA not received", MslTestConstants.TIMEOUT);
+        
+        var userBoundServiceTokenB;
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(userBoundServiceTokenA)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(3);
+
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                result: function(x) { userBoundServiceTokenB = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return userBoundServiceTokenB; }, "userBoundServiceTokenB not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(tokenBuilder.addPeerServiceToken(userBoundServiceTokenB)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(3);
+        });
+    });
 	
 	it("add peer service token with mismatched master token", function() {
         var msgBuilder, serviceToken;
@@ -916,24 +1093,24 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 	});
 
-	it("exclude primary service token", function() {
+	it("exclude unbound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
 		var serviceToken;
 		runs(function() {
-		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
 		waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
-		
-		var msgBuilder;
-		runs(function() {
-			messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
-				result: function(x) { msgBuilder = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
 		
 		var tokenBuilder;
 		runs(function() {
@@ -944,14 +1121,111 @@ describe("MessageServiceTokenBuilder", function() {
 		
 		runs(function() {
 			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
-			expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME)).toBeTruthy();
-			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+			expect(msgBuilder.getServiceTokens().length).toEqual(1);
 			
-			expect(msgBuilder.getServiceTokens().length).toEqual(0);
+			expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
 		});
 	});
 
-	it("exclude unknown primary service token", function() {
+    it("exclude master bound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder;
+        runs(function() {
+            msgBuilder.addServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        });
+        waitsFor(function() { return tokenBuilder; }, "token builder not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
+        });
+    });
+
+    it("exclude user bound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder;
+        runs(function() {
+            msgBuilder.addServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        });
+        waitsFor(function() { return tokenBuilder; }, "token builder not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
+        });
+    });
+
+	it("exclude unknown user bound primary service token", function() {
 		var msgBuilder;
 		runs(function() {
 		    messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
@@ -963,29 +1237,39 @@ describe("MessageServiceTokenBuilder", function() {
 		
 		runs(function() {
 			var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
-	
-			expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME)).toBeFalsy();
+
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
 		});
 	});
 
-	it("delete primary service token", function() {
+	it("delete unbound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
 		var serviceToken;
 		runs(function() {
-		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
 		waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
-
-		var msgBuilder;
-		runs(function() {
-			messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
-				result: function(x) { msgBuilder = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
 		
 		var tokenBuilder;
 		runs(function() {
@@ -994,16 +1278,37 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return tokenBuilder; }, "token builder not received", MslTestConstants.TIMEOUT);
 		
-		var del;
+		var delA;
 		runs(function() {
 			expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
-			tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, {
-		        result: function(b) { del = b; },
+			tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false, {
+		        result: function(b) { delA = b; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
-		waitsFor(function() { return del !== undefined; }, "del not received", MslTestConstants.TIMEOUT);
-		runs(function() { expect(del).toBeTruthy(); });
+		waitsFor(function() { return delA !== undefined; }, "delA not received", MslTestConstants.TIMEOUT);
+		runs(function() { expect(delA).toBeFalsy(); });
+        
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+        
+        var delC;
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
 		
 		runs(function() {
 			var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
@@ -1012,8 +1317,8 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(builderServiceToken.name).toEqual(TOKEN_NAME);
 			expect(builderServiceToken.data.length).toEqual(0);
 			expect(builderServiceToken.isEncrypted()).toBeFalsy();
-			expect(builderServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
-			expect(builderServiceToken.isBoundTo(USER_ID_TOKEN)).toBeTruthy();
+			expect(builderServiceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
+			expect(builderServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
 	
 			var msgServiceTokens = msgBuilder.getServiceTokens();
 			expect(msgServiceTokens.length).toEqual(1);
@@ -1021,10 +1326,168 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(msgServiceToken.name).toEqual(TOKEN_NAME);
 			expect(msgServiceToken.data.length).toEqual(0);
 			expect(msgServiceToken.isEncrypted()).toBeFalsy();
-			expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
-			expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeTruthy();
+			expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
+			expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
 		});
 	});
+
+    it("delete master bound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder;
+        runs(function() {
+            msgBuilder.addServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        });
+        waitsFor(function() { return tokenBuilder; }, "token builder not received", MslTestConstants.TIMEOUT);
+        
+        var delA;
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delA = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delA !== undefined; }, "delA not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delA).toBeFalsy(); });
+        
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+        
+        var delC;
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
+        
+        runs(function() {
+            var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var builderServiceToken = builderServiceTokens[0];
+            expect(builderServiceToken.name).toEqual(TOKEN_NAME);
+            expect(builderServiceToken.data.length).toEqual(0);
+            expect(builderServiceToken.isEncrypted()).toBeFalsy();
+            expect(builderServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
+            expect(builderServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
+    
+            var msgServiceTokens = msgBuilder.getServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+            var msgServiceToken = msgServiceTokens[0];
+            expect(msgServiceToken.name).toEqual(TOKEN_NAME);
+            expect(msgServiceToken.data.length).toEqual(0);
+            expect(msgServiceToken.isEncrypted()).toBeFalsy();
+            expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
+            expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
+        });
+    });
+
+    it("delete user bound primary service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, MASTER_TOKEN, USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        var tokenBuilder;
+        runs(function() {
+            msgBuilder.addServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+        });
+        waitsFor(function() { return tokenBuilder; }, "token builder not received", MslTestConstants.TIMEOUT);
+        
+        var delA;
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delA = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delA !== undefined; }, "delA not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delA).toBeFalsy(); });
+        
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+        
+        var delC;
+        runs(function() {
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
+        
+        runs(function() {
+            var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var builderServiceToken = builderServiceTokens[0];
+            expect(builderServiceToken.name).toEqual(TOKEN_NAME);
+            expect(builderServiceToken.data.length).toEqual(0);
+            expect(builderServiceToken.isEncrypted()).toBeFalsy();
+            expect(builderServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
+            expect(builderServiceToken.isBoundTo(USER_ID_TOKEN)).toBeTruthy();
+    
+            var msgServiceTokens = msgBuilder.getServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+            var msgServiceToken = msgServiceTokens[0];
+            expect(msgServiceToken.name).toEqual(TOKEN_NAME);
+            expect(msgServiceToken.data.length).toEqual(0);
+            expect(msgServiceToken.isEncrypted()).toBeFalsy();
+            expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
+            expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeTruthy();
+        });
+    });
 
 	it("delete unknown primary service token", function() {
 		var msgBuilder;
@@ -1036,16 +1499,36 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
 
-		var tokenBuilder, del;
+		var tokenBuilder, delA;
 		runs(function() {
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
-		    tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, {
-		        result: function(b) { del = b; },
+		    tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false, {
+		        result: function(b) { delA = b; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
-		waitsFor(function() { return tokenBuilder && del !== undefined; }, "tokenBuilder and del not received", MslTestConstants.TIMEOUT);
-		runs(function() { expect(del).toBeFalsy(); });
+		waitsFor(function() { return tokenBuilder && delA !== undefined; }, "tokenBuilder and delA not received", MslTestConstants.TIMEOUT);
+		runs(function() { expect(delA).toBeFalsy(); });
+
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+
+        var delC;
+        runs(function() {
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeFalsy(); });
 	});
 
 	it("p2p add unbound peer service token", function() {
@@ -1404,37 +1887,125 @@ describe("MessageServiceTokenBuilder", function() {
 		runs(function() { expect(add).toBeFalsy(); });
 	});
 
-	it("exclude peer service token", function() {
+	it("exclude unbound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
 		var serviceToken;
 		runs(function() {
-		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+		    msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
 		waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
-
-		var msgBuilder;
-		runs(function() {
-			messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
-				result: function(x) { msgBuilder = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
 		
 		runs(function() {
-			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			msgBuilder.addPeerServiceToken(serviceToken);
 			var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
-
 			expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
-			expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME)).toBeTruthy();
-			expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
-			
-			expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+			expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
 		});
 	});
+
+    it("exclude master bound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            msgBuilder.addPeerServiceToken(serviceToken);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+        });
+    });
+
+    it("exclude user bound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            msgBuilder.addPeerServiceToken(serviceToken);
+            var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+        });
+    });
 
 	it("exclude unknown peer service token", function() {
 		var msgBuilder;
@@ -1450,42 +2021,72 @@ describe("MessageServiceTokenBuilder", function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 	
-			expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME)).toBeFalsy();
+			expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+    
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+    
+            expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true)).toBeFalsy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
 		});
 	});
 
-	it("delete peer service token", function() {
+	it("delete unbound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
 		var serviceToken;
 		runs(function() {
-		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+		    ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, null, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
 		        result: function(x) { serviceToken = x; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
 		waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
 
-		var msgBuilder;
+		var tokenBuilder, delA;
 		runs(function() {
-			messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
-				result: function(x) { msgBuilder = x; },
-				error: function(e) { expect(function() { throw e; }).not.toThrow(); }
-			});
-		});
-		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
-
-		var tokenBuilder, del;
-		runs(function() {
-			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
 			msgBuilder.addPeerServiceToken(serviceToken);
 			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 			expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
-		    tokenBuilder.deletePeerServiceToken(TOKEN_NAME, {
-		        result: function(b) { del = b; },
+		    tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false, {
+		        result: function(b) { delA = b; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
-		waitsFor(function() { return tokenBuilder && del !== undefined; }, "tokenBuilder and del not received", MslTestConstants.TIMEOUT);
-		runs(function() { expect(del).toBeTruthy(); });
+		waitsFor(function() { return tokenBuilder && delA !== undefined; }, "tokenBuilder and delA not received", MslTestConstants.TIMEOUT);
+		runs(function() { expect(delA).toBeFalsy(); });
+
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+
+        var delC;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
 		
 		runs(function() {
 			var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
@@ -1494,8 +2095,8 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(builderServiceToken.name).toEqual(TOKEN_NAME);
 			expect(builderServiceToken.data.length).toEqual(0);
 			expect(builderServiceToken.isEncrypted()).toBeFalsy();
-			expect(builderServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
-			expect(builderServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeTruthy();
+			expect(builderServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeFalsy();
+			expect(builderServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
 	
 			var msgServiceTokens = msgBuilder.getPeerServiceTokens();
 			expect(msgServiceTokens.length).toEqual(1);
@@ -1503,10 +2104,158 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(msgServiceToken.name).toEqual(TOKEN_NAME);
 			expect(msgServiceToken.data.length).toEqual(0);
 			expect(msgServiceToken.isEncrypted()).toBeFalsy();
-			expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
-			expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeTruthy();
+			expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeFalsy();
+			expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
 		});
 	});
+
+    it("delete master bound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, null, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+
+        var tokenBuilder, delA;
+        runs(function() {
+            msgBuilder.addPeerServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delA = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return tokenBuilder && delA !== undefined; }, "tokenBuilder and delA not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delA).toBeFalsy(); });
+
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+
+        var delC;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
+        
+        runs(function() {
+            var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var builderServiceToken = builderServiceTokens[0];
+            expect(builderServiceToken.name).toEqual(TOKEN_NAME);
+            expect(builderServiceToken.data.length).toEqual(0);
+            expect(builderServiceToken.isEncrypted()).toBeFalsy();
+            expect(builderServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
+            expect(builderServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
+    
+            var msgServiceTokens = msgBuilder.getPeerServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+            var msgServiceToken = msgServiceTokens[0];
+            expect(msgServiceToken.name).toEqual(TOKEN_NAME);
+            expect(msgServiceToken.data.length).toEqual(0);
+            expect(msgServiceToken.isEncrypted()).toBeFalsy();
+            expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
+            expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
+        });
+    });
+
+    it("delete user bound peer service token", function() {
+        var msgBuilder;
+        runs(function() {
+            messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                result: function(x) { msgBuilder = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
+        
+        var serviceToken;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            ServiceToken.create(p2pCtx, TOKEN_NAME, DATA, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, ENCRYPT, COMPRESSION_ALGO, new NullCryptoContext(), {
+                result: function(x) { serviceToken = x; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+
+        var tokenBuilder, delA;
+        runs(function() {
+            msgBuilder.addPeerServiceToken(serviceToken);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delA = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return tokenBuilder && delA !== undefined; }, "tokenBuilder and delA not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delA).toBeFalsy(); });
+
+        var delB;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, false, false, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+
+        var delC;
+        runs(function() {
+            tokenBuilder.deletePeerServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeTruthy(); });
+        
+        runs(function() {
+            var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var builderServiceToken = builderServiceTokens[0];
+            expect(builderServiceToken.name).toEqual(TOKEN_NAME);
+            expect(builderServiceToken.data.length).toEqual(0);
+            expect(builderServiceToken.isEncrypted()).toBeFalsy();
+            expect(builderServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
+            expect(builderServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeTruthy();
+    
+            var msgServiceTokens = msgBuilder.getPeerServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+            var msgServiceToken = msgServiceTokens[0];
+            expect(msgServiceToken.name).toEqual(TOKEN_NAME);
+            expect(msgServiceToken.data.length).toEqual(0);
+            expect(msgServiceToken.isEncrypted()).toBeFalsy();
+            expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
+            expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeTruthy();
+        });
+    });
 
 	it("delete unknown peer service token", function() {
 		var msgBuilder;
@@ -1518,17 +2267,43 @@ describe("MessageServiceTokenBuilder", function() {
 		});
 		waitsFor(function() { return msgBuilder; }, "msgBuilder not received", MslTestConstants.TIMEOUT);
 		
-		var del;
+		var tokenBuilder, delA;
 		runs(function() {
 			msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-			var tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+			tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
 
-			tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, {
-		        result: function(b) { del = b; },
+			tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, false, false, {
+		        result: function(b) { delA = b; },
 		        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
 		    });
 		});
-		waitsFor(function() { return del !== undefined; }, "del not received", MslTestConstants.TIMEOUT);
-		runs(function() { expect(del).toBeFalsy(); });
+		waitsFor(function() { return delA !== undefined; }, "delA not received", MslTestConstants.TIMEOUT);
+		runs(function() { expect(delA).toBeFalsy(); });
+        
+        var delB;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, false, {
+                result: function(b) { delB = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delB !== undefined; }, "delB not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delB).toBeFalsy(); });
+        
+        var delC;
+        runs(function() {
+            msgBuilder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            tokenBuilder = new MessageServiceTokenBuilder(p2pCtx, p2pMsgCtx, msgBuilder);
+
+            tokenBuilder.deletePrimaryServiceToken(TOKEN_NAME, true, true, {
+                result: function(b) { delC = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
+        runs(function() { expect(delC).toBeFalsy(); });
 	});
 });

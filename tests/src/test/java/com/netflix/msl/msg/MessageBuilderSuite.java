@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -800,6 +800,37 @@ public class MessageBuilderSuite {
         }
         
         @Test
+        public void addNamedServiceTokens() throws MslException {
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final byte[] data = new byte[1];
+            random.nextBytes(data);
+            
+            final ServiceToken unboundServiceTokenA = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext());
+            builder.addServiceToken(unboundServiceTokenA);
+            assertEquals(1, builder.getServiceTokens().size());
+            
+            final ServiceToken unboundServiceTokenB = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext());
+            builder.addServiceToken(unboundServiceTokenB);
+            assertEquals(1, builder.getServiceTokens().size());
+            
+            final ServiceToken masterBoundServiceTokenA = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, null, false, null, new NullCryptoContext());
+            builder.addServiceToken(masterBoundServiceTokenA);
+            assertEquals(2, builder.getServiceTokens().size());
+            
+            final ServiceToken masterBoundServiceTokenB = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, null, false, null, new NullCryptoContext());
+            builder.addServiceToken(masterBoundServiceTokenB);
+            assertEquals(2, builder.getServiceTokens().size());
+            
+            final ServiceToken userBoundServiceTokenA = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addServiceToken(userBoundServiceTokenA);
+            assertEquals(3, builder.getServiceTokens().size());
+            
+            final ServiceToken userBoundServiceTokenB = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addServiceToken(userBoundServiceTokenB);
+            assertEquals(3, builder.getServiceTokens().size());
+        }
+        
+        @Test
         public void excludeServiceToken() throws MslEncodingException, MslCryptoException, MslException {
             final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
             final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
@@ -810,7 +841,7 @@ public class MessageBuilderSuite {
             final Iterator<ServiceToken> tokens = serviceTokens.iterator();
             while (tokens.hasNext()) {
                 final ServiceToken token = tokens.next();
-                builder.excludeServiceToken(token.getName());
+                builder.excludeServiceToken(token.getName(), token.isMasterTokenBound(), token.isUserIdTokenBound());
                 tokens.remove();
                 final MessageHeader messageHeader = builder.getHeader();
                 assertTrue(messageHeader.getServiceTokens().equals(serviceTokens));
@@ -828,7 +859,7 @@ public class MessageBuilderSuite {
             builder.addServiceToken(serviceToken);
             
             // Delete the service token.
-            builder.deleteServiceToken(SERVICE_TOKEN_NAME);
+            builder.deleteServiceToken(SERVICE_TOKEN_NAME, true, true);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getServiceTokens();
             for (final ServiceToken token : tokens) {
@@ -843,13 +874,16 @@ public class MessageBuilderSuite {
         @Test
         public void deleteUnknownServiceToken() throws MslException {
             final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
-            builder.deleteServiceToken(SERVICE_TOKEN_NAME);
+            builder.deleteServiceToken(SERVICE_TOKEN_NAME, true, true);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getServiceTokens();
             for (final ServiceToken token : tokens) {
-                if (token.getName().equals(SERVICE_TOKEN_NAME))
-                    fail("Deleted unknown service token.");
+                if (token.getName().equals(SERVICE_TOKEN_NAME)) {
+                    assertEquals(0, token.getData().length);
+                    return;
+                }
             }
+            fail("Deleted unknown service token not found.");
         }
         
         @Test(expected = MslInternalException.class)
@@ -925,6 +959,38 @@ public class MessageBuilderSuite {
         }
         
         @Test
+        public void addNamedPeerServiceTokens() throws MslException {
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            final byte[] data = new byte[1];
+            random.nextBytes(data);
+            
+            final ServiceToken unboundServiceTokenA = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(unboundServiceTokenA);
+            assertEquals(1, builder.getPeerServiceTokens().size());
+            
+            final ServiceToken unboundServiceTokenB = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, null, null, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(unboundServiceTokenB);
+            assertEquals(1, builder.getPeerServiceTokens().size());
+            
+            final ServiceToken masterBoundServiceTokenA = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(masterBoundServiceTokenA);
+            assertEquals(2, builder.getPeerServiceTokens().size());
+            
+            final ServiceToken masterBoundServiceTokenB = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, null, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(masterBoundServiceTokenB);
+            assertEquals(2, builder.getPeerServiceTokens().size());
+            
+            final ServiceToken userBoundServiceTokenA = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(userBoundServiceTokenA);
+            assertEquals(3, builder.getPeerServiceTokens().size());
+            
+            final ServiceToken userBoundServiceTokenB = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(userBoundServiceTokenB);
+            assertEquals(3, builder.getPeerServiceTokens().size());
+        }
+        
+        @Test
         public void excludePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
             final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -935,7 +1001,7 @@ public class MessageBuilderSuite {
             final Iterator<ServiceToken> tokens = serviceTokens.iterator();
             while (tokens.hasNext()) {
                 final ServiceToken token = tokens.next();
-                builder.excludePeerServiceToken(token.getName());
+                builder.excludePeerServiceToken(token.getName(), token.isMasterTokenBound(), token.isUserIdTokenBound());
                 tokens.remove();
                 assertEquals(serviceTokens, builder.getPeerServiceTokens());
                 final MessageHeader messageHeader = builder.getHeader();
@@ -955,7 +1021,7 @@ public class MessageBuilderSuite {
             builder.addPeerServiceToken(serviceToken);
             
             // Delete the service token.
-            builder.deletePeerServiceToken(SERVICE_TOKEN_NAME);
+            builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, true, true);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getPeerServiceTokens();
             for (final ServiceToken token : tokens) {
@@ -971,13 +1037,16 @@ public class MessageBuilderSuite {
         public void deleteUnknownPeerServiceToken() throws MslException {
             final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
-            builder.deletePeerServiceToken(SERVICE_TOKEN_NAME);
+            builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, true, true);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getPeerServiceTokens();
             for (final ServiceToken token : tokens) {
-                if (token.getName().equals(SERVICE_TOKEN_NAME))
-                    fail("Deleted unknown peer service token.");
+                if (token.getName().equals(SERVICE_TOKEN_NAME)) {
+                    assertEquals(0, token.getData().length);
+                    return;
+                }
             }
+            fail("Deleted unknown peer service token not found.");
         }
         
         @Test
@@ -1225,7 +1294,7 @@ public class MessageBuilderSuite {
         @Test(expected = MslInternalException.class)
         public void negativeMessageId() throws MslEncodingException, MslEntityAuthException, MslMessageException, MslCryptoException {
             final Long messageId = -12L;
-            ErrorHeader errorHeader = messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
+            messageFactory.createErrorResponse(trustedNetCtx, messageId, MSL_ERROR, USER_MESSAGE);
         }
         
         @Test

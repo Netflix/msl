@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1035,7 +1035,7 @@ describe("SimpleMslStore", function() {
         });
     });
 
-    it("remove service tokens by master token", function() {
+    it("remove master bound service tokens", function() {
         var masterToken;
         runs(function() {
             MslTestUtils.getMasterToken(ctx, 1, 1, {
@@ -1087,9 +1087,12 @@ describe("SimpleMslStore", function() {
             expect(storedMasterBoundTokens).not.toBeNull();
             expect(serviceTokensEqual(unboundTokens, storedMasterBoundTokens)).toBeTruthy();
 
-            // This should only return the unbound tokens.
+            // This should only return the unbound and user-bound tokens.
+            var unboundAndUserBoundTokens = [];
+            unboundAndUserBoundTokens.push.apply(unboundAndUserBoundTokens, unboundTokens);
+            unboundAndUserBoundTokens.push.apply(unboundAndUserBoundTokens, userBoundTokens);
             var storedUserBoundTokens = store.getServiceTokens(masterToken, userIdToken);
-            expect(serviceTokensEqual(unboundTokens, storedUserBoundTokens)).toBeTruthy();
+            expect(serviceTokensEqual(unboundAndUserBoundTokens, storedUserBoundTokens)).toBeTruthy();
 
             // This should only return the unbound tokens.
             var storedUnboundTokens = store.getServiceTokens(null, null);
@@ -1322,7 +1325,7 @@ describe("SimpleMslStore", function() {
             var removedTokens = [];
             allTokens.forEach(function(token) {
                 if (random.nextBoolean()) return;
-                store.removeServiceTokens(token.name, null, null);
+                store.removeServiceTokens(token.name, token.isMasterTokenBound() ? masterToken : null, token.isUserIdTokenBound() ? userIdToken : null);
                 removedTokens.push(token);
             }, this);
 
