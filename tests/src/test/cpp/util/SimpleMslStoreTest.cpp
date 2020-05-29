@@ -738,7 +738,7 @@ TEST_F(SimpleMslStoreTest, removeUserBoundServiceTokens)
 	store->addServiceTokens(userBoundTokens);
 	store->addServiceTokens(unboundTokens);
 
-	store->removeServiceTokens(NULL_NAME, masterToken, userIdToken);
+	store->removeServiceTokens(NULL_NAME, NULL_MASTER_TOKEN, userIdToken);
 
 	// This should only return the unbound and master bound-only tokens.
 	set<shared_ptr<ServiceToken>> storedMasterBoundTokens = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);

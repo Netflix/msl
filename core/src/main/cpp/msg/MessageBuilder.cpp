@@ -460,6 +460,11 @@ shared_ptr<MessageBuilder> MessageBuilder::addServiceTokenIfAbsent(shared_ptr<Se
 	return shared_from_this();
 }
 
+shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludeServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
 shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
     set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens_.begin();
@@ -475,6 +480,11 @@ shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(const string& nam
         }
     }
 	return shared_from_this();
+}
+
+shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deleteServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
@@ -590,6 +600,11 @@ shared_ptr<MessageBuilder> MessageBuilder::addPeerServiceTokenIfAbsent(shared_pt
 	return shared_from_this();
 }
 
+shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
 shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
     set<shared_ptr<ServiceToken>>::iterator tokens = peerServiceTokens_.begin();
@@ -605,6 +620,11 @@ shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(const string&
         }
     }
 	return shared_from_this();
+}
+
+shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deletePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)

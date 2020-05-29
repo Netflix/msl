@@ -424,7 +424,7 @@
             // If a user ID token was provided remove all tokens bound to the user
             // ID token. If a name was also provided then limit removal to tokens
             // with the specified name.
-            if (masterToken && userIdToken) {
+            if (userIdToken) {
                 uitTokenSet = this.uitServiceTokens[userIdToken.serialNumber];
                 if (uitTokenSet) {
                     uitBoundKeys = Object.keys(uitTokenSet);

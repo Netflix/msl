@@ -277,6 +277,11 @@ bool MessageServiceTokenBuilder::addUserBoundPeerServiceToken(const string& name
 	return true;
 }
 
+bool MessageServiceTokenBuilder::excludePrimaryServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludePrimaryServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
 bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
 	// Exclude the service token if found.
@@ -296,6 +301,11 @@ bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name, 
 
 	// Not found.
 	return false;
+}
+
+bool MessageServiceTokenBuilder::excludePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
 }
 
 bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
@@ -319,6 +329,11 @@ bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name, con
 	return false;
 }
 
+bool MessageServiceTokenBuilder::deletePrimaryServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deletePrimaryServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
 bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
     // Mark the service token for deletion if found.
@@ -338,6 +353,11 @@ bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name, c
 
 	// Not found.
 	return false;
+}
+
+bool MessageServiceTokenBuilder::deletePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deletePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
 }
 
 bool MessageServiceTokenBuilder::deletePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)

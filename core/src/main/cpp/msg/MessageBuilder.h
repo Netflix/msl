@@ -314,34 +314,85 @@ public:
     std::shared_ptr<MessageBuilder> addServiceTokenIfAbsent(std::shared_ptr<tokens::ServiceToken> serviceToken);
 
     /**
+     * <p>Exclude a service token from the message. This matches the token name
+     * and whether or not it is bound to the master token or to a user ID
+     * token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #excludeServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return this.
+     * @see #excludeServiceToken(String, boolean, boolean)
+     */
+    std::shared_ptr<MessageBuilder> excludeServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Exclude a service token from the message matching all the specified
      * parameters. A false value for the master token bound or user ID token
      * bound parameters restricts exclusion to tokens that are not bound to a
      * master token or not bound to a user ID token respectively.</p>
      * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be excluded
+     * from the message. If a name is provided but both other parameters are
+     * false, then only an unbound service token with the same name will be
+     * excluded.</p>
+     *
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return this.
      */
     std::shared_ptr<MessageBuilder> excludeServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
 
     /**
+     * <p>Mark a service token for deletion.</p>
+     *
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #deleteServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    std::shared_ptr<MessageBuilder> deleteServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Mark a service token for deletion. A false value for the master token
-     * bound or user ID token bound parameters restricts exclusion to tokens
+     * bound or user ID token bound parameters restricts deletion to tokens
      * that are not bound to a master token or not bound to a user ID token
      * respectively.</p>
      * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be marked
+     * for deletion. If a name is provided but both other parameters are false,
+     * then only an unbound service token with the same name will be marked for
+     * deletion.</p>
+     *
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to delete a master token bound service token.
-     * @param userIdTokenBound true to delete a user ID token bound service token.
+     * @param masterTokenBound true to delete a master token bound service
+     *        token.
+     * @param userIdTokenBound true to delete a user ID token bound service
+     *        token.
      * @return this.
      */
     std::shared_ptr<MessageBuilder> deleteServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
@@ -411,35 +462,85 @@ public:
     std::shared_ptr<MessageBuilder> addPeerServiceTokenIfAbsent(std::shared_ptr<tokens::ServiceToken> serviceToken);
 
     /**
+     * <p>Exclude a peer service token from the message. This matches the token
+     * name and whether or not it is bound to the master token or to a user ID
+     * token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #excludePeerServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    std::shared_ptr<MessageBuilder> excludePeerServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Exclude a peer service token from the message matching all the
      * specified parameters. A false value for the master token bound or user
      * ID token bound parameters restricts exclusion to tokens that are not
      * bound to a master token or not bound to a user ID token
      * respectively.</p>
      * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be excluded
+     * from the message. If a name is provided but both other parameters are
+     * false, then only an unbound service token with the same name will be
+     * excluded.</p>
+     *
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return this.
      */
     std::shared_ptr<MessageBuilder> excludePeerServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
 
     /**
+     * <p>Mark a peer service token for deletion.</p>
+     *
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #deletePeerServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    std::shared_ptr<MessageBuilder> deletePeerServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Mark a peer service token for deletion. A false value for the master
-     * token bound or user ID token bound parameters restricts exclusion to
+     * token bound or user ID token bound parameters restricts deletion to
      * tokens that are not bound to a master token or not bound to a user ID
      * token respectively.</p>
      * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be marked
+     * for deletion. If a name is provided but both other parameters are false,
+     * then only an unbound service token with the same name will be marked for
+     * deletion.</p>
+     *
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to delete a master token bound service token.
-     * @param userIdTokenBound true to delete a user ID token bound service token.
+     * @param masterTokenBound true to delete a master token bound service
+     *        token.
+     * @param userIdTokenBound true to delete a user ID token bound service
+     *        token.
      * @return this.
      */
     std::shared_ptr<MessageBuilder> deletePeerServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
@@ -457,7 +558,7 @@ protected:
      *
      * @param ctx MSL context.
      */
-    MessageBuilder(std::shared_ptr<util::MslContext> ctx) : ctx_(ctx) {}
+    MessageBuilder(std::shared_ptr<util::MslContext> ctx) : ctx_(ctx), messageId_(-1) {}
 
     /**
      * initialize a message builder with the provided tokens and key exchange

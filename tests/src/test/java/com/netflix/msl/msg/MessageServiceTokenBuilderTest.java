@@ -595,6 +595,14 @@ public class MessageServiceTokenBuilderTest {
         assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false));
         assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
         assertEquals(0, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(serviceToken));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
     }
     
     @Test
@@ -617,6 +625,14 @@ public class MessageServiceTokenBuilderTest {
         assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false));
         assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
         assertEquals(0, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(serviceToken));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
     }
     
     @Test
@@ -637,6 +653,14 @@ public class MessageServiceTokenBuilderTest {
         assertEquals(1, msgBuilder.getServiceTokens().size());
         
         assertTrue(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true));
+        assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(0, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePrimaryServiceToken(serviceToken));
         assertEquals(0, tokenBuilder.getPrimaryServiceTokens().size());
         assertEquals(0, msgBuilder.getServiceTokens().size());
     }
@@ -687,6 +711,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertFalse(msgServiceToken.isMasterTokenBound());
         assertFalse(msgServiceToken.isMasterTokenBound());
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
     }
     
     @Test
@@ -717,6 +746,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertTrue(msgServiceToken.isBoundTo(MASTER_TOKEN));
         assertFalse(msgServiceToken.isUserIdTokenBound());
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
     }
     
     @Test
@@ -747,6 +781,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertTrue(msgServiceToken.isBoundTo(MASTER_TOKEN));
         assertTrue(msgServiceToken.isBoundTo(USER_ID_TOKEN));
+        
+        assertTrue(tokenBuilder.addPrimaryServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePrimaryServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPrimaryServiceTokens().size());
+        assertEquals(1, msgBuilder.getServiceTokens().size());
     }
 
     @Test
@@ -944,6 +983,14 @@ public class MessageServiceTokenBuilderTest {
         assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false));
         assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
         assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(serviceToken));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
     }
     
     @Test
@@ -967,6 +1014,14 @@ public class MessageServiceTokenBuilderTest {
         assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false));
         assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
         assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(serviceToken));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
     }
     
     @Test
@@ -988,6 +1043,14 @@ public class MessageServiceTokenBuilderTest {
         assertEquals(1, msgBuilder.getPeerServiceTokens().size());
         
         assertTrue(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true));
+        assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(0, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
+        
+        assertTrue(tokenBuilder.excludePeerServiceToken(serviceToken));
         assertEquals(0, tokenBuilder.getPeerServiceTokens().size());
         assertEquals(0, msgBuilder.getPeerServiceTokens().size());
     }
@@ -1040,6 +1103,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertFalse(msgServiceToken.isMasterTokenBound());
         assertFalse(msgServiceToken.isUserIdTokenBound());
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
     }
     
     @Test
@@ -1071,6 +1139,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertTrue(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN));
         assertFalse(msgServiceToken.isUserIdTokenBound());
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
     }
     
     @Test
@@ -1102,6 +1175,11 @@ public class MessageServiceTokenBuilderTest {
         assertFalse(msgServiceToken.isEncrypted());
         assertTrue(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN));
         assertTrue(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN));
+        
+        assertTrue(tokenBuilder.addPeerServiceToken(serviceToken));
+        assertTrue(tokenBuilder.deletePeerServiceToken(serviceToken));
+        assertEquals(1, tokenBuilder.getPeerServiceTokens().size());
+        assertEquals(1, msgBuilder.getPeerServiceTokens().size());
     }
 
     @Test

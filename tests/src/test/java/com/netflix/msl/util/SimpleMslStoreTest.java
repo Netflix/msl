@@ -765,7 +765,7 @@ public class SimpleMslStoreTest {
         store.addServiceTokens(userBoundTokens);
         store.addServiceTokens(unboundTokens);
         
-        store.removeServiceTokens(null, masterToken, userIdToken);
+        store.removeServiceTokens(null, null, userIdToken);
         
         // This should only return the unbound and master bound-only tokens.
         final Set<ServiceToken> storedMasterBoundTokens = store.getServiceTokens(masterToken, null);

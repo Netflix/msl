@@ -516,21 +516,62 @@
         },
 
         /**
-         * <p>Exclude a primary service token from the message matching all
-         * specified parameters. A false value for the master token bound or user
-         * ID token bound parameters restricts exclusion to tokens that are not
-         * bound to a master token or not bound to a user ID token
-         * respectively.</p>
-         *
-         * <p>The service token will not be sent in the built message. This is not
-         * the same as requesting the remote entity delete a service token.</p>
-         *
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
+         * @return {boolean} true if the service token was found and therefore removed.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
+         * 
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service token.
          * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @return {boolean} true if the service token was found and therefore removed.
+         * 
+         * <hr>
+         *
+         * <p>In either case the service token will not be sent in the built
+         * message. This is not the same as requesting the remote entity delete
+         * a service token.</p>
          */
-        excludePrimaryServiceToken: function excludePrimaryServiceToken(name, masterTokenBound, userIdTokenBound) {
+        excludePrimaryServiceToken: function excludePrimaryServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound;
+            
+            // Handle the first form.
+            if (arguments.length == 1) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+            }
+            
+            // Handle the second form.
+            else if (arguments.length = 3) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
             // Exclude the service token if found.
             var serviceTokens = this.builder.getServiceTokens();
             for (var i = 0; i < serviceTokens.length; ++i) {
@@ -549,20 +590,62 @@
         },
 
         /**
-         * <p>Exclude a peer service token from the message matching all specified
-         * parameters. A false value for the master token bound or user ID token
-         * bound parameters restricts exclusion to tokens that are not bound to a
-         * master token or not bound to a user ID token respectively.</p>
-         *
-         * <p>The service token will not be sent in the built message. This is not
-         * the same as requesting the remote entity delete a service token.</p>
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
+         * @return {boolean} true if the peer service token was found and therefore removed.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service token.
          * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
          * @return {boolean} true if the peer service token was found and therefore removed.
+         * 
+         * <h2>
+         * 
+         * <p>In either case the service token will not be sent in the built
+         * message. This is not the same as requesting the remote entity delete
+         * a service token.</p>
          */
-        excludePeerServiceToken: function excludePeerServiceToken(name, masterTokenBound, userIdTokenBound) {
+        excludePeerServiceToken: function excludePeerServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound;
+
+            // Handle the first form.
+            if (arguments.length == 1) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+            }
+
+            // Handle the second form.
+            else if (arguments.length = 3) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+
             // Exclude the service token if found.
             var peerServiceTokens = this.builder.getPeerServiceTokens();
             for (var i = 0; i < peerServiceTokens.length; ++i) {
@@ -581,15 +664,26 @@
         },
 
         /**
-         * <p>Mark a primary service token for deletion, if it exists, matching all
-         * specified parameters. A false value for the master token bound or user
-         * ID token bound parameters restricts exclusion to tokens that are not
-         * bound to a master token or not bound to a user ID token
-         * respectively.</p>
-         *
-         * <p>The service token will be sent in the built message with an empty
-         * value. This is not the same as requesting that a service token be
-         * excluded from the message.</p>
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * @param {ServiceToken> serviceToken the service token.
+         * @param {{result: function(boolean), error: function(Error)}} callback
+         *        the callback will receive true if the service token exists
+         *        and was marked for deletion, or any thrown exceptions.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts deletion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service token.
@@ -597,8 +691,39 @@
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the service token exists
          *        and was marked for deletion, or any thrown exceptions.
+         * 
+         * <hr>
+         *
+         * <p>In either case the service token will marked for deletion and be
+         * sent in the built message with an empty value. This is not the same
+         * as requesting that a service token be excluded from the message.</p>
          */
-        deletePrimaryServiceToken: function deletePrimaryServiceToken(name, masterTokenBound, userIdTokenBound, callback) {
+        deletePrimaryServiceToken: function deletePrimaryServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound,
+                callback;
+            
+            // Handle the first form.
+            if (arguments.length == 2) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+                callback = arguments[1];
+            }
+            
+            // Handle the second form.
+            else if (arguments.length == 4) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+                callback = arguments[3];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
             AsyncExecutor(callback, function() {
                 // Mark the service token for deletion if found.
                 var serviceTokens = this.builder.getServiceTokens();
@@ -622,15 +747,26 @@
         },
 
         /**
-         * <p>Mark a peer service token for deletion, if it exists, matching all
-         * specified parameters. A false value for the master token bound or user
-         * ID token bound parameters restricts exclusion to tokens that are not
-         * bound to a master token or not bound to a user ID token
-         * respectively.</p>
-         *
-         * <p>The service token will be sent in the built message with an empty
-         * value. This is not the same as requesting that a service token be
-         * excluded from the message.</p>
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * @param {ServiceToken> serviceToken the service token.
+         * @param {{result: function(boolean), error: function(Error)}} callback
+         *        the callback will receive true if the peer service token
+         *        exists and was marked for deletion, or any thrown exceptions.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts deletion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service token.
@@ -638,8 +774,39 @@
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the peer service token
          *        exists and was marked for deletion, or any thrown exceptions.
+         * 
+         * <hr>
+         *
+         * <p>In either case the service token will marked for deletion and be
+         * sent in the built message with an empty value. This is not the same
+         * as requesting that a service token be excluded from the message.</p>
          */
-        deletePeerServiceToken: function deletePeerServiceToken(name, masterTokenBound, userIdTokenBound, callback) {
+        deletePeerServiceToken: function deletePeerServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound,
+                callback;
+            
+            // Handle the first form.
+            if (arguments.length == 2) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+                callback = arguments[1];
+            }
+            
+            // Handle the second form.
+            else if (arguments.length == 4) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+                callback = arguments[3];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
             AsyncExecutor(callback, function() {
                 // Mark the service token for deletion if found.
                 var peerServiceTokens = this.builder.getPeerServiceTokens();

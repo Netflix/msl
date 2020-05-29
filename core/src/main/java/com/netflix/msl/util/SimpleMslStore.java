@@ -385,7 +385,7 @@ public class SimpleMslStore implements MslStore {
         // If a user ID token was provided remove all tokens bound to the user
         // ID token. If a name was also provided then limit removal to tokens
         // with the specified name.
-        if (masterToken != null && userIdToken != null) {
+        if (userIdToken != null) {
             final Set<ServiceToken> tokenSet = uitServiceTokens.get(userIdToken.getSerialNumber());
             if (tokenSet != null) {
                 final Iterator<ServiceToken> tokens = tokenSet.iterator();

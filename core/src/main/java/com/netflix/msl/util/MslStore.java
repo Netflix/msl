@@ -167,13 +167,13 @@ public interface MslStore {
      * 
      * <p>For example, if a name and master token is provided, only tokens with
      * that name, bound to that master token, and not bound to a user ID token
-     * are removed.</p>
+     * are removed. If only a user ID token is provided, all tokens bound to
+     * that user ID token are removed.</p>
      * 
      * <p>If no parameters are provided, no tokens are removed.</p>
      * 
      * @param name service token name. May be null.
-     * @param masterToken master token. May be null unless a user ID token is
-     *        also provided.
+     * @param masterToken master token. May be null.
      * @param userIdToken user ID token. May be null.
      * @throws MslException if the user ID token is not bound to the master
      *         token.

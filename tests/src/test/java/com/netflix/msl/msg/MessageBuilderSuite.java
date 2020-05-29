@@ -841,7 +841,27 @@ public class MessageBuilderSuite {
             final Iterator<ServiceToken> tokens = serviceTokens.iterator();
             while (tokens.hasNext()) {
                 final ServiceToken token = tokens.next();
+                
                 builder.excludeServiceToken(token.getName(), token.isMasterTokenBound(), token.isUserIdTokenBound());
+                tokens.remove();
+                final MessageHeader messageHeader = builder.getHeader();
+                assertTrue(messageHeader.getServiceTokens().equals(serviceTokens));
+            }
+        }
+        
+        @Test
+        public void excludeServiceTokenAlternate() throws MslEncodingException, MslCryptoException, MslException {
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+
+            for (final ServiceToken serviceToken : serviceTokens)
+                builder.addServiceToken(serviceToken);
+            
+            final Iterator<ServiceToken> tokens = serviceTokens.iterator();
+            while (tokens.hasNext()) {
+                final ServiceToken token = tokens.next();
+                
+                builder.excludeServiceToken(token);
                 tokens.remove();
                 final MessageHeader messageHeader = builder.getHeader();
                 assertTrue(messageHeader.getServiceTokens().equals(serviceTokens));
@@ -868,6 +888,31 @@ public class MessageBuilderSuite {
                     return;
                 }
             }
+            
+            fail("Deleted service token not found.");
+        }
+        
+        @Test
+        public void deleteServiceTokenAlternate() throws MslException {
+            final MessageBuilder builder = messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            
+            // The service token must exist before it can be deleted.
+            final byte[] data = new byte[1];
+            random.nextBytes(data);
+            final ServiceToken serviceToken = new ServiceToken(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addServiceToken(serviceToken);
+            
+            // Delete the service token.
+            builder.deleteServiceToken(serviceToken);
+            final MessageHeader messageHeader = builder.getHeader();
+            final Set<ServiceToken> tokens = messageHeader.getServiceTokens();
+            for (final ServiceToken token : tokens) {
+                if (token.getName().equals(SERVICE_TOKEN_NAME)) {
+                    assertEquals(0, token.getData().length);
+                    return;
+                }
+            }
+            
             fail("Deleted service token not found.");
         }
         
@@ -1010,6 +1055,25 @@ public class MessageBuilderSuite {
         }
         
         @Test
+        public void excludePeerServiceTokenAlternate() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            final Set<ServiceToken> serviceTokens = MslTestUtils.getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            for (final ServiceToken serviceToken : serviceTokens)
+                builder.addPeerServiceToken(serviceToken);
+            
+            final Iterator<ServiceToken> tokens = serviceTokens.iterator();
+            while (tokens.hasNext()) {
+                final ServiceToken token = tokens.next();
+                builder.excludePeerServiceToken(token);
+                tokens.remove();
+                assertEquals(serviceTokens, builder.getPeerServiceTokens());
+                final MessageHeader messageHeader = builder.getHeader();
+                assertEquals(serviceTokens, messageHeader.getPeerServiceTokens());
+            }
+        }
+        
+        @Test
         public void deletePeerServiceToken() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
             final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
             builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
@@ -1022,6 +1086,30 @@ public class MessageBuilderSuite {
             
             // Delete the service token.
             builder.deletePeerServiceToken(SERVICE_TOKEN_NAME, true, true);
+            final MessageHeader messageHeader = builder.getHeader();
+            final Set<ServiceToken> tokens = messageHeader.getPeerServiceTokens();
+            for (final ServiceToken token : tokens) {
+                if (token.getName().equals(SERVICE_TOKEN_NAME)) {
+                    assertEquals(0, token.getData().length);
+                    return;
+                }
+            }
+            fail("Deleted peer service token not found.");
+        }
+        
+        @Test
+        public void deletePeerServiceTokenAlternate() throws MslEncodingException, MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslException {
+            final MessageBuilder builder = messageFactory.createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+            builder.setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+            
+            // The service token must exist before it can be deleted.
+            final byte[] data = new byte[1];
+            random.nextBytes(data);
+            final ServiceToken serviceToken = new ServiceToken(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, null, new NullCryptoContext());
+            builder.addPeerServiceToken(serviceToken);
+            
+            // Delete the service token.
+            builder.deletePeerServiceToken(serviceToken);
             final MessageHeader messageHeader = builder.getHeader();
             final Set<ServiceToken> tokens = messageHeader.getPeerServiceTokens();
             for (final ServiceToken token : tokens) {

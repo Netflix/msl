@@ -1146,7 +1146,7 @@ describe("SimpleMslStore", function() {
             store.addServiceTokens(userBoundTokens);
             store.addServiceTokens(unboundTokens);
 
-            store.removeServiceTokens(null, masterToken, userIdToken);
+            store.removeServiceTokens(null, null, userIdToken);
 
             // This should only return the unbound and master bound-only tokens.
             var storedMasterBoundTokens = store.getServiceTokens(masterToken, null);

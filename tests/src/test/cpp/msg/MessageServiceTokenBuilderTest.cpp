@@ -608,6 +608,14 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnboundPrimaryServiceToken)
     EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, false, false));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPrimaryServiceToken)
@@ -630,6 +638,16 @@ TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPrimaryServiceToken)
     EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, false));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPrimaryServiceToken)
@@ -650,6 +668,14 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPrimaryServiceToken)
     EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 
     EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePrimaryServiceToken(serviceToken));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPrimaryServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getServiceTokens().size());
 }
@@ -700,6 +726,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUnboundPrimaryServiceToken)
 	EXPECT_FALSE(msgServiceToken->isEncrypted());
 	EXPECT_FALSE(msgServiceToken->isMasterTokenBound());
 	EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPrimaryServiceToken)
@@ -730,6 +761,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPrimaryServiceToken)
     EXPECT_FALSE(msgServiceToken->isEncrypted());
     EXPECT_TRUE(msgServiceToken->isBoundTo(MASTER_TOKEN));
     EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPrimaryServiceToken)
@@ -760,6 +796,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPrimaryServiceToken)
     EXPECT_FALSE(msgServiceToken->isEncrypted());
     EXPECT_TRUE(msgServiceToken->isBoundTo(MASTER_TOKEN));
     EXPECT_TRUE(msgServiceToken->isBoundTo(USER_ID_TOKEN));
+
+    EXPECT_TRUE(tokenBuilder->addPrimaryServiceToken(serviceToken));
+    EXPECT_TRUE(tokenBuilder->deletePrimaryServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPrimaryServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPrimaryServiceToken)
@@ -961,6 +1002,14 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUnboundPeerServiceToken)
     EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, false, false));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPeerServiceToken)
@@ -984,6 +1033,14 @@ TEST_F(MessageServiceTokenBuilderTest, excludeMasterBoundPeerServiceToken)
     EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, false));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPeerServiceToken)
@@ -1005,6 +1062,14 @@ TEST_F(MessageServiceTokenBuilderTest, excludeUserBoundPeerServiceToken)
     EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 
     EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(TOKEN_NAME, true, true));
+    EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
+
+    EXPECT_TRUE(tokenBuilder->excludePeerServiceToken(serviceToken));
     EXPECT_EQ(static_cast<size_t>(0), tokenBuilder->getPeerServiceTokens().size());
     EXPECT_EQ(static_cast<size_t>(0), msgBuilder->getPeerServiceTokens().size());
 }
@@ -1057,6 +1122,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUnboundPeerServiceToken)
 	EXPECT_FALSE(msgServiceToken->isEncrypted());
 	EXPECT_FALSE(msgServiceToken->isMasterTokenBound());
 	EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+
+	EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+	EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(serviceToken));
+	EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+	EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPeerServiceToken)
@@ -1088,6 +1158,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteMasterBoundPeerServiceToken)
     EXPECT_FALSE(msgServiceToken->isEncrypted());
     EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_MASTER_TOKEN));
     EXPECT_FALSE(msgServiceToken->isUserIdTokenBound());
+
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+    EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPeerServiceToken)
@@ -1119,6 +1194,11 @@ TEST_F(MessageServiceTokenBuilderTest, deleteUserBoundPeerServiceToken)
     EXPECT_FALSE(msgServiceToken->isEncrypted());
     EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_MASTER_TOKEN));
     EXPECT_TRUE(msgServiceToken->isBoundTo(PEER_USER_ID_TOKEN));
+
+    EXPECT_TRUE(tokenBuilder->addPeerServiceToken(serviceToken));
+    EXPECT_TRUE(tokenBuilder->deletePeerServiceToken(serviceToken));
+    EXPECT_EQ(static_cast<size_t>(1), tokenBuilder->getPeerServiceTokens().size());
+    EXPECT_EQ(static_cast<size_t>(1), msgBuilder->getPeerServiceTokens().size());
 }
 
 TEST_F(MessageServiceTokenBuilderTest, deleteUnknownPeerServiceToken)

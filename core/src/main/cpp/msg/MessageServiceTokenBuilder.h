@@ -272,6 +272,23 @@ public:
     bool addUserBoundPeerServiceToken(const std::string& name, std::shared_ptr<ByteArray> data, bool encrypt, MslConstants::CompressionAlgorithm compressionAlgo);
     
     /**
+     * <p>Exclude a primary service token from the message. This matches the
+     * token name and whether or not it is bound to the master token or to a
+     * user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #excludePrimaryServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return true if the service token was found and therefore removed.
+     */
+    bool excludePrimaryServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Exclude a primary service token from the message matching all
      * specified parameters. A false value for the master token bound or user
      * ID token bound parameters restricts exclusion to tokens that are not
@@ -287,6 +304,23 @@ public:
      * @return true if the service token was found and therefore removed.
      */
     bool excludePrimaryServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
+
+    /**
+     * <p>Exclude a peer service token from the message. This matches the
+     * token name and whether or not it is bound to the master token or to a
+     * user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #excludePeerServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return true if the service token was found and therefore removed.
+     */
+    bool excludePeerServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
     
     /**
      * <p>Exclude a peer service token from the message matching all specified
@@ -303,11 +337,29 @@ public:
      * @return true if the peer service token was found and therefore removed.
      */
     bool excludePeerServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
+
+    /**
+     * <p>Mark a primary service token for deletion, if it exists. This matches
+     * the token name and whether or not it is bound to the master token or to
+     * a user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #deletePrimaryServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return true if the service token exists and was marked for deletion.
+     */
+    bool deletePrimaryServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
     
     /**
      * <p>Mark a primary service token for deletion, if it exists, matching all
      * specified parameters. A false value for the master token bound or user
-     * ID token bound parameters restricts exclusion to tokens that are not
+     * ID token bound parameters restricts deletion to tokens that are not
      * bound to a master token or not bound to a user ID token
      * respectively.</p>
      * 
@@ -323,9 +375,27 @@ public:
     bool deletePrimaryServiceToken(const std::string& name, const bool masterTokenBound, const bool userIdTokenBound);
     
     /**
+     * <p>Mark a peer service token for deletion, if it exists. This matches
+     * the token name and whether or not it is bound to the master token or to
+     * a user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
+     *
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     *
+     * <p>This function is equivalent to calling
+     * {@link #deletePeerServiceToken(String, boolean, boolean)}.</p>
+     *
+     * @param serviceToken the service token.
+     * @return true if the service token exists and was marked for deletion.
+     */
+    bool deletePeerServiceToken(std::shared_ptr<tokens::ServiceToken> serviceToken);
+
+    /**
      * <p>Mark a peer service token for deletion, if it exists, matching all
      * specified parameters. A false value for the master token bound or user
-     * ID token bound parameters restricts exclusion to tokens that are not
+     * ID token bound parameters restricts deletion to tokens that are not
      * bound to a master token or not bound to a user ID token
      * respectively.</p>
      * 

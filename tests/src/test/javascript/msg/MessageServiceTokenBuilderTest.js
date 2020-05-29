@@ -1134,6 +1134,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, false, false)).toBeTruthy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
             expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
 		});
 	});
 
@@ -1178,6 +1186,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, false)).toBeTruthy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
             expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
         });
     });
 
@@ -1220,6 +1236,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgBuilder.getServiceTokens().length).toEqual(1);
             
             expect(tokenBuilder.excludePrimaryServiceToken(TOKEN_NAME, true, true)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePrimaryServiceToken(serviceToken)).toBeTruthy();
             expect(tokenBuilder.getPrimaryServiceTokens().length).toEqual(0);
             expect(msgBuilder.getServiceTokens().length).toEqual(0);
         });
@@ -1310,6 +1334,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
 		
+        var delD;
 		runs(function() {
 			var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
 			expect(builderServiceTokens.length).toEqual(1);
@@ -1328,7 +1353,22 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(msgServiceToken.isEncrypted()).toBeFalsy();
 			expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeFalsy();
 			expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
-		});
+			
+			expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+			tokenBuilder.deletePrimaryServiceToken(serviceToken, {
+			    result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+        });
 	});
 
     it("delete master bound primary service token", function() {
@@ -1389,6 +1429,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
         
+        var delD;
         runs(function() {
             var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
             expect(builderServiceTokens.length).toEqual(1);
@@ -1407,6 +1448,21 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgServiceToken.isEncrypted()).toBeFalsy();
             expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
             expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeFalsy();
+            
+            expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+            tokenBuilder.deletePrimaryServiceToken(serviceToken, {
+                result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
         });
     });
 
@@ -1468,6 +1524,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
         
+        var delD;
         runs(function() {
             var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
             expect(builderServiceTokens.length).toEqual(1);
@@ -1486,6 +1543,21 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgServiceToken.isEncrypted()).toBeFalsy();
             expect(msgServiceToken.isBoundTo(MASTER_TOKEN)).toBeTruthy();
             expect(msgServiceToken.isBoundTo(USER_ID_TOKEN)).toBeTruthy();
+            
+            expect(tokenBuilder.addPrimaryServiceToken(serviceToken)).toBeTruthy();
+            tokenBuilder.deletePrimaryServiceToken(serviceToken, {
+                result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPrimaryServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
         });
     });
 
@@ -1924,6 +1996,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, false, false)).toBeTruthy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
             expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
 		});
 	});
 
@@ -1964,6 +2044,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, false)).toBeTruthy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
             expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
         });
     });
 
@@ -2002,6 +2090,14 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
             
             expect(tokenBuilder.excludePeerServiceToken(TOKEN_NAME, true, true)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            expect(tokenBuilder.getPeerServiceTokens().length).toEqual(1);
+            expect(msgBuilder.getPeerServiceTokens().length).toEqual(1);
+            
+            expect(tokenBuilder.excludePeerServiceToken(serviceToken)).toBeTruthy();
             expect(tokenBuilder.getPeerServiceTokens().length).toEqual(0);
             expect(msgBuilder.getPeerServiceTokens().length).toEqual(0);
         });
@@ -2088,6 +2184,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
 		
+        var delD;
 		runs(function() {
 			var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
 			expect(builderServiceTokens.length).toEqual(1);
@@ -2106,7 +2203,22 @@ describe("MessageServiceTokenBuilder", function() {
 			expect(msgServiceToken.isEncrypted()).toBeFalsy();
 			expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeFalsy();
 			expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
-		});
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            tokenBuilder.deletePeerServiceToken(serviceToken, {
+                result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getPeerServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
+        });
 	});
 
     it("delete master bound peer service token", function() {
@@ -2162,6 +2274,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
         
+        var delD;
         runs(function() {
             var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
             expect(builderServiceTokens.length).toEqual(1);
@@ -2180,6 +2293,21 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgServiceToken.isEncrypted()).toBeFalsy();
             expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
             expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeFalsy();
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            tokenBuilder.deletePeerServiceToken(serviceToken, {
+                result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getPeerServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
         });
     });
 
@@ -2236,6 +2364,7 @@ describe("MessageServiceTokenBuilder", function() {
         waitsFor(function() { return delC !== undefined; }, "delC not received", MslTestConstants.TIMEOUT);
         runs(function() { expect(delC).toBeTruthy(); });
         
+        var delD;
         runs(function() {
             var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
             expect(builderServiceTokens.length).toEqual(1);
@@ -2254,6 +2383,21 @@ describe("MessageServiceTokenBuilder", function() {
             expect(msgServiceToken.isEncrypted()).toBeFalsy();
             expect(msgServiceToken.isBoundTo(PEER_MASTER_TOKEN)).toBeTruthy();
             expect(msgServiceToken.isBoundTo(PEER_USER_ID_TOKEN)).toBeTruthy();
+            
+            expect(tokenBuilder.addPeerServiceToken(serviceToken)).toBeTruthy();
+            tokenBuilder.deletePeerServiceToken(serviceToken, {
+                result: function(b) { delD = b; },
+                error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+            });
+        });
+        waitsFor(function() { return delD !== undefined; }, "delD not received", MslTestConstants.TIMEOUT);
+        
+        runs(function() {
+            expect(delD).toBeTruthy();
+            var builderServiceTokens = tokenBuilder.getPeerServiceTokens();
+            expect(builderServiceTokens.length).toEqual(1);
+            var msgServiceTokens = msgBuilder.getPeerServiceTokens();
+            expect(msgServiceTokens.length).toEqual(1);
         });
     });
 

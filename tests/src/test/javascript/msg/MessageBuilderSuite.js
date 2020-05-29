@@ -1385,6 +1385,53 @@ describe("MessageBuilder", function() {
 			waitsFor(function() { return count == expected; }, "service tokens to be processed", 1000);
 		});
 
+        it("exclude service token using alternate parameters", function() {
+            var serviceTokens;
+            runs(function() {
+                MslTestUtils.getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, {
+                    result: function(t) { serviceTokens = t; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return serviceTokens; }, "serviceTokens not received", MslTestConstants.TIMEOUT);
+
+            var builder;
+            runs(function() {
+                messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                    result: function(x) { builder = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
+            
+            // This may take a while to finish.
+            var count = 0, expected = -1;
+            runs(function() {
+                serviceTokens.forEach(function(serviceToken) {
+                    builder.addServiceToken(serviceToken);
+                }, this);
+    
+                expected = serviceTokens.length;
+                function next() {
+                    if (serviceTokens.length == 0)
+                        return;
+                    var token = serviceTokens[0];
+                    builder.excludeServiceToken(token);
+                    serviceTokens.splice(0, 1);
+                    builder.getHeader({
+                        result: function(messageHeader) {
+                            expect(Arrays.containEachOther(messageHeader.serviceTokens, serviceTokens)).toBeTruthy();
+                            ++count;
+                            next();
+                        },
+                        error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                    });
+                }
+                next();
+            });
+            waitsFor(function() { return count == expected; }, "service tokens to be processed", 1000);
+        });
+
 		it("delete service token", function() {
 			// The service token must exist before it can be deleted.
 			var serviceToken;
@@ -1440,6 +1487,62 @@ describe("MessageBuilder", function() {
 				throw new Error("Deleted service token not found.");
 			});
 		});
+
+        it("delete service token using alternate parameters", function() {
+            // The service token must exist before it can be deleted.
+            var serviceToken;
+            runs(function() {
+                var data = new Uint8Array(1);
+                random.nextBytes(data);
+                ServiceToken.create(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, null, new NullCryptoContext(), {
+                    result: function(x) { serviceToken = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return serviceToken; }, "serviceToken not received", MslTestConstants.TIMEOUT);
+
+            var builder;
+            runs(function() {
+                messageFactory.createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN, null, {
+                    result: function(x) { builder = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return builder; }, "builder not received", MslTestConstants.TIMEOUT);
+            
+            var deleted = false;
+            runs(function() {
+                builder.addServiceToken(serviceToken);
+    
+                // Delete the service token.
+                builder.deleteServiceToken(serviceToken, {
+                    result: function(x) { deleted = (x === builder); },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return deleted; }, "service token to be deleted", MslTestConstants.TIMEOUT);
+
+            var messageHeader;
+            runs(function() {
+                builder.getHeader({
+                    result: function(x) { messageHeader = x; },
+                    error: function(e) { expect(function() { throw e; }).not.toThrow(); }
+                });
+            });
+            waitsFor(function() { return messageHeader; }, "messageHeader not received", MslTestConstants.TIMEOUT);
+            
+            runs(function() {
+                var tokens = messageHeader.serviceTokens;
+                for (var i = 0; i < tokens.length; ++i) {
+                    var token = tokens[i];
+                    if (token.name == SERVICE_TOKEN_NAME) {
+                        expect(token.data.length).toEqual(0);
+                        return;
+                    }
+                }
+                throw new Error("Deleted service token not found.");
+            });
+        });
 
 		it("delete unknown service token", function() {
 			var builder;

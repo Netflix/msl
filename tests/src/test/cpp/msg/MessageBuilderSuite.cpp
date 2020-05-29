@@ -936,6 +936,27 @@ TEST_F(MessageBuilderTest_CreateRequest, excludeServiceToken)
 	}
 }
 
+TEST_F(MessageBuilderTest_CreateRequest, excludeServiceTokenAlternate)
+{
+    shared_ptr<MessageBuilder> builder = messageFactory->createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
+         serviceToken != serviceTokens.end();
+         ++serviceToken)
+    {
+        builder->addServiceToken(*serviceToken);
+    }
+
+    set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens.begin();
+    while (tokens != serviceTokens.end()) {
+        shared_ptr<ServiceToken> token = *tokens;
+        builder->excludeServiceToken(token);
+        serviceTokens.erase(tokens++);
+        shared_ptr<MessageHeader> messageHeader = builder->getHeader();
+        EXPECT_TRUE(MslTestUtils::equal(messageHeader->getServiceTokens(), serviceTokens));
+    }
+}
+
 TEST_F(MessageBuilderTest_CreateRequest, deleteServiceToken)
 {
 	shared_ptr<MessageBuilder> builder = messageFactory->createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
@@ -961,6 +982,33 @@ TEST_F(MessageBuilderTest_CreateRequest, deleteServiceToken)
 		}
 	}
 	ADD_FAILURE() << "Deleted service token not found";
+}
+
+TEST_F(MessageBuilderTest_CreateRequest, deleteServiceTokenAlternate)
+{
+    shared_ptr<MessageBuilder> builder = messageFactory->createRequest(trustedNetCtx, MASTER_TOKEN, USER_ID_TOKEN);
+
+    // The service token must exist before it can be deleted.
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
+    random.nextBytes(*data);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(trustedNetCtx, SERVICE_TOKEN_NAME, data, MASTER_TOKEN, USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    builder->addServiceToken(serviceToken);
+
+    // Delete the service token.
+    builder->deleteServiceToken(serviceToken);
+    shared_ptr<MessageHeader> messageHeader = builder->getHeader();
+    set<shared_ptr<ServiceToken>> tokens = messageHeader->getServiceTokens();
+    for (set<shared_ptr<ServiceToken>>::iterator it = tokens.begin();
+         it != tokens.end();
+         ++it)
+    {
+        shared_ptr<ServiceToken> token = *it;
+        if (token->getName() == SERVICE_TOKEN_NAME) {
+            EXPECT_EQ(static_cast<size_t>(0), token->getData()->size());
+            return;
+        }
+    }
+    ADD_FAILURE() << "Deleted service token not found";
 }
 
 TEST_F(MessageBuilderTest_CreateRequest, deleteUnknownServiceToken)
@@ -1131,6 +1179,29 @@ TEST_F(MessageBuilderTest_CreateRequest, excludePeerServiceToken)
 	}
 }
 
+TEST_F(MessageBuilderTest_CreateRequest, excludePeerServiceTokenAlternate)
+{
+    shared_ptr<MessageBuilder> builder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    set<shared_ptr<ServiceToken>> serviceTokens = MslTestUtils::getServiceTokens(p2pCtx, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+    for (set<shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens.begin();
+         serviceToken != serviceTokens.end();
+         ++serviceToken)
+    {
+        builder->addPeerServiceToken(*serviceToken);
+    }
+
+    set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens.begin();
+    while (tokens != serviceTokens.end()) {
+        shared_ptr<ServiceToken> token = *tokens;
+        builder->excludePeerServiceToken(token);
+        serviceTokens.erase(tokens++);
+        EXPECT_TRUE(MslTestUtils::equal(serviceTokens, builder->getPeerServiceTokens()));
+        shared_ptr<MessageHeader> messageHeader = builder->getHeader();
+        EXPECT_TRUE(MslTestUtils::equal(serviceTokens, messageHeader->getPeerServiceTokens()));
+    }
+}
+
 TEST_F(MessageBuilderTest_CreateRequest, deletePeerServiceToken)
 {
 	shared_ptr<MessageBuilder> builder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
@@ -1157,6 +1228,34 @@ TEST_F(MessageBuilderTest_CreateRequest, deletePeerServiceToken)
 		}
 	}
 	ADD_FAILURE() << "Deleted peer service token not found";
+}
+
+TEST_F(MessageBuilderTest_CreateRequest, deletePeerServiceTokenAlternate)
+{
+    shared_ptr<MessageBuilder> builder = messageFactory->createRequest(p2pCtx, MASTER_TOKEN, USER_ID_TOKEN);
+    builder->setPeerAuthTokens(PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN);
+
+    // The service token must exist before it can be deleted.
+    shared_ptr<ByteArray> data = make_shared<ByteArray>(1);
+    random.nextBytes(*data);
+    shared_ptr<ServiceToken> serviceToken = make_shared<ServiceToken>(p2pCtx, SERVICE_TOKEN_NAME, data, PEER_MASTER_TOKEN, PEER_USER_ID_TOKEN, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
+    builder->addPeerServiceToken(serviceToken);
+
+    // Delete the service token.
+    builder->deletePeerServiceToken(serviceToken);
+    shared_ptr<MessageHeader> messageHeader = builder->getHeader();
+    set<shared_ptr<ServiceToken>> tokens = messageHeader->getPeerServiceTokens();
+    for (set<shared_ptr<ServiceToken>>::iterator it = tokens.begin();
+         it != tokens.end();
+         ++it)
+    {
+        shared_ptr<ServiceToken> token = *it;
+        if (token->getName() == SERVICE_TOKEN_NAME) {
+            EXPECT_EQ(static_cast<size_t>(0), token->getData()->size());
+            return;
+        }
+    }
+    ADD_FAILURE() << "Deleted peer service token not found";
 }
 
 TEST_F(MessageBuilderTest_CreateRequest, deleteUnknownPeerServiceToken)
