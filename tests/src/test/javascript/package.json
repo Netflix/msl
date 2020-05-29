@@ -26,8 +26,8 @@
   "devDependencies": {
     "ec-key": "0.0.2",
     "elliptic": "^6.4.0",
-    "jshint": "^2.9.5",
-    "jsrsasign": "^7.2.2",
+    "jshint": "^2.11.1",
+    "jsrsasign": "^8.0.15",
     "ursa": "^0.9.4"
   }
 }

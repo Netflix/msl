@@ -39,7 +39,7 @@
     ]
   },
   "devDependencies": {
-    "jshint": "^2.9.6",
-    "jsrsasign": "^7.2.2"
+    "jshint": "^2.11.1",
+    "jsrsasign": "^8.0.15"
   }
 }
