@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <vector>
 #include <openssl/x509.h>
+#include <openssl/opensslv.h>
 
 using namespace std;
 using namespace netflix::msl;
@@ -101,9 +102,15 @@ public:
     {
         if (!rsa.get())
             throw MslInternalException("RsaKey not initialized");
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         pubMod = extractBignum(rsa.get()->n);
         pubExp = extractBignum(rsa.get()->e);
         privExp = extractBignum(rsa.get()->d);
+#else
+        pubMod = extractBignum(RSA_get0_n(rsa.get()));
+        pubExp = extractBignum(RSA_get0_e(rsa.get()));
+        privExp = extractBignum(RSA_get0_d(rsa.get()));
+#endif
     }
 private:
     ScopedDisposer<RSA, void, RSA_free> rsa;

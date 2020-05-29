@@ -25,6 +25,7 @@
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/opensslv.h>
 #include <rsaconverter/librsaconverter.h>
 #include <algorithm>
 #include <cassert>
@@ -432,6 +433,7 @@ shared_ptr<RsaEvpKey> RsaEvpKey::fromRaw(const shared_ptr<ByteArray>& pubMod,
     ScopedDisposer<RSA, void, RSA_free> rsa(RSA_new());
     assert(nBn);  // must always have n
     assert(eBn);  // must always have e
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     rsa.get()->n = nBn.release();
     rsa.get()->e = eBn.release();
     rsa.get()->d = (dBn) ? dBn.release() : NULL;
@@ -440,6 +442,18 @@ shared_ptr<RsaEvpKey> RsaEvpKey::fromRaw(const shared_ptr<ByteArray>& pubMod,
     rsa.get()->dmp1 = (dpBn) ? dpBn.release() : NULL;
     rsa.get()->dmq1 = (dqBn) ? dqBn.release() : NULL;
     rsa.get()->iqmp = (uBn) ? uBn.release() : NULL;
+#else
+    RSA_set0_key(rsa.get(),
+                 nBn.release(), eBn.release(),
+                 (dBn) ? dBn.release() : NULL);
+    RSA_set0_factors(rsa.get(),
+                     (pBn) ? pBn.release() : NULL,
+                     (qBn) ? qBn.release() : NULL);
+    RSA_set0_crt_params(rsa.get(),
+                        (dpBn) ? dpBn.release() : NULL,
+                        (dqBn) ? dqBn.release() : NULL,
+                        (uBn) ? uBn.release() : NULL);
+#endif
 
     // Convert the RSA key to an EVP_PKEY
     ScopedDisposer<EVP_PKEY, void, EVP_PKEY_free> pkey(EVP_PKEY_new());
@@ -469,14 +483,24 @@ void RsaEvpKey::toRaw(shared_ptr<ByteArray>& pubMod, shared_ptr<ByteArray>& pubE
     ScopedDisposer<RSA, void, RSA_free> rsa(EVP_PKEY_get1_RSA(key.get()));
     if (!rsa.get())
         throw MslCryptoException(MslError::KEY_EXPORT_ERROR, "Could not convert EVP_PKEY to RSA key.");
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     shared_ptr<ByteArray> modulus = bignumToByteArray(rsa.get()->n);
     shared_ptr<ByteArray> publicExponent = bignumToByteArray(rsa.get()->e);
+#else
+    shared_ptr<ByteArray> modulus = bignumToByteArray(RSA_get0_n(rsa.get()));
+    shared_ptr<ByteArray> publicExponent = bignumToByteArray(RSA_get0_e(rsa.get()));
+#endif
     if (!modulus || !publicExponent)
         throw MslCryptoException(MslError::KEY_EXPORT_ERROR, "Invalid RSA key.");
     pubMod = modulus;
     pubExp = publicExponent;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     if (rsa.get()->d) {
         shared_ptr<ByteArray> privateExponent = bignumToByteArray(rsa.get()->d);
+#else
+    if (RSA_get0_d(rsa.get())) {
+        shared_ptr<ByteArray> privateExponent = bignumToByteArray(RSA_get0_d(rsa.get()));
+#endif
         if (!privateExponent)
             throw MslCryptoException(MslError::KEY_EXPORT_ERROR, "Invalid RSA private key.");
         privExp = privateExponent;

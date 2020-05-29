@@ -28,6 +28,7 @@
 #include <MslEncodingException.h>
 #include <openssl/x509.h>
 #include <openssl/bn.h>
+#include <openssl/opensslv.h>
 #include <memory>
 #include <set>
 #include <string>
@@ -137,15 +138,27 @@ public:
     }
     shared_ptr<ByteArray> getPublicExponent() const
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         return BigNumToByteArray(rsa.get()->e);
+#else
+        return BigNumToByteArray(RSA_get0_e(rsa.get()));
+#endif
     }
     shared_ptr<ByteArray> getPrivateExponent() const
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         return BigNumToByteArray(rsa.get()->d);
+#else
+        return BigNumToByteArray(RSA_get0_d(rsa.get()));
+#endif
     }
     shared_ptr<ByteArray> getModulus() const
     {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         return BigNumToByteArray(rsa.get()->n);
+#else
+        return BigNumToByteArray(RSA_get0_n(rsa.get()));
+#endif
     }
 private:
     ScopedDisposer<RSA, void, RSA_free> rsa;
@@ -213,14 +226,22 @@ shared_ptr<ByteArray> getModulus(shared_ptr<PublicKey> key)
 {
     ScopedDisposer<RSA, void, RSA_free> rsa(getRsaKeyFromSpki(key));
     assert(rsa);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BigNumToByteArray(rsa.get()->n);
+#else
+    return BigNumToByteArray(RSA_get0_n(rsa.get()));
+#endif
 }
 
 shared_ptr<ByteArray> getPublicExponent(shared_ptr<PublicKey> key)
 {
     ScopedDisposer<RSA, void, RSA_free> rsa(getRsaKeyFromSpki(key));
     assert(rsa);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BigNumToByteArray(rsa.get()->e);
+#else
+    return BigNumToByteArray(RSA_get0_e(rsa.get()));
+#endif
 }
 
 EVP_PKEY * getEvpPkeyFromPkcs8(shared_ptr<PrivateKey> key)
@@ -256,7 +277,11 @@ shared_ptr<ByteArray> getModulus(shared_ptr<PrivateKey> key)
     const RSA * const rsa = EVP_PKEY_get1_RSA(pkey.get());
     assert(rsa);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BigNumToByteArray(rsa->n);
+#else
+    return BigNumToByteArray(RSA_get0_n(rsa));
+#endif
 }
 
 shared_ptr<ByteArray> getPublicExponent(shared_ptr<PrivateKey> key)
@@ -268,7 +293,11 @@ shared_ptr<ByteArray> getPublicExponent(shared_ptr<PrivateKey> key)
     const RSA * const rsa = EVP_PKEY_get1_RSA(pkey.get());
     assert(rsa);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BigNumToByteArray(rsa->e);
+#else
+    return BigNumToByteArray(RSA_get0_e(rsa));
+#endif
 }
 
 shared_ptr<ByteArray> getPrivateExponent(shared_ptr<PrivateKey> key)
@@ -280,7 +309,11 @@ shared_ptr<ByteArray> getPrivateExponent(shared_ptr<PrivateKey> key)
     const RSA * const rsa = EVP_PKEY_get1_RSA(pkey.get());
     assert(rsa);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     return BigNumToByteArray(rsa->d);
+#else
+    return BigNumToByteArray(RSA_get0_d(rsa));
+#endif
 }
 
 } // namespace anonymous

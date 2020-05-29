@@ -19,6 +19,7 @@
 #include <MslInternalException.h>
 #include <numerics/safe_math.h>
 #include <openssl/evp.h>
+#include <openssl/opensslv.h>
 #include <util/ScopedDisposer.h>
 
 using namespace std;
@@ -34,7 +35,11 @@ void digest(const string& spec, const ByteArray& data, ByteArray& md)
 {
     OpenSslErrStackTracer errTracer;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_destroy> evpMd(EVP_MD_CTX_create());
+#else
+    ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_free> evpMd(EVP_MD_CTX_new());
+#endif
     if (!evpMd.get())
         throw MslInternalException("digest: EVP_MD_CTX_create unable to create EVP_MD_CTX");
 

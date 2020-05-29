@@ -29,6 +29,7 @@
 #include <openssl/evp.h>
 
 #include <openssl/x509.h>
+#include <openssl/opensslv.h>
 #include <stdint.h>
 #include <util/ScopedDisposer.h>
 #include <vector>
@@ -114,7 +115,11 @@ void sign(EVP_PKEY* pkey, const ByteArray& data, ByteArray& signature)
     if (EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA)
         throw MslCryptoException(MslError::INVALID_PRIVATE_KEY);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_destroy> ctx(EVP_MD_CTX_create());
+#else
+    ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_free> ctx(EVP_MD_CTX_new());
+#endif
     if (ctx.isEmpty())
         throw MslInternalException("EVP_MD_CTX_new failed.");
     EVP_PKEY_CTX* pctx = NULL;  // Owned by |ctx|.
@@ -147,7 +152,11 @@ bool verify(EVP_PKEY* pkey, const ByteArray& data, const ByteArray& signature)
     if (EVP_PKEY_base_id(pkey) != EVP_PKEY_RSA)
         throw MslCryptoException(MslError::INVALID_PUBLIC_KEY);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_destroy> ctx(EVP_MD_CTX_create());
+#else
+    ScopedDisposer<EVP_MD_CTX, void, EVP_MD_CTX_free> ctx(EVP_MD_CTX_new());
+#endif
     if (ctx.isEmpty())
         throw MslInternalException("EVP_MD_CTX_new failed.");
     EVP_PKEY_CTX* pctx = NULL;  // Owned by |ctx|.
