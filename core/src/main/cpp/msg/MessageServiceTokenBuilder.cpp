@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -277,7 +277,12 @@ bool MessageServiceTokenBuilder::addUserBoundPeerServiceToken(const string& name
 	return true;
 }
 
-bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name)
+bool MessageServiceTokenBuilder::excludePrimaryServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludePrimaryServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
 	// Exclude the service token if found.
 	set<shared_ptr<ServiceToken>> serviceTokens = builder_->getServiceTokens();
@@ -285,8 +290,11 @@ bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name)
 		 serviceToken != serviceTokens.end();
 		 ++serviceToken)
 	{
-		if ((*serviceToken)->getName() == name) {
-			builder_->excludeServiceToken(name);
+		if ((*serviceToken)->getName() == name &&
+		    (*serviceToken)->isMasterTokenBound() == masterTokenBound &&
+		    (*serviceToken)->isUserIdTokenBound() == userIdTokenBound)
+		{
+			builder_->excludeServiceToken(name, masterTokenBound, userIdTokenBound);
 			return true;
 		}
 	}
@@ -295,7 +303,12 @@ bool MessageServiceTokenBuilder::excludePrimaryServiceToken(const string& name)
 	return false;
 }
 
-bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name)
+bool MessageServiceTokenBuilder::excludePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return excludePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
 	// Exclude the service token if found.
 	set<shared_ptr<ServiceToken>> serviceTokens = builder_->getPeerServiceTokens();
@@ -303,8 +316,11 @@ bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name)
 		 serviceToken != serviceTokens.end();
 		 ++serviceToken)
 	{
-		if ((*serviceToken)->getName() == name) {
-			builder_->excludePeerServiceToken(name);
+		if ((*serviceToken)->getName() == name &&
+	        (*serviceToken)->isMasterTokenBound() == masterTokenBound &&
+	        (*serviceToken)->isUserIdTokenBound() == userIdTokenBound)
+		{
+			builder_->excludePeerServiceToken(name, masterTokenBound, userIdTokenBound);
 			return true;
 		}
 	}
@@ -313,7 +329,12 @@ bool MessageServiceTokenBuilder::excludePeerServiceToken(const string& name)
 	return false;
 }
 
-bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name)
+bool MessageServiceTokenBuilder::deletePrimaryServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deletePrimaryServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
     // Mark the service token for deletion if found.
 	set<shared_ptr<ServiceToken>> serviceTokens = builder_->getServiceTokens();
@@ -321,8 +342,11 @@ bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name)
 		 serviceToken != serviceTokens.end();
 		 ++serviceToken)
 	{
-		if ((*serviceToken)->getName() == name) {
-			builder_->deleteServiceToken(name);
+		if ((*serviceToken)->getName() == name &&
+	        (*serviceToken)->isMasterTokenBound() == masterTokenBound &&
+	        (*serviceToken)->isUserIdTokenBound() == userIdTokenBound)
+		{
+			builder_->deleteServiceToken(name, masterTokenBound, userIdTokenBound);
 			return true;
 		}
 	}
@@ -331,7 +355,12 @@ bool MessageServiceTokenBuilder::deletePrimaryServiceToken(const string& name)
 	return false;
 }
 
-bool MessageServiceTokenBuilder::deletePeerServiceToken(const string& name)
+bool MessageServiceTokenBuilder::deletePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
+{
+    return deletePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+bool MessageServiceTokenBuilder::deletePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
 {
     // Mark the service token for deletion if found.
 	set<shared_ptr<ServiceToken>> serviceTokens = builder_->getPeerServiceTokens();
@@ -339,8 +368,11 @@ bool MessageServiceTokenBuilder::deletePeerServiceToken(const string& name)
 		 serviceToken != serviceTokens.end();
 		 ++serviceToken)
 	{
-		if ((*serviceToken)->getName() == name) {
-			builder_->deletePeerServiceToken(name);
+		if ((*serviceToken)->getName() == name &&
+	        (*serviceToken)->isMasterTokenBound() == masterTokenBound &&
+	        (*serviceToken)->isUserIdTokenBound() == userIdTokenBound)
+		{
+			builder_->deletePeerServiceToken(name, masterTokenBound, userIdTokenBound);
 			return true;
 		}
 	}

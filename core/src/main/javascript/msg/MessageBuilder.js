@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,21 +157,26 @@
 
             // Set the initial service tokens based on the MSL store and provided
             // service tokens.
-            var _serviceTokens = {};
+            var _serviceTokens = [];
             var tokens = ctx.getMslStore().getServiceTokens(serviceMasterToken, userIdToken);
-            tokens.forEach(function(token) {
-                _serviceTokens[token.name] = token;
-            }, this);
+            _serviceTokens.push.apply(_serviceTokens, tokens);
             if (serviceTokens) {
                 serviceTokens.forEach(function(token) {
-                    _serviceTokens[token.name] = token;
+                    // Make sure the service token is properly bound.
+                    if (token.isMasterTokenBound() && !token.isBoundTo(serviceMasterToken))
+                        throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + token + "; mt " + serviceMasterToken).setMasterToken(serviceMasterToken);
+                    if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken))
+                        throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + token + "; uit " + userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken);
+
+                    // Add the service token.
+                    _serviceTokens.push(token);
                 }, this);
             }
 
             // Set the peer-to-peer data.
             var _peerMasterToken;
             var _peerUserIdToken;
-            var _peerServiceTokens = {};
+            var _peerServiceTokens = [];
             if (ctx.isPeerToPeer()) {
                 _peerMasterToken = peerMasterToken;
                 _peerUserIdToken = peerUserIdToken;
@@ -187,12 +192,17 @@
                 // Set the initial peer service tokens based on the MSL store and
                 // provided peer service tokens.
                 var peerTokens = ctx.getMslStore().getServiceTokens(peerServiceMasterToken, peerUserIdToken);
-                peerTokens.forEach(function(peerToken) {
-                    _peerServiceTokens[peerToken.name] = peerToken;
-                }, this);
+                _peerServiceTokens.push.apply(_peerServiceTokens, peerTokens);
                 if (peerServiceTokens) {
                     peerServiceTokens.forEach(function(peerToken) {
-                        _peerServiceTokens[peerToken.name] = peerToken;
+                        // Make sure the service token is properly bound.
+                        if (peerToken.isMasterTokenBound() && !peerToken.isBoundTo(peerMasterToken))
+                            throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + peerToken + "; mt " + peerMasterToken).setMasterToken(peerMasterToken);
+                        if (peerToken.isUserIdTokenBound() && !peerToken.isBoundTo(peerUserIdToken))
+                            throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + peerToken + "; uit " + peerUserIdToken).setMasterToken(peerMasterToken).setUserIdToken(peerUserIdToken);
+
+                        // Add the peer service token.
+                        _peerServiceTokens.push(peerToken);
                     }, this);
                 }
             }
@@ -244,14 +254,14 @@
                 _userAuthData: { value: _userAuthData, writable: true, enumerable: false, configurable: false },
                 /** @type {UserIdToken} */
                 _userIdToken: { value: _userIdToken, writable: true, enumerable: false, configurable: false },
-                /** @type {Object.<name,ServiceToken>} */
+                /** @type {Array<ServiceToken>} */
                 _serviceTokens: { value: _serviceTokens, writable: false, enumerable: false, configurable: false },
 
                 /** @type {MasterToken} */
                 _peerMasterToken: { value: _peerMasterToken, writable: true, enumerable: false, configurable: false },
                 /** @type {UserIdToken} */
                 _peerUserIdToken: { value: _peerUserIdToken, writable: true, enumerable: false, configurable: false },
-                /** @type {Object.<name,ServiceToken>} */
+                /** @type {Array<ServiceToken>} */
                 _peerServiceTokens: { value: _peerServiceTokens, writable: false, enumerable: false, configurable: false },
             };
             Object.defineProperties(this, props);
@@ -361,9 +371,6 @@
             var self = this;
             AsyncExecutor(callback, function() {
                 var response = (this._keyExchangeData) ? this._keyExchangeData.keyResponseData : null;
-                var tokens = [];
-                for (var name in this._serviceTokens)
-                    tokens.push(this._serviceTokens[name]);
                 var keyRequests = [];
                 for (var key in this._keyRequestData)
                     keyRequests.push(this._keyRequestData[key]);
@@ -375,11 +382,8 @@
                 } else {
                     nonReplayableId = null;
                 }
-                var headerData = new MessageHeader.HeaderData(this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, tokens);
-                var peerTokens = [];
-                for (var peerName in this._peerServiceTokens)
-                    peerTokens.push(this._peerServiceTokens[peerName]);
-                var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, peerTokens);
+                var headerData = new MessageHeader.HeaderData(this._messageId, nonReplayableId, this._renewable, this._handshake, this._capabilities, keyRequests, response, this._userAuthData, this._userIdToken, this._serviceTokens);
+                var peerData = new MessageHeader.HeaderPeerData(this._peerMasterToken, this._peerUserIdToken, this._peerServiceTokens);
                 this.createMessageHeader(this._ctx, this._entityAuthData, this._masterToken, headerData, peerData, callback);
             }, self);
         },
@@ -519,28 +523,29 @@
             }
 
             // Remove any service tokens that will no longer be bound.
-            var tokens = [];
-            for (var name in this._serviceTokens)
-                tokens.push(this._serviceTokens[name]);
-            tokens.forEach(function(token) {
-                if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken) ||
-                    token.isMasterTokenBound() && !token.isBoundTo(masterToken))
+            for (var i = this._serviceTokens.length - 1; i >= 0; --i) {
+                var token = this._serviceTokens[i];
+                if ((token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) ||
+                    (token.isMasterTokenBound() && !token.isBoundTo(masterToken)))
                 {
-                    delete this._serviceTokens[token.name];
+                    this._serviceTokens.splice(i, 1);
                 }
-            }, this);
+            }
 
             // Add any service tokens based on the MSL store replacing ones already
             // set as they may be newer. The application will have a chance to
             // manage the service tokens before the message is constructed and
             // sent.
             storedTokens.forEach(function(token) {
-                this._serviceTokens[token.name] = token;
+                this.excludeServiceToken(token.name, token.isMasterTokenBound(), token.isUserIdTokenBound());
+                this._serviceTokens.push(token);
             }, this);
 
             // Set the new authentication tokens.
             this._masterToken = masterToken;
             this._userIdToken = userIdToken;
+            if (!this._userIdToken)
+                this._userAuthData = null;
         },
 
         /**
@@ -647,7 +652,8 @@
 
         /**
          * <p>Add a service token to the message. This will overwrite any service
-         * token with the same name.</p>
+         * token with the same name that is also bound to the master token or user
+         * ID token in the same way as the new service token.</p>
          *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
@@ -674,14 +680,18 @@
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._userIdToken))
                 throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + this._userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(this._userIdToken);
 
+            // Remove any existing service token with the same name and bound state.
+            this.excludeServiceToken(serviceToken.name, serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+            
             // Add the service token.
-            this._serviceTokens[serviceToken.name] = serviceToken;
+            this._serviceTokens.push(serviceToken);
             return this;
         },
 
         /**
          * <p>Add a service token to the message if a service token with the same
-         * name does not already exist.</p>
+         * name that is also bound to the master token or user ID token in the same
+         * way as the new service token does not already exist.</p>
          *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
@@ -693,49 +703,175 @@
          *         built.
          */
         addServiceTokenIfAbsent: function addServiceTokenIfAbsent(serviceToken) {
-            if (!this._serviceTokens[serviceToken.name])
-                this.addServiceToken(serviceToken);
+            for (var i = this._serviceTokens.length - 1; i >= 0; --i) {
+                var token = this._serviceTokens[i];
+                if (token.name == serviceToken.name &&
+                    token.isMasterTokenBound() == serviceToken.isMasterTokenBound() &&
+                    token.isUserIdTokenBound() == serviceToken.isUserIdTokenBound())
+                {
+                    return this;
+                }
+            }
+            this.addServiceToken(serviceToken);
             return this;
         },
 
         /**
-         * <p>Exclude a service token from the message.</p>
-         *
-         * <p>The service token will not be sent in the built message. This is not
-         * the same as requesting the remote entity delete a service token.</p>
-         *
-         * @param {string} name service token name.
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
          * @return {MessageBuilder} this.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
+         * 
+         * <p>For example, if a name is provided and the master token bound
+         * parameter is true while the user ID token bound parameter is false, then
+         * the master token bound service token with the same name will be excluded
+         * from the message. If a name is provided but both other parameters are
+         * false, then only an unbound service token with the same name will be
+         * excluded.</p>
+         *
+         * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
+         * @return {MessageBuilder} this.
+         * 
+         * <hr>
+         * 
+         * <p>In either case the service token will not be sent in the built
+         * message. This is not the same as requesting the remote entity delete
+         * a service token.</p>
          */
-        excludeServiceToken: function excludeServiceToken(name) {
-            delete this._serviceTokens[name];
+        excludeServiceToken: function excludeServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound;
+            
+            // Handle the first form.
+            if (arguments.length == 1) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+            }
+            
+            // Handle the second form.
+            else if (arguments.length = 3) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
+            for (var i = this._serviceTokens.length - 1; i >= 0; --i) {
+                var token = this._serviceTokens[i];
+                if (token.name == name &&
+                    token.isMasterTokenBound() == masterTokenBound &&
+                    token.isUserIdTokenBound() == userIdTokenBound)
+                {
+                    this._serviceTokens.splice(i, 1);
+                }
+            }
             return this;
         },
 
         /**
-         * <p>Mark a service token for deletion, if it exists. Otherwise this
-         * method does nothing.</p>
-         *
-         * <p>The service token will be sent in the built message with an empty
-         * value. This is not the same as requesting that a service token be
-         * excluded from the message.</p>
-         *
-         * @param {string} name service token name.
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
          * @param {{result: function(MessageBuilder), error: function(Error)}}
          *        callback the callback that will receive this message builder
          *        upon completion or any thrown exceptions.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
+         * 
+         * <p>For example, if a name is provided and the master token bound
+         * parameter is true while the user ID token bound parameter is false, then
+         * the master token bound service token with the same name will be excluded
+         * from the message. If a name is provided but both other parameters are
+         * false, then only an unbound service token with the same name will be
+         * excluded.</p>
+         *
+         * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to delete a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to delete a user ID token bound service
+         *        token.
+         * @param {{result: function(MessageBuilder), error: function(Error)}}
+         *        callback the callback that will receive this message builder
+         *        upon completion or any thrown exceptions.
+         * 
+         * <hr>
+         *
+         * <p>In either case the service token will be marked for deletion and
+         * sent in the built message with an empty value. This is not the same as
+         * requesting that a service token be excluded from the message.</p>
          */
-        deleteServiceToken: function deleteServiceToken(name, callback) {
+        deleteServiceToken: function deleteServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound,
+                callback;
+            
+            // Handle the first form.
+            if (arguments.length == 2) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+                callback = arguments[1];
+            }
+
+            // Handle the second form.
+            else if (arguments.length = 4) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+                callback = arguments[3];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
             var self = this;
             AsyncExecutor(callback, function() {
-                // Do nothing if the original token does not exist.
-                var originalToken = this._serviceTokens[name];
-                if (!originalToken)
-                    return this;
-
                 // Rebuild the original token with empty service data.
-                var masterToken = originalToken.isMasterTokenBound() ? this._masterToken : null;
-                var userIdToken = originalToken.isUserIdTokenBound() ? this._userIdToken : null;
+                var masterToken = masterTokenBound ? this._masterToken : null;
+                var userIdToken = userIdTokenBound ? this._userIdToken : null;
                 ServiceToken.create(this._ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext(), {
                     result: function(token) {
                         AsyncExecutor(callback, function() {
@@ -757,8 +893,7 @@
          */
         getServiceTokens: function getServiceTokens() {
             var tokens = [];
-            for (var name in this._serviceTokens)
-                tokens.push(this._serviceTokens[name]);
+            tokens.push.apply(tokens, this._serviceTokens);
             return tokens;
         },
 
@@ -786,7 +921,6 @@
          *
          * @param {MasterToken} masterToken peer master token to set. May be null.
          * @param {UserIdToken} userIdToken peer user ID token to set. May be null.
-         * @return {MessageBuilder} this.
          * @throws MslMessageException if the peer user ID token is not bound to
          *         the peer master token.
          */
@@ -811,36 +945,31 @@
             }
 
             // Remove any peer service tokens that will no longer be bound.
-            var names = Object.keys(this._peerServiceTokens);
-            names.forEach(function(name) {
-                var token = this._peerServiceTokens[name];
-                if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) {
-                    delete this._peerServiceTokens[name];
-                    return;
+            for (var i = this._peerServiceTokens.length - 1; i >= 0; --i) {
+                var token = this._peerServiceTokens[i];
+                if ((token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) ||
+                    (token.isMasterTokenBound() && !token.isBoundTo(masterToken)))
+                {
+                    this._peerServiceTokens.slice(i, 1);
                 }
-                if (token.isMasterTokenBound() && !token.isBoundTo(masterToken)) {
-                    delete this._peerServiceTokens[name];
-                    return;
-                }
-            }, this);
+            }
 
             // Add any peer service tokens based on the MSL store if they are not
             // already set (as a set one may be newer than the stored one).
             storedTokens.forEach(function(token) {
-                var name = token.name;
-                if (!this._peerServiceTokens[name])
-                    this._peerServiceTokens[name] = token;
+                this.excludePeerServiceToken(token.name, token.isMasterTokenBound(), token.isUserIdTokenBound());
+                this._peerServiceTokens.push(token);
             }, this);
 
             // Set the new peer authentication tokens.
             this._peerUserIdToken = userIdToken;
             this._peerMasterToken = masterToken;
-            return this;
         },
 
         /**
          * <p>Add a peer service token to the message. This will overwrite any peer
-         * service token with the same name.</p>
+         * service token with the same name that is also bound to a peer master
+         * token or peer user ID token in the same way as the new service token.</p>
          *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
@@ -852,21 +981,30 @@
          *         being built.
          */
         addPeerServiceToken: function addPeerServiceToken(serviceToken) {
+            // If we are not in peer-to-peer mode then peer service tokens cannot
+            // be set.
             if (!this._ctx.isPeerToPeer())
                 throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
+
+            // Make sure the service token is properly bound.
             if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(this._peerMasterToken))
                 throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + this._peerMasterToken).setMasterToken(this._peerMasterToken);
             if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(this._peerUserIdToken))
                 throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + this._peerUserIdToken).setMasterToken(this._peerMasterToken).setUserIdToken(this._peerUserIdToken);
 
+            // Remove any existing service token with the same name and bound state.
+            this.excludePeerServiceToken(serviceToken.name, serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+            
             // Add the peer service token.
-            this._peerServiceTokens[serviceToken.name] = serviceToken;
+            this._peerServiceTokens.push(serviceToken);
             return this;
         },
 
         /**
          * <p>Add a peer service token to the message if a peer service token with
-         * the same name does not already exist.</p>
+         * the same name that is also bound to the peer master token or peer user
+         * ID token in the same way as the new service token does not already
+         * exist.</p>
          *
          * <p>Adding a service token with empty data indicates the recipient should
          * delete the service token.</p>
@@ -878,49 +1016,175 @@
          *         being built.
          */
         addPeerServiceTokenIfAbsent: function addPeerServiceTokenIfAbsent(serviceToken) {
-            if (!this._peerServiceTokens[serviceToken.name])
-                this.addPeerServiceToken(serviceToken);
+            for (var i = this._peerServiceTokens.length - 1; i >= 0; --i) {
+                var token = this._peerServiceTokens[i];
+                if (token.name == serviceToken.name &&
+                    token.isMasterTokenBound() == serviceToken.isMasterTokenBound() &&
+                    token.isUserIdTokenBound() == serviceToken.isUserIdTokenBound())
+                {
+                    return this;
+                }
+            }
+            this.addPeerServiceToken(serviceToken);
             return this;
         },
 
         /**
-         * <p>Exclude a peer service token from the message.</p>
-         *
-         * <p>The service token will not be sent in the built message. This is not
-         * the same as requesting the remote entity delete a service token.</p>
-         *
-         * @param {string} name service token name.
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
          * @return {MessageBuilder} this.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
+         * 
+         * <p>For example, if a name is provided and the master token bound
+         * parameter is true while the user ID token bound parameter is false, then
+         * the master token bound service token with the same name will be excluded
+         * from the message. If a name is provided but both other parameters are
+         * false, then only an unbound service token with the same name will be
+         * excluded.</p>
+         *
+         * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
+         * @return {MessageBuilder} this.
+         * 
+         * <hr>
+         * 
+         * <p>In either case the service token will not be sent in the built
+         * message. This is not the same as requesting the remote entity delete
+         * a service token.</p>
          */
-        excludePeerServiceToken: function excludePeerServiceToken(name) {
-            delete this._peerServiceTokens[name];
+        excludePeerServiceToken: function excludePeerServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound;
+        
+            // Handle the first form.
+            if (arguments.length == 1) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+            }
+
+            // Handle the second form.
+            else if (arguments.length = 3) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+            }
+
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
+            for (var i = this._peerServiceTokens.length - 1; i >= 0; --i) {
+                var token = this._peerServiceTokens[i];
+                if (token.name == name &&
+                    token.isMasterTokenBound() == masterTokenBound &&
+                    token.isUserIdTokenBound() == userIdTokenBound)
+                {
+                    this._peerServiceTokens.splice(i, 1);
+                }
+            }
             return this;
         },
 
         /**
-         * <p>Mark a peer service token for deletion, if it exists. Otherwise this
-         * method does nothing.</p>
-         *
-         * <p>The service token will be sent in the built message with an empty
-         * value. This is not the same as requesting that a service token be
-         * excluded from the message.</p>
-         *
-         * @param {string} name service token name.
+         * <p>This method has two acceptable parameter lists.</p>
+         * 
+         * <p>The first form accepts a service token and uses the token name
+         * and whether or not it is bound to a master token or to a user ID
+         * token. It does not require the token to be bound to the exact same
+         * master token or user ID token that will be used in the message.</p>
+         * 
+         * <p>This function is equivalent to calling the second form with the
+         * service token's properties.</p>
+         * 
+         * @param {ServiceToken} serviceToken the service token.
          * @param {{result: function(MessageBuilder), error: function(Error)}}
          *        callback the callback that will receive this message builder
          *        upon completion or any thrown exceptions.
+         * 
+         * <hr>
+         * 
+         * <p>The second form accepts a service token name and parameters
+         * indicating if the token must be bound to a master token and if the
+         * token must be bound to a user ID token. A false value for the master
+         * token bound or user ID token bound parameters restricts exclusion to
+         * tokens that are not bound to a master token or not bound to a user
+         * ID token respectively.</p>
+         * 
+         * <p>For example, if a name is provided and the master token bound
+         * parameter is true while the user ID token bound parameter is false, then
+         * the master token bound service token with the same name will be excluded
+         * from the message. If a name is provided but both other parameters are
+         * false, then only an unbound service token with the same name will be
+         * excluded.</p>
+         *
+         * @param {string} name service token name.
+         * @param {boolean} masterTokenBound true to delete a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to delete a user ID token bound service
+         *        token.
+         * @param {{result: function(MessageBuilder), error: function(Error)}}
+         *        callback the callback that will receive this message builder
+         *        upon completion or any thrown exceptions.
+         * 
+         * <hr>
+         *
+         * <p>In either case the service token will be marked for deletion and
+         * sent in the built message with an empty value. This is not the same as
+         * requesting that a service token be excluded from the message.</p>
          */
-        deletePeerServiceToken: function deletePeerServiceToken(name, callback) {
+        deletePeerServiceToken: function deletePeerServiceToken(/* variable arguments */) {
+            var name,
+                masterTokenBound,
+                userIdTokenBound,
+                callback;
+            
+            // Handle the first form.
+            if (arguments.length == 2) {
+                var serviceToken = arguments[0];
+                name = serviceToken.name;
+                masterTokenBound = serviceToken.isMasterTokenBound();
+                userIdTokenBound = serviceToken.isUserIdTokenBound();
+                callback = arguments[1];
+            }
+    
+            // Handle the second form.
+            else if (arguments.length = 4) {
+                name = arguments[0];
+                masterTokenBound = arguments[1];
+                userIdTokenBound = arguments[2];
+                callback = arguments[3];
+            }
+    
+            // Malformed arguments are not explicitly handled, just as with any
+            // other function.
+            
             var self = this;
             AsyncExecutor(callback, function() {
-                // Do nothing if the original token does not exist.
-                var originalToken = this._peerServiceTokens[name];
-                if (!originalToken)
-                    return this;
-
                 // Rebuild the original token with empty service data.
-                var peerMasterToken = originalToken.isMasterTokenBound() ? this._peerMasterToken : null;
-                var peerUserIdToken = originalToken.isUserIdTokenBound() ? this._peerUserIdToken : null;
+                var peerMasterToken = masterTokenBound ? this._peerMasterToken : null;
+                var peerUserIdToken = userIdTokenBound ? this._peerUserIdToken : null;
                 ServiceToken.create(this._ctx, name, EMPTY_DATA, peerMasterToken, peerUserIdToken, false, null, new NullCryptoContext(), {
                     result: function(token) {
                         AsyncExecutor(callback, function() {
@@ -942,8 +1206,7 @@
          */
         getPeerServiceTokens: function getPeerServiceTokens() {
             var tokens = [];
-            for (var name in this._peerServiceTokens)
-                tokens.push(this._peerServiceTokens[name]);
+            tokens.push.apply(tokens, this._peerServiceTokens);
             return tokens;
         },
     });

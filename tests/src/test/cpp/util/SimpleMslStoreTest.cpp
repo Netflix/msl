@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -711,9 +711,12 @@ TEST_F(SimpleMslStoreTest, removeMasterBoundServiceTokens)
 	set<shared_ptr<ServiceToken>> storedMasterBoundTokens = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
 	EXPECT_TRUE(MslTestUtils::equal(unboundTokens, storedMasterBoundTokens));
 
-	// This should only return the unbound tokens.
+	// This should only return the unbound and user-bound tokens.
+	set<shared_ptr<ServiceToken>> unboundAndUserBoundTokens;
+	unboundAndUserBoundTokens.insert(unboundTokens.begin(), unboundTokens.end());
+	unboundAndUserBoundTokens.insert(userBoundTokens.begin(), userBoundTokens.end());
 	set<shared_ptr<ServiceToken>> storedUserBoundTokens = store->getServiceTokens(masterToken, userIdToken);
-	EXPECT_TRUE(MslTestUtils::equal(unboundTokens, storedUserBoundTokens));
+	EXPECT_TRUE(MslTestUtils::equal(unboundAndUserBoundTokens, storedUserBoundTokens));
 
 	// This should only return the unbound tokens.
 	set<shared_ptr<ServiceToken>> storedUnboundTokens = store->getServiceTokens(NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
@@ -735,7 +738,7 @@ TEST_F(SimpleMslStoreTest, removeUserBoundServiceTokens)
 	store->addServiceTokens(userBoundTokens);
 	store->addServiceTokens(unboundTokens);
 
-	store->removeServiceTokens(NULL_NAME, masterToken, userIdToken);
+	store->removeServiceTokens(NULL_NAME, NULL_MASTER_TOKEN, userIdToken);
 
 	// This should only return the unbound and master bound-only tokens.
 	set<shared_ptr<ServiceToken>> storedMasterBoundTokens = store->getServiceTokens(masterToken, NULL_USER_ID_TOKEN);
@@ -819,7 +822,7 @@ TEST_F(SimpleMslStoreTest, removeNamedServiceTokens)
 		if (random->nextBoolean()) continue;
 		shared_ptr<ServiceToken> token = *tokens;
 		shared_ptr<string> name = make_shared<string>(token->getName());
-		store->removeServiceTokens(name, NULL_MASTER_TOKEN, NULL_USER_ID_TOKEN);
+		store->removeServiceTokens(name, token->isMasterTokenBound() ? masterToken : NULL_MASTER_TOKEN, token->isUserIdTokenBound() ? userIdToken : NULL_USER_ID_TOKEN);
 		removedTokens.insert(token);
 	}
 

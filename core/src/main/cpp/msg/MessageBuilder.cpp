@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,18 +152,26 @@ void MessageBuilder::initializeMessageBuilder(
 	// Set the initial service tokens based on the MSL store and provided
 	// service tokens.
 	set<shared_ptr<ServiceToken>> tokens = ctx_->getMslStore()->getServiceTokens(serviceMasterToken, userIdToken);
-	for (set<shared_ptr<ServiceToken>>::iterator token = tokens.begin();
-		 token != tokens.end();
-		 ++token)
-	{
-		serviceTokens_.insert(make_pair((*token)->getName(), *token));
-	}
+	serviceTokens_.insert(tokens.begin(), tokens.end());
 	for (set<shared_ptr<ServiceToken>>::iterator token = serviceTokens.begin();
 		 token != serviceTokens.end();
 		 ++token)
 	{
-		serviceTokens_.erase((*token)->getName());
-		serviceTokens_.insert(make_pair((*token)->getName(), *token));
+        // Make sure the service token is properly bound.
+        if ((*token)->isMasterTokenBound() && !(*token)->isBoundTo(serviceMasterToken)) {
+            stringstream ss;
+            ss << "st " << *token << "; mt " << serviceMasterToken;
+            throw MslMessageException(MslError::SERVICETOKEN_MASTERTOKEN_MISMATCH, ss.str()).setMasterToken(serviceMasterToken);
+        }
+        if ((*token)->isUserIdTokenBound() && !(*token)->isBoundTo(userIdToken)) {
+            stringstream ss;
+            ss << "st " << *token << "; uit " << userIdToken;
+            throw MslMessageException(MslError::SERVICETOKEN_USERIDTOKEN_MISMATCH, ss.str()).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken);
+        }
+
+		// Add the service token.
+        serviceTokens_.erase(*token);
+		serviceTokens_.insert(*token);
 	}
 
 	// Set the peer-to-peer data.
@@ -182,18 +190,26 @@ void MessageBuilder::initializeMessageBuilder(
 		// Set the initial peer service tokens based on the MSL store and
 		// provided peer service tokens.
 		set<shared_ptr<ServiceToken>> peerTokens = ctx_->getMslStore()->getServiceTokens(peerServiceMasterToken, peerUserIdToken);
-		for (set<shared_ptr<ServiceToken>>::iterator peerToken = peerTokens.begin();
-				peerToken != peerTokens.end();
-				++peerToken)
-		{
-			peerServiceTokens_.insert(make_pair((*peerToken)->getName(), *peerToken));
-		}
+		peerServiceTokens_.insert(peerTokens.begin(), peerTokens.end());
 		for (set<shared_ptr<ServiceToken>>::iterator peerToken = peerServiceTokens.begin();
 			 peerToken != peerServiceTokens.end();
 			 ++peerToken)
 		{
-			peerServiceTokens_.erase((*peerToken)->getName());
-			peerServiceTokens_.insert(make_pair((*peerToken)->getName(), *peerToken));
+            // Make sure the service token is properly bound.
+            if ((*peerToken)->isMasterTokenBound() && !(*peerToken)->isBoundTo(peerMasterToken)) {
+                stringstream ss;
+                ss << "st " << *peerToken << "; mt " << peerMasterToken;
+                throw MslMessageException(MslError::SERVICETOKEN_MASTERTOKEN_MISMATCH, ss.str()).setMasterToken(peerMasterToken);
+            }
+            if ((*peerToken)->isUserIdTokenBound() && !(*peerToken)->isBoundTo(peerUserIdToken)) {
+                stringstream ss;
+                ss << "st " << *peerToken << "; uit " << peerUserIdToken;
+                throw MslMessageException(MslError::SERVICETOKEN_USERIDTOKEN_MISMATCH, ss.str()).setMasterToken(peerMasterToken).setUserIdToken(peerUserIdToken);
+            }
+
+            // Add the peer service token.
+            peerServiceTokens_.erase(*peerToken);
+			peerServiceTokens_.insert(*peerToken);
 		}
 	}
 }
@@ -229,13 +245,6 @@ shared_ptr<MessageHeader> MessageBuilder::getHeader()
 {
 	shared_ptr<KeyResponseData> response;
 	if (keyExchangeData_) response = keyExchangeData_->keyResponseData;
-	set<shared_ptr<ServiceToken>> tokens;
-	for (map<string,shared_ptr<ServiceToken>>::iterator token = serviceTokens_.begin();
-		 token != serviceTokens_.end();
-		 ++token)
-	{
-		tokens.insert(token->second);
-	}
 	int64_t nonReplayableId;
 	if (nonReplayable_) {
 		if (!masterToken_)
@@ -244,15 +253,8 @@ shared_ptr<MessageHeader> MessageBuilder::getHeader()
 	} else {
 		nonReplayableId = -1;
 	}
-	shared_ptr<HeaderData> headerData = make_shared<HeaderData>( messageId_, nonReplayableId, renewable_, handshake_, capabilities_, keyRequestData_, response, userAuthData_, userIdToken_, tokens);
-	set<shared_ptr<ServiceToken>> peerTokens;
-	for (map<string,shared_ptr<ServiceToken>>::iterator token = peerServiceTokens_.begin();
-		 token != peerServiceTokens_.end();
-		 ++token)
-	{
-		peerTokens.insert(token->second);
-	}
-	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(peerMasterToken_, peerUserIdToken_, peerTokens);
+	shared_ptr<HeaderData> headerData = make_shared<HeaderData>( messageId_, nonReplayableId, renewable_, handshake_, capabilities_, keyRequestData_, response, userAuthData_, userIdToken_, serviceTokens_);
+	shared_ptr<HeaderPeerData> peerData = make_shared<HeaderPeerData>(peerMasterToken_, peerUserIdToken_, peerServiceTokens_);
 
 	return createMessageHeader(ctx_, ctx_->getEntityAuthenticationData(), masterToken_, headerData, peerData);
 }
@@ -326,9 +328,9 @@ void MessageBuilder::setAuthTokens(shared_ptr<MasterToken> masterToken, shared_p
 	}
 
 	// Remove any service tokens that will no longer be bound.
-	map<string,shared_ptr<ServiceToken>>::iterator tokens = serviceTokens_.begin();
+	set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens_.begin();
 	while (tokens != serviceTokens_.end()) {
-		shared_ptr<ServiceToken> token = tokens->second;
+		shared_ptr<ServiceToken> token = *tokens;
 		if ((token->isUserIdTokenBound() && !token->isBoundTo(userIdToken)) ||
 			(token->isMasterTokenBound() && !token->isBoundTo(masterToken)))
 		{
@@ -346,8 +348,8 @@ void MessageBuilder::setAuthTokens(shared_ptr<MasterToken> masterToken, shared_p
 		 token != storedTokens.end();
 		 ++token)
 	{
-		serviceTokens_.erase((*token)->getName());
-		serviceTokens_.insert(make_pair((*token)->getName(), *token));
+	    excludeServiceToken((*token)->getName(), (*token)->isMasterTokenBound(), (*token)->isUserIdTokenBound());
+		serviceTokens_.insert(*token);
 	}
 
 	// Set the new authentication tokens.
@@ -432,39 +434,66 @@ shared_ptr<MessageBuilder> MessageBuilder::addServiceToken(shared_ptr<ServiceTok
 		throw MslMessageException(MslError::SERVICETOKEN_USERIDTOKEN_MISMATCH, ss.str()).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken_);
 	}
 
+    // Remove any existing service token with the same name and bound state.
+    excludeServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+
 	// Add the service token.
-	serviceTokens_.erase(serviceToken->getName());
-	serviceTokens_.insert(make_pair(serviceToken->getName(), serviceToken));
+	serviceTokens_.insert(serviceToken);
 	return shared_from_this();
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::addServiceTokenIfAbsent(shared_ptr<ServiceToken> serviceToken)
 {
-	map<string,shared_ptr<ServiceToken>>::iterator it = serviceTokens_.find(serviceToken->getName());
-	if (it == serviceTokens_.end())
-		addServiceToken(serviceToken);
+    for (set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens_.begin();
+         tokens != serviceTokens_.end();
+         ++tokens)
+    {
+        shared_ptr<ServiceToken> token = (*tokens);
+        if (token->getName() == serviceToken->getName() &&
+            token->isMasterTokenBound() == serviceToken->isMasterTokenBound() &&
+            token->isUserIdTokenBound() == serviceToken->isUserIdTokenBound())
+        {
+            return shared_from_this();
+        }
+    }
+    addServiceToken(serviceToken);
 	return shared_from_this();
 }
 
-shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(const string& name)
+shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(shared_ptr<ServiceToken> serviceToken)
 {
-	serviceTokens_.erase(name);
+    return excludeServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+shared_ptr<MessageBuilder> MessageBuilder::excludeServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
+{
+    set<shared_ptr<ServiceToken>>::iterator tokens = serviceTokens_.begin();
+    while (tokens != serviceTokens_.end()) {
+        shared_ptr<ServiceToken> token = (*tokens);
+        if (token->getName() == name &&
+            token->isMasterTokenBound() == masterTokenBound &&
+            token->isUserIdTokenBound() == userIdTokenBound)
+        {
+            serviceTokens_.erase(tokens++);
+        } else {
+            ++tokens;
+        }
+    }
 	return shared_from_this();
 }
 
-shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(const string& name)
+shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(shared_ptr<ServiceToken> serviceToken)
 {
-	// Do nothing if the original token does not exist.
-	map<string,shared_ptr<ServiceToken>>::iterator it = serviceTokens_.find(name);
-	if (it == serviceTokens_.end())
-		return shared_from_this();
-	shared_ptr<ServiceToken> originalToken = it->second;
+    return deleteServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
 
+shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
+{
 	// Rebuild the original token with empty service data.
 	shared_ptr<MasterToken> masterToken;
-	if (originalToken->isMasterTokenBound()) masterToken = masterToken_;
+	if (masterTokenBound) masterToken = masterToken_;
 	shared_ptr<UserIdToken> userIdToken;
-	if (originalToken->isUserIdTokenBound()) userIdToken = userIdToken_;
+	if (userIdTokenBound) userIdToken = userIdToken_;
 	try {
 		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx_, name, EMPTY_DATA, masterToken, userIdToken, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 		return addServiceToken(token);
@@ -474,13 +503,7 @@ shared_ptr<MessageBuilder> MessageBuilder::deleteServiceToken(const string& name
 }
 
 set<shared_ptr<ServiceToken>> MessageBuilder::getServiceTokens() {
-	set<shared_ptr<ServiceToken>> tokens;
-	for (map<string,shared_ptr<ServiceToken>>::iterator serviceToken = serviceTokens_.begin();
-		 serviceToken != serviceTokens_.end();
-		 ++serviceToken)
-	{
-		tokens.insert(serviceToken->second);
-	}
+	set<shared_ptr<ServiceToken>> tokens(serviceTokens_);
 	return tokens;
 }
 
@@ -507,25 +530,16 @@ void MessageBuilder::setPeerAuthTokens(shared_ptr<MasterToken> masterToken, shar
 	}
 
 	// Remove any peer service tokens that will no longer be bound.
-	set<shared_ptr<ServiceToken>> tokens;
-	for (map<string,shared_ptr<ServiceToken>>::iterator token = peerServiceTokens_.begin();
-		 token != peerServiceTokens_.end();
-		 ++token)
-	{
-		tokens.insert(token->second);
-	}
-	for (set<shared_ptr<ServiceToken>>::iterator token = tokens.begin();
-		 token != tokens.end();
-		 ++token)
-	{
-		if ((*token)->isUserIdTokenBound() && !(*token)->isBoundTo(userIdToken)) {
-			peerServiceTokens_.erase((*token)->getName());
-			continue;
-		}
-		if ((*token)->isMasterTokenBound() && !(*token)->isBoundTo(masterToken)) {
-			peerServiceTokens_.erase((*token)->getName());
-			continue;
-		}
+	set<shared_ptr<ServiceToken>>::iterator tokens = peerServiceTokens_.begin();
+	while(tokens != peerServiceTokens_.end()) {
+	    shared_ptr<ServiceToken> token = *tokens;
+	    if ((token->isUserIdTokenBound() && !token->isBoundTo(userIdToken)) ||
+	        (token->isMasterTokenBound() && !token->isBoundTo(masterToken)))
+	    {
+	        peerServiceTokens_.erase(tokens++);
+	    } else {
+	        ++tokens;
+	    }
 	}
 
 	// Add any peer service tokens based on the MSL store if they are not
@@ -534,9 +548,8 @@ void MessageBuilder::setPeerAuthTokens(shared_ptr<MasterToken> masterToken, shar
 		 token != storedTokens.end();
 		 ++token)
 	{
-		map<string,shared_ptr<ServiceToken>>::iterator found = peerServiceTokens_.find((*token)->getName());
-		if (found == peerServiceTokens_.end())
-			peerServiceTokens_.insert(make_pair((*token)->getName(), (*token)));
+	    excludePeerServiceToken((*token)->getName(), (*token)->isMasterTokenBound(), (*token)->isUserIdTokenBound());
+	    peerServiceTokens_.insert(*token);
 	}
 
 	// Set the new peer authentication tokens.
@@ -546,8 +559,12 @@ void MessageBuilder::setPeerAuthTokens(shared_ptr<MasterToken> masterToken, shar
 
 shared_ptr<MessageBuilder> MessageBuilder::addPeerServiceToken(shared_ptr<ServiceToken> serviceToken)
 {
+    // If we are not in peer-to-peer mode then peer service tokens cannot
+    // be set.
 	if (!ctx_->isPeerToPeer())
 		throw MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
+
+    // Make sure the service token is properly bound.
 	if (serviceToken->isMasterTokenBound() && !serviceToken->isBoundTo(peerMasterToken_)) {
 		stringstream ss;
 		ss << "st " << serviceToken << "; mt " << peerMasterToken_;
@@ -559,39 +576,64 @@ shared_ptr<MessageBuilder> MessageBuilder::addPeerServiceToken(shared_ptr<Servic
 		throw MslMessageException(MslError::SERVICETOKEN_USERIDTOKEN_MISMATCH, ss.str()).setMasterToken(peerMasterToken_).setUserIdToken(peerUserIdToken_);
 	}
 
+    // Remove any existing service token with the same name and bound state.
+    excludePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+
 	// Add the peer service token.
-	peerServiceTokens_.erase(serviceToken->getName());
-	peerServiceTokens_.insert(make_pair(serviceToken->getName(), serviceToken));
+	peerServiceTokens_.insert(serviceToken);
 	return shared_from_this();
 }
 
 shared_ptr<MessageBuilder> MessageBuilder::addPeerServiceTokenIfAbsent(shared_ptr<ServiceToken> serviceToken)
 {
-	map<string,shared_ptr<ServiceToken>>::iterator it = peerServiceTokens_.find(serviceToken->getName());
-	if (it == peerServiceTokens_.end())
-		addPeerServiceToken(serviceToken);
+	set<shared_ptr<ServiceToken>>::iterator tokens = peerServiceTokens_.begin();
+	while (tokens != peerServiceTokens_.end()) {
+	    shared_ptr<ServiceToken> token = *tokens;
+	    if (token->getName() == serviceToken->getName() &&
+	        token->isMasterTokenBound() == serviceToken->isMasterTokenBound() &&
+	        token->isUserIdTokenBound() == serviceToken->isUserIdTokenBound())
+	    {
+	        return shared_from_this();
+	    }
+	}
+	addPeerServiceToken(serviceToken);
 	return shared_from_this();
 }
 
-shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(const string& name)
+shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
 {
-	peerServiceTokens_.erase(name);
+    return excludePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
+
+shared_ptr<MessageBuilder> MessageBuilder::excludePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
+{
+    set<shared_ptr<ServiceToken>>::iterator tokens = peerServiceTokens_.begin();
+    while (tokens != peerServiceTokens_.end()) {
+        shared_ptr<ServiceToken> token = *tokens;
+        if (token->getName() == name &&
+            token->isMasterTokenBound() == masterTokenBound &&
+            token->isUserIdTokenBound() == userIdTokenBound)
+        {
+            peerServiceTokens_.erase(tokens++);
+        } else {
+            ++tokens;
+        }
+    }
 	return shared_from_this();
 }
 
-shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(const string& name)
+shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(shared_ptr<ServiceToken> serviceToken)
 {
-	// Do nothing if the original token does not exist.
-	map<string,shared_ptr<ServiceToken>>::iterator it = peerServiceTokens_.find(name);
-	if (it == peerServiceTokens_.end())
-		return shared_from_this();
-	shared_ptr<ServiceToken> originalToken = it->second;
+    return deletePeerServiceToken(serviceToken->getName(), serviceToken->isMasterTokenBound(), serviceToken->isUserIdTokenBound());
+}
 
+shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(const string& name, const bool masterTokenBound, const bool userIdTokenBound)
+{
 	// Rebuild the original token with empty service data.
 	shared_ptr<MasterToken> peerMasterToken;
-	if (originalToken->isMasterTokenBound()) peerMasterToken = peerMasterToken_;
+	if (masterTokenBound) peerMasterToken = peerMasterToken_;
 	shared_ptr<UserIdToken> peerUserIdToken;
-	if (originalToken->isUserIdTokenBound()) peerUserIdToken = peerUserIdToken_;
+	if (userIdTokenBound) peerUserIdToken = peerUserIdToken_;
 	try {
 		shared_ptr<ServiceToken> token = make_shared<ServiceToken>(ctx_, name, EMPTY_DATA, peerMasterToken, peerUserIdToken, false, CompressionAlgorithm::NOCOMPRESSION, make_shared<NullCryptoContext>());
 		return addPeerServiceToken(token);
@@ -600,16 +642,9 @@ shared_ptr<MessageBuilder> MessageBuilder::deletePeerServiceToken(const string& 
 	}
 }
 
-
 set<shared_ptr<ServiceToken>> MessageBuilder::getPeerServiceTokens()
 {
-	set<shared_ptr<ServiceToken>> tokens;
-	for (map<string,shared_ptr<ServiceToken>>::iterator serviceToken = peerServiceTokens_.begin();
-		 serviceToken != peerServiceTokens_.end();
-		 ++serviceToken)
-	{
-		tokens.insert(serviceToken->second);
-	}
+	set<shared_ptr<ServiceToken>> tokens(peerServiceTokens_);
 	return tokens;
 }
 

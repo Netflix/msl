@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -737,9 +737,12 @@ public class SimpleMslStoreTest {
         assertNotNull(storedMasterBoundTokens);
         assertTrue(equal(unboundTokens, storedMasterBoundTokens));
         
-        // This should only return the unbound tokens.
+        // This should only return the unbound and user-bound tokens.
+        final Set<ServiceToken> unboundAndUserBoundTokens = new HashSet<ServiceToken>();
+        unboundAndUserBoundTokens.addAll(unboundTokens);
+        unboundAndUserBoundTokens.addAll(userBoundTokens);
         final Set<ServiceToken> storedUserBoundTokens = store.getServiceTokens(masterToken, userIdToken);
-        assertTrue(equal(unboundTokens, storedUserBoundTokens));
+        assertTrue(equal(unboundAndUserBoundTokens, storedUserBoundTokens));
         
         // This should only return the unbound tokens.
         final Set<ServiceToken> storedUnboundTokens = store.getServiceTokens(null, null);
@@ -762,7 +765,7 @@ public class SimpleMslStoreTest {
         store.addServiceTokens(userBoundTokens);
         store.addServiceTokens(unboundTokens);
         
-        store.removeServiceTokens(null, masterToken, userIdToken);
+        store.removeServiceTokens(null, null, userIdToken);
         
         // This should only return the unbound and master bound-only tokens.
         final Set<ServiceToken> storedMasterBoundTokens = store.getServiceTokens(masterToken, null);
@@ -847,7 +850,7 @@ public class SimpleMslStoreTest {
         final Set<ServiceToken> removedTokens = new HashSet<ServiceToken>();
         for (final ServiceToken token : allTokens) {
             if (random.nextBoolean()) continue;
-            store.removeServiceTokens(token.getName(), null, null);
+            store.removeServiceTokens(token.getName(), token.isMasterTokenBound() ? masterToken : null, token.isUserIdTokenBound() ? userIdToken : null);
             removedTokens.add(token);
         }
         

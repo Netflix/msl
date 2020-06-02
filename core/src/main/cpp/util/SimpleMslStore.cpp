@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2016-2020 Netflix, Inc.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,25 +108,32 @@ shared_ptr<ICryptoContext> SimpleMslStore::getCryptoContext(shared_ptr<MasterTok
 void SimpleMslStore::removeCryptoContext(shared_ptr<MasterToken> masterToken) {
 	LockGuard lg(mutex_);
 
+    // We must perform the removal operations in reverse-dependency order.
+    // This ensures the store is in the correct state, allowing all logical
+    // and safety checks to pass.
+    //
+    // First any bound user ID tokens are removed (which first removes any
+    // service tokens bound to those user ID tokens), then bound service
+    // tokens, and finally the non-replayable ID and crypto context and
+    // master token pair.
 	CryptoContextMap::iterator it = find_if(cryptoContexts_.begin(), cryptoContexts_.end(), MslUtils::sharedPtrKeyEqual<CryptoContextMap>(masterToken));
 	if (it != cryptoContexts_.end()) {
-		cryptoContexts_.erase(it);
-
-		// Remove bound user ID tokens, service tokens, and the non-
-		// replayable ID if we no longer have a master token with the same
-		// serial number.
+        // Look for a second master token with the same serial number. If
+        // there is one, then just remove this master token and its crypto
+        // context but do not remove any bound user ID tokens, service
+        // tokens, or the non-replayable ID as those are still associated
+        // with the master token that remains.
 		const int64_t serialNumber = masterToken->getSerialNumber();
 		for (CryptoContextMap::const_iterator tokens = cryptoContexts_.begin();
 			 tokens != cryptoContexts_.end();
 			 ++tokens)
 		{
 			const shared_ptr<MasterToken> token = tokens->first;
-			if (token->getSerialNumber() == serialNumber)
+			if (token != masterToken && token->getSerialNumber() == serialNumber) {
+		        cryptoContexts_.erase(it);
 				return;
+			}
 		}
-
-		// Remove the non-replayable ID.
-		nonReplayableIds_.erase(serialNumber);
 
 		// Remove bound user ID tokens and service tokens.
 		UserIdTokenMap::iterator userIdTokens = userIdTokens_.begin();
@@ -147,6 +154,12 @@ void SimpleMslStore::removeCryptoContext(shared_ptr<MasterToken> masterToken) {
 			// FIXME Have to recast the exception otherwise the type is lost.
 			throw MslInternalException("Unexpected exception while removing master token bound service tokens.", e);
 		}
+
+        // Remove the non-replayable ID.
+        nonReplayableIds_.erase(serialNumber);
+
+		// Finally remove the crypto context.
+        cryptoContexts_.erase(it);
 	}
 }
 
@@ -211,8 +224,6 @@ void SimpleMslStore::removeUserIdToken(shared_ptr<UserIdToken> userIdToken) {
 	UserIdTokenMap::iterator entry = userIdTokens_.begin();
 	while(entry != userIdTokens_.end()) {
 		if (entry->second == userIdToken) {
-			const string userId = entry->first;
-			userIdTokens_.erase(entry++);
 			try {
 				removeServiceTokens(shared_ptr<std::string>(), masterToken, userIdToken);
 			} catch (const MslException& e) {
@@ -222,6 +233,7 @@ void SimpleMslStore::removeUserIdToken(shared_ptr<UserIdToken> userIdToken) {
 				// FIXME Have to recast the exception otherwise the type is lost.
 				throw MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
 			}
+            userIdTokens_.erase(entry++);
 			break;
 		} else {
 			++entry;
@@ -232,23 +244,20 @@ void SimpleMslStore::removeUserIdToken(shared_ptr<UserIdToken> userIdToken) {
 void SimpleMslStore::clearUserIdTokens() {
 	LockGuard lg(mutex_);
 
+	set<shared_ptr<UserIdToken>> tokens;
 	for (UserIdTokenMap::const_iterator userIdTokens = userIdTokens_.begin();
 		 userIdTokens != userIdTokens_.end();
 		 ++userIdTokens
 	)
 	{
-		shared_ptr<UserIdToken> userIdToken = userIdTokens->second;
-		try {
-			removeServiceTokens(shared_ptr<std::string>(), shared_ptr<MasterToken>(), userIdToken);
-		} catch (const MslException& e) {
-			// This should not happen since we are only providing a user ID
-			// token.
-			//
-			// FIXME Have to recast the exception otherwise the type is lost.
-			throw MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
-		}
+	    tokens.insert(userIdTokens->second);
 	}
-	userIdTokens_.clear();
+	for (set<shared_ptr<UserIdToken>>::iterator token = tokens.begin();
+	     token != tokens.end();
+	     ++token)
+	{
+	    removeUserIdToken(*token);
+	}
 }
 
 void SimpleMslStore::addServiceTokens(set<shared_ptr<ServiceToken>> tokens) {
@@ -409,7 +418,8 @@ void SimpleMslStore::removeServiceTokens(shared_ptr<string> name, shared_ptr<Mas
 		throw MslException(MslError::USERIDTOKEN_MASTERTOKEN_MISMATCH, ss.str());
 	}
 
-	// If only a name was provided remove all tokens with that name.
+	// If only a name was provided remove all unbound tokens with that
+	// name.
 	if (name && !masterToken && !userIdToken) {
 		// Remove all unbound tokens with the specified name.
 		UnboundServiceTokensSet::iterator unboundTokens = unboundServiceTokens_.begin();
@@ -419,50 +429,6 @@ void SimpleMslStore::removeServiceTokens(shared_ptr<string> name, shared_ptr<Mas
 				unboundServiceTokens_.erase(unboundTokens++);
 			else
 				++unboundTokens;
-		}
-
-		// Remove all master bound tokens with the specified name.
-		for (MasterTokenServiceTokensMap::iterator mtTokenEntries = mtServiceTokens_.begin();
-			 mtTokenEntries != mtServiceTokens_.end();
-			 ++mtTokenEntries)
-		{
-			// Modify the token set by reference.
-			set<shared_ptr<ServiceToken>>& tokenSet = mtTokenEntries->second;
-			set<shared_ptr<ServiceToken>>::iterator tokens = tokenSet.begin();
-			while (tokens != tokenSet.end()) {
-				const shared_ptr<ServiceToken>& token = *tokens;
-
-				// Skip if the name was provided and it does not match.
-				if (token->getName() != *name) {
-					++tokens;
-					continue;
-				}
-
-				// Remove the token.
-				tokenSet.erase(tokens++);
-			}
-		}
-
-		// Remove all user ID tokens with the specified name.
-		for (UserIdTokenServiceTokensMap::iterator uitTokenEntries = uitServiceTokens_.begin();
-			 uitTokenEntries != uitServiceTokens_.end();
-			 ++uitTokenEntries)
-		{
-			// Modify the token set by reference.
-			set<shared_ptr<ServiceToken>>& tokenSet = uitTokenEntries->second;
-			set<shared_ptr<ServiceToken>>::iterator tokens = tokenSet.begin();
-			while (tokens != tokenSet.end()) {
-				const shared_ptr<ServiceToken>& token = *tokens;
-
-				// Skip if the name was provided and it does not match.
-				if (token->getName() != *name) {
-					++tokens;
-					continue;
-				}
-
-				// Remove the token.
-				tokenSet.erase(tokens++);
-			}
 		}
 	}
 
@@ -490,40 +456,11 @@ void SimpleMslStore::removeServiceTokens(shared_ptr<string> name, shared_ptr<Mas
 			mtServiceTokens_.erase(mtSerialNumber);
 			mtServiceTokens_.insert(make_pair(mtSerialNumber, tokenSet));
 		}
-
-		// Remove all user ID tokens (with the specified name if any).
-		for (UserIdTokenServiceTokensMap::iterator uitTokenEntries = uitServiceTokens_.begin();
-			 uitTokenEntries != uitServiceTokens_.end();
-			 ++uitTokenEntries)
-		{
-			// Modify the token set by reference.
-			set<shared_ptr<ServiceToken>>& uitTokenSet = uitTokenEntries->second;
-			set<shared_ptr<ServiceToken>>::iterator tokens = uitTokenSet.begin();
-			while (tokens != uitTokenSet.end()) {
-				const shared_ptr<ServiceToken>& token = *tokens;
-
-				// Skip if the name was provided and it does not match.
-				if (name && token->getName() != *name) {
-					++tokens;
-					continue;
-				}
-
-				// Skip if the token is not bound to the master token.
-				if (!token->isBoundTo(masterToken)) {
-					++tokens;
-					continue;
-				}
-
-				// Remove the token.
-				uitTokenSet.erase(tokens++);
-			}
-		}
 	}
 
-	// If a user ID token was provided remove all tokens bound to the user
-	// ID token. If a name was also provided then limit removal to tokens
-	// with the specified name. If a master token was also provided then
-	// limit removal to tokens bound to the master token.
+    // If a user ID token was provided remove all tokens bound to the user
+    // ID token. If a name was also provided then limit removal to tokens
+    // with the specified name.
 	if (userIdToken) {
 		const int64_t uitSerialNumber = userIdToken->getSerialNumber();
 		UserIdTokenServiceTokensMap::iterator sets = uitServiceTokens_.find(uitSerialNumber);
@@ -535,13 +472,6 @@ void SimpleMslStore::removeServiceTokens(shared_ptr<string> name, shared_ptr<Mas
 
 				// Skip if the name was provided and it does not match.
 				if (name && token->getName() != *name) {
-					++tokens;
-					continue;
-				}
-
-				// Skip if the master token was provided and the token is
-				// not bound to it.
-				if (masterToken && !token->isBoundTo(masterToken)) {
 					++tokens;
 					continue;
 				}

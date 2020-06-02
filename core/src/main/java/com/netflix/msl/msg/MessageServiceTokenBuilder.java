@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2017 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -437,41 +437,100 @@ public class MessageServiceTokenBuilder {
     }
     
     /**
-     * <p>Exclude a primary service token from the message.</p>
+     * <p>Exclude a primary service token from the message. This matches the
+     * token name and whether or not it is bound to a master token or to a user
+     * ID token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
      * 
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
-     * @param name service token name.
+     * <p>This function is equivalent to calling
+     * {@link #excludePrimaryServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
      * @return true if the service token was found and therefore removed.
      */
-    public boolean excludePrimaryServiceToken(final String name) {
-        // Exclude the service token if found.
-        for (final ServiceToken serviceToken : builder.getServiceTokens()) {
-            if (serviceToken.getName().equals(name)) {
-                builder.excludeServiceToken(name);
-                return true;
-            }
-        }
-        
-        // Not found.
-        return false;
+    public boolean excludePrimaryServiceToken(final ServiceToken serviceToken) {
+        return excludePrimaryServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
     }
     
     /**
-     * <p>Exclude a peer service token from the message.</p>
+     * <p>Exclude a primary service token from the message matching all
+     * specified parameters. A false value for the master token bound or user
+     * ID token bound parameters restricts exclusion to tokens that are not
+     * bound to a master token or not bound to a user ID token
+     * respectively.</p>
      * 
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
+     * @return true if the service token was found and therefore removed.
+     */
+    public boolean excludePrimaryServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
+        // Exclude the service token if found.
+        for (final ServiceToken serviceToken : builder.getServiceTokens()) {
+            if (serviceToken.getName().equals(name) &&
+                serviceToken.isMasterTokenBound() == masterTokenBound &&
+                serviceToken.isUserIdTokenBound() == userIdTokenBound)
+            {
+                builder.excludeServiceToken(name, masterTokenBound, userIdTokenBound);
+                return true;
+            }
+        }
+        
+        // Not found.
+        return false;
+    }
+    
+    /**
+     * <p>Exclude a peer service token from the message. This matches the
+     * token name and whether or not it is bound to a master token or to a user
+     * ID token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
+     * 
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #excludePeerServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return true if the service token was found and therefore removed.
+     */
+    public boolean excludePeerServiceToken(final ServiceToken serviceToken) {
+        return excludePeerServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+    }
+    
+    /**
+     * <p>Exclude a peer service token from the message matching all specified
+     * parameters. A false value for the master token bound or user ID token
+     * bound parameters restricts exclusion to tokens that are not bound to a
+     * master token or not bound to a user ID token respectively.</p>
+     * 
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     * 
+     * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the peer service token was found and therefore removed.
      */
-    public boolean excludePeerServiceToken(final String name) {
+    public boolean excludePeerServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
         // Exclude the service token if found.
         for (final ServiceToken serviceToken : builder.getPeerServiceTokens()) {
-            if (serviceToken.getName().equals(name)) {
-                builder.excludePeerServiceToken(name);
+            if (serviceToken.getName().equals(name) &&
+                serviceToken.isMasterTokenBound() == masterTokenBound &&
+                serviceToken.isUserIdTokenBound() == userIdTokenBound)
+            {
+                builder.excludePeerServiceToken(name, masterTokenBound, userIdTokenBound);
                 return true;
             }
         }
@@ -481,20 +540,51 @@ public class MessageServiceTokenBuilder {
     }
     
     /**
-     * <p>Mark a primary service token for deletion, if it exists.</p>
+     * <p>Mark a primary service token for deletion, if it exists. This matches
+     * the token name and whether or not it is bound to a master token or to a
+     * user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
      * 
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
-     * @param name service token name.
+     * <p>This function is equivalent to calling
+     * {@link #deletePrimaryServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
      * @return true if the service token exists and was marked for deletion.
      */
-    public boolean deletePrimaryServiceToken(final String name) {
+    public boolean deletePrimaryServiceToken(final ServiceToken serviceToken) {
+        return deletePrimaryServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+    }
+    
+    /**
+     * <p>Mark a primary service token for deletion, if it exists, matching all
+     * specified parameters. A false value for the master token bound or user
+     * ID token bound parameters restricts deletion to tokens that are not
+     * bound to a master token or not bound to a user ID token
+     * respectively.</p>
+     * 
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     * 
+     * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
+     * @return true if the service token exists and was marked for deletion.
+     */
+    public boolean deletePrimaryServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
         // Mark the service token for deletion if found.
         for (final ServiceToken serviceToken : builder.getServiceTokens()) {
-            if (serviceToken.getName().equals(name)) {
-                builder.deleteServiceToken(name);
+            if (serviceToken.getName().equals(name) &&
+                serviceToken.isMasterTokenBound() == masterTokenBound &&
+                serviceToken.isUserIdTokenBound() == userIdTokenBound)
+            {
+                builder.deleteServiceToken(name, masterTokenBound, userIdTokenBound);
                 return true;
             }
         }
@@ -504,21 +594,52 @@ public class MessageServiceTokenBuilder {
     }
     
     /**
-     * <p>Mark a peer service token for deletion, if it exists.</p>
+     * <p>Mark a peer service token for deletion, if it exists. This matches
+     * the token name and whether or not it is bound to a master token or to a
+     * user ID token. It does not require the token to be bound to the exact
+     * same master token or user ID token that will be used in the message.</p>
+     * 
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #deletePeerServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return true if the service token exists and was marked for deletion.
+     */
+    public boolean deletePeerServiceToken(final ServiceToken serviceToken) {
+        return deletePeerServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+    }
+    
+    /**
+     * <p>Mark a peer service token for deletion, if it exists, matching all
+     * specified parameters. A false value for the master token bound or user
+     * ID token bound parameters restricts deletion to tokens that are not
+     * bound to a master token or not bound to a user ID token
+     * respectively.</p>
      * 
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the peer service token exists and was marked for
      *         deletion.
      */
-    public boolean deletePeerServiceToken(final String name) {
+    public boolean deletePeerServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
         // Mark the service token for deletion if found.
         for (final ServiceToken serviceToken : builder.getPeerServiceTokens()) {
-            if (serviceToken.getName().equals(name)) {
-                builder.deletePeerServiceToken(name);
+            if (serviceToken.getName().equals(name) &&
+                serviceToken.isMasterTokenBound() == masterTokenBound &&
+                serviceToken.isUserIdTokenBound() == userIdTokenBound)
+            {
+                builder.deletePeerServiceToken(name, masterTokenBound, userIdTokenBound);
                 return true;
             }
         }

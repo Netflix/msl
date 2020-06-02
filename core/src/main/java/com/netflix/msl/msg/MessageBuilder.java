@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2018 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,9 @@
  */
 package com.netflix.msl.msg;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
+import java.util.Iterator;
 import java.util.Set;
 
 import com.netflix.msl.MslConstants;
@@ -173,11 +171,18 @@ public class MessageBuilder {
         // Set the initial service tokens based on the MSL store and provided
         // service tokens.
         final Set<ServiceToken> tokens = ctx.getMslStore().getServiceTokens(serviceMasterToken, userIdToken);
-        for (final ServiceToken token : tokens)
-            this.serviceTokens.put(token.getName(), token);
+        this.serviceTokens.addAll(tokens);
         if (serviceTokens != null) {
-            for (final ServiceToken token : serviceTokens)
-                this.serviceTokens.put(token.getName(), token);
+            for (final ServiceToken token : serviceTokens) {
+                // Make sure the service token is properly bound.
+                if (token.isMasterTokenBound() && !token.isBoundTo(serviceMasterToken))
+                    throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + token + "; mt " + serviceMasterToken).setMasterToken(serviceMasterToken);
+                if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken))
+                    throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + token + "; uit " + userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken);
+                
+                // Add the service token.
+                this.serviceTokens.add(token);
+            }
         }
         
         // Set the peer-to-peer data.
@@ -196,11 +201,18 @@ public class MessageBuilder {
             // Set the initial peer service tokens based on the MSL store and
             // provided peer service tokens.
             final Set<ServiceToken> peerTokens = ctx.getMslStore().getServiceTokens(peerServiceMasterToken, peerUserIdToken);
-            for (final ServiceToken peerToken : peerTokens)
-                this.peerServiceTokens.put(peerToken.getName(), peerToken);
+            this.peerServiceTokens.addAll(peerTokens);
             if (peerServiceTokens != null) {
-                for (final ServiceToken peerToken : peerServiceTokens)
-                    this.peerServiceTokens.put(peerToken.getName(), peerToken);
+                for (final ServiceToken peerToken : peerServiceTokens) {
+                    // Make sure the service token is properly bound.
+                    if (peerToken.isMasterTokenBound() && !peerToken.isBoundTo(peerMasterToken))
+                        throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + peerToken + "; mt " + peerMasterToken).setMasterToken(peerMasterToken);
+                    if (peerToken.isUserIdTokenBound() && !peerToken.isBoundTo(peerUserIdToken))
+                        throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + peerToken + "; uit " + peerUserIdToken).setMasterToken(peerMasterToken).setUserIdToken(peerUserIdToken);
+
+                    // Add the peer service token.
+                    this.peerServiceTokens.add(peerToken);
+                }
             }
         }
     }
@@ -291,7 +303,6 @@ public class MessageBuilder {
      */
     public MessageHeader getHeader() throws MslCryptoException, MslMasterTokenException, MslEntityAuthException, MslMessageException, MslException {
         final KeyResponseData response = (keyExchangeData != null) ? keyExchangeData.keyResponseData : null;
-        final Set<ServiceToken> tokens = new HashSet<ServiceToken>(serviceTokens.values());
         final Long nonReplayableId;
         if (nonReplayable) {
             if (masterToken == null)
@@ -300,9 +311,8 @@ public class MessageBuilder {
         } else {
             nonReplayableId = null;
         }
-        final HeaderData headerData = new HeaderData(messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, response, userAuthData, userIdToken, tokens);
-        final Set<ServiceToken> peerTokens = new HashSet<ServiceToken>(peerServiceTokens.values());
-        final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerTokens);
+        final HeaderData headerData = new HeaderData(messageId, nonReplayableId, renewable, handshake, capabilities, keyRequestData, response, userAuthData, userIdToken, serviceTokens);
+        final HeaderPeerData peerData = new HeaderPeerData(peerMasterToken, peerUserIdToken, peerServiceTokens);
 
         return createMessageHeader(ctx, ctx.getEntityAuthenticationData(null), masterToken, headerData, peerData);
     }
@@ -445,12 +455,13 @@ public class MessageBuilder {
         }
 
         // Remove any service tokens that will no longer be bound.
-        final Collection<ServiceToken> tokens = serviceTokens.values();
-        for (final ServiceToken token : tokens) {
-            if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken) ||
-                token.isMasterTokenBound() && !token.isBoundTo(masterToken))
+        final Iterator<ServiceToken> tokens = serviceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if ((token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) ||
+                (token.isMasterTokenBound() && !token.isBoundTo(masterToken)))
             {
-                serviceTokens.remove(token.getName());
+                tokens.remove();
             }
         }
         
@@ -458,8 +469,10 @@ public class MessageBuilder {
         // set as they may be newer. The application will have a chance to
         // manage the service tokens before the message is constructed and
         // sent.
-        for (final ServiceToken token : storedTokens)
-            serviceTokens.put(token.getName(), token);
+        for (final ServiceToken token : storedTokens) {
+            excludeServiceToken(token.getName(), token.isMasterTokenBound(), token.isUserIdTokenBound());
+            serviceTokens.add(token);
+        }
 
         // Set the new authentication tokens.
         this.masterToken = masterToken;
@@ -558,7 +571,8 @@ public class MessageBuilder {
 
     /**
      * <p>Add a service token to the message. This will overwrite any service
-     * token with the same name.</p>
+     * token with the same name that is also bound to the master token or user
+     * ID token in the same way as the new service token.</p>
      * 
      * <p>Adding a service token with empty data indicates the recipient should
      * delete the service token.</p>
@@ -585,14 +599,18 @@ public class MessageBuilder {
         if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(userIdToken))
             throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + userIdToken).setMasterToken(serviceMasterToken).setUserIdToken(userIdToken);
         
+        // Remove any existing service token with the same name and bound state.
+        excludeServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
+        
         // Add the service token.
-        serviceTokens.put(serviceToken.getName(), serviceToken);
+        serviceTokens.add(serviceToken);
         return this;
     }
 
     /**
      * <p>Add a service token to the message if a service token with the same
-     * name does not already exist.</p>
+     * name that is also bound to the master token or user ID token in the same
+     * way as the new service token does not already exist.</p>
      * 
      * <p>Adding a service token with empty data indicates the recipient should
      * delete the service token.</p>
@@ -604,45 +622,122 @@ public class MessageBuilder {
      *         built.
      */
     public MessageBuilder addServiceTokenIfAbsent(final ServiceToken serviceToken) throws MslMessageException {
-        if (!serviceTokens.containsKey(serviceToken.getName()))
-            addServiceToken(serviceToken);
+        final Iterator<ServiceToken> tokens = serviceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if (token.getName().equals(serviceToken.getName()) &&
+                token.isMasterTokenBound() == serviceToken.isMasterTokenBound() &&
+                token.isUserIdTokenBound() == serviceToken.isUserIdTokenBound())
+            {
+                return this;
+            }
+        }
+        addServiceToken(serviceToken);
         return this;
+    }
+    
+    /**
+     * <p>Exclude a service token from the message. This matches the token name
+     * and whether or not it is bound to the master token or to a user ID
+     * token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
+     * 
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #excludeServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return this.
+     * @see #excludeServiceToken(String, boolean, boolean)
+     */
+    public MessageBuilder excludeServiceToken(final ServiceToken serviceToken) {
+        return excludeServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
     }
 
     /**
-     * <p>Exclude a service token from the message.</p>
+     * <p>Exclude a service token from the message matching all the specified
+     * parameters. A false value for the master token bound or user ID token
+     * bound parameters restricts exclusion to tokens that are not bound to a
+     * master token or not bound to a user ID token respectively.</p>
+     * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be excluded
+     * from the message. If a name is provided but both other parameters are
+     * false, then only an unbound service token with the same name will be
+     * excluded.</p>
      * 
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return this.
      */
-    public MessageBuilder excludeServiceToken(final String name) {
-        serviceTokens.remove(name);
+    public MessageBuilder excludeServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
+        final Iterator<ServiceToken> tokens = serviceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if (token.getName().equals(name) &&
+                token.isMasterTokenBound() == masterTokenBound &&
+                token.isUserIdTokenBound() == userIdTokenBound)
+            {
+                tokens.remove();
+            }
+        }
         return this;
+    }
+    
+    /**
+     * <p>Mark a service token for deletion.</p>
+     * 
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #deleteServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    public MessageBuilder deleteServiceToken(final ServiceToken serviceToken) {
+        return deleteServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
     }
 
     /**
-     * <p>Mark a service token for deletion, if it exists. Otherwise this
-     * method does nothing.</p>
+     * <p>Mark a service token for deletion. A false value for the master token
+     * bound or user ID token bound parameters restricts deletion to tokens
+     * that are not bound to a master token or not bound to a user ID token
+     * respectively.</p>
+     * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be marked
+     * for deletion. If a name is provided but both other parameters are false,
+     * then only an unbound service token with the same name will be marked for
+     * deletion.</p>
      * 
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to delete a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to delete a user ID token bound service
+     *        token.
      * @return this.
      */
-    public MessageBuilder deleteServiceToken(final String name) {
-        // Do nothing if the original token does not exist.
-        final ServiceToken originalToken = serviceTokens.get(name);
-        if (originalToken == null)
-            return this;
-        
+    public MessageBuilder deleteServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
         // Rebuild the original token with empty service data.
-        final MasterToken masterToken = originalToken.isMasterTokenBound() ? this.masterToken : null;
-        final UserIdToken userIdToken = originalToken.isUserIdTokenBound() ? this.userIdToken : null;
+        final MasterToken masterToken = masterTokenBound ? this.masterToken : null;
+        final UserIdToken userIdToken = userIdTokenBound ? this.userIdToken : null;
         try {
             final ServiceToken token = new ServiceToken(ctx, name, EMPTY_DATA, masterToken, userIdToken, false, null, new NullCryptoContext());
             return addServiceToken(token);
@@ -656,7 +751,7 @@ public class MessageBuilder {
      *         the built message.
      */
     public Set<ServiceToken> getServiceTokens() {
-        return Collections.unmodifiableSet(new HashSet<ServiceToken>(serviceTokens.values()));
+        return Collections.unmodifiableSet(serviceTokens);
     }
 
     /**
@@ -705,23 +800,21 @@ public class MessageBuilder {
         }
 
         // Remove any peer service tokens that will no longer be bound.
-        final Collection<ServiceToken> tokens = peerServiceTokens.values();
-        for (final ServiceToken token : tokens) {
-            if (token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) {
-                peerServiceTokens.remove(token.getName());
-                continue;
-            }
-            if (token.isMasterTokenBound() && !token.isBoundTo(masterToken)) {
-                peerServiceTokens.remove(token.getName());
-                continue;
+        final Iterator<ServiceToken> tokens = peerServiceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if ((token.isUserIdTokenBound() && !token.isBoundTo(userIdToken)) ||
+                (token.isMasterTokenBound() && !token.isBoundTo(masterToken)))
+            {
+                tokens.remove();
             }
         }
         
         // Add any peer service tokens based on the MSL store if they are not
         // already set (as a set one may be newer than the stored one).
         for (final ServiceToken token : storedTokens) {
-            if (!peerServiceTokens.containsKey(token.getName()))
-                peerServiceTokens.put(token.getName(), token);
+            excludePeerServiceToken(token.getName(), token.isMasterTokenBound(), token.isUserIdTokenBound());
+            peerServiceTokens.add(token);
         }
         
         // Set the new peer authentication tokens.
@@ -731,7 +824,8 @@ public class MessageBuilder {
 
     /**
      * <p>Add a peer service token to the message. This will overwrite any peer
-     * service token with the same name.</p>
+     * service token with the same name that is also bound to a peer master
+     * token or peer user ID token in the same way as the new service token.</p>
      * 
      * <p>Adding a service token with empty data indicates the recipient should
      * delete the service token.</p>
@@ -743,21 +837,30 @@ public class MessageBuilder {
      *         being built.
      */
     public MessageBuilder addPeerServiceToken(final ServiceToken serviceToken) throws MslMessageException {
+        // If we are not in peer-to-peer mode then peer service tokens cannot
+        // be set.
         if (!ctx.isPeerToPeer())
             throw new MslInternalException("Cannot set peer service tokens when not in peer-to-peer mode.");
+
+        // Make sure the service token is properly bound.
         if (serviceToken.isMasterTokenBound() && !serviceToken.isBoundTo(peerMasterToken))
             throw new MslMessageException(MslError.SERVICETOKEN_MASTERTOKEN_MISMATCH, "st " + serviceToken + "; mt " + peerMasterToken).setMasterToken(peerMasterToken);
         if (serviceToken.isUserIdTokenBound() && !serviceToken.isBoundTo(peerUserIdToken))
             throw new MslMessageException(MslError.SERVICETOKEN_USERIDTOKEN_MISMATCH, "st " + serviceToken + "; uit " + peerUserIdToken).setMasterToken(peerMasterToken).setUserIdToken(peerUserIdToken);
+
+        // Remove any existing service token with the same name and bound state.
+        excludePeerServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
         
         // Add the peer service token.
-        peerServiceTokens.put(serviceToken.getName(), serviceToken);
+        peerServiceTokens.add(serviceToken);
         return this;
     }
 
     /**
      * <p>Add a peer service token to the message if a peer service token with
-     * the same name does not already exist.</p>
+     * the same name that is also bound to the peer master token or peer user
+     * ID token in the same way as the new service token does not already
+     * exist.</p>
      * 
      * <p>Adding a service token with empty data indicates the recipient should
      * delete the service token.</p>
@@ -769,45 +872,122 @@ public class MessageBuilder {
      *         being built.
      */
     public MessageBuilder addPeerServiceTokenIfAbsent(final ServiceToken serviceToken) throws MslMessageException {
-        if (!peerServiceTokens.containsKey(serviceToken.getName()))
-            addPeerServiceToken(serviceToken);
+        final Iterator<ServiceToken> tokens = peerServiceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if (token.getName().equals(serviceToken.getName()) &&
+                token.isMasterTokenBound() == serviceToken.isMasterTokenBound() &&
+                token.isUserIdTokenBound() == serviceToken.isUserIdTokenBound())
+            {
+                return this;
+            }
+        }
+        addPeerServiceToken(serviceToken);
         return this;
+    }
+    
+    /**
+     * <p>Exclude a peer service token from the message. This matches the token
+     * name and whether or not it is bound to the master token or to a user ID
+     * token. It does not require the token to be bound to the exact same
+     * master token or user ID token that will be used in the message.</p>
+     * 
+     * <p>The service token will not be sent in the built message. This is not
+     * the same as requesting the remote entity delete a service token.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #excludePeerServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    public MessageBuilder excludePeerServiceToken(final ServiceToken serviceToken) {
+        return excludePeerServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
     }
 
     /**
-     * <p>Exclude a peer service token from the message.</p>
+     * <p>Exclude a peer service token from the message matching all the
+     * specified parameters. A false value for the master token bound or user
+     * ID token bound parameters restricts exclusion to tokens that are not
+     * bound to a master token or not bound to a user ID token
+     * respectively.</p>
+     * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be excluded
+     * from the message. If a name is provided but both other parameters are
+     * false, then only an unbound service token with the same name will be
+     * excluded.</p>
      * 
      * <p>The service token will not be sent in the built message. This is not
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return this.
      */
-    public MessageBuilder excludePeerServiceToken(final String name) {
-        peerServiceTokens.remove(name);
+    public MessageBuilder excludePeerServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
+        final Iterator<ServiceToken> tokens = peerServiceTokens.iterator();
+        while (tokens.hasNext()) {
+            final ServiceToken token = tokens.next();
+            if (token.getName().equals(name) &&
+                token.isMasterTokenBound() == masterTokenBound &&
+                token.isUserIdTokenBound() == userIdTokenBound)
+            {
+                tokens.remove();
+            }
+        }
         return this;
+    }
+    
+    /**
+     * <p>Mark a peer service token for deletion.</p>
+     * 
+     * <p>The service token will be sent in the built message with an empty
+     * value. This is not the same as requesting that a service token be
+     * excluded from the message.</p>
+     * 
+     * <p>This function is equivalent to calling
+     * {@link #deletePeerServiceToken(String, boolean, boolean)}.</p>
+     * 
+     * @param serviceToken the service token.
+     * @return this.
+     */
+    public MessageBuilder deletePeerServiceToken(final ServiceToken serviceToken) {
+        return deletePeerServiceToken(serviceToken.getName(), serviceToken.isMasterTokenBound(), serviceToken.isUserIdTokenBound());
     }
 
     /**
-     * <p>Mark a peer service token for deletion, if it exists. Otherwise this
-     * method does nothing.</p>
+     * <p>Mark a peer service token for deletion. A false value for the master
+     * token bound or user ID token bound parameters restricts deletion to
+     * tokens that are not bound to a master token or not bound to a user ID
+     * token respectively.</p>
+     * 
+     * <p>For example, if a name is provided and the master token bound
+     * parameter is true while the user ID token bound parameter is false, then
+     * the master token bound service token with the same name will be marked
+     * for deletion. If a name is provided but both other parameters are false,
+     * then only an unbound service token with the same name will be marked for
+     * deletion.</p>
      * 
      * <p>The service token will be sent in the built message with an empty
      * value. This is not the same as requesting that a service token be
      * excluded from the message.</p>
      * 
      * @param name service token name.
+     * @param masterTokenBound true to delete a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to delete a user ID token bound service
+     *        token.
      * @return this.
      */
-    public MessageBuilder deletePeerServiceToken(final String name) {
-        // Do nothing if the original token does not exist.
-        final ServiceToken originalToken = peerServiceTokens.get(name);
-        if (originalToken == null)
-            return this;
-
+    public MessageBuilder deletePeerServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
         // Rebuild the original token with empty service data.
-        final MasterToken peerMasterToken = originalToken.isMasterTokenBound() ? this.peerMasterToken : null;
-        final UserIdToken peerUserIdToken = originalToken.isUserIdTokenBound() ? this.peerUserIdToken : null;
+        final MasterToken peerMasterToken = masterTokenBound ? this.peerMasterToken : null;
+        final UserIdToken peerUserIdToken = userIdTokenBound ? this.peerUserIdToken : null;
         try {
             final ServiceToken token = new ServiceToken(ctx, name, EMPTY_DATA, peerMasterToken, peerUserIdToken, false, null, new NullCryptoContext());
             return addPeerServiceToken(token);
@@ -821,7 +1001,7 @@ public class MessageBuilder {
      *         included in the built message.
      */
     public Set<ServiceToken> getPeerServiceTokens() {
-        return Collections.unmodifiableSet(new HashSet<ServiceToken>(peerServiceTokens.values()));
+        return Collections.unmodifiableSet(peerServiceTokens);
     }
 
     /** MSL context. */
@@ -846,13 +1026,13 @@ public class MessageBuilder {
     protected UserAuthenticationData userAuthData = null;
     /** Header data user ID token. */
     protected UserIdToken userIdToken = null;
-    /** Header data service tokens keyed off token name. */
-    protected final Map<String,ServiceToken> serviceTokens = new HashMap<String,ServiceToken>();
+    /** Header data service tokens. */
+    protected final Set<ServiceToken> serviceTokens = new HashSet<ServiceToken>();
 
     /** Header peer data master token. */
     protected MasterToken peerMasterToken = null;
     /** Header peer data user ID token. */
     protected UserIdToken peerUserIdToken = null;
-    /** Header peer data service tokens keyed off token name. */
-    protected final Map<String,ServiceToken> peerServiceTokens = new HashMap<String,ServiceToken>();
+    /** Header peer data service tokens. */
+    protected final Set<ServiceToken> peerServiceTokens = new HashSet<ServiceToken>();
 }

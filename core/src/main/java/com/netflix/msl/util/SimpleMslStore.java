@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2012-2014 Netflix, Inc.  All rights reserved.
+ * Copyright (c) 2012-2020 Netflix, Inc.  All rights reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,11 @@
  */
 package com.netflix.msl.util;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -108,18 +109,27 @@ public class SimpleMslStore implements MslStore {
      */
     @Override
     public synchronized void removeCryptoContext(final MasterToken masterToken) {
-        if (cryptoContexts.remove(masterToken) != null) {
-            // Remove bound user ID tokens, service tokens, and the non-
-            // replayable ID if we no longer have a master token with the same
-            // serial number.
+        // We must perform the removal operations in reverse-dependency order.
+        // This ensures the store is in the correct state, allowing all logical
+        // and safety checks to pass.
+        //
+        // First any bound user ID tokens are removed (which first removes any
+        // service tokens bound to those user ID tokens), then bound service
+        // tokens, and finally the non-replayable ID and crypto context and
+        // master token pair.
+        if (cryptoContexts.containsKey(masterToken)) {
+            // Look for a second master token with the same serial number. If
+            // there is one, then just remove this master token and its crypto
+            // context but do not remove any bound user ID tokens, service
+            // tokens, or the non-replayable ID as those are still associated
+            // with the master token that remains.
             final long serialNumber = masterToken.getSerialNumber();
             for (final MasterToken token : cryptoContexts.keySet()) {
-                if (token.getSerialNumber() == serialNumber)
+                if (!token.equals(masterToken) && token.getSerialNumber() == serialNumber) {
+                    cryptoContexts.remove(masterToken);
                     return;
+                }
             }
-            
-            // Remove the non-replayable ID.
-            nonReplayableIds.remove(serialNumber);
             
             // Remove bound user ID tokens and service tokens.
             for (final UserIdToken userIdToken : userIdTokens.values()) {
@@ -133,6 +143,12 @@ public class SimpleMslStore implements MslStore {
                 // token.
                 throw new MslInternalException("Unexpected exception while removing master token bound service tokens.", e);
             }
+            
+            // Remove the non-replayable ID.
+            nonReplayableIds.remove(serialNumber);
+            
+            // Finally remove the crypto context.
+            cryptoContexts.remove(masterToken);
         }
     }
     
@@ -191,8 +207,6 @@ public class SimpleMslStore implements MslStore {
         // ID token, but it doesn't hurt to try anyway and clean things up.
         for (final Entry<String,UserIdToken> entry : userIdTokens.entrySet()) {
             if (entry.getValue().equals(userIdToken)) {
-                final String userId = entry.getKey();
-                userIdTokens.remove(userId);
                 try {
                     removeServiceTokens(null, masterToken, userIdToken);
                 } catch (final MslException e) {
@@ -200,6 +214,8 @@ public class SimpleMslStore implements MslStore {
                     // that the user ID token is bound to the master token.
                     throw new MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
                 }
+                final String userId = entry.getKey();
+                userIdTokens.remove(userId);
                 break;
             }
         }
@@ -210,16 +226,9 @@ public class SimpleMslStore implements MslStore {
      */
     @Override
     public void clearUserIdTokens() {
-        for (final UserIdToken userIdToken : userIdTokens.values()) {
-            try {
-                removeServiceTokens(null, null, userIdToken);
-            } catch (final MslException e) {
-                // This should not happen since we are only providing a user ID
-                // token.
-                throw new MslInternalException("Unexpected exception while removing user ID token bound service tokens.", e);
-            }
-        }
-        userIdTokens.clear();
+        final List<UserIdToken> tokens = new ArrayList<UserIdToken>(userIdTokens.values());
+        for (final UserIdToken token : tokens)
+            removeUserIdToken(token);
     }
     
     /* (non-Javadoc)
@@ -342,51 +351,14 @@ public class SimpleMslStore implements MslStore {
             throw new MslException(MslError.USERIDTOKEN_MASTERTOKEN_MISMATCH, "uit mtserialnumber " + userIdToken.getMasterTokenSerialNumber() + "; mt " + masterToken.getSerialNumber());
         }
         
-        // If only a name was provided remove all tokens with that name.
+        // If only a name was provided remove all unbound tokens with that
+        // name.
         if (name != null && masterToken == null && userIdToken == null) {
             // Remove all unbound tokens with the specified name.
             final Iterator<ServiceToken> unboundTokens = unboundServiceTokens.iterator();
             while (unboundTokens.hasNext()) {
                 if (unboundTokens.next().getName().equals(name))
                     unboundTokens.remove();
-            }
-            
-            // Remove all master bound tokens with the specified name.
-            final Collection<Entry<Long, Set<ServiceToken>>> mtTokenEntries = mtServiceTokens.entrySet();
-            for (final Entry<Long, Set<ServiceToken>> entry : mtTokenEntries) {
-                final Long serialNumber = entry.getKey();
-                final Set<ServiceToken> tokenSet = entry.getValue();
-                final Iterator<ServiceToken> tokens = tokenSet.iterator();
-                while (tokens.hasNext()) {
-                    final ServiceToken token = tokens.next();
-                    
-                    // Skip if the name was provided and it does not match.
-                    if (!token.getName().equals(name))
-                        continue;
-                    
-                    // Remove the token.
-                    tokens.remove();
-                }
-                mtServiceTokens.put(serialNumber, tokenSet);
-            }
-        
-            // Remove all user ID tokens with the specified name.
-            final Collection<Entry<Long, Set<ServiceToken>>> uitTokenEntries = uitServiceTokens.entrySet();
-            for (final Entry<Long, Set<ServiceToken>> entry : uitTokenEntries) {
-                final Long serialNumber = entry.getKey();
-                final Set<ServiceToken> tokenSet = entry.getValue();
-                final Iterator<ServiceToken> tokens = tokenSet.iterator();
-                while (tokens.hasNext()) {
-                    final ServiceToken token = tokens.next();
-                    
-                    // Skip if the name was provided and it does not match.
-                    if (!token.getName().equals(name))
-                        continue;
-                    
-                    // Remove the token.
-                    tokens.remove();
-                }
-                uitServiceTokens.put(serialNumber, tokenSet);
             }
         }
         
@@ -408,35 +380,11 @@ public class SimpleMslStore implements MslStore {
                     tokens.remove();
                 }
             }
-            
-            // Remove all user ID tokens (with the specified name if any).
-            final Collection<Entry<Long, Set<ServiceToken>>> entries = uitServiceTokens.entrySet();
-            for (final Entry<Long, Set<ServiceToken>> entry : entries) {
-                final Long serialNumber = entry.getKey();
-                final Set<ServiceToken> uitTokenSet = entry.getValue();
-                final Iterator<ServiceToken> tokens = uitTokenSet.iterator();
-                while (tokens.hasNext()) {
-                    final ServiceToken token = tokens.next();
-                    
-                    // Skip if the name was provided and it does not match.
-                    if (name != null && !token.getName().equals(name))
-                        continue;
-                    
-                    // Skip if the token is not bound to the master token.
-                    if (!token.isBoundTo(masterToken))
-                        continue;
-                    
-                    // Remove the token.
-                    tokens.remove();
-                }
-                uitServiceTokens.put(serialNumber, uitTokenSet);
-            }
         }
         
         // If a user ID token was provided remove all tokens bound to the user
         // ID token. If a name was also provided then limit removal to tokens
-        // with the specified name. If a master token was also provided then
-        // limit removal to tokens bound to the master token.
+        // with the specified name.
         if (userIdToken != null) {
             final Set<ServiceToken> tokenSet = uitServiceTokens.get(userIdToken.getSerialNumber());
             if (tokenSet != null) {
@@ -446,11 +394,6 @@ public class SimpleMslStore implements MslStore {
                     
                     // Skip if the name was provided and it does not match.
                     if (name != null && !token.getName().equals(name))
-                        continue;
-                    
-                    // Skip if the master token was provided and the token is
-                    // not bound to it.
-                    if (masterToken != null && !token.isBoundTo(masterToken))
                         continue;
                     
                     // Remove the token.
