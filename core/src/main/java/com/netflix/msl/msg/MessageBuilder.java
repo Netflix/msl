@@ -729,7 +729,7 @@ public class MessageBuilder {
      * 
      * @param name service token name.
      * @param masterTokenBound true to delete a master token bound service
-     *        token.
+     *        token. Must be true if {@code userIdTokenBound} is true.
      * @param userIdTokenBound true to delete a user ID token bound service
      *        token.
      * @return this.
@@ -924,7 +924,7 @@ public class MessageBuilder {
      * 
      * @param name service token name.
      * @param masterTokenBound true to exclude a master token bound service
-     *        token.
+     *        token. Must be true if {@code userIdTokenBound} is true.
      * @param userIdTokenBound true to exclude a user ID token bound service
      *        token.
      * @return this.
@@ -979,7 +979,7 @@ public class MessageBuilder {
      * 
      * @param name service token name.
      * @param masterTokenBound true to delete a master token bound service
-     *        token.
+     *        token. Must be true if {@code userIdTokenBound} is true.
      * @param userIdTokenBound true to delete a user ID token bound service
      *        token.
      * @return this.

@@ -466,8 +466,10 @@ public class MessageServiceTokenBuilder {
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the service token was found and therefore removed.
      */
     public boolean excludePrimaryServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
@@ -515,8 +517,10 @@ public class MessageServiceTokenBuilder {
      * the same as requesting the remote entity delete a service token.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the peer service token was found and therefore removed.
      */
     public boolean excludePeerServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
@@ -567,8 +571,10 @@ public class MessageServiceTokenBuilder {
      * excluded from the message.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the service token exists and was marked for deletion.
      */
     public boolean deletePrimaryServiceToken(final String name, final boolean masterTokenBound, final boolean userIdTokenBound) {
@@ -619,8 +625,10 @@ public class MessageServiceTokenBuilder {
      * excluded from the message.</p>
      * 
      * @param name service token name.
-     * @param masterTokenBound true to exclude a master token bound service token.
-     * @param userIdTokenBound true to exclude a user ID token bound service token.
+     * @param masterTokenBound true to exclude a master token bound service
+     *        token. Must be true if {@code userIdTokenBound} is true.
+     * @param userIdTokenBound true to exclude a user ID token bound service
+     *        token.
      * @return true if the peer service token exists and was marked for
      *         deletion.
      */

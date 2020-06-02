@@ -748,7 +748,7 @@
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service
-         *        token.
+         *        token. Must be true if {@code userIdTokenBound} is true.
          * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
          *        token.
          * @return {MessageBuilder} this.
@@ -828,7 +828,7 @@
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to delete a master token bound service
-         *        token.
+         *        token. Must be true if {@code userIdTokenBound} is true.
          * @param {boolean} userIdTokenBound true to delete a user ID token bound service
          *        token.
          * @param {{result: function(MessageBuilder), error: function(Error)}}
@@ -1061,7 +1061,7 @@
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to exclude a master token bound service
-         *        token.
+         *        token. Must be true if {@code userIdTokenBound} is true.
          * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
          *        token.
          * @return {MessageBuilder} this.
@@ -1141,7 +1141,7 @@
          *
          * @param {string} name service token name.
          * @param {boolean} masterTokenBound true to delete a master token bound service
-         *        token.
+         *        token. Must be true if {@code userIdTokenBound} is true.
          * @param {boolean} userIdTokenBound true to delete a user ID token bound service
          *        token.
          * @param {{result: function(MessageBuilder), error: function(Error)}}

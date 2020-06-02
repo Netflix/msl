@@ -539,8 +539,10 @@
          * ID token respectively.</p>
          * 
          * @param {string} name service token name.
-         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
-         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
          * @return {boolean} true if the service token was found and therefore removed.
          * 
          * <hr>
@@ -613,8 +615,10 @@
          * ID token respectively.</p>
          *
          * @param {string} name service token name.
-         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
-         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
          * @return {boolean} true if the peer service token was found and therefore removed.
          * 
          * <h2>
@@ -686,8 +690,10 @@
          * ID token respectively.</p>
          *
          * @param {string} name service token name.
-         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
-         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the service token exists
          *        and was marked for deletion, or any thrown exceptions.
@@ -769,8 +775,10 @@
          * ID token respectively.</p>
          *
          * @param {string} name service token name.
-         * @param {boolean} masterTokenBound true to exclude a master token bound service token.
-         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service token.
+         * @param {boolean} masterTokenBound true to exclude a master token bound service
+         *        token. Must be true if {@code userIdTokenBound} is true.
+         * @param {boolean} userIdTokenBound true to exclude a user ID token bound service
+         *        token.
          * @param {{result: function(boolean), error: function(Error)}} callback
          *        the callback will receive true if the peer service token
          *        exists and was marked for deletion, or any thrown exceptions.
