@@ -40,7 +40,7 @@ public class JavaUrl implements Url {
      * methods. This is necessary to facilitate stream reuse across multiple
      * MSL messages.</p>
      */
-    public class DelayedInputStream extends FilterInputStream {
+    public static class DelayedInputStream extends FilterInputStream {
         /**
          * Create a new delayed input stream that will not attempt to
          * construct the input stream from the URL connection until it is
@@ -146,7 +146,7 @@ public class JavaUrl implements Url {
      * An implementation of the {@link Connection} interface backed by the
      * built-in Java {@link URLConnection} class.
      */
-    private class JavaConnection implements Connection {
+    private static class JavaConnection implements Connection {
         /**
          * Create a new Java connection with the backing URL connection.
          * 
