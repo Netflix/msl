@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/Netflix/msl.svg?branch=master)](https://travis-ci.org/Netflix/msl)
+[![Build Status](https://travis-ci.com/Netflix/msl.svg?branch=master)](https://travis-ci.com/Netflix/msl)
 
 # Message Security Layer
 
