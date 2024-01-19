@@ -1,6 +1,6 @@
 apply plugin: 'java'
 
 dependencies {
-    compile project(':msl-core')
-    compile 'io.reactivex:rxjava:latest.release'
+    implementation project(':msl-core')
+    implementation 'io.reactivex:rxjava:latest.release'
 }

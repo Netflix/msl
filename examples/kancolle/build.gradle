@@ -1,5 +1,5 @@
 apply plugin: 'java'
 
 dependencies {
-    compile project(':msl-core')
+    implementation project(':msl-core')
 }

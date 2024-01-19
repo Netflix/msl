@@ -1,23 +1,17 @@
 plugins {
-    id 'nebula.netflixoss' version '5.1.1'
+    id 'nebula.netflixoss' version '11.5.0'
 }
 
 subprojects {
     group = 'com.netflix.msl'
 
     repositories {
-        jcenter()
+        mavenCentral()
     }
 
-    apply plugin: 'nebula.netflixoss'
-    apply plugin: 'nebula.javadoc-jar'
-    apply plugin: 'nebula.source-jar'
-
-    apply plugin: 'findbugs'
-    findbugs {
-        excludeFilter = rootProject.file("findbugs-exclude.xml")
-        ignoreFailures = true
-    }
+    apply plugin: 'com.netflix.nebula.netflixoss'
+    apply plugin: 'com.netflix.nebula.javadoc-jar'
+    apply plugin: 'com.netflix.nebula.source-jar'
 
     if (JavaVersion.current().isJava8Compatible()) {
         tasks.withType(Javadoc) {
@@ -27,5 +21,11 @@ subprojects {
 
     tasks.withType(Test) {
         maxHeapSize = '1024m'
+    }
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(8)
+        }
     }
 }
