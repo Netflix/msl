@@ -1,12 +1,9 @@
-apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'eclipse-wtp'
 
-targetCompatibility = '1.7' // Android maximum supported language level
-sourceCompatibility = '1.7' // Android maximum supported language level
-
 dependencies {
-    compile 'org.bouncycastle:bcprov-jdk15on:1.46'
-    compile 'org.json:json:20140107'
+    api 'org.bouncycastle:bcprov-jdk15on:1.46'
+    api 'org.json:json:20140107'
 }
 
 task my_javadoc(type: Javadoc) {

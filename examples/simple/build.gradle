@@ -1,19 +1,19 @@
 buildscript {
-    repositories { jcenter() }
-    dependencies { classpath 'org.akhikhl.gretty:gretty:latest.release' }
+    repositories { mavenCentral() }
+    dependencies { classpath 'org.gretty:gretty:3.1.0' }
 }
 
 apply plugin: 'war'
 apply plugin: 'eclipse-wtp'
 
-apply plugin: 'org.akhikhl.gretty'
+apply plugin: 'org.gretty'
 gretty {
     contextPath = "/msl-example-server"
 }
 
 dependencies {
-    compile 'javax.servlet:servlet-api:2.5'
-    compile project(':msl-core')
+    implementation 'javax.servlet:servlet-api:2.5'
+    implementation project(':msl-core')
 }
 
-war.baseName "msl-example-server"
+war.archiveBaseName.set "msl-example-server"
