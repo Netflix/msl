@@ -1,0 +1,2 @@
+# Test payload for cache poisoning
+echo "Cache poisoning test" > /tmp/cache-test.txt
